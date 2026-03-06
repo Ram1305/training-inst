@@ -6,7 +6,7 @@ import { Label } from '../ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import type { QuizSectionData } from './Quiz';
 import { Alert, AlertDescription } from '../ui/alert';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface QuizSectionProps {
   section: QuizSectionData;
@@ -124,18 +124,18 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Check if devices drag-drop is complete
   const isDevicesComplete = devicesDragState.labels.every(l => l.placed);
 
-  // Auto-mark as complete when drag-drop is done
+  // Auto-mark as complete when drag-drop is done (always sync so reset + re-do works)
   useEffect(() => {
-    if (currentQuestion?.image === 'desktop-files' && isFilesComplete && !answers[currentQuestion.id]) {
+    if (currentQuestion?.image === 'desktop-files' && isFilesComplete) {
       setAnswers(prev => ({ ...prev, [currentQuestion.id]: 'completed' }));
     }
-  }, [isFilesComplete, currentQuestion?.image, currentQuestion?.id, answers]);
+  }, [isFilesComplete, currentQuestion?.image, currentQuestion?.id]);
 
   useEffect(() => {
-    if (currentQuestion?.image === 'digital-devices' && isDevicesComplete && !answers[currentQuestion.id]) {
+    if (currentQuestion?.image === 'digital-devices' && isDevicesComplete) {
       setAnswers(prev => ({ ...prev, [currentQuestion.id]: 'completed' }));
     }
-  }, [isDevicesComplete, currentQuestion?.image, currentQuestion?.id, answers]);
+  }, [isDevicesComplete, currentQuestion?.image, currentQuestion?.id]);
 
   // Safety check - if currentQuestion is undefined, return null
   if (!currentQuestion) {
@@ -179,6 +179,13 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
       onComplete(finalAnswers);
     } else {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      setShowValidation(false);
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
 
@@ -392,6 +399,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
       checklistBook: [],
       imagesFolder: []
     });
+    setAnswers(prev => {
+      const next = { ...prev };
+      if (currentQuestion?.id) delete next[currentQuestion.id];
+      return next;
+    });
   };
 
   // Handle device label drag - use ref (synchronous) so drop works on first try
@@ -431,6 +443,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
         { id: 'device4', name: 'Laptop', matchedLabel: null },
         { id: 'device5', name: 'Barcode Scanner', matchedLabel: null }
       ]
+    });
+    setAnswers(prev => {
+      const next = { ...prev };
+      if (currentQuestion?.id) delete next[currentQuestion.id];
+      return next;
     });
   };
 
@@ -884,10 +901,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
         </div>
       </CardContent>
       <CardFooter className="flex justify-between">
-        <div>
+        <div className="flex gap-3">
           {onCancel && (
             <Button variant="outline" onClick={onCancel}>
               Cancel
+            </Button>
+          )}
+          {currentQuestionIndex > 0 && (
+            <Button variant="outline" onClick={handlePrevious}>
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Previous
             </Button>
           )}
         </div>
@@ -896,7 +919,8 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
             onClick={handleNext}
             className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
           >
-            {currentQuestionIndex === 0 ? 'Submit' : isLastQuestion ? 'Submit Section' : 'Continue'}
+            {isLastQuestion ? 'Submit Section' : 'Next'}
+            {!isLastQuestion && <ArrowRight className="w-4 h-4 ml-2" />}
           </Button>
         </div>
       </CardFooter>

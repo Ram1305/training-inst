@@ -16,6 +16,7 @@ import {
   ChevronLeft,
   ChevronRight,
   ChevronDown,
+  ChevronUp,
   Quote,
   Facebook,
   Linkedin,
@@ -45,7 +46,9 @@ import { courseService } from '../services/course.service';
 import type { CourseListItem } from '../services/course.service';
 import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
+import { reviewService } from '../services/review.service';
 import { WhatsAppButton } from "./ui/WhatsAppButton";
+import { ResourcesDropdown } from "./ui/ResourcesDropdown";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -58,6 +61,7 @@ interface LandingPageProps {
   onEnrollNow?: () => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onGallery?: () => void;
   onBookCourse?: (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => void;
 }
 
@@ -78,37 +82,6 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
-const googleReviews = [
-  {
-    id: 1,
-    author: "Training Combined RTO 45490",
-    rating: 5,
-    text: "Based on 141 reviews",
-    isMainReview: true,
-  },
-  {
-    id: 2,
-    author: "Dylan James",
-    rating: 5,
-    text: "Katelyn was my trainer and I'm really happy with my training could not recommend her more!",
-    time: "a year ago",
-  },
-  {
-    id: 3,
-    author: "kassam hussein",
-    rating: 5,
-    text: "I reached out to the team for my C6 licence what a fantastic experience from the booking to the assessment all the help you need",
-    time: "a year ago",
-  },
-  {
-    id: 4,
-    author: "susam adhikari",
-    rating: 5,
-    text: "I did my forklift training with Training Combined. The trainer was very professional and helpful throughout the course.",
-    time: "a year ago",
-  },
-];
-
 const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
   { name: "Avopiling", logo: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200" },
@@ -116,21 +89,22 @@ const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
 ];
 
-export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onLLNDTest, onEnrollNow, onForms, onFeesRefund, onBookCourse }: LandingPageProps) {
+export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onLLNDTest, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse }: LandingPageProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
-  const [resourcesDropdownOpen, setResourcesDropdownOpen] = useState(false);
-  const [codeOfPracticeOpen, setCodeOfPracticeOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [expandedCombo, setExpandedCombo] = useState(false);
-  
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
   // Data states
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
+  const [googleReviews, setGoogleReviews] = useState<{ googleReviewId: string; author: string; rating: number; reviewText: string; timeText?: string | null; isMainReview: boolean }[]>([]);
+  const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -163,8 +137,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
       setIsLoading(true);
       setError(null);
 
-      const filter: { searchQuery?: string; pageSize: number } = {
-        pageSize: 1000  // Fetch all courses so categories dropdown and section show every category
+      const filter: { searchQuery?: string; pageSize: number; sortBy?: string; sortDescending?: boolean } = {
+        pageSize: 1000,  // Fetch all courses so categories dropdown and section show every category
+        sortBy: 'displayOrder',
+        sortDescending: false
       };
 
       if (debouncedSearch) {
@@ -197,10 +173,30 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     }
   };
 
+  const fetchReviews = useCallback(async () => {
+    try {
+      setIsReviewsLoading(true);
+      const response = await reviewService.getPublicReviews();
+      if (response.success && response.data) {
+        setGoogleReviews(response.data);
+      }
+    } catch (err) {
+      console.error('Error fetching reviews:', err);
+      setGoogleReviews([]);
+    } finally {
+      setIsReviewsLoading(false);
+    }
+  }, []);
+
   // Fetch categories on mount
   useEffect(() => {
     fetchCategories();
   }, []);
+
+  // Fetch reviews on mount
+  useEffect(() => {
+    fetchReviews();
+  }, [fetchReviews]);
 
   // Fetch courses when search changes (debounced)
   useEffect(() => {
@@ -214,6 +210,17 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // Back to top visibility
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 400);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   const nextSlide = () => {
     setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
@@ -230,7 +237,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   };
 
   const getCoursesByCategory = (categoryId: string) => {
-    return courses.filter((course) => course.categoryId === categoryId && !course.hasComboOffer);
+    return courses
+      .filter((course) => course.categoryId === categoryId && !course.hasComboOffer)
+      .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
   };
 
   const toggleCategory = (categoryId: string) => {
@@ -419,104 +428,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 )}
               </div>
 
-              {/* Resources Dropdown */}
-              <div 
-                className="relative"
-                onMouseEnter={() => setResourcesDropdownOpen(true)}
-                onMouseLeave={() => {
-                  setResourcesDropdownOpen(false);
-                  setCodeOfPracticeOpen(false);
-                }}
-              >
-                <a
-                  href="#resources"
-                  className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-sm font-medium cursor-pointer"
-                >
-                  RESOURCES
-                  <ChevronDown className={`w-4 h-4 transition-transform ${resourcesDropdownOpen ? 'rotate-180' : ''}`} />
-                </a>
-                
-                {resourcesDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 top-full pt-2 z-50"
-                  >
-                    <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
-                      {/* Main Menu Panel */}
-                      <div className="dropdown-category-panel">
-                        <button
-                          onClick={() => {
-                            setResourcesDropdownOpen(false);
-                            if (onForms) onForms();
-                          }}
-                          className="dropdown-category-item"
-                        >
-                          <span>Forms</span>
-                        </button>
-                        <button
-                          className="dropdown-category-item"
-                        >
-                          <span>Unique Student Identifier (USI)</span>
-                        </button>
-                        <button
-                          className="dropdown-category-item"
-                        >
-                          <span>Gallery</span>
-                        </button>
-                        <button
-                          onMouseEnter={() => setCodeOfPracticeOpen(true)}
-                          className={`dropdown-category-item ${codeOfPracticeOpen ? 'active' : ''}`}
-                        >
-                          <span>Code of Practice</span>
-                          <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                        </button>
-                      </div>
-                      
-                      {/* Submenu Panel */}
-                      <div className="dropdown-courses-panel">
-                        {codeOfPracticeOpen && (
-                          <div>
-                            <a
-                              href="https://safetytrainingacademy.edu.au/wp-content/uploads/2025/08/How-to-safely-remove-asbestos-COP.pdf"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="resources-submenu-item"
-                            >
-                              Manage and Control Asbestos in Workplace
-                            </a>
-                            <a
-                              href="https://safetytrainingacademy.edu.au/wp-content/uploads/2021/12/How-to-safely-remove-asbestos-COP-2019-1.pdf"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="resources-submenu-item"
-                            >
-                              Asbestos Removal
-                            </a>
-                            <a
-                              href="https://www.safework.nsw.gov.au/__data/assets/pdf_file/0015/50073/Confined-spaces-COP.pdf"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="resources-submenu-item"
-                            >
-                              Confined Space
-                            </a>
-                            <a
-                              href="https://www.safework.nsw.gov.au/__data/assets/pdf_file/0018/50076/Managing-the-risk-of-falls-at-workplaces-COP.pdf"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="resources-submenu-item"
-                            >
-                              Working at Heights
-                            </a>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
 
               <button
                 onClick={onAbout}
@@ -899,10 +811,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                               <span>{course.duration}</span>
                             </div>
                           )}
-                          <div className="flex items-center gap-1">
-                            <Users className="w-4 h-4 text-cyan-500" />
-                            <span>{course.enrolledStudentsCount || 0} enrolled</span>
-                          </div>
                         </div>
 
                         <div className="flex flex-wrap gap-2 pt-2">
@@ -954,19 +862,36 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                             </Button>
                           </>
                         ) : (
-                          <Button 
-                            className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.price);
-                            }}
-                          >
-                            {course.originalPrice && (
-                              <span className="price-strikethrough text-white/80 text-base mr-1">${course.originalPrice}</span>
+                          <>
+                            <Button 
+                              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.price);
+                              }}
+                            >
+                              {course.originalPrice && (
+                                <span className="price-strikethrough text-white/80 text-base mr-1">${course.originalPrice}</span>
+                              )}
+                              <span className="price-current text-lg">${course.price}</span>
+                              <span className="ml-1">Book Now</span>
+                            </Button>
+                            {course.promoPrice != null && course.promoPrice > 0 && (
+                              <Button 
+                                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.promoPrice!);
+                                }}
+                              >
+                                {course.promoOriginalPrice != null && course.promoOriginalPrice > 0 && (
+                                  <span className="price-strikethrough text-white/80 text-base mr-1">${course.promoOriginalPrice}</span>
+                                )}
+                                <span className="price-current text-lg">${course.promoPrice}</span>
+                                <span className="ml-1">Book Now SL + BL</span>
+                              </Button>
                             )}
-                            <span className="price-current text-lg">${course.price}</span>
-                            <span className="ml-1">Book Now</span>
-                          </Button>
+                          </>
                         )}
                         <Button 
                           variant="outline"
@@ -1046,6 +971,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
               return (
                 <motion.div
+                  id={`category-${category.categoryId}`}
                   key={category.categoryId}
                   initial={{ opacity: 0, y: 30 }}
                   whileInView={{ opacity: 1, y: 0 }}
@@ -1123,10 +1049,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                                   <span>{course.duration}</span>
                                 </div>
                               )}
-                              <div className="flex items-center gap-1">
-                                <Users className="w-4 h-4 text-cyan-500" />
-                                <span>{course.enrolledStudentsCount} students</span>
-                              </div>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {course.hasTheory && (
@@ -1180,19 +1102,36 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                                 </Button>
                               </>
                             ) : (
-                              <Button 
-                                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.price);
-                                }}
-                              >
-                                {course.originalPrice && (
-                                  <span className="price-strikethrough text-white/80 text-base mr-1">${course.originalPrice}</span>
+                              <>
+                                <Button 
+                                  className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.price);
+                                  }}
+                                >
+                                  {course.originalPrice && (
+                                    <span className="price-strikethrough text-white/80 text-base mr-1">${course.originalPrice}</span>
+                                  )}
+                                  <span className="price-current text-lg">${course.price}</span>
+                                  <span className="ml-1">Book Now</span>
+                                </Button>
+                                {course.promoPrice != null && course.promoPrice > 0 && (
+                                  <Button 
+                                    className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.promoPrice!);
+                                    }}
+                                  >
+                                    {course.promoOriginalPrice != null && course.promoOriginalPrice > 0 && (
+                                      <span className="price-strikethrough text-white/80 text-base mr-1">${course.promoOriginalPrice}</span>
+                                    )}
+                                    <span className="price-current text-lg">${course.promoPrice}</span>
+                                    <span className="ml-1">Book Now SL + BL</span>
+                                  </Button>
                                 )}
-                                <span className="price-current text-lg">${course.price}</span>
-                                <span className="ml-1">Book Now</span>
-                              </Button>
+                              </>
                             )}
                             <Button 
                               variant="outline"
@@ -1331,9 +1270,16 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {googleReviews.map((review, index) => (
+            {isReviewsLoading ? (
+              <div className="col-span-full flex justify-center py-12">
+                <Loader2 className="w-10 h-10 animate-spin text-cyan-500" />
+              </div>
+            ) : googleReviews.length === 0 ? (
+              <div className="col-span-full text-center py-12 text-gray-500">No reviews to display</div>
+            ) : (
+              googleReviews.map((review, index) => (
               <motion.div
-                key={review.id}
+                key={review.googleReviewId}
                 initial={{ opacity: 0, y: 20 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
@@ -1353,7 +1299,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                         <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
                       ))}
                     </div>
-                    <p className="text-sm text-gray-600">{review.text}</p>
+                    <p className="text-sm text-gray-600">{review.reviewText}</p>
                     <Button
                       variant="outline"
                       className="mt-4 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-full w-full"
@@ -1381,12 +1327,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                         <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       ))}
                     </div>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-3">{review.text}</p>
-                    <p className="text-xs text-gray-500">{review.time}</p>
+                    <p className="text-sm text-gray-700 leading-relaxed mb-3">{review.reviewText}</p>
+                    {review.timeText && <p className="text-xs text-gray-500">{review.timeText}</p>}
                   </Card>
                 )}
               </motion.div>
-            ))}
+            ))
+            )}
           </div>
         </div>
       </section>
@@ -1614,6 +1561,18 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
       {/* WhatsApp Floating Button */}
       <WhatsAppButton />
+
+      {/* Back to top */}
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={scrollToTop}
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
+          aria-label="Back to top"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }

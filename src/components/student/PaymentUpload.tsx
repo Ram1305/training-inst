@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -21,6 +21,7 @@ export function PaymentUpload({ courseName, coursePrice, onUpload, onCancel, pay
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -51,6 +52,11 @@ export function PaymentUpload({ courseName, coursePrice, onUpload, onCancel, pay
         setPreviewUrl(null);
       }
     }
+  };
+
+  const handleUploadClick = () => {
+    if (paymentStatus === 'pending' || isSubmitting) return;
+    fileInputRef.current?.click();
   };
 
   const handleSubmit = async () => {
@@ -160,8 +166,14 @@ export function PaymentUpload({ courseName, coursePrice, onUpload, onCancel, pay
           {/* File Upload */}
           <div className="space-y-2">
             <Label htmlFor="receipt">Payment Receipt *</Label>
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-violet-400 transition-colors">
+            <div 
+              onClick={handleUploadClick}
+              className={`border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-violet-400 transition-colors ${
+                (paymentStatus === 'pending' || isSubmitting) ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+              }`}
+            >
               <input
+                ref={fileInputRef}
                 id="receipt"
                 type="file"
                 accept="image/jpeg,image/jpg,image/png,application/pdf"
@@ -169,42 +181,48 @@ export function PaymentUpload({ courseName, coursePrice, onUpload, onCancel, pay
                 className="hidden"
                 disabled={paymentStatus === 'pending' || isSubmitting}
               />
-              <label htmlFor="receipt" className={`cursor-pointer ${(paymentStatus === 'pending' || isSubmitting) ? 'pointer-events-none' : ''}`}>
-                {selectedFile ? (
-                  <div className="space-y-2">
-                    <FileCheck className="w-12 h-12 mx-auto text-green-600" />
-                    <p className="text-green-700">{selectedFile.name}</p>
-                    <p className="text-sm text-gray-500">
-                      {(selectedFile.size / 1024).toFixed(2)} KB
-                    </p>
-                    {previewUrl && (
-                      <img 
-                        src={previewUrl} 
-                        alt="Receipt preview" 
-                        className="max-w-full max-h-48 mx-auto mt-4 rounded border"
-                      />
-                    )}
-                    {selectedFile.type === 'application/pdf' && (
-                      <div className="mt-4 p-4 bg-gray-50 rounded">
-                        <p className="text-gray-600">PDF file selected</p>
-                      </div>
-                    )}
-                    {paymentStatus !== 'pending' && !isSubmitting && (
-                      <Button variant="outline" size="sm" className="mt-2">
-                        Change File
-                      </Button>
-                    )}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <Upload className="w-12 h-12 mx-auto text-gray-400" />
-                    <p className="text-gray-600">Click to upload payment receipt</p>
-                    <p className="text-sm text-gray-500">
-                      Supports: JPG, PNG, PDF (Max 5MB)
-                    </p>
-                  </div>
-                )}
-              </label>
+              {selectedFile ? (
+                <div className="space-y-2">
+                  <FileCheck className="w-12 h-12 mx-auto text-green-600" />
+                  <p className="text-green-700">{selectedFile.name}</p>
+                  <p className="text-sm text-gray-500">
+                    {(selectedFile.size / 1024).toFixed(2)} KB
+                  </p>
+                  {previewUrl && (
+                    <img 
+                      src={previewUrl} 
+                      alt="Receipt preview" 
+                      className="max-w-full max-h-48 mx-auto mt-4 rounded border"
+                    />
+                  )}
+                  {selectedFile.type === 'application/pdf' && (
+                    <div className="mt-4 p-4 bg-gray-50 rounded">
+                      <p className="text-gray-600">PDF file selected</p>
+                    </div>
+                  )}
+                  {paymentStatus !== 'pending' && !isSubmitting && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleUploadClick();
+                      }}
+                    >
+                      Change File
+                    </Button>
+                  )}
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  <Upload className="w-12 h-12 mx-auto text-gray-400" />
+                  <p className="text-gray-600">Click to upload payment receipt</p>
+                  <p className="text-sm text-gray-500">
+                    Supports: JPG, PNG, PDF (Max 5MB)
+                  </p>
+                </div>
+              )}
             </div>
           </div>
 

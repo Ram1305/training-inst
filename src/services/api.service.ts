@@ -24,13 +24,30 @@ class ApiService {
 
     try {
       const response = await fetch(url, config);
-      
+      const text = await response.text();
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'An error occurred');
+        let message = 'An error occurred';
+        let body: { message?: string; errors?: string[] } = {};
+        try {
+          body = text ? JSON.parse(text) : {};
+          message = body.message || text || response.statusText || message;
+        } catch {
+          message = text || response.statusText || message;
+        }
+        const err = new Error(message) as Error & { responseBody?: typeof body };
+        err.responseBody = body;
+        throw err;
       }
 
-      return await response.json();
+      if (text.trim() === '') {
+        return {} as T;
+      }
+      try {
+        return JSON.parse(text) as T;
+      } catch {
+        throw new Error('Invalid JSON in response');
+      }
     } catch (error) {
       if (error instanceof Error) {
         throw error;

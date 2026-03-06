@@ -32,6 +32,7 @@ export interface CourseDateSimple {
   location?: string;
   meetingLink?: string;
   availableSpots: number;
+  currentEnrollments?: number;
   isAvailable: boolean;
 }
 
@@ -106,13 +107,19 @@ class CourseDateService {
     return apiService.get<ApiResponse<CourseDateListResponse>>(endpoint);
   }
 
-  // Get course dates for a specific course
+  // Get course dates for a specific course (only today and future dates)
   async getCourseDatesForCourse(
     courseId: string, 
-    activeOnly: boolean = true
+    activeOnly: boolean = true,
+    fromDate?: string // YYYY-MM-DD - user's local "today" for filtering; when omitted, server uses UTC today
   ): Promise<ApiResponse<CourseDateSimple[]>> {
+    const params = new URLSearchParams();
+    params.append('activeOnly', String(activeOnly));
+    if (fromDate) {
+      params.append('fromDate', fromDate);
+    }
     return apiService.get<ApiResponse<CourseDateSimple[]>>(
-      `${API_CONFIG.ENDPOINTS.COURSE_DATE.FOR_COURSE(courseId)}?activeOnly=${activeOnly}`
+      `${API_CONFIG.ENDPOINTS.COURSE_DATE.FOR_COURSE(courseId)}?${params.toString()}`
     );
   }
 
@@ -174,9 +181,9 @@ class CourseDateService {
     );
   }
 
-  // Delete a course date
-  async deleteCourseDate(courseDateId: string): Promise<ApiResponse<null>> {
-    return apiService.delete<ApiResponse<null>>(
+  // Delete a course date (deactivates if it has enrollments)
+  async deleteCourseDate(courseDateId: string): Promise<ApiResponse<{ wasDeactivated?: boolean }>> {
+    return apiService.delete<ApiResponse<{ wasDeactivated?: boolean }>>(
       API_CONFIG.ENDPOINTS.COURSE_DATE.BY_ID(courseDateId)
     );
   }

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { LandingPage } from './components/LandingPage';
 import { LoginPage } from './components/LoginPage';
 import { StudentPortal } from './components/StudentPortal';
@@ -6,12 +6,14 @@ import { TeacherPortal } from './components/TeacherPortal';
 import { AdminPortal } from './components/AdminPortal';
 import { SuperAdminPortal } from './components/SuperAdminPortal';
 import { CourseDetailsPage } from './components/CourseDetails';
+import { HandbookViewerPage } from './components/HandbookViewerPage';
 import { CourseBooking } from './components/CourseBooking';
 import { AboutUsPage } from './components/AboutUsPage';
 import { ContactPage } from './components/ContactPage';
 import { BookNowPage } from './components/BookNowPage';
 import { FormsPage } from './components/FormsPage';
 import { FeesRefundPage } from './components/FeesRefundPage';
+import { GalleryPage } from './components/GalleryPage';
 import { PublicQuiz } from './components/student/PublicQuiz';
 import { PublicEnrollmentForm } from './components/student/PublicEnrollmentForm';
 import { PublicEnrollmentWizard } from './components/student/PublicEnrollmentWizard';
@@ -74,8 +76,9 @@ const parseUrlPath = (): { path: string; enrollCode?: string } => {
 
 export default function App() {
   const { user: authUser, setUser, isLoading, logout, isAuthenticated } = useAuth();
-  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'portal' | 'courseDetails' | 'courseBooking' | 'about' | 'contact' | 'bookNow' | 'publicQuiz' | 'publicEnrollment' | 'publicEnrollmentWizard' | 'forms' | 'feesRefund'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'portal' | 'courseDetails' | 'handbookViewer' | 'courseBooking' | 'about' | 'contact' | 'bookNow' | 'publicQuiz' | 'publicEnrollment' | 'publicEnrollmentWizard' | 'forms' | 'feesRefund' | 'gallery'>('landing');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
+  const [handbookViewerState, setHandbookViewerState] = useState<{ pdfUrl: string; title?: string; courseName?: string } | null>(null);
   const [selectedCourseData, setSelectedCourseData] = useState<{
     courseName?: string;
     courseCode?: string;
@@ -90,6 +93,9 @@ export default function App() {
     linkId?: string;
   } | null>(null);
   const [isLoadingEnrollmentLink, setIsLoadingEnrollmentLink] = useState(false);
+
+  // When true, authenticated user explicitly chose "Go to Landing Page" — don't redirect back to portal
+  const allowLandingViewRef = useRef(false);
 
   const user: User | null = authUser ? mapAuthUserToUser(authUser) : null;
 
@@ -134,12 +140,13 @@ export default function App() {
   }, [isLoading]);
 
   useEffect(() => {
-    if (!isLoading) {
-      if (isAuthenticated && currentPage === 'login') {
+    if (!isLoading && !isLoadingEnrollmentLink) {
+      // Redirect authenticated users to portal when on landing/login, unless they explicitly chose to view landing
+      if (isAuthenticated && (currentPage === 'login' || currentPage === 'landing') && !allowLandingViewRef.current) {
         setCurrentPage('portal');
       }
     }
-  }, [isAuthenticated, isLoading, currentPage]);
+  }, [isAuthenticated, isLoading, currentPage, isLoadingEnrollmentLink]);
 
   const handleLogin = (userData: User) => {
     const authUser: AuthUser = {
@@ -156,15 +163,18 @@ export default function App() {
 
   const handleLogout = () => {
     logout();
+    allowLandingViewRef.current = false;
     setCurrentPage('landing');
     setSelectedCourseId(null);
   };
 
   const handleGoToLogin = () => {
+    allowLandingViewRef.current = false;
     setCurrentPage('login');
   };
 
   const handleBackToLanding = () => {
+    allowLandingViewRef.current = true; // Allow authenticated users to stay on landing when they chose "Go to Landing Page"
     setCurrentPage('landing');
     setSelectedCourseId(null);
     setEnrollmentLinkData(null);
@@ -214,6 +224,10 @@ export default function App() {
     setCurrentPage('feesRefund');
   };
 
+  const handleGoToGallery = () => {
+    setCurrentPage('gallery');
+  };
+
   const handlePublicQuizComplete = (result: { userId: string; studentId: string; email: string; fullName: string; isPassed: boolean }) => {
     const authUser: AuthUser = {
       userId: result.userId,
@@ -259,6 +273,16 @@ export default function App() {
 
   const handleCourseDetails = (courseId: string) => {
     setSelectedCourseId(courseId);
+    setCurrentPage('courseDetails');
+  };
+
+  const handleViewHandbook = (url: string, title?: string, courseName?: string) => {
+    setHandbookViewerState({ pdfUrl: url, title, courseName });
+    setCurrentPage('handbookViewer');
+  };
+
+  const handleBackFromHandbookViewer = () => {
+    setHandbookViewerState(null);
     setCurrentPage('courseDetails');
   };
 
@@ -341,6 +365,7 @@ export default function App() {
         onEnrollNow={handleGoToPublicEnrollmentWizard}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
         onBookCourse={handleBookCourse}
       />
     );
@@ -357,6 +382,7 @@ export default function App() {
         onBookNow={handleGoToBookNow}
         onCourseDetails={handleCourseDetails}
         onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
       />
     );
   }
@@ -371,6 +397,22 @@ export default function App() {
         onContact={handleGoToContact}
         onBookNow={handleGoToBookNow}
         onCourseDetails={handleCourseDetails}
+        onGallery={handleGoToGallery}
+      />
+    );
+  }
+
+  if (currentPage === 'gallery') {
+    return (
+      <GalleryPage
+        onBack={handleBackToLanding}
+        onLogin={handleGoToLogin}
+        onRegister={handleGoToLogin}
+        onAbout={handleGoToAbout}
+        onContact={handleGoToContact}
+        onBookNow={handleGoToBookNow}
+        onForms={handleGoToForms}
+        onFeesRefund={handleGoToFeesRefund}
       />
     );
   }
@@ -415,6 +457,7 @@ export default function App() {
         onContact={handleGoToContact}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
       />
     );
   }
@@ -429,6 +472,7 @@ export default function App() {
         onViewCourses={handleViewCourses}
         onBookNow={handleGoToBookNow}
         onCourseDetails={handleCourseDetails}
+        onGallery={handleGoToGallery}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
       />
@@ -437,7 +481,7 @@ export default function App() {
 
   if (currentPage === 'contact') {
     return (
-      <ContactPage 
+      <ContactPage
         onBack={handleBackToLanding}
         onLogin={handleGoToLogin}
         onRegister={handleGoToLogin}
@@ -447,14 +491,26 @@ export default function App() {
         onCourseDetails={handleCourseDetails}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
+      />
+    );
+  }
+
+  if (currentPage === 'handbookViewer' && handbookViewerState) {
+    return (
+      <HandbookViewerPage
+        pdfUrl={handbookViewerState.pdfUrl}
+        title={handbookViewerState.title}
+        courseName={handbookViewerState.courseName}
+        onBack={handleBackFromHandbookViewer}
       />
     );
   }
 
   if (currentPage === 'courseDetails' && selectedCourseId) {
     return (
-      <CourseDetailsPage 
-        courseId={selectedCourseId} 
+      <CourseDetailsPage
+        courseId={selectedCourseId}
         onBack={handleBackToLanding}
         onEnroll={handleCourseBooking}
         onLogin={handleGoToLogin}
@@ -466,13 +522,15 @@ export default function App() {
         onAbout={handleGoToAbout}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
+        onViewHandbook={handleViewHandbook}
       />
     );
   }
 
   if (currentPage === 'courseBooking') {
     return (
-      <CourseBooking 
+      <CourseBooking
         courseId={selectedCourseId || undefined}
         courseName={selectedCourseData.courseName}
         courseCode={selectedCourseData.courseCode}
@@ -485,6 +543,9 @@ export default function App() {
         onBookNow={handleGoToBookNow}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
+        onLogin={handleGoToLogin}
+        onRegister={handleGoToLogin}
       />
     );
   }

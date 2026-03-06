@@ -29,7 +29,7 @@ export default defineConfig({
     host: '0.0.0.0', // Listen on all interfaces
     proxy: {
       '/api': {
-        target: 'https://localhost:7419',
+        target: 'https://safety-academy-api-afh9eua2ctege9bz.australiasoutheast-01.azurewebsites.net',
         changeOrigin: true,
         secure: false,
         rewrite: (path) => path.replace(/^\/api/, '')
@@ -41,6 +41,7 @@ export default defineConfig({
   build: {
     target: 'esnext',
     outDir: 'dist',
+    chunkSizeWarningLimit: 1024,
     rollupOptions: {
       input: {
         main: path.resolve(__dirname, 'index.html'),

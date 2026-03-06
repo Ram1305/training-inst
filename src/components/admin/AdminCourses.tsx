@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Plus, Edit, Trash2, Upload, X, Tags, Loader2, Calendar as CalendarIcon, Clock, Search, GraduationCap, FileText } from 'lucide-react';
+import { Plus, Edit, Trash2, Upload, X, Tags, Loader2, Calendar as CalendarIcon, Clock, Search, GraduationCap, FileText, Bold, Italic, Heading2, Heading3, List, ListOrdered, GripVertical } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -10,6 +10,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '../ui/tooltip';
+import { DndContext, pointerWithin, PointerSensor, TouchSensor, useSensor, useSensors } from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { courseService } from '../../services/course.service';
 import type { CourseListItem, CreateCourseRequest, UpdateCourseRequest } from '../../services/course.service';
 import { categoryService } from '../../services/category.service';
@@ -18,6 +23,7 @@ import { courseDateService } from '../../services/courseDate.service';
 import type { CourseDateSimple, CreateCourseDateRequest } from '../../services/courseDate.service';
 import { adminManagementService, type AdminResponse } from '../../services/adminManagement.service';
 import { filesService } from '../../services/files.service';
+import { courseDescriptionToHtml } from '../../utils/courseDescriptionFormatter';
 
 interface CourseFormData {
   code: string;
@@ -26,6 +32,8 @@ interface CourseFormData {
   duration: string;
   price: number;
   originalPrice?: number;
+  promoPrice?: number;
+  promoOriginalPrice?: number;
   image: string;
   hasTheory: boolean;
   hasPractical: boolean;
@@ -33,7 +41,7 @@ interface CourseFormData {
   validityPeriod: string;
   delivery: string;
   location: string;
-  courseDescription: string;
+  courseDescriptions: string[];
   entryRequirements: string[];
   trainingOverview: string[];
   vocationalOutcome: string[];
@@ -80,7 +88,7 @@ const initialFormData: CourseFormData = {
   validityPeriod: '',
   delivery: 'Face to Face Training',
   location: 'Face to Face',
-  courseDescription: '',
+  courseDescriptions: [''],
   entryRequirements: [''],
   trainingOverview: [''],
   vocationalOutcome: [''],
@@ -104,10 +112,281 @@ const getDateTypeConfig = (dateType: string) => {
   return DATE_TYPES.find(dt => dt.value === dateType) || DATE_TYPES[0];
 };
 
+function SortableCourseCard({
+  course,
+  onEdit,
+  onToggleStatus,
+  onManageDates,
+  onDelete,
+  disabled = false,
+}: {
+  course: CourseListItem;
+  onEdit: (courseId: string) => void;
+  onToggleStatus: (courseId: string) => void;
+  onManageDates: (course: CourseListItem) => void;
+  onDelete: (courseId: string) => void;
+  disabled?: boolean;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: course.courseId,
+    disabled,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <Card
+      ref={setNodeRef}
+      style={style}
+      className="border-violet-100 hover:shadow-lg transition-shadow"
+    >
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            {!disabled && (
+              <div
+                {...attributes}
+                {...listeners}
+                className="cursor-grab active:cursor-grabbing touch-none p-1 -ml-1 rounded hover:bg-violet-50 flex-shrink-0"
+                title="Drag to reorder (order reflects on landing page)"
+              >
+                <GripVertical className="w-4 h-4 text-violet-400" />
+              </div>
+            )}
+            <div className="min-w-0">
+              <div className="flex items-center gap-2 mb-2">
+                <Badge variant="outline" className="text-xs">{course.courseCode}</Badge>
+                {course.hasComboOffer && (
+                  <Badge className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white">
+                    Combo Available
+                  </Badge>
+                )}
+              </div>
+              <CardTitle>{course.courseName}</CardTitle>
+              <CardDescription>
+                {course.categoryName || 'Uncategorized'}
+                {course.duration ? ` • ${course.duration}` : ''} •{' '}
+                {course.experienceBookingEnabled ? (
+                  <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 ml-1">
+                    <span>
+                      {course.experienceOriginalPrice && (
+                        <span className="line-through text-gray-400 mr-1">${course.experienceOriginalPrice}</span>
+                      )}
+                      <span className="font-semibold text-green-600">${course.experiencePrice ?? course.price}</span>
+                      <span className="text-xs text-gray-500">(w/ exp)</span>
+                    </span>
+                    <span>
+                      {course.noExperienceOriginalPrice && (
+                        <span className="line-through text-gray-400 mr-1">${course.noExperienceOriginalPrice}</span>
+                      )}
+                      <span className="font-semibold text-red-600">${course.noExperiencePrice ?? course.price}</span>
+                      <span className="text-xs text-gray-500">(w/o exp)</span>
+                    </span>
+                  </span>
+                ) : (
+                  <>
+                    {course.originalPrice && (
+                      <span className="line-through text-gray-400 ml-2">${course.originalPrice}</span>
+                    )}
+                    <span className="font-semibold text-violet-600 ml-1">${course.price}</span>
+                  </>
+                )}
+              </CardDescription>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-shrink-0">
+            <Badge
+              className={`cursor-pointer ${course.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
+              onClick={() => onToggleStatus(course.courseId)}
+            >
+              {course.isActive ? 'active' : 'inactive'}
+            </Badge>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onManageDates(course)}
+              title="Manage Course Dates"
+            >
+              <CalendarIcon className="w-4 h-4 text-violet-600" />
+            </Button>
+            <Button variant="outline" size="icon" onClick={() => onEdit(course.courseId)}>
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() => onDelete(course.courseId)}
+              title="Delete course"
+              className="text-red-600 hover:bg-red-50 hover:text-red-700 border-red-200"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
+          <div className="text-sm text-gray-600">
+            <span className="font-semibold text-gray-900">{course.enrolledStudentsCount}</span> students enrolled
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Minimal sortable row showing only course title; used in Reorder Courses dialog. */
+function SortableCourseTitleRow({ course }: { course: CourseListItem }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: course.courseId,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors border border-gray-100"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="cursor-grab active:cursor-grabbing touch-none p-1 -ml-1 rounded hover:bg-violet-50 flex-shrink-0"
+        title="Drag to reorder"
+      >
+        <GripVertical className="w-4 h-4 text-violet-400" />
+      </div>
+      <span className="font-medium text-gray-800 truncate">{course.courseName}</span>
+    </div>
+  );
+}
+
+function SortableCategoryRow({
+  category,
+  editingCategory,
+  onEdit,
+  onCancelEdit,
+  onSaveEdit,
+  onDelete,
+  isSubmitting,
+  setEditingCategory,
+}: {
+  category: CategoryItem;
+  editingCategory: { id: string; value: string } | null;
+  onEdit: (category: CategoryItem) => void;
+  onCancelEdit: () => void;
+  onSaveEdit: () => void;
+  onDelete: (categoryId: string) => void;
+  isSubmitting: boolean;
+  setEditingCategory: (v: { id: string; value: string } | null) => void;
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: category.categoryId,
+    disabled: !!editingCategory,
+  });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+    >
+      {editingCategory?.id === category.categoryId ? (
+        <div className="flex-1 flex gap-2">
+          <Input
+            value={editingCategory.value}
+            onChange={(e) => setEditingCategory({ ...editingCategory, value: e.target.value })}
+            onKeyPress={(e) => e.key === 'Enter' && onSaveEdit()}
+            autoFocus
+            disabled={isSubmitting}
+          />
+          <Button
+            size="sm"
+            onClick={onSaveEdit}
+            className="bg-green-600 hover:bg-green-700"
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={onCancelEdit}
+            disabled={isSubmitting}
+          >
+            Cancel
+          </Button>
+        </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <div
+              {...attributes}
+              {...listeners}
+              className="cursor-grab active:cursor-grabbing touch-none p-1 -ml-1 rounded hover:bg-violet-50 flex-shrink-0"
+              title="Drag to reorder (order reflects on front page)"
+            >
+              <GripVertical className="w-4 h-4 text-violet-400" />
+            </div>
+            <div>
+              <span className="font-medium text-gray-700">{category.categoryName}</span>
+              {category.courseCount > 0 && (
+                <Badge variant="secondary" className="text-xs ml-2">
+                  {category.courseCount} courses
+                </Badge>
+              )}
+              {!category.isActive && (
+                <Badge variant="outline" className="text-xs ml-2 text-red-600">
+                  Inactive
+                </Badge>
+              )}
+            </div>
+          </div>
+          <div className="flex gap-2 flex-shrink-0">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onEdit(category)}
+              className="hover:bg-blue-100"
+            >
+              <Edit className="w-4 h-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => onDelete(category.categoryId)}
+              className="hover:bg-red-100 text-red-600"
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
 export function AdminCourses() {
   // Dialog states
   const [showDialog, setShowDialog] = useState(false);
   const [showCategoryDialog, setShowCategoryDialog] = useState(false);
+  const [showReorderCoursesDialog, setShowReorderCoursesDialog] = useState(false);
+  const [selectedCategoryForReorder, setSelectedCategoryForReorder] = useState<CategoryItem | null>(null);
   const [showDateDialog, setShowDateDialog] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
@@ -131,11 +410,14 @@ export function AdminCourses() {
   const [newCategory, setNewCategory] = useState('');
   const [editingCategory, setEditingCategory] = useState<{ id: string; value: string } | null>(null);
   const [categoryToDelete, setCategoryToDelete] = useState<string | null>(null);
+  const [courseToDelete, setCourseToDelete] = useState<string | null>(null);
   const [isCategorySubmitting, setIsCategorySubmitting] = useState(false);
+  const [isCourseDeleteSubmitting, setIsCourseDeleteSubmitting] = useState(false);
   
   // Image states
   const [imagePreview, setImagePreview] = useState<string>('');
   const [imageUploadMethod, setImageUploadMethod] = useState<'url' | 'upload'>('url');
+  const [editingCourseImageUrl, setEditingCourseImageUrl] = useState<string | null>(null);
   
   // Date picker states
   const [selectedDate, setSelectedDate] = useState<string>('');
@@ -172,6 +454,11 @@ export function AdminCourses() {
   const [resourcePdfUploading, setResourcePdfUploading] = useState(false);
   const [resourcePdfUploadError, setResourcePdfUploadError] = useState<string | null>(null);
   const resourcePdfInputRef = useRef<HTMLInputElement>(null);
+  const descriptionTextareaRefs = useRef<Record<number, HTMLTextAreaElement | null>>({});
+
+  // Course reorder state
+  const [isReordering, setIsReordering] = useState(false);
+  const [isCategoryReordering, setIsCategoryReordering] = useState(false);
 
   // Teacher states for date management
   const [teachers, setTeachers] = useState<AdminResponse[]>([]);
@@ -193,6 +480,8 @@ export function AdminCourses() {
       const response = await courseService.getAllCourses({
         pageSize: 100,
         searchQuery: (query ?? searchQuery).trim() || undefined,
+        sortBy: 'displayOrder',
+        sortDescending: false,
       });
       if (response.success && response.data) {
         setCourses(response.data.courses);
@@ -228,7 +517,11 @@ export function AdminCourses() {
 
   const fetchAllCategories = async () => {
     try {
-      const response = await categoryService.getAllCategories({ pageSize: 100 });
+      const response = await categoryService.getAllCategories({
+        pageSize: 100,
+        sortBy: 'displayOrder',
+        sortDescending: false,
+      });
       if (response.success && response.data) {
         setAllCategories(response.data.categories);
       }
@@ -288,6 +581,8 @@ export function AdminCourses() {
         duration: formData.duration || undefined,
         price: formData.price || undefined,
         originalPrice: formData.originalPrice,
+        promoPrice: formData.promoPrice,
+        promoOriginalPrice: formData.promoOriginalPrice,
         imageUrl: formData.image,
         hasTheory: formData.hasTheory,
         hasPractical: formData.hasPractical,
@@ -295,7 +590,7 @@ export function AdminCourses() {
         validityPeriod: formData.validityPeriod,
         deliveryMethod: formData.delivery,
         location: formData.location,
-        courseDescription: formData.courseDescription,
+        courseDescription: formData.courseDescriptions.filter(d => d.trim()).join('\n\n') || undefined,
         entryRequirements: formData.entryRequirements.filter(r => r.trim()),
         trainingOverview: formData.trainingOverview.filter(t => t.trim()),
         vocationalOutcome: formData.vocationalOutcome.filter(v => v.trim()),
@@ -347,14 +642,16 @@ export function AdminCourses() {
         duration: formData.duration,
         price: formData.price,
         originalPrice: formData.originalPrice,
-        imageUrl: formData.image,
+        promoPrice: formData.promoPrice,
+        promoOriginalPrice: formData.promoOriginalPrice,
+        imageUrl: formData.image?.trim() || editingCourseImageUrl || undefined,
         hasTheory: formData.hasTheory,
         hasPractical: formData.hasPractical,
         hasExam: formData.hasExam,
         validityPeriod: formData.validityPeriod,
         deliveryMethod: formData.delivery,
         location: formData.location,
-        courseDescription: formData.courseDescription,
+        courseDescription: formData.courseDescriptions.filter(d => d.trim()).join('\n\n') || undefined,
         entryRequirements: formData.entryRequirements.filter(r => r.trim()),
         trainingOverview: formData.trainingOverview.filter(t => t.trim()),
         vocationalOutcome: formData.vocationalOutcome.filter(v => v.trim()),
@@ -382,6 +679,7 @@ export function AdminCourses() {
         resetForm();
         setIsEditing(false);
         setEditingCourseId(null);
+        setEditingCourseImageUrl(null);
         fetchCourses();
       } else {
         setError(response.message || 'Failed to update course');
@@ -406,6 +704,8 @@ export function AdminCourses() {
           duration: course.duration || '',
           price: course.price,
           originalPrice: course.originalPrice,
+          promoPrice: course.promoPrice,
+          promoOriginalPrice: course.promoOriginalPrice,
           image: course.imageUrl || '',
           hasTheory: course.hasTheory,
           hasPractical: course.hasPractical,
@@ -413,7 +713,7 @@ export function AdminCourses() {
           validityPeriod: course.validityPeriod || '',
           delivery: course.deliveryMethod || 'Face to Face Training',
           location: course.location || '',
-          courseDescription: course.courseDescription || '',
+          courseDescriptions: course.courseDescription?.trim() ? course.courseDescription.split(/\n\n+/).map(s => s.trim()).filter(Boolean) : [''],
           entryRequirements: course.entryRequirements.length > 0 ? course.entryRequirements : [''],
           trainingOverview: course.trainingOverview.length > 0 ? course.trainingOverview : [''],
           vocationalOutcome: course.vocationalOutcome.length > 0 ? course.vocationalOutcome : [''],
@@ -434,6 +734,8 @@ export function AdminCourses() {
           comboDuration: course.comboOffer?.duration,
         });
         setImagePreview(course.imageUrl || '');
+        setImageUploadMethod((course.imageUrl || '').startsWith('data:') ? 'upload' : 'url');
+        setEditingCourseImageUrl(course.imageUrl || null);
         setIsEditing(true);
         setEditingCourseId(courseId);
         setShowDialog(true);
@@ -445,8 +747,6 @@ export function AdminCourses() {
   };
 
   const handleDeleteCourse = async (courseId: string) => {
-    if (!confirm('Are you sure you want to delete this course? This will also delete all associated dates.')) return;
-
     try {
       const response = await courseService.deleteCourse(courseId);
       if (response.success) {
@@ -457,6 +757,17 @@ export function AdminCourses() {
     } catch (err) {
       console.error('Error deleting course:', err);
       setError('Failed to delete course');
+    }
+  };
+
+  const confirmDeleteCourse = async () => {
+    if (!courseToDelete) return;
+    setIsCourseDeleteSubmitting(true);
+    try {
+      await handleDeleteCourse(courseToDelete);
+      setCourseToDelete(null);
+    } finally {
+      setIsCourseDeleteSubmitting(false);
     }
   };
 
@@ -473,6 +784,82 @@ export function AdminCourses() {
       setError('Failed to toggle course status');
     }
   };
+
+  const handleCourseReorder = async (categoryId: string, oldOrder: string[], newOrder: string[]) => {
+    if (JSON.stringify(oldOrder) === JSON.stringify(newOrder)) return;
+
+    const previousCourses = [...courses];
+    const optimisticCourses = courses.map((c) => {
+      if (c.categoryId !== categoryId) return c;
+      const idx = newOrder.indexOf(c.courseId);
+      return { ...c, displayOrder: idx };
+    });
+    setCourses(optimisticCourses);
+    setIsReordering(true);
+
+    try {
+      const response = await courseService.reorderCourses(categoryId, newOrder);
+      if (response.success) {
+        await fetchCourses();
+      } else {
+        setCourses(previousCourses);
+        setError(response.message || 'Failed to reorder courses');
+      }
+    } catch (err) {
+      console.error('Error reordering courses:', err);
+      setCourses(previousCourses);
+      setError('Failed to reorder courses');
+    } finally {
+      setIsReordering(false);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const draggedCourse = courses.find((c) => c.courseId === active.id);
+    if (!draggedCourse?.categoryId) return;
+
+    const overCourse = courses.find((c) => c.courseId === over.id);
+    if (!overCourse || overCourse.categoryId !== draggedCourse.categoryId) return;
+
+    // Use same order as displayed (aligned with landing page: by displayOrder)
+    const categoryCourseIds = courses
+      .filter((c) => c.categoryId === draggedCourse.categoryId)
+      .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+      .map((c) => c.courseId);
+
+    const oldIndex = categoryCourseIds.indexOf(active.id as string);
+    const newIndex = categoryCourseIds.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newOrder = arrayMove(categoryCourseIds, oldIndex, newIndex);
+    handleCourseReorder(draggedCourse.categoryId, categoryCourseIds, newOrder);
+  };
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: 8 },
+    }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 250, tolerance: 5 },
+    })
+  );
+
+  // Group courses by category (aligned with landing page: categories by displayOrder, courses within each by displayOrder)
+  const coursesByCategory = categories
+    .map((cat) => ({
+      category: cat,
+      courses: courses
+        .filter((c) => c.categoryId === cat.categoryId)
+        .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)),
+    }))
+    .filter((g) => g.courses.length > 0);
+
+  const uncategorizedCourses = courses
+    .filter((c) => !c.categoryId)
+    .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
 
   // Category CRUD operations
   const handleAddCategory = async () => {
@@ -531,6 +918,42 @@ export function AdminCourses() {
     setEditingCategory(null);
   };
 
+  const handleCategoryReorder = async (newOrder: string[]) => {
+    if (newOrder.length === 0) return;
+    try {
+      setIsCategoryReordering(true);
+      const response = await categoryService.reorderCategories(newOrder);
+      if (response.success) {
+        await fetchAllCategories();
+        fetchCategories();
+        fetchCourses();
+      } else {
+        alert(response.message || 'Failed to reorder categories');
+      }
+    } catch (err) {
+      console.error('Error reordering categories:', err);
+      alert('Failed to reorder categories');
+    } finally {
+      setIsCategoryReordering(false);
+    }
+  };
+
+  const handleCategoryDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+
+    const sortedCategoryIds = [...allCategories]
+      .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+      .map((c) => c.categoryId);
+
+    const oldIndex = sortedCategoryIds.indexOf(active.id as string);
+    const newIndex = sortedCategoryIds.indexOf(over.id as string);
+    if (oldIndex === -1 || newIndex === -1) return;
+
+    const newOrder = arrayMove(sortedCategoryIds, oldIndex, newIndex);
+    handleCategoryReorder(newOrder);
+  };
+
   const handleDeleteCategory = (categoryId: string) => {
     setCategoryToDelete(categoryId);
   };
@@ -583,6 +1006,46 @@ export function AdminCourses() {
       ...prev,
       [field]: (prev[field] as string[]).map((item, i) => i === index ? value : item)
     }));
+  };
+
+  const getDescriptionTextarea = (index: number): HTMLTextAreaElement | null => {
+    const fromRef = descriptionTextareaRefs.current[index];
+    if (fromRef) return fromRef;
+    const active = document.activeElement;
+    if (active instanceof HTMLTextAreaElement && active.id?.startsWith('course-desc-')) {
+      const idx = parseInt(active.id.replace('course-desc-', ''), 10);
+      if (idx === index) return active;
+    }
+    return null;
+  };
+
+  const applyDescriptionFormatting = (index: number, wrapChar: string) => {
+    const textarea = getDescriptionTextarea(index);
+    if (!textarea) return;
+    const { selectionStart, selectionEnd, value } = textarea;
+    if (selectionStart === selectionEnd) return;
+    const selectedText = value.substring(selectionStart, selectionEnd);
+    const newText = value.substring(0, selectionStart) + wrapChar + selectedText + wrapChar + value.substring(selectionEnd);
+    updateArrayItem('courseDescriptions', index, newText);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(selectionStart + wrapChar.length, selectionEnd + wrapChar.length);
+    }, 0);
+  };
+
+  const insertDescriptionAtCursor = (index: number, prefix: string) => {
+    const textarea = getDescriptionTextarea(index);
+    if (!textarea) return;
+    const { selectionStart, selectionEnd, value } = textarea;
+    const before = value.substring(0, selectionStart);
+    const after = value.substring(selectionEnd);
+    const newText = before + prefix + after;
+    updateArrayItem('courseDescriptions', index, newText);
+    setTimeout(() => {
+      textarea.focus();
+      const pos = selectionStart + prefix.length;
+      textarea.setSelectionRange(pos, pos);
+    }, 0);
   };
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -688,12 +1151,21 @@ export function AdminCourses() {
       setDateError(null);
       setShowDateDialog(true);
 
-      // Fetch existing dates from backend
-      const response = await courseDateService.getCourseDatesForCourse(course.courseId, false);
+      // Fetch existing dates from backend - only today and future (user's local date)
+      const today = new Date();
+      const fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+      const response = await courseDateService.getCourseDatesForCourse(course.courseId, false, fromDate);
       
       if (response.success && response.data) {
-        // Convert API response to local format
-        const existingDates: LocalCourseDate[] = response.data.map(d => ({
+        // Filter out any past dates (safety net for timezone edge cases) - only show today and future
+        const todayStr = fromDate;
+        const filtered = response.data.filter((d) => {
+          const dStr = typeof d.scheduledDate === 'string'
+            ? (d.scheduledDate.includes('T') ? d.scheduledDate.split('T')[0] : d.scheduledDate)
+            : (d.scheduledDate as unknown as Date)?.toISOString?.()?.split('T')[0] ?? '';
+          return dStr >= todayStr;
+        });
+        const existingDates: LocalCourseDate[] = filtered.map(d => ({
           ...d,
           isNew: false
         }));
@@ -777,38 +1249,21 @@ export function AdminCourses() {
         return;
       }
 
-      // Filter out duplicates
-      const existingDates = courseDates.map(d => `${formatDateForInput(d.scheduledDate)}-${d.dateType}`);
-      const newDates: LocalCourseDate[] = [];
-      const duplicates: string[] = [];
-
-      datesToAdd.forEach((dateValue) => {
-        const key = `${dateValue}-${selectedDateType}`;
-        if (existingDates.includes(key)) {
-          duplicates.push(dateValue);
-        } else {
-          newDates.push({
-            tempId: `temp-${Date.now()}-${dateValue}`,
-            scheduledDate: dateValue,
-            dateType: selectedDateType,
-            startTime: selectedStartTime || undefined,
-            endTime: selectedEndTime || undefined,
-            location: selectedLocation,
-            meetingLink: selectedLocation === 'Online' ? selectedMeetingLink : undefined,
-            isNew: true,
-            availableSpots: selectedMaxCapacity ? parseInt(selectedMaxCapacity) : 999,
-            isAvailable: true,
-            teacherId: selectedTeacherId && selectedTeacherId.trim() !== '' ? selectedTeacherId : undefined,
-            teacherName: selectedTeacherName && selectedTeacherName.trim() !== '' ? selectedTeacherName : undefined
-          });
-          existingDates.push(key); // Prevent duplicates within the same batch
-        }
-      });
-
-      if (newDates.length === 0) {
-        setDateError('All selected dates already exist');
-        return;
-      }
+      // Allow multiple sessions per day (same or different times)
+      const newDates: LocalCourseDate[] = datesToAdd.map((dateValue, index) => ({
+        tempId: `temp-${Date.now()}-${dateValue}-${index}`,
+        scheduledDate: dateValue,
+        dateType: selectedDateType,
+        startTime: selectedStartTime || undefined,
+        endTime: selectedEndTime || undefined,
+        location: selectedLocation,
+        meetingLink: selectedLocation === 'Online' ? selectedMeetingLink : undefined,
+        isNew: true,
+        availableSpots: selectedMaxCapacity ? parseInt(selectedMaxCapacity) : 999,
+        isAvailable: true,
+        teacherId: selectedTeacherId && selectedTeacherId.trim() !== '' ? selectedTeacherId : undefined,
+        teacherName: selectedTeacherName && selectedTeacherName.trim() !== '' ? selectedTeacherName : undefined
+      }));
 
       setCourseDates(prev => [...prev, ...newDates].sort((a, b) => 
         new Date(a.scheduledDate + 'T00:00:00').getTime() - new Date(b.scheduledDate + 'T00:00:00').getTime()
@@ -822,25 +1277,11 @@ export function AdminCourses() {
       setSelectedTeacherId('');
       setSelectedTeacherName('');
       setDateError(null);
-
-      if (duplicates.length > 0) {
-        alert(`Added ${newDates.length} dates. ${duplicates.length} duplicate(s) were skipped.`);
-      }
       return;
     }
 
-    // Single date mode (original logic)
+    // Single date mode - allow multiple sessions on same day (same or different times)
     const dateValue = selectedDate;
-
-    // Check for duplicate (same date + same type)
-    const isDuplicate = courseDates.some(
-      d => formatDateForInput(d.scheduledDate) === selectedDate && d.dateType === selectedDateType
-    );
-
-    if (isDuplicate) {
-      setDateError(`A ${selectedDateType} session already exists on this date`);
-      return;
-    }
 
     // Validate date is not in the past
     const today = new Date();
@@ -870,12 +1311,11 @@ export function AdminCourses() {
       teacherName: selectedTeacherName && selectedTeacherName.trim() !== '' ? selectedTeacherName : undefined
     };
 
-    setCourseDates(prev => [...prev, newDate].sort((a, b) => 
+    setCourseDates(prev => [...prev, newDate].sort((a, b) =>
       new Date(a.scheduledDate + 'T00:00:00').getTime() - new Date(b.scheduledDate + 'T00:00:00').getTime()
     ));
 
-    // Reset form
-    setSelectedDate('');
+    // Reset form but keep date so user can add another slot on same day
     setSelectedMeetingLink('');
     setSelectedTeacherId('');
     setSelectedTeacherName('');
@@ -894,32 +1334,38 @@ export function AdminCourses() {
         const response = await courseDateService.deleteCourseDate(date.courseDateId);
         
         if (response.success) {
-          setCourseDates(prev => {
-            const newDates = prev.filter(d => d.courseDateId !== date.courseDateId);
-            
-            // Update the courses list with the new count
-            if (managingDatesForCourse) {
-              setCourses(prevCourses => 
-                prevCourses.map(course => 
-                  course.courseId === managingDatesForCourse.id
-                    ? { 
-                        ...course, 
-                        courseDatesCount: newDates.length,
-                        courseDates: newDates.map(d => d.scheduledDate)
-                      }
-                    : course
-                )
-              );
-            }
-            
-            return newDates;
-          });
+          const wasDeactivated = response.data?.wasDeactivated;
+          if (wasDeactivated) {
+            // Deactivated (had enrollments) - update isActive instead of removing
+            setCourseDates(prev => prev.map(d =>
+              d.courseDateId === date.courseDateId ? { ...d, isActive: false } : d
+            ));
+          } else {
+            // Actually deleted
+            setCourseDates(prev => {
+              const newDates = prev.filter(d => d.courseDateId !== date.courseDateId);
+              if (managingDatesForCourse) {
+                setCourses(prevCourses =>
+                  prevCourses.map(course =>
+                    course.courseId === managingDatesForCourse.id
+                      ? {
+                          ...course,
+                          courseDatesCount: newDates.length,
+                          courseDates: newDates.map(d => d.scheduledDate)
+                        }
+                      : course
+                  )
+                );
+              }
+              return newDates;
+            });
+          }
         } else {
           setDateError(response.message || 'Failed to delete date');
         }
       } catch (err) {
         console.error('Error deleting date:', err);
-        setDateError('Failed to delete date');
+        setDateError(err instanceof Error ? err.message : 'Failed to delete date');
       } finally {
         setIsDeletingDate(null);
       }
@@ -1036,11 +1482,19 @@ export function AdminCourses() {
     try {
       const response = await courseDateService.toggleCourseDateStatus(courseDateId);
       if (response.success) {
-        // Refresh dates
+        // Refresh dates (only today and future)
         if (managingDatesForCourse) {
-          const refreshResponse = await courseDateService.getCourseDatesForCourse(managingDatesForCourse.id, false);
+          const today = new Date();
+          const fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+          const refreshResponse = await courseDateService.getCourseDatesForCourse(managingDatesForCourse.id, false, fromDate);
           if (refreshResponse.success && refreshResponse.data) {
-            const existingDates: LocalCourseDate[] = refreshResponse.data.map(d => ({
+            const filtered = refreshResponse.data.filter((d) => {
+              const dStr = typeof d.scheduledDate === 'string'
+                ? (d.scheduledDate.includes('T') ? d.scheduledDate.split('T')[0] : d.scheduledDate)
+                : (d.scheduledDate as unknown as Date)?.toISOString?.()?.split('T')[0] ?? '';
+              return dStr >= fromDate;
+            });
+            const existingDates: LocalCourseDate[] = filtered.map(d => ({
               ...d,
               isNew: false
             }));
@@ -1055,6 +1509,14 @@ export function AdminCourses() {
     } catch (err) {
       console.error('Error toggling date status:', err);
     }
+  };
+
+  // Pre-fill form to add another slot for a date (used by "Add slot" button)
+  const handleAddSlotForDate = (scheduledDate: string, dateType: string) => {
+    setSelectedDate(formatDateForInput(scheduledDate));
+    setSelectedDateType(dateType);
+    setIsBulkMode(false);
+    setDateError(null);
   };
 
   // Group dates by date for display
@@ -1072,6 +1534,7 @@ export function AdminCourses() {
       resetForm();
       setIsEditing(false);
       setEditingCourseId(null);
+      setEditingCourseImageUrl(null);
     }
     setShowDialog(open);
   };
@@ -1135,86 +1598,145 @@ export function AdminCourses() {
                   </Button>
                 </div>
 
-                {/* Categories List */}
+                {/* Categories List - Drag to reorder (order reflects on front page) */}
                 <div className="border rounded-lg p-4 max-h-[400px] overflow-y-auto">
-                  <div className="space-y-2">
-                    {allCategories.map((category) => (
-                      <div 
-                        key={category.categoryId} 
-                        className="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
-                      >
-                        {editingCategory?.id === category.categoryId ? (
-                          <div className="flex-1 flex gap-2">
-                            <Input
-                              value={editingCategory.value}
-                              onChange={(e) => setEditingCategory({ ...editingCategory, value: e.target.value })}
-                              onKeyPress={(e) => e.key === 'Enter' && handleSaveEdit()}
-                              autoFocus
-                              disabled={isCategorySubmitting}
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={pointerWithin}
+                    onDragEnd={handleCategoryDragEnd}
+                  >
+                    <SortableContext
+                      items={[...allCategories].sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0)).map((c) => c.categoryId)}
+                      strategy={verticalListSortingStrategy}
+                    >
+                      <div className="space-y-2">
+                        {[...allCategories]
+                          .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+                          .map((category) => (
+                            <SortableCategoryRow
+                              key={category.categoryId}
+                              category={category}
+                              editingCategory={editingCategory}
+                              onEdit={handleEditCategory}
+                              onCancelEdit={handleCancelEdit}
+                              onSaveEdit={handleSaveEdit}
+                              onDelete={handleDeleteCategory}
+                              isSubmitting={isCategorySubmitting}
+                              setEditingCategory={setEditingCategory}
                             />
-                            <Button 
-                              size="sm" 
-                              onClick={handleSaveEdit} 
-                              className="bg-green-600 hover:bg-green-700"
-                              disabled={isCategorySubmitting}
-                            >
-                              {isCategorySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Save'}
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="outline" 
-                              onClick={handleCancelEdit}
-                              disabled={isCategorySubmitting}
-                            >
-                              Cancel
-                            </Button>
-                          </div>
-                        ) : (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <span className="font-medium text-gray-700">{category.categoryName}</span>
-                              {category.courseCount > 0 && (
-                                <Badge variant="secondary" className="text-xs">
-                                  {category.courseCount} courses
-                                </Badge>
-                              )}
-                              {!category.isActive && (
-                                <Badge variant="outline" className="text-xs text-red-600">
-                                  Inactive
-                                </Badge>
-                              )}
-                            </div>
-                            <div className="flex gap-2">
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleEditCategory(category)}
-                                className="hover:bg-blue-100"
-                              >
-                                <Edit className="w-4 h-4" />
-                              </Button>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteCategory(category.categoryId)}
-                                className="hover:bg-red-100 text-red-600"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          </>
+                          ))}
+                        {allCategories.length === 0 && (
+                          <p className="text-center text-gray-500 py-4">No categories found</p>
                         )}
                       </div>
-                    ))}
+                    </SortableContext>
+                  </DndContext>
+                  {isCategoryReordering && (
+                    <p className="text-sm text-violet-600 mt-2 flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Reordering...
+                    </p>
+                  )}
+                </div>
+
+                <p className="text-sm text-gray-500">
+                  Total Categories: <strong>{allCategories.length}</strong>
+                  <span className="text-gray-400 ml-2">• Drag to reorder (order appears on front page)</span>
+                </p>
+              </div>
+            </DialogContent>
+          </Dialog>
+
+          {/* Reorder Courses Dialog */}
+          <Dialog
+            open={showReorderCoursesDialog}
+            onOpenChange={(open) => {
+              setShowReorderCoursesDialog(open);
+              setSelectedCategoryForReorder(null);
+            }}
+          >
+            <DialogTrigger asChild>
+              <Button variant="outline" className="border-violet-200 hover:bg-violet-50">
+                <ListOrdered className="w-4 h-4 mr-2" />
+                Reorder Courses
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+              <DialogHeader>
+                <DialogTitle>Manage Course Order</DialogTitle>
+                <DialogDescription>
+                  Select a category, then drag courses to reorder. Order reflects on the landing page.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 flex-1 min-h-0 overflow-hidden flex flex-col">
+                {/* Category selector */}
+                <div className="border rounded-lg p-3 max-h-[200px] overflow-y-auto">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Select category</p>
+                  <div className="space-y-1">
+                    {[...allCategories]
+                      .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0))
+                      .map((category) => (
+                        <button
+                          key={category.categoryId}
+                          type="button"
+                          onClick={() => setSelectedCategoryForReorder(category)}
+                          className={`w-full flex items-center justify-between p-3 rounded-lg text-left transition-colors ${
+                            selectedCategoryForReorder?.categoryId === category.categoryId
+                              ? 'bg-violet-100 border border-violet-300 text-violet-800'
+                              : 'bg-gray-50 hover:bg-gray-100 border border-transparent text-gray-700'
+                          }`}
+                        >
+                          <span className="font-medium">{category.categoryName}</span>
+                          {category.courseCount > 0 && (
+                            <Badge variant="secondary" className="text-xs">
+                              {category.courseCount} courses
+                            </Badge>
+                          )}
+                        </button>
+                      ))}
                     {allCategories.length === 0 && (
                       <p className="text-center text-gray-500 py-4">No categories found</p>
                     )}
                   </div>
                 </div>
-
-                <p className="text-sm text-gray-500">
-                  Total Categories: <strong>{allCategories.length}</strong>
-                </p>
+                {/* Course list for selected category (drag-and-drop) */}
+                {selectedCategoryForReorder && (
+                  <div className="border rounded-lg p-4 flex-1 min-h-0 overflow-y-auto flex flex-col">
+                    <h4 className="text-sm font-semibold text-violet-700 mb-2">
+                      Courses in {selectedCategoryForReorder.categoryName}
+                      {isReordering && (
+                        <span className="text-sm font-normal text-gray-500 ml-2">(reordering...)</span>
+                      )}
+                    </h4>
+                    {(() => {
+                      const categoryCourses = courses
+                        .filter((c) => c.categoryId === selectedCategoryForReorder.categoryId)
+                        .sort((a, b) => (a.displayOrder ?? 0) - (b.displayOrder ?? 0));
+                      const courseIds = categoryCourses.map((c) => c.courseId);
+                      if (categoryCourses.length === 0) {
+                        return <p className="text-gray-500 py-4">No courses in this category.</p>;
+                      }
+                      return (
+                        <DndContext
+                          sensors={sensors}
+                          collisionDetection={pointerWithin}
+                          onDragEnd={handleDragEnd}
+                        >
+                          <SortableContext items={courseIds} strategy={verticalListSortingStrategy}>
+                            <div className="space-y-2">
+                              {categoryCourses.map((course) => (
+                                <SortableCourseTitleRow key={course.courseId} course={course} />
+                              ))}
+                            </div>
+                          </SortableContext>
+                        </DndContext>
+                      );
+                    })()}
+                  </div>
+                )}
+                {!selectedCategoryForReorder && (
+                  <p className="text-sm text-gray-500 py-2">Select a category above to reorder its courses.</p>
+                )}
               </div>
             </DialogContent>
           </Dialog>
@@ -1259,7 +1781,7 @@ export function AdminCourses() {
                         id="code"
                         placeholder="e.g., RIIHAN309F"
                         value={formData.code}
-                        onChange={(e) => setFormData({ ...formData, code: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, code: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1268,14 +1790,14 @@ export function AdminCourses() {
                         id="title"
                         placeholder="e.g., Conduct Telescopic materials handler operations"
                         value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="category">Category (Optional)</Label>
                       <Select
                         value={formData.categoryId}
-                        onValueChange={(value) => setFormData({ ...formData, categoryId: value })}
+                        onValueChange={(value) => setFormData(prev => ({ ...prev, categoryId: value }))}
                       >
                         <SelectTrigger id="category">
                           <SelectValue placeholder="Select a category" />
@@ -1295,34 +1817,79 @@ export function AdminCourses() {
                         id="duration"
                         placeholder="e.g., 1 Day Course"
                         value={formData.duration}
-                        onChange={(e) => setFormData({ ...formData, duration: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, duration: e.target.value }))}
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="price">Price ($) (Optional)</Label>
-                      <Input
-                        id="price"
-                        type="number"
-                        placeholder="380"
-                        value={formData.price || ''}
-                        onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="originalPrice">Original Price ($) (Optional - shown as strikethrough)</Label>
-                      <Input
-                        id="originalPrice"
-                        type="number"
-                        placeholder="450"
-                        value={formData.originalPrice || ''}
-                        onChange={(e) => setFormData({ ...formData, originalPrice: parseFloat(e.target.value) || undefined })}
-                      />
-                      {formData.originalPrice != null && formData.originalPrice > 0 && (
+                    {/* Price options: main + SL + BL (strikethrough + price) */}
+                    <div className="space-y-3">
+                      <p className="text-sm font-medium text-gray-700">Pricing (Optional)</p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="price">Selling Price ($)</Label>
+                          <Input
+                            id="price"
+                            type="number"
+                            placeholder="e.g. 1050"
+                            value={formData.price || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, price: parseFloat(e.target.value) || 0 }))}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="originalPrice">Original Price ($) — strikethrough</Label>
+                          <Input
+                            id="originalPrice"
+                            type="number"
+                            placeholder="e.g. 450"
+                            value={formData.originalPrice || ''}
+                            onChange={(e) => setFormData(prev => ({ ...prev, originalPrice: parseFloat(e.target.value) || undefined }))}
+                          />
+                        </div>
+                      </div>
+                      <div className="border-t pt-3 mt-1">
+                        <p className="text-xs font-medium text-gray-600 mb-2">SL + BL pricing</p>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label htmlFor="promoOriginalPrice">SL + BL Strikethrough Price ($)</Label>
+                            <Input
+                              id="promoOriginalPrice"
+                              type="number"
+                              placeholder="e.g. 499"
+                              value={formData.promoOriginalPrice || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, promoOriginalPrice: parseFloat(e.target.value) || undefined }))}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label htmlFor="promoPrice">SL + BL Price ($)</Label>
+                            <Input
+                              id="promoPrice"
+                              type="number"
+                              placeholder="e.g. 399"
+                              value={formData.promoPrice || ''}
+                              onChange={(e) => setFormData(prev => ({ ...prev, promoPrice: parseFloat(e.target.value) || undefined }))}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      {(formData.originalPrice != null && formData.originalPrice > 0) || (formData.promoPrice != null && formData.promoPrice > 0) ? (
                         <p className="text-sm text-gray-600">
-                          Preview: <span className="line-through text-gray-500">${formData.originalPrice}</span>{' '}
+                          Preview — Main:{' '}
+                          {formData.originalPrice != null && formData.originalPrice > 0 && (
+                            <span className="line-through text-gray-500">${formData.originalPrice}</span>
+                          )}
+                          {formData.originalPrice != null && formData.originalPrice > 0 && ' '}
                           <span className="font-semibold text-violet-600">${formData.price || 0}</span>
+                          {formData.promoPrice != null && formData.promoPrice > 0 && (
+                            <>
+                              {' · SL + BL: '}
+                              {formData.promoOriginalPrice != null && formData.promoOriginalPrice > 0 && (
+                                <span className="line-through text-gray-500">${formData.promoOriginalPrice}</span>
+                              )}
+                              {formData.promoOriginalPrice != null && formData.promoOriginalPrice > 0 && ' '}
+                              <span className="text-amber-600 font-medium">${formData.promoPrice}</span>
+                            </>
+                          )}
                         </p>
-                      )}
+                      ) : null}
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="validityPeriod">Certificate Validity (Optional)</Label>
@@ -1330,7 +1897,7 @@ export function AdminCourses() {
                         id="validityPeriod"
                         placeholder="e.g., 3 years"
                         value={formData.validityPeriod}
-                        onChange={(e) => setFormData({ ...formData, validityPeriod: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, validityPeriod: e.target.value }))}
                       />
                     </div>
                     <div className="space-y-2">
@@ -1339,7 +1906,7 @@ export function AdminCourses() {
                         id="delivery"
                         placeholder="e.g., Face to Face Training"
                         value={formData.delivery}
-                        onChange={(e) => setFormData({ ...formData, delivery: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, delivery: e.target.value }))}
                       />
                     </div>
                   </div>
@@ -1348,7 +1915,7 @@ export function AdminCourses() {
                     <Label htmlFor="location">Location (Optional)</Label>
                     <Select
                       value={formData.location}
-                      onValueChange={(value) => setFormData({ ...formData, location: value })}
+                      onValueChange={(value) => setFormData(prev => ({ ...prev, location: value }))}
                     >
                       <SelectTrigger id="location">
                         <SelectValue />
@@ -1437,7 +2004,7 @@ export function AdminCourses() {
                           placeholder="https://example.com/image.jpg"
                           value={formData.image}
                           onChange={(e) => {
-                            setFormData({ ...formData, image: e.target.value });
+                            setFormData(prev => ({ ...prev, image: e.target.value }));
                             setImagePreview(e.target.value);
                           }}
                         />
@@ -1464,14 +2031,118 @@ export function AdminCourses() {
                 {/* Details Tab */}
                 <TabsContent value="details" className="space-y-4 mt-4">
                   <div className="space-y-2">
-                    <Label htmlFor="courseDescription">Course Description (Optional)</Label>
-                    <Textarea
-                      id="courseDescription"
-                      rows={5}
-                      placeholder="Detailed course description..."
-                      value={formData.courseDescription}
-                      onChange={(e) => setFormData({ ...formData, courseDescription: e.target.value })}
-                    />
+                    <Label>Course Description (Optional)</Label>
+                    <p className="text-xs text-gray-500">
+                      Select text then use Bold/Italic. Or use: **bold** *italic* ## Heading ## ### Subheading ### - bullet 1. numbered
+                    </p>
+                    {formData.courseDescriptions.map((item, index) => (
+                      <div key={index} className="flex gap-2">
+                        <div className="flex-1 flex flex-col gap-1">
+                          <div className="flex flex-wrap gap-1">
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Bold (select text first)"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => applyDescriptionFormatting(index, '**')}
+                            >
+                              <Bold className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Italic (select text first)"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => applyDescriptionFormatting(index, '*')}
+                            >
+                              <Italic className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Heading 2 (## )"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => insertDescriptionAtCursor(index, '## ')}
+                            >
+                              <Heading2 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Heading 3 (### )"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => insertDescriptionAtCursor(index, '### ')}
+                            >
+                              <Heading3 className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Bullet list (- )"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => insertDescriptionAtCursor(index, '- ')}
+                            >
+                              <List className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="sm"
+                              className="h-8 px-2"
+                              title="Numbered list (1. )"
+                              onMouseDown={(e) => e.preventDefault()}
+                              onClick={() => insertDescriptionAtCursor(index, '1. ')}
+                            >
+                              <ListOrdered className="w-4 h-4" />
+                            </Button>
+                          </div>
+                          <Textarea
+                            id={`course-desc-${index}`}
+                            ref={(el) => { descriptionTextareaRefs.current[index] = el; }}
+                            placeholder="Description paragraph... Use **bold**, *italic*, ## heading, - bullet, 1. numbered"
+                            rows={5}
+                            value={item}
+                            onChange={(e) => updateArrayItem('courseDescriptions', index, e.target.value)}
+                            className="flex-1 font-mono text-sm"
+                          />
+                          {item.trim() ? (
+                            <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Preview</span>
+                              <div
+                                className="mt-1 prose prose-sm max-w-none [&_.course-desc-h2]:text-base [&_.course-desc-h2]:font-semibold [&_.course-desc-h3]:text-sm [&_.course-desc-h3]:font-medium [&_.course-desc-ul]:list-disc [&_.course-desc-ol]:list-decimal [&_.course-desc-li]:my-0.5"
+                                dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(item) }}
+                              />
+                            </div>
+                          ) : null}
+                        </div>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="icon"
+                          className="shrink-0 self-start"
+                          onClick={() => removeArrayItem('courseDescriptions', index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => addArrayItem('courseDescriptions')}
+                    >
+                      <Plus className="w-4 h-4 mr-2" /> Add Description Paragraph
+                    </Button>
                   </div>
 
                   <div className="space-y-2">
@@ -1621,24 +2292,24 @@ export function AdminCourses() {
                     <CardHeader>
                       <CardTitle className="text-lg flex items-center gap-2">
                         <FileText className="w-5 h-5" />
-                        Resource PDF (Optional)
+                        Upload handbook (Optional)
                       </CardTitle>
                       <CardDescription>
-                        Upload a PDF or enter a URL. Students will see this as a downloadable resource.
+                        Upload a PDF or enter a URL. This handbook is shown on the course details page with a view option.
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
                       <div className="space-y-2">
-                        <Label htmlFor="resourcePdfTitle">PDF Title</Label>
+                        <Label htmlFor="resourcePdfTitle">Handbook title</Label>
                         <Input
                           id="resourcePdfTitle"
                           placeholder="e.g., Code of Practice Managing the Risk..."
                           value={formData.resourcePdfTitle || ''}
-                          onChange={(e) => setFormData({ ...formData, resourcePdfTitle: e.target.value })}
+                          onChange={(e) => setFormData(prev => ({ ...prev, resourcePdfTitle: e.target.value }))}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Upload PDF</Label>
+                        <Label>Upload handbook</Label>
                         <div className="flex flex-wrap gap-2 items-center">
                           <input
                             ref={resourcePdfInputRef}
@@ -1693,7 +2364,7 @@ export function AdminCourses() {
                         {formData.resourcePdfUrl && (
                           <p className="text-sm text-green-600 flex items-center gap-1">
                             <FileText className="w-4 h-4" />
-                            PDF linked. Students can download from course details.
+                            Handbook linked. It will appear on the course details page.
                           </p>
                         )}
                       </div>
@@ -1706,12 +2377,12 @@ export function AdminCourses() {
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="resourcePdfUrl">Enter PDF URL</Label>
+                        <Label htmlFor="resourcePdfUrl">Enter handbook URL</Label>
                         <Input
                           id="resourcePdfUrl"
                           placeholder="https://... (external link)"
                           value={formData.resourcePdfUrl || ''}
-                          onChange={(e) => setFormData({ ...formData, resourcePdfUrl: e.target.value })}
+                          onChange={(e) => setFormData(prev => ({ ...prev, resourcePdfUrl: e.target.value }))}
                         />
                       </div>
                     </CardContent>
@@ -1727,7 +2398,7 @@ export function AdminCourses() {
                       rows={3}
                       placeholder="Description of pathways and certifications..."
                       value={formData.pathwaysDescription}
-                      onChange={(e) => setFormData({ ...formData, pathwaysDescription: e.target.value })}
+                      onChange={(e) => setFormData(prev => ({ ...prev, pathwaysDescription: e.target.value }))}
                     />
                   </div>
 
@@ -1779,7 +2450,7 @@ export function AdminCourses() {
                           type="checkbox"
                           id="experienceBookingEnabled"
                           checked={formData.experienceBookingEnabled}
-                          onChange={(e) => setFormData({ ...formData, experienceBookingEnabled: e.target.checked })}
+                          onChange={(e) => setFormData(prev => ({ ...prev, experienceBookingEnabled: e.target.checked }))}
                         />
                         <Label htmlFor="experienceBookingEnabled">Enable Experience-Based Booking</Label>
                       </div>
@@ -1799,7 +2470,7 @@ export function AdminCourses() {
                                   type="number"
                                   placeholder="e.g., 400"
                                   value={formData.experiencePrice || ''}
-                                  onChange={(e) => setFormData({ ...formData, experiencePrice: parseFloat(e.target.value) || undefined })}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, experiencePrice: parseFloat(e.target.value) || undefined }))}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -1809,7 +2480,7 @@ export function AdminCourses() {
                                   type="number"
                                   placeholder="e.g., 500"
                                   value={formData.experienceOriginalPrice || ''}
-                                  onChange={(e) => setFormData({ ...formData, experienceOriginalPrice: parseFloat(e.target.value) || undefined })}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, experienceOriginalPrice: parseFloat(e.target.value) || undefined }))}
                                 />
                               </div>
                             </div>
@@ -1826,7 +2497,7 @@ export function AdminCourses() {
                                   type="number"
                                   placeholder="e.g., 620"
                                   value={formData.noExperiencePrice || ''}
-                                  onChange={(e) => setFormData({ ...formData, noExperiencePrice: parseFloat(e.target.value) || undefined })}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, noExperiencePrice: parseFloat(e.target.value) || undefined }))}
                                 />
                               </div>
                               <div className="space-y-2">
@@ -1836,7 +2507,7 @@ export function AdminCourses() {
                                   type="number"
                                   placeholder="e.g., 800"
                                   value={formData.noExperienceOriginalPrice || ''}
-                                  onChange={(e) => setFormData({ ...formData, noExperienceOriginalPrice: parseFloat(e.target.value) || undefined })}
+                                  onChange={(e) => setFormData(prev => ({ ...prev, noExperienceOriginalPrice: parseFloat(e.target.value) || undefined }))}
                                 />
                               </div>
                             </div>
@@ -1886,7 +2557,7 @@ export function AdminCourses() {
                           type="checkbox"
                           id="comboOfferEnabled"
                           checked={formData.comboOfferEnabled}
-                          onChange={(e) => setFormData({ ...formData, comboOfferEnabled: e.target.checked })}
+                          onChange={(e) => setFormData(prev => ({ ...prev, comboOfferEnabled: e.target.checked }))}
                         />
                         <Label htmlFor="comboOfferEnabled">Enable Combo Package Offer</Label>
                       </div>
@@ -1899,7 +2570,7 @@ export function AdminCourses() {
                               id="comboDescription"
                               placeholder="e.g., RIIWHS204E + RIIWHS202E Enter and work in confined spaces"
                               value={formData.comboDescription || ''}
-                              onChange={(e) => setFormData({ ...formData, comboDescription: e.target.value })}
+                              onChange={(e) => setFormData(prev => ({ ...prev, comboDescription: e.target.value }))}
                             />
                             <p className="text-sm text-gray-500">
                               Describe what courses are included in this combo package
@@ -1914,7 +2585,7 @@ export function AdminCourses() {
                                 type="number"
                                 placeholder="350"
                                 value={formData.comboPrice || ''}
-                                onChange={(e) => setFormData({ ...formData, comboPrice: parseFloat(e.target.value) || undefined })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, comboPrice: parseFloat(e.target.value) || undefined }))}
                               />
                             </div>
                             <div className="space-y-2">
@@ -1923,7 +2594,7 @@ export function AdminCourses() {
                                 id="comboDuration"
                                 placeholder="e.g., 2 Days Training"
                                 value={formData.comboDuration || ''}
-                                onChange={(e) => setFormData({ ...formData, comboDuration: e.target.value })}
+                                onChange={(e) => setFormData(prev => ({ ...prev, comboDuration: e.target.value }))}
                               />
                             </div>
                           </div>
@@ -2002,9 +2673,13 @@ export function AdminCourses() {
         )}
       </div>
 
-      {/* Courses List */}
-      <div className="grid gap-4">
-        {courses.length === 0 ? (
+      {/* Courses List - Grouped by Category (aligned with landing page) */}
+      <div className="space-y-8">
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+          </div>
+        ) : courses.length === 0 ? (
           <Card className="border-violet-100">
             <CardContent className="py-12 text-center">
               <p className="text-gray-500 mb-4">No courses found. Create your first course!</p>
@@ -2018,105 +2693,59 @@ export function AdminCourses() {
             </CardContent>
           </Card>
         ) : (
-          courses.map((course) => (
-            <Card key={course.courseId} className="border-violet-100 hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Badge variant="outline" className="text-xs">{course.courseCode}</Badge>
-                      {course.hasComboOffer && (
-                        <Badge className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white">
-                          Combo Available
-                        </Badge>
-                      )}
+          <DndContext
+            sensors={sensors}
+            collisionDetection={pointerWithin}
+            onDragEnd={handleDragEnd}
+          >
+            {coursesByCategory.map(({ category, courses: categoryCourses }) => {
+              const courseIds = categoryCourses.map((c) => c.courseId);
+              return (
+                <div key={category.categoryId} className="space-y-4">
+                  <h3 className="text-xl font-semibold text-violet-700 flex items-center gap-2">
+                    {category.categoryName}
+                    {isReordering && (
+                      <span className="text-sm font-normal text-gray-500">(reordering...)</span>
+                    )}
+                  </h3>
+                  <SortableContext items={courseIds} strategy={verticalListSortingStrategy}>
+                    <div className="grid grid-cols-1 gap-4">
+                      {categoryCourses.map((course) => (
+                        <SortableCourseCard
+                          key={course.courseId}
+                          course={course}
+                          onEdit={handleEditCourse}
+                          onToggleStatus={handleToggleCourseStatus}
+                          onManageDates={handleOpenDateDialog}
+                          onDelete={(id) => setCourseToDelete(id)}
+                        />
+                      ))}
                     </div>
-                    <CardTitle>{course.courseName}</CardTitle>
-                    <CardDescription>
-                      {course.categoryName || 'Uncategorized'}
-                      {course.duration ? ` • ${course.duration}` : ''} •{' '}
-                      {course.experienceBookingEnabled ? (
-                        <span className="inline-flex flex-wrap items-center gap-x-3 gap-y-1 ml-1">
-                          <span>
-                            {course.experienceOriginalPrice && (
-                              <span className="line-through text-gray-400 mr-1">${course.experienceOriginalPrice}</span>
-                            )}
-                            <span className="font-semibold text-green-600">${course.experiencePrice ?? course.price}</span>
-                            <span className="text-xs text-gray-500">(w/ exp)</span>
-                          </span>
-                          <span>
-                            {course.noExperienceOriginalPrice && (
-                              <span className="line-through text-gray-400 mr-1">${course.noExperienceOriginalPrice}</span>
-                            )}
-                            <span className="font-semibold text-red-600">${course.noExperiencePrice ?? course.price}</span>
-                            <span className="text-xs text-gray-500">(w/o exp)</span>
-                          </span>
-                        </span>
-                      ) : (
-                        <>
-                          {course.originalPrice && (
-                            <span className="line-through text-gray-400 ml-2">${course.originalPrice}</span>
-                          )}
-                          <span className="font-semibold text-violet-600 ml-1">${course.price}</span>
-                        </>
-                      )}
-                    </CardDescription>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge 
-                      className={`cursor-pointer ${course.isActive ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-red-100 text-red-700 hover:bg-red-200'}`}
-                      onClick={() => handleToggleCourseStatus(course.courseId)}
-                    >
-                      {course.isActive ? 'active' : 'inactive'}
-                    </Badge>
-                    <Button 
-                      variant="outline" 
-                      size="icon" 
-                      onClick={() => handleOpenDateDialog(course)}
-                      title="Manage Course Dates"
-                    >
-                      <CalendarIcon className="w-4 h-4 text-violet-600" />
-                    </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleEditCourse(course.courseId)}>
-                      <Edit className="w-4 h-4" />
-                    </Button>
-                  </div>
+                  </SortableContext>
                 </div>
-              </CardHeader>
-              <CardContent>
-                {/* <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
-                  <div className="bg-violet-50 rounded-lg p-3">
-                    <div className="text-sm text-gray-600 mb-1">Theory</div>
-                    <div className="font-semibold">{course.hasTheory ? '✓ Included' : '✗ Not required'}</div>
+              );
+            })}
+            {uncategorizedCourses.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-xl font-semibold text-gray-600">Uncategorized</h3>
+                <SortableContext items={uncategorizedCourses.map((c) => c.courseId)} strategy={verticalListSortingStrategy}>
+                  <div className="grid grid-cols-1 gap-4">
+                    {uncategorizedCourses.map((course) => (
+                      <SortableCourseCard
+                        key={course.courseId}
+                        course={course}
+                        onEdit={handleEditCourse}
+                        onToggleStatus={handleToggleCourseStatus}
+                        onManageDates={handleOpenDateDialog}
+                        onDelete={(id) => setCourseToDelete(id)}
+                        disabled
+                      />
+                    ))}
                   </div>
-                  <div className="bg-fuchsia-50 rounded-lg p-3">
-                    <div className="text-sm text-gray-600 mb-1">Practical</div>
-                    <div className="font-semibold">{course.hasPractical ? '✓ Included' : '✗ Not required'}</div>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-3">
-                    <div className="text-sm text-gray-600 mb-1">Exam</div>
-                    <div className="font-semibold">{course.hasExam ? '✓ Included' : '✗ Not required'}</div>
-                  </div>
-                  <div className="bg-green-50 rounded-lg p-3">
-                    <div className="text-sm text-gray-600 mb-1">Valid For</div>
-                    <div className="font-semibold">{course.validityPeriod || 'N/A'}</div>
-                  </div>
-                </div> */}
-
-                <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50">
-                  <div className="text-sm text-gray-600">
-                    <span className="font-semibold text-gray-900">{course.enrolledStudentsCount}</span> students enrolled
-                  </div>
-                  {/* <div className="flex items-center gap-1 text-sm">
-                    <CalendarIcon className="w-4 h-4 text-violet-600" />
-                    <span className="text-gray-600">
-                      <span className="font-semibold text-gray-900">{course.courseDates?.length ?? 0}</span> date{(course.courseDates?.length ?? 0) !== 1 ? 's' : ''} available
-                    </span>
-                  </div> */}
-                </div>
-              </CardContent>
-            </Card>
-          ))
+                </SortableContext>
+              </div>
+            )}
+          </DndContext>
         )}
       </div>
 
@@ -2466,12 +3095,23 @@ export function AdminCourses() {
                   {Object.entries(groupedDates).map(([dateKey, datesOnDay]) => (
                     <div key={dateKey} className="space-y-2">
                       {/* Date Header */}
-                      <div className="flex items-center gap-2 text-sm font-semibold text-gray-700 sticky top-0 bg-gray-50 py-1">
-                        <CalendarIcon className="w-4 h-4" />
-                        {formatDateForDisplay(datesOnDay[0].scheduledDate)}
-                        <Badge variant="outline" className="text-xs">
-                          {datesOnDay.length} session{datesOnDay.length !== 1 ? 's' : ''} available
-                        </Badge>
+                      <div className="flex items-center justify-between gap-2 text-sm font-semibold text-gray-700 sticky top-0 bg-gray-50 py-1">
+                        <div className="flex items-center gap-2">
+                          <CalendarIcon className="w-4 h-4" />
+                          {formatDateForDisplay(datesOnDay[0].scheduledDate)}
+                          <Badge variant="outline" className="text-xs">
+                            {datesOnDay.length} session{datesOnDay.length !== 1 ? 's' : ''} available
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => handleAddSlotForDate(datesOnDay[0].scheduledDate, datesOnDay[0].dateType)}
+                          className="text-violet-600 hover:text-violet-700 hover:bg-violet-50 text-xs"
+                        >
+                          <Plus className="w-3 h-3 mr-1" />
+                          Add slot
+                        </Button>
                       </div>
 
                       {/* Sessions for this date */}
@@ -2543,9 +3183,11 @@ export function AdminCourses() {
 
                               <div className="flex items-center gap-2">
                                 {/* Availability info */}
-                                {!date.isNew && date.availableSpots !== undefined && date.availableSpots < 999 && (
+                                {!date.isNew && ((date.currentEnrollments ?? 0) > 0 || (date.availableSpots !== undefined && date.availableSpots < 999)) && (
                                   <span className="text-xs text-gray-500">
-                                    {date.availableSpots} spots left
+                                    {(date.currentEnrollments ?? 0) > 0 ? `${date.currentEnrollments} enrolled` : ''}
+                                    {(date.currentEnrollments ?? 0) > 0 && date.availableSpots !== undefined && date.availableSpots < 999 ? ', ' : ''}
+                                    {date.availableSpots !== undefined && date.availableSpots < 999 ? `${date.availableSpots} spots left` : ''}
                                   </span>
                                 )}
 
@@ -2563,19 +3205,32 @@ export function AdminCourses() {
                                 )}
 
                                 {/* Delete Button */}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleRemoveDate(date)}
-                                  disabled={isDeleting}
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  {isDeleting ? (
-                                    <Loader2 className="w-4 h-4 animate-spin" />
-                                  ) : (
-                                    <Trash2 className="w-4 h-4" />
-                                  )}
-                                </Button>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="inline-flex">
+                                        <Button
+                                          size="sm"
+                                          variant="ghost"
+                                          onClick={() => handleRemoveDate(date)}
+                                          disabled={isDeleting || (!date.isNew && (date.currentEnrollments ?? 0) > 0)}
+                                          className="text-red-600 hover:text-red-700 hover:bg-red-50 disabled:opacity-60"
+                                        >
+                                          {isDeleting ? (
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                          ) : (
+                                            <Trash2 className="w-4 h-4" />
+                                          )}
+                                        </Button>
+                                      </span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      {!date.isNew && (date.currentEnrollments ?? 0) > 0
+                                        ? `Cannot delete - ${date.currentEnrollments} student(s) enrolled. Use Deactivate instead.`
+                                        : 'Delete this date'}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                               </div>
                             </div>
                           );
@@ -2587,13 +3242,6 @@ export function AdminCourses() {
               )}
             </div>
 
-            {/* Info Box */}
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <p className="text-sm text-blue-900">
-                <strong className="font-semibold">💡 Tip:</strong> You can add multiple session types (Theory, Practical, Exam) on the same day. 
-                Students will see all available dates when enrolling in this course.
-              </p>
-            </div>
           </div>
 
           {/* Footer Actions */}
@@ -2644,6 +3292,30 @@ export function AdminCourses() {
               disabled={isCategorySubmitting}
             >
               {isCategorySubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Delete Course Confirmation Dialog */}
+      <AlertDialog open={courseToDelete !== null} onOpenChange={(open) => !open && setCourseToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Course</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this course? This will also delete all associated dates.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setCourseToDelete(null)} disabled={isCourseDeleteSubmitting}>
+              Cancel
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmDeleteCourse}
+              className="bg-red-600 hover:bg-red-700"
+              disabled={isCourseDeleteSubmitting}
+            >
+              {isCourseDeleteSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

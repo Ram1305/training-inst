@@ -3,8 +3,8 @@ import { useState, useEffect } from 'react';
 import { 
   ArrowLeft, Clock, Users, Award, CheckCircle, BookOpen, Target, 
   Zap, Star, Calendar, MapPin, Globe, DollarSign, Phone, Mail,
-  Download, FileText, Loader2, TrendingUp, Shield, Sparkles,
-  Menu, X, ChevronDown, Facebook, Linkedin, Instagram
+  FileText, Loader2, TrendingUp, Shield, Sparkles,
+  Menu, X, ChevronDown, ChevronRight, ChevronUp, Facebook, Linkedin, Instagram, Eye
 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Badge } from './ui/badge';
@@ -17,6 +17,8 @@ import { categoryService } from '../services/category.service';
 import type { CourseDetail as APICourseDetail, CourseListItem } from '../services/course.service';
 import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from './ui/WhatsAppButton';
+import { ResourcesDropdown } from "./ui/ResourcesDropdown";
+import { courseDescriptionToHtml } from '../utils/courseDescriptionFormatter';
 
 const logoImage = '/assets/SafetyTrainingAcademylogo.png';
 
@@ -33,6 +35,8 @@ interface CourseDetailsPageProps {
   onAbout?: () => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onGallery?: () => void;
+  onViewHandbook?: (url: string, title?: string, courseName?: string) => void;
 }
 
 // Helper function to map API response to display format
@@ -46,6 +50,8 @@ const mapApiCourseToDisplay = (apiCourse: APICourseDetail) => {
     students: apiCourse.enrolledStudentsCount,
     price: apiCourse.price,
     originalPrice: apiCourse.originalPrice,
+    promoPrice: apiCourse.promoPrice,
+    promoOriginalPrice: apiCourse.promoOriginalPrice,
     image: apiCourse.imageUrl || 'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080',
     hasTheory: apiCourse.hasTheory,
     hasPractical: apiCourse.hasPractical,
@@ -97,7 +103,9 @@ export function CourseDetailsPage({
   onCourseDetails,
   onAbout,
   onForms,
-  onFeesRefund
+  onFeesRefund,
+  onGallery,
+  onViewHandbook
 }: CourseDetailsPageProps) {
   const [course, setCourse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -108,6 +116,13 @@ export function CourseDetailsPage({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
+  const [showBackToTop, setShowBackToTop] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setShowBackToTop(window.scrollY > 400);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     fetchCourseDetails();
@@ -335,61 +350,49 @@ export function CourseDetailsPage({
                     className="absolute left-0 top-full pt-2 z-50"
                   >
                     <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
-                      {/* Categories Sidebar */}
-                      <div className="w-64 bg-slate-800/50 p-4 border-r border-slate-700">
-                        <h3 className="text-xs font-bold text-cyan-400 mb-3 uppercase tracking-wider">Categories</h3>
-                        <div className="space-y-1">
-                          {categories.filter(cat => allCourses.some(course => course.categoryId === cat.categoryId)).map((category) => (
+                      <div className="dropdown-category-panel">
+                        {categories
+                          .filter(cat => allCourses.some(course => course.categoryId === cat.categoryId))
+                          .map((category) => (
                             <button
                               key={category.categoryId}
                               onMouseEnter={() => setActiveCategory(category.categoryId)}
-                              className={`w-full text-left px-3 py-2 rounded-lg text-sm transition-all ${
-                                activeCategory === category.categoryId
-                                  ? 'bg-cyan-500 text-white font-semibold'
-                                  : 'text-gray-300 hover:bg-slate-700'
-                              }`}
+                              className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
                             >
-                              {category.categoryName}
+                              <span>{category.categoryName}</span>
+                              <ChevronRight className="w-4 h-4 flex-shrink-0" />
                             </button>
                           ))}
-                        </div>
                       </div>
-                      {/* Courses List */}
-                      <div className="w-80 p-4 max-h-96 overflow-y-auto">
+                      <div className="dropdown-courses-panel">
                         {activeCategory && (
-                          <>
-                            <h3 className="text-sm font-bold text-white mb-3">
-                              {categories.find(c => c.categoryId === activeCategory)?.categoryName}
-                            </h3>
-                            <div className="space-y-2">
-                              {allCourses
-                                .filter(course => course.categoryId === activeCategory)
-                                .map((course) => (
-                                  <button
-                                    key={course.courseId}
-                                    onClick={() => {
-                                      setCoursesDropdownOpen(false);
-                                      if (onCourseDetails) {
-                                        onCourseDetails(course.courseId);
-                                      }
-                                    }}
-                                    className="w-full text-left px-3 py-2 rounded-lg text-sm text-gray-300 hover:bg-slate-700 hover:text-cyan-400 transition-all"
-                                  >
-                                    <div className="font-medium">{course.courseCode}</div>
-                                    <div className="text-xs text-gray-400 line-clamp-1">{course.courseName}</div>
-                                  </button>
-                                ))}
-                            </div>
-                          </>
+                          <div>
+                            {allCourses
+                              .filter(course => course.categoryId === activeCategory)
+                              .map((course) => (
+                                <button
+                                  key={course.courseId}
+                                  onClick={() => {
+                                    setCoursesDropdownOpen(false);
+                                    if (onCourseDetails) {
+                                      onCourseDetails(course.courseId);
+                                    }
+                                  }}
+                                  className="dropdown-course-item"
+                                >
+                                  {course.courseCode} - {course.courseName}
+                                </button>
+                              ))}
+                          </div>
                         )}
                       </div>
                     </div>
                   </motion.div>
                 )}
               </div>
-              <button className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                RESOURCES
-              </button>
+
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery}/>
+
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
                 ABOUT
               </button>
@@ -475,7 +478,7 @@ export function CourseDetailsPage({
       </nav>
 
       {/* Course Title Section */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 text-white py-8 shadow-2xl">
+      <div className="bg-slate-900 text-white py-8 shadow-2xl">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <Button
             onClick={onBack}
@@ -503,7 +506,7 @@ export function CourseDetailsPage({
                 </Badge>
               )}
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-white to-cyan-200 bg-clip-text text-transparent">
+            <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white">
               {course.code ? `${course.code} - ${course.title}` : course.title}
             </h1>
             <p className="text-blue-100 text-lg max-w-3xl">
@@ -553,15 +556,9 @@ export function CourseDetailsPage({
               )}
               <div className="absolute bottom-6 left-6 right-6">
                 <div className="flex items-center gap-4 text-white">
-                  {course.duration && (
-                    <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
-                      <Clock className="w-4 h-4" />
-                      <span className="font-semibold">{course.duration}</span>
-                    </div>
-                  )}
                   <div className="flex items-center gap-2 bg-white/20 backdrop-blur-md px-4 py-2 rounded-full">
-                    <Users className="w-4 h-4" />
-                    <span className="font-semibold">{course.students}+ enrolled</span>
+                    <Calendar className="w-4 h-4 text-amber-200 stroke-amber-200" />
+                    <span className="font-semibold">{course.duration || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -576,8 +573,8 @@ export function CourseDetailsPage({
             >
               <Card className="border-2 border-cyan-100 shadow-lg rounded-2xl bg-gradient-to-br from-cyan-50 to-white">
                 <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <Globe className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <Globe className="w-6 h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Delivery</div>
                   <div className="text-sm font-bold text-slate-900">{course.delivery}</div>
@@ -586,30 +583,28 @@ export function CourseDetailsPage({
 
               <Card className="border-2 border-green-100 shadow-lg rounded-2xl bg-gradient-to-br from-green-50 to-white">
                 <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <DollarSign className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <DollarSign className="w-6 h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Price</div>
                   <div className="text-sm font-bold text-slate-900">${course.price}</div>
                 </CardContent>
               </Card>
 
-              {course.duration && (
-                <Card className="border-2 border-purple-100 shadow-lg rounded-2xl bg-gradient-to-br from-purple-50 to-white">
-                  <CardContent className="p-4 text-center">
-                    <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                      <Calendar className="w-6 h-6 text-white" />
-                    </div>
-                    <div className="text-xs text-gray-500 mb-1">Duration</div>
-                    <div className="text-sm font-bold text-slate-900">{course.duration}</div>
-                  </CardContent>
-                </Card>
-              )}
+              <Card className="border-2 border-purple-100 shadow-lg rounded-2xl bg-gradient-to-br from-purple-50 to-white">
+                <CardContent className="p-4 text-center">
+                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-2 [&_svg]:text-amber-200 [&_svg]:stroke-amber-200">
+                    <Calendar className="w-6 h-6 text-amber-200 stroke-amber-200" />
+                  </div>
+                  <div className="text-xs text-gray-500 mb-1">Duration</div>
+                  <div className="text-sm font-bold text-slate-900">{course.duration || '—'}</div>
+                </CardContent>
+              </Card>
 
               <Card className="border-2 border-orange-100 shadow-lg rounded-2xl bg-gradient-to-br from-orange-50 to-white">
                 <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-2">
-                    <MapPin className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <MapPin className="w-6 h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Location</div>
                   <div className="text-sm font-bold text-slate-900 line-clamp-1">{course.location}</div>
@@ -678,36 +673,38 @@ export function CourseDetailsPage({
               <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-white">
                 <CardHeader>
                   <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                      <BookOpen className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <BookOpen className="w-6 h-6" />
                     </div>
                     Course Overview
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-gray-700 text-lg leading-relaxed whitespace-pre-line">
-                    {course.courseDescription}
-                  </p>
+                  <div
+                    className="course-description-content text-gray-700 text-lg leading-relaxed [&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic"
+                    dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(course.courseDescription) }}
+                  />
                   
-                  {/* Resource PDF */}
+                  {/* Handbook */}
                   {course.resourcePdf && (
                     <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-20 bg-white border-2 border-blue-200 rounded-lg flex items-center justify-center shadow-md">
-                          <FileText className="w-8 h-8 text-red-600" />
+                          <BookOpen className="w-8 h-8 text-cyan-600" />
                         </div>
                         <div className="flex-1">
-                          <h4 className="font-bold text-slate-900 mb-1">Course Resource</h4>
-                          <a 
-                            href={course.resourcePdf.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-cyan-600 hover:text-cyan-700 font-semibold flex items-center gap-2 hover:underline"
+                          <h4 className="font-bold text-slate-900 mb-1">Handbook</h4>
+                          <button
+                            type="button"
+                            onClick={() => onViewHandbook
+                              ? onViewHandbook(course.resourcePdf.url, course.resourcePdf.title, course.title)
+                              : window.open(`https://docs.google.com/gview?url=${encodeURIComponent(course.resourcePdf.url)}&embedded=true`, '_blank')
+                            }
+                            className="text-cyan-600 hover:text-cyan-700 font-semibold flex items-center gap-2 hover:underline text-left"
                           >
-                            <Download className="w-4 h-4" />
-                            {course.resourcePdf.title}
-                          </a>
-                          <p className="text-sm text-gray-500 mt-1">Click to download PDF resource</p>
+                            <Eye className="w-4 h-4" />
+                            View — {course.resourcePdf.title}
+                          </button>
                         </div>
                       </div>
                     </div>
@@ -725,8 +722,8 @@ export function CourseDetailsPage({
               <Card className="border-2 border-orange-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-orange-50">
                 <CardHeader>
                   <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg">
-                      <Target className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <Target className="w-6 h-6" />
                     </div>
                     Entry Requirements
                   </CardTitle>
@@ -754,8 +751,8 @@ export function CourseDetailsPage({
                 <Card className="border-2 border-purple-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-purple-50">
                   <CardHeader>
                     <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <Clock className="w-6 h-6 text-white" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <Clock className="w-6 h-6" />
                       </div>
                       Duration
                     </CardTitle>
@@ -779,8 +776,8 @@ export function CourseDetailsPage({
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
                   <CardHeader>
                     <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <TrendingUp className="w-6 h-6 text-white" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <TrendingUp className="w-6 h-6" />
                       </div>
                       Training Overview
                     </CardTitle>
@@ -809,8 +806,8 @@ export function CourseDetailsPage({
                 <Card className="border-2 border-green-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-green-50">
                   <CardHeader>
                     <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <Award className="w-6 h-6 text-white" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <Award className="w-6 h-6" />
                       </div>
                       Vocational Outcome
                     </CardTitle>
@@ -842,8 +839,8 @@ export function CourseDetailsPage({
                 <Card className="border-2 border-indigo-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-indigo-50">
                   <CardHeader>
                     <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <TrendingUp className="w-6 h-6 text-white" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <TrendingUp className="w-6 h-6" />
                       </div>
                       Pathways & Further Study
                     </CardTitle>
@@ -868,35 +865,33 @@ export function CourseDetailsPage({
               </motion.div>
             )}
 
-            {/* Fees and Charges */}
-            {course.feesAndCharges.length > 0 && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: 0.5 }}
-              >
-                <Card className="border-2 border-yellow-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-yellow-50">
-                  <CardHeader>
-                    <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg">
-                        <DollarSign className="w-6 h-6 text-white" />
-                      </div>
-                      Fees and Charges
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-3">
-                      {course.feesAndCharges.map((item: string, index: number) => (
-                        <li key={index} className="flex items-start gap-3 bg-white p-4 rounded-xl shadow-sm">
-                          <CheckCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                          <span className="text-gray-700">{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
+            {/* Fees and Charges - always show so icon is visible */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+            >
+              <Card className="border-2 border-yellow-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-yellow-50">
+                <CardHeader>
+                  <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg text-white [&_svg]:text-white [&_svg]:stroke-white">
+                      <DollarSign className="w-6 h-6 text-white stroke-white" />
+                    </div>
+                    Fees and Charges
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="space-y-3">
+                    {(course.feesAndCharges.length > 0 ? course.feesAndCharges : ['Group discounts apply', 'Refund and fee protection policy – Please refer to the student handbook']).map((item: string, index: number) => (
+                      <li key={index} className="flex items-start gap-3 bg-white p-4 rounded-xl shadow-sm">
+                        <CheckCircle className="w-5 h-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                        <span className="text-gray-700">{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            </motion.div>
 
             {/* Optional Charges */}
             {course.optionalCharges.length > 0 && (
@@ -908,8 +903,8 @@ export function CourseDetailsPage({
                 <Card className="border-2 border-gray-200 shadow-xl rounded-3xl bg-gradient-to-br from-white to-gray-50">
                   <CardHeader>
                     <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-lg">
-                        <DollarSign className="w-6 h-6 text-white" />
+                      <div className="w-12 h-12 bg-gradient-to-br from-gray-500 to-slate-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <DollarSign className="w-6 h-6" />
                       </div>
                       Optional Charges
                     </CardTitle>
@@ -945,7 +940,7 @@ export function CourseDetailsPage({
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
                   <div className="relative">
                     {course.originalPrice && (
-                      <div className="text-xl line-through text-white/60 mb-1">
+                      <div className="price-strikethrough text-xl text-white/60 mb-1">
                         ${course.originalPrice}
                       </div>
                     )}
@@ -958,6 +953,15 @@ export function CourseDetailsPage({
                         SAVE ${course.originalPrice - course.price}!
                       </Badge>
                     )}
+                    {course.promoPrice != null && course.promoPrice > 0 && (
+                      <div className="mt-4 pt-4 border-t border-white/20">
+                        <p className="text-blue-100 text-sm mb-1">SL + BL</p>
+                        {course.promoOriginalPrice != null && course.promoOriginalPrice > 0 && (
+                          <span className="price-strikethrough text-lg text-white/60 mr-2">${course.promoOriginalPrice}</span>
+                        )}
+                        <span className="text-2xl font-bold">${course.promoPrice}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -965,24 +969,33 @@ export function CourseDetailsPage({
                   {/* Course Details */}
                   <div className="space-y-4">
                     <h3 className="text-xl font-bold text-slate-900 mb-4">Course Details</h3>
-                    
-                    {course.duration && (
-                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+
+                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+                      <span className="text-gray-700 flex items-center gap-2 font-semibold">
+                        <Clock className="w-5 h-5 text-cyan-600" />
+                        Duration
+                      </span>
+                      <span className="font-bold text-slate-900">{course.duration || '—'}</span>
+                    </div>
+
+                    {course.resourcePdf && (
+                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200">
                         <span className="text-gray-700 flex items-center gap-2 font-semibold">
-                          <Clock className="w-5 h-5 text-cyan-600" />
-                          Duration
+                          <BookOpen className="w-5 h-5 text-cyan-600 flex-shrink-0" />
+                          Handbook
                         </span>
-                        <span className="font-bold text-slate-900">{course.duration}</span>
+                        <button
+                          type="button"
+                          onClick={() => onViewHandbook
+                            ? onViewHandbook(course.resourcePdf.url, course.resourcePdf.title, course.title)
+                            : window.open(`https://docs.google.com/gview?url=${encodeURIComponent(course.resourcePdf.url)}&embedded=true`, '_blank')
+                          }
+                          className="text-cyan-600 hover:text-cyan-700 font-semibold text-sm hover:underline flex-shrink-0"
+                        >
+                          View handbook
+                        </button>
                       </div>
                     )}
-
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-xl border border-green-100">
-                      <span className="text-gray-700 flex items-center gap-2 font-semibold">
-                        <Users className="w-5 h-5 text-green-600" />
-                        Students
-                      </span>
-                      <span className="font-bold text-slate-900">{course.students}+</span>
-                    </div>
 
                     {course.validityPeriod && (
                       <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border border-purple-100">
@@ -1035,8 +1048,20 @@ export function CourseDetailsPage({
                       })}
                       className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
                     >
-                      BOOK NOW
+                      BOOK NOW — ${course.price}
                     </Button>
+                    {course.promoPrice != null && course.promoPrice > 0 && (
+                      <Button
+                        onClick={() => onEnroll({
+                          courseName: course.title,
+                          courseCode: course.code,
+                          coursePrice: course.promoPrice!
+                        })}
+                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                      >
+                        Book Now SL + BL — ${course.promoPrice}
+                      </Button>
+                    )}
                     
                     {course.courseDates && course.courseDates.length > 0 && (
                       <Button 
@@ -1052,10 +1077,13 @@ export function CourseDetailsPage({
                       <Button 
                         variant="outline"
                         className="w-full border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-full h-12 font-semibold"
-                        onClick={() => window.open(course.resourcePdf.url, '_blank')}
+                        onClick={() => onViewHandbook
+                          ? onViewHandbook(course.resourcePdf.url, course.resourcePdf.title, course.title)
+                          : window.open(`https://docs.google.com/gview?url=${encodeURIComponent(course.resourcePdf.url)}&embedded=true`, '_blank')
+                        }
                       >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download Brochure
+                        <Eye className="w-4 h-4 mr-2" />
+                        View Handbook
                       </Button>
                     )}
                   </div>
@@ -1082,8 +1110,8 @@ export function CourseDetailsPage({
               <Card className="border-2 border-blue-100 rounded-2xl shadow-lg">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3 mb-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg">
-                      <Phone className="w-6 h-6 text-white" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-lg text-white">
+                      <Phone className="w-6 h-6" />
                     </div>
                     <div>
                       <h4 className="font-bold text-slate-900 mb-1">Need Help?</h4>
@@ -1095,7 +1123,7 @@ export function CourseDetailsPage({
                   <div className="space-y-3">
                     <Button variant="outline" className="w-full justify-start border-2 border-cyan-200 hover:bg-cyan-50 rounded-xl">
                       <Phone className="w-4 h-4 mr-2 text-cyan-600" />
-                      <span className="text-cyan-600 font-semibold">Call: 1300 876 097</span>
+                      <span className="text-cyan-600 font-semibold">Call: 1300 976 097</span>
                     </Button>
                     <Button variant="outline" className="w-full justify-start border-2 border-blue-200 hover:bg-blue-50 rounded-xl">
                       <Mail className="w-4 h-4 mr-2 text-blue-600" />
@@ -1180,6 +1208,18 @@ export function CourseDetailsPage({
 
       {/* WhatsApp Floating Button */}
       <WhatsAppButton />
+
+      {/* Back to top */}
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
+          aria-label="Back to top"
+        >
+          <ChevronUp className="w-5 h-5" />
+        </button>
+      )}
     </div>
   );
 }

@@ -159,9 +159,7 @@ export function StudentEnrolmentForm() {
     }
 
     if (!applicant.docPrimaryId) errs.docPrimaryId = 'Please upload your primary ID.';
-    if (!applicant.emergencyName?.trim()) errs.emergencyName = 'Emergency contact name is required.';
-    if (!applicant.emergencyRelationship?.trim()) errs.emergencyRelationship = 'Relationship is required.';
-    if (!applicant.emergencyContactNumber?.trim()) errs.emergencyContactNumber = 'Contact number is required.';
+    if (!applicant.docSecondaryId) errs.docSecondaryId = 'Please upload your photo.';
     if (!applicant.emergencyPermission) errs.emergencyPermission = 'Please select Yes or No.';
 
     return errs;
@@ -214,10 +212,8 @@ export function StudentEnrolmentForm() {
     const { education } = formData;
 
     if (!education.schoolLevel) errs.schoolLevel = 'Please select one school level.';
-    if (!education.schoolCompleteYear) errs.schoolCompleteYear = 'Year is required.';
 
     if (education.schoolInAus) {
-      if (!education.schoolState?.trim()) errs.schoolState = 'State is required.';
       if (!education.schoolPostcode?.trim()) errs.schoolPostcode = 'Postcode is required.';
       else if (!/^\d{4}$/.test(education.schoolPostcode)) errs.schoolPostcode = 'Valid postcode required.';
     } else {

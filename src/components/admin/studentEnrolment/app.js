@@ -118,8 +118,11 @@ page15: {
   studentName: "Dushman Panchalingam",
   signature: "Dushman P.",
   date: "07/02/2026"
-}
+},
 
+  // Photo and ID documents (Page 14)
+  primaryIdDocumentUrl: "",
+  secondaryIdDocumentUrl: ""
 };
 
 function formatDobDMY(iso) {
@@ -310,6 +313,40 @@ function fillPage14(d){
   setText("p14Email", p.submission?.email);
   setText("p14Phone", p.submission?.phone);
 }
+
+function fillPhotoIdSection(d){
+  const primaryUrl = d.primaryIdDocumentUrl || '';
+  const secondaryUrl = d.secondaryIdDocumentUrl || '';
+
+  function setPhotoContainer(type, url){
+    const el = document.querySelector(`[data-photo="${type}"]`);
+    if (!el) return;
+    el.innerHTML = '';
+    if (!url){
+      const span = document.createElement('span');
+      span.className = 'photoIdPlaceholder';
+      span.textContent = 'Not provided';
+      el.appendChild(span);
+      return;
+    }
+    const isPdf = /\.pdf$/i.test(url);
+    if (isPdf){
+      const span = document.createElement('span');
+      span.className = 'photoIdPdfNote';
+      span.textContent = 'Document attached (PDF)';
+      el.appendChild(span);
+      return;
+    }
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = type === 'primaryId' ? 'Primary Photo ID' : 'Photo';
+    img.className = 'photoIdImg';
+    el.appendChild(img);
+  }
+
+  setPhotoContainer('primaryId', primaryUrl);
+  setPhotoContainer('secondaryId', secondaryUrl);
+}
 function fillPage15(d){
   const p = d.page15 || {};
 
@@ -349,6 +386,7 @@ function fillAll(d){
   fillPage6(d);
   fillPage14(d);
   fillPage15(d);
+  fillPhotoIdSection(d);
 }
 
 document.addEventListener("DOMContentLoaded", () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, ChevronLeft, ChevronRight, Plus, X, GripVertical, MapPin, Link as LinkIcon, Loader2, Trash2, ExternalLink, Info, Calendar, Search, GraduationCap } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Plus, X, GripVertical, MapPin, Link as LinkIcon, Loader2, Trash2, ExternalLink, Info, Calendar, Search, GraduationCap, BookOpen } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -58,27 +58,28 @@ interface DraggableEventTemplate {
 }
 
 const eventTemplates: DraggableEventTemplate[] = [
-  {
-    id: 'template-theory',
-    title: 'Theory Class',
-    type: 'theory',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-200'
-  },
-  {
-    id: 'template-practical',
-    title: 'Practical Session',
-    type: 'practical',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-200'
-  },
-  {
-    id: 'template-exam',
-    title: 'Exam',
-    type: 'exam',
-    color: 'text-green-700',
-    bgColor: 'bg-green-200'
-  },
+  // Theory, Practical, Exam - commented out, General only
+  // {
+  //   id: 'template-theory',
+  //   title: 'Theory Class',
+  //   type: 'theory',
+  //   color: 'text-blue-700',
+  //   bgColor: 'bg-blue-200'
+  // },
+  // {
+  //   id: 'template-practical',
+  //   title: 'Practical Session',
+  //   type: 'practical',
+  //   color: 'text-purple-700',
+  //   bgColor: 'bg-purple-200'
+  // },
+  // {
+  //   id: 'template-exam',
+  //   title: 'Exam',
+  //   type: 'exam',
+  //   color: 'text-green-700',
+  //   bgColor: 'bg-green-200'
+  // },
   {
     id: 'template-meeting',
     title: 'General',
@@ -368,8 +369,10 @@ export function AdminScheduling() {
   const [showEventDetailDialog, setShowEventDetailDialog] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<ScheduleEvent | null>(null);
   const [draggedTemplate, setDraggedTemplate] = useState<DraggableEventTemplate | null>(null);
+  const [selectedCourseFilter, setSelectedCourseFilter] = useState<string>('all');
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeletingOld, setIsDeletingOld] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Teacher states
@@ -383,7 +386,7 @@ export function AdminScheduling() {
   const [newEvent, setNewEvent] = useState({
     title: '',
     courseId: '',
-    type: 'theory' as 'theory' | 'practical' | 'exam' | 'meeting',
+    type: 'meeting' as 'theory' | 'practical' | 'exam' | 'meeting',
     startTime: '09:00',
     endTime: '11:00',
     location: 'Face to Face',
@@ -411,10 +414,10 @@ export function AdminScheduling() {
     fetchSchedules();
   }, []);
 
-  // Refetch schedules when month changes
+  // Refetch schedules when month or course filter changes
   useEffect(() => {
     fetchSchedules();
-  }, [currentDate]);
+  }, [currentDate, selectedCourseFilter]);
 
   // Fetch teachers
   const fetchTeachers = async (searchQuery?: string) => {
@@ -497,7 +500,8 @@ export function AdminScheduling() {
       
       const response = await scheduleService.getSchedulesForCalendar(
         startDate.toISOString().split('T')[0],
-        endDate.toISOString().split('T')[0]
+        endDate.toISOString().split('T')[0],
+        selectedCourseFilter !== 'all' ? selectedCourseFilter : undefined
       );
       
       if (response.success && response.data) {
@@ -610,14 +614,21 @@ export function AdminScheduling() {
     setCurrentDate(new Date());
   };
 
-  const getEventsForDate = (date: Date) => {
-    return events.filter(event => {
-      const eventDate = new Date(event.startDate);
-      return eventDate.getDate() === date.getDate() &&
-             eventDate.getMonth() === date.getMonth() &&
-             eventDate.getFullYear() === date.getFullYear();
-    });
-  };
+const getEventsForDate = (date: Date) => {
+  return events.filter(event => {
+    const eventDate = new Date(event.startDate);
+    eventDate.setHours(0, 0, 0, 0);
+
+    const compareDate = new Date(date);
+    compareDate.setHours(0, 0, 0, 0);
+
+    return (
+      eventDate.getDate() === compareDate.getDate() &&
+      eventDate.getMonth() === compareDate.getMonth() &&
+      eventDate.getFullYear() === compareDate.getFullYear()
+    );
+  });
+};
 
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentDate.getMonth();
@@ -745,24 +756,65 @@ export function AdminScheduling() {
   };
 
   const handleDeleteEvent = async (scheduleId: string) => {
-    if (!confirm('Are you sure you want to delete this schedule?')) return;
+  if (!window.confirm('Are you sure you want to delete this schedule?')) return;
+
+  try {
+    setIsSubmitting(true);
+    setError(null);
+
+    const response = await scheduleService.deleteSchedule(scheduleId);
+
+    if (response.success) {
+      const wasDeactivated = response.data?.wasDeactivated;
+      if (wasDeactivated) {
+        // Deactivated (had enrollments) - update status in list
+        setEvents(prev => prev.map(e =>
+          e.id === scheduleId ? { ...e, status: 'Cancelled' } : e
+        ));
+      } else {
+        // Actually deleted
+        setEvents(prev => prev.filter(e => e.id !== scheduleId));
+      }
+      setShowEventDetailDialog(false);
+      setSelectedEvent(null);
+    } else {
+      setError(response.message || 'Failed to delete schedule');
+    }
+  } catch (err) {
+    console.error('Error deleting schedule:', err);
+    setError('Failed to delete schedule');
+  } finally {
+    setIsSubmitting(false);
+  }
+};
+
+  const handleDeleteOldSchedules = async () => {
+    if (!window.confirm('Delete all past schedules with no enrollments? This cannot be undone.')) return;
 
     try {
-      setIsSubmitting(true);
-      const response = await scheduleService.deleteSchedule(scheduleId);
-      
+      setIsDeletingOld(true);
+      setError(null);
+      const response = await scheduleService.deleteOldSchedules();
+
       if (response.success) {
-        setEvents(events.filter(e => e.id !== scheduleId));
-        setShowEventDetailDialog(false);
-        setSelectedEvent(null);
+        const count = response.data?.deletedCount ?? 0;
+        if (count > 0) {
+          const today = new Date();
+          today.setHours(0, 0, 0, 0);
+          setEvents(prev => prev.filter(e => {
+            const eventDate = new Date(e.startDate);
+            eventDate.setHours(0, 0, 0, 0);
+            return eventDate >= today;
+          }));
+        }
       } else {
-        setError(response.message || 'Failed to delete schedule');
+        setError(response.message || 'Failed to delete old schedules');
       }
     } catch (err) {
-      console.error('Error deleting schedule:', err);
-      setError('Failed to delete schedule');
+      console.error('Error deleting old schedules:', err);
+      setError('Failed to delete old schedules');
     } finally {
-      setIsSubmitting(false);
+      setIsDeletingOld(false);
     }
   };
 
@@ -770,7 +822,7 @@ export function AdminScheduling() {
     setNewEvent({
       title: '',
       courseId: '',
-      type: 'theory',
+      type: 'meeting',
       startTime: '09:00',
       endTime: '11:00',
       location: 'Face to Face',
@@ -817,7 +869,7 @@ export function AdminScheduling() {
         <h1 className="mb-2 text-3xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
           Class & Exam Scheduling
         </h1>
-        <p className="text-gray-600">Drag and drop events to schedule classes and exams</p>
+        <p className="text-gray-600">Drag and drop events to schedule</p>
       </div>
 
       {/* Sync Info Banner */}
@@ -869,7 +921,8 @@ export function AdminScheduling() {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h4 className="text-sm font-medium mb-3">Event Types:</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex items-center gap-2">
+                  {/* Theory, Practical, Exam - commented out, General only */}
+                  {/* <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-blue-200 rounded border-l-2 border-blue-700" />
                     <span>Theory Class</span>
                   </div>
@@ -880,7 +933,7 @@ export function AdminScheduling() {
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-green-200 rounded border-l-2 border-green-700" />
                     <span>Exam</span>
-                  </div>
+                  </div> */}
                   <div className="flex items-center gap-2">
                     <div className="w-4 h-4 bg-gray-200 rounded border-l-2 border-gray-700" />
                     <span>General</span>
@@ -927,7 +980,35 @@ export function AdminScheduling() {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleDeleteOldSchedules}
+                      disabled={isDeletingOld}
+                      className="border-amber-200 hover:border-amber-500 hover:bg-amber-50 hover:text-amber-700"
+                    >
+                      {isDeletingOld ? (
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4 mr-2" />
+                      )}
+                      Delete old schedules
+                    </Button>
+                    <Select value={selectedCourseFilter} onValueChange={setSelectedCourseFilter}>
+                      <SelectTrigger className="w-[240px] border-2 hover:border-blue-200">
+                        <BookOpen className="w-4 h-4 mr-2 text-gray-500 flex-shrink-0" />
+                        <SelectValue placeholder="Filter by course" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All courses</SelectItem>
+                        {courses.map((course) => (
+                          <SelectItem key={course.courseId} value={course.courseId}>
+                            {course.courseCode} - {course.courseName}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                     <div className="flex items-center gap-2 bg-gray-100 rounded-lg p-1">
                       {(['month', 'week', 'day', 'list'] as const).map((v) => (
                         <button
@@ -1179,7 +1260,7 @@ export function AdminScheduling() {
                   <X className="w-5 h-5" />
                 </button>
                 <h2 className="text-2xl font-semibold">Add New Event</h2>
-                <p className="text-white/90 mt-1">Schedule a class, exam, or meeting</p>
+                <p className="text-white/90 mt-1">Schedule an event</p>
               </div>
 
               <div className="p-6 space-y-4 max-h-[60vh] overflow-y-auto">
@@ -1209,9 +1290,10 @@ export function AdminScheduling() {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="theory">Theory Class</SelectItem>
+                        {/* Theory, Practical, Exam - commented out, General only */}
+                        {/* <SelectItem value="theory">Theory Class</SelectItem>
                         <SelectItem value="practical">Practical Session</SelectItem>
-                        <SelectItem value="exam">Exam</SelectItem>
+                        <SelectItem value="exam">Exam</SelectItem> */}
                         <SelectItem value="meeting">General</SelectItem>
                       </SelectContent>
                     </Select>

@@ -14,9 +14,6 @@ interface ApplicantSectionProps {
 }
 
 export function ApplicantSection({ data, onChange, errors }: ApplicantSectionProps) {
-  const handleFileChange = (field: 'docPrimaryId' | 'docSecondaryId', file: File | null) => {
-    onChange({ [field]: file });
-  };
 
   return (
     <div className="space-y-6">
@@ -244,7 +241,7 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                   value={data.resState}
                   onValueChange={(value) => onChange({ resState: value })}
                 >
-                  <SelectTrigger className={errors.resState ? 'border-red-500' : ''}>
+                  <SelectTrigger id="resState" className={errors.resState ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -333,7 +330,7 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                           value={data.postState || ''}
                           onValueChange={(value) => onChange({ postState: value })}
                         >
-                          <SelectTrigger className={errors.postState ? 'border-red-500' : ''}>
+                          <SelectTrigger id="postState" className={errors.postState ? 'border-red-500' : ''}>
                             <SelectValue placeholder="Select..." />
                           </SelectTrigger>
                           <SelectContent>
@@ -371,47 +368,6 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
         </CardContent>
       </Card>
 
-      {/* Required Documents Card */}
-      <Card className="border border-gray-200 shadow-sm">
-        <CardContent className="pt-6">
-          <h3 className="font-semibold text-gray-800 mb-2">REQUIRED DOCUMENTS — ID VERIFICATION</h3>
-          <p className="text-sm text-gray-500 mb-6">
-            Please upload a clear copy of your identification document(s). Files must be readable.
-          </p>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label htmlFor="docPrimaryId" className="flex items-center gap-1">
-                Primary Photo ID (required)
-                <span className="text-red-500 font-bold">*</span>
-              </Label>
-              <Input
-                id="docPrimaryId"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileChange('docPrimaryId', e.target.files?.[0] || null)}
-                className={errors.docPrimaryId ? 'border-red-500' : ''}
-              />
-              <p className="text-sm text-gray-500">Accepted: PDF, JPG, PNG. Example: Passport / Driver Licence.</p>
-              {errors.docPrimaryId && <p className="text-sm text-red-500">{errors.docPrimaryId}</p>}
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="docSecondaryId">Secondary ID (optional)</Label>
-              <Input
-                id="docSecondaryId"
-                type="file"
-                accept=".pdf,.jpg,.jpeg,.png"
-                onChange={(e) => handleFileChange('docSecondaryId', e.target.files?.[0] || null)}
-              />
-              <p className="text-sm text-gray-500">
-                Example: Medicare card / Birth certificate / Visa document (if applicable).
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
       {/* Emergency Contact Card */}
       <Card className="border border-gray-200 shadow-sm">
         <CardContent className="pt-6">
@@ -422,52 +378,47 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
               <div className="space-y-2">
                 <Label htmlFor="emergencyName" className="flex items-center gap-1">
                   Full Name
-                  <span className="text-red-500 font-bold">*</span>
                 </Label>
                 <Input
                   id="emergencyName"
                   value={data.emergencyName}
                   onChange={(e) => onChange({ emergencyName: e.target.value })}
-                  className={errors.emergencyName ? 'border-red-500' : ''}
                 />
-                {errors.emergencyName && <p className="text-sm text-red-500">{errors.emergencyName}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="emergencyRelationship" className="flex items-center gap-1">
                   Relationship
-                  <span className="text-red-500 font-bold">*</span>
                 </Label>
                 <Input
                   id="emergencyRelationship"
                   value={data.emergencyRelationship}
                   onChange={(e) => onChange({ emergencyRelationship: e.target.value })}
-                  className={errors.emergencyRelationship ? 'border-red-500' : ''}
                 />
-                {errors.emergencyRelationship && <p className="text-sm text-red-500">{errors.emergencyRelationship}</p>}
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="emergencyContactNumber" className="flex items-center gap-1">
                   Contact Number
-                  <span className="text-red-500 font-bold">*</span>
                 </Label>
                 <Input
                   id="emergencyContactNumber"
                   type="tel"
                   value={data.emergencyContactNumber}
                   onChange={(e) => onChange({ emergencyContactNumber: e.target.value })}
-                  className={errors.emergencyContactNumber ? 'border-red-500' : ''}
                 />
-                {errors.emergencyContactNumber && <p className="text-sm text-red-500">{errors.emergencyContactNumber}</p>}
               </div>
             </div>
 
             <div className="space-y-2">
-              <h4 className="font-semibold text-gray-700">Emergency permission</h4>
+              <h4 className="font-semibold text-gray-700 flex items-center gap-1">
+                Emergency permission
+                <span className="text-red-500 font-bold">*</span>
+              </h4>
               <p className="text-sm text-gray-500">
                 In the event of an emergency do you give STA permission to organise emergency transport and treatment and do you agree to pay all costs related to the emergency?
               </p>
+              <p className="text-sm text-gray-500 italic">Emergency contact details (name, relationship, number) are optional when permission is No.</p>
               <RadioGroup
                 value={data.emergencyPermission}
                 onValueChange={(value) => onChange({ emergencyPermission: value as 'Yes' | 'No' })}

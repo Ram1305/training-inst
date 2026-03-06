@@ -8,13 +8,20 @@ import { Textarea } from '../../ui/textarea';
 import type { AdditionalInfo } from '../../../types/studentEnrolment';
 import { INDIGENOUS_STATUS_OPTIONS, DISABILITY_TYPES } from '../../../types/studentEnrolment';
 
+const isFile = (obj: any): obj is File => {
+  return obj instanceof File || (obj && typeof obj.name === 'string' && typeof obj.size === 'number');
+};
 interface AdditionalInfoSectionProps {
   data: AdditionalInfo;
   onChange: (data: Partial<AdditionalInfo>) => void;
   errors: Record<string, string>;
 }
 
-export function AdditionalInfoSection({ data, onChange, errors }: AdditionalInfoSectionProps) {
+export function AdditionalInfoSection({
+  data,
+  onChange,
+  errors,
+}: AdditionalInfoSectionProps) {
   const handleDisabilityTypeChange = (type: string, checked: boolean) => {
     const currentTypes = data.disabilityTypes || [];
     if (checked) {
@@ -106,7 +113,7 @@ export function AdditionalInfoSection({ data, onChange, errors }: AdditionalInfo
                   value={data.indigenousStatus}
                   onValueChange={(value) => onChange({ indigenousStatus: value })}
                 >
-                  <SelectTrigger className={errors.indigenousStatus ? 'border-red-500' : ''}>
+                  <SelectTrigger id="indigenousStatus" className={errors.indigenousStatus ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select..." />
                   </SelectTrigger>
                   <SelectContent>
@@ -204,3 +211,6 @@ export function AdditionalInfoSection({ data, onChange, errors }: AdditionalInfo
     </div>
   );
 }
+
+
+

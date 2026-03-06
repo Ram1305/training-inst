@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -19,7 +19,9 @@ import {
   ClipboardCheck,
   Calendar,
   FileEdit,
-  Link2
+  Link2,
+  Star,
+  Images
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type { User as UserType } from '../App';
@@ -37,6 +39,9 @@ import { AdminQuizResults } from './admin/AdminQuizResults';
 import { AdminScheduling } from './admin/AdminScheduling';
 import { AdminStudentEnrollments } from './admin/AdminStudentEnrollments';
 import { AdminEnrollmentLinks } from './admin/AdminEnrollmentLinks';
+import { AdminReviews } from './admin/AdminReviews';
+import { AdminGallery } from './admin/AdminGallery';
+import { AdminBookingDetails } from './admin/AdminBookingDetails';
 
 interface AdminPortalProps {
   user: UserType;
@@ -44,14 +49,24 @@ interface AdminPortalProps {
   onNavigateToLanding?: () => void;
 }
 
-type AdminPage = 'dashboard' | 'courses' | 'students' | 'payments' | 'exams' | 'certificates' | 'reports' | 'quiz-results' | 'scheduling' | 'enrollment-forms' | 'enrollment-links';
+type AdminPage = 'dashboard' | 'courses' | 'students' | 'payments' | 'exams' | 'certificates' | 'reports' | 'quiz-results' | 'scheduling' | 'enrollment-forms' | 'enrollment-links' | 'reviews' | 'gallery' | 'booking-details';
 // Commented out: 'teachers' | 'batches' | 'walkin'
 
+const VALID_ADMIN_PAGES: AdminPage[] = ['dashboard', 'courses', 'students', 'payments', 'exams', 'certificates', 'reports', 'quiz-results', 'scheduling', 'enrollment-forms', 'enrollment-links', 'reviews', 'gallery', 'booking-details'];
+
+function getInitialTabFromUrl(): AdminPage {
+  if (typeof window === 'undefined') return 'dashboard';
+  const tab = new URLSearchParams(window.location.search).get('tab');
+  if (tab && (VALID_ADMIN_PAGES as string[]).includes(tab)) return tab as AdminPage;
+  return 'dashboard';
+}
+
 export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortalProps) {
-  const [currentPage, setCurrentPage] = useState<AdminPage>('dashboard');
+  const [currentPage, setCurrentPage] = useState<AdminPage>(getInitialTabFromUrl);
   const [sidebarOpen, setSidebarOpen] = useState(true); // Start with sidebar open on desktop
   const [navbarHidden, setNavbarHidden] = useState(false);
   const [studentEmailFilter, setStudentEmailFilter] = useState<string | undefined>(undefined);
+  const [bookingDetailsDate, setBookingDetailsDate] = useState<string | undefined>(undefined);
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
@@ -67,11 +82,28 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'certificates', name: 'Certificates', icon: Award },
     { id: 'payments', name: 'Payments', icon: DollarSign },
     { id: 'reports', name: 'Reports', icon: ClipboardList },
+    { id: 'reviews', name: 'Google Reviews', icon: Star },
+    { id: 'gallery', name: 'Gallery', icon: Images },
   ];
 
-  const handleNavigate = (page: string, studentEmail?: string) => {
+  // Keep URL in sync with active tab so refresh keeps the same tab (e.g. Course)
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    params.set('tab', currentPage);
+    const next = `${window.location.pathname}?${params.toString()}`;
+    const current = window.location.pathname + (window.location.search || '');
+    if (current !== next) {
+      window.history.replaceState(null, '', next);
+    }
+  }, [currentPage]);
+
+  const handleNavigate = (page: string, extra?: string) => {
     setCurrentPage(page as AdminPage);
-    setStudentEmailFilter(studentEmail);
+    if (page === 'booking-details' && extra) {
+      setBookingDetailsDate(extra);
+    } else {
+      setStudentEmailFilter(extra);
+    }
   };
 
   const renderPage = () => {
@@ -104,6 +136,19 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
         return <AdminStudentEnrollments initialSearchQuery={studentEmailFilter} />;
       case 'enrollment-links':
         return <AdminEnrollmentLinks />;
+      case 'reviews':
+        return <AdminReviews />;
+      case 'gallery':
+        return <AdminGallery />;
+      case 'booking-details':
+        return bookingDetailsDate ? (
+          <AdminBookingDetails
+            selectedDate={bookingDetailsDate}
+            onBack={() => setCurrentPage('dashboard')}
+          />
+        ) : (
+          <AdminDashboard onNavigate={handleNavigate} />
+        );
       default:
         return <AdminDashboard onNavigate={handleNavigate} />;
     }

@@ -36,7 +36,41 @@ body{
   body{ background:#fff; }
   .sheet{ margin:0; box-shadow:none; page-break-after:always; }
   .toolbar{ display:none !important; }
+  .student-id-banner{ display:none !important; }
+  .error-container{ display:none !important; }
 }
+
+/* Student ID notice and pre-filled values (loaded from API by student ID) */
+.student-id-banner {
+  width: 210mm;
+  margin: 8px auto 12px;
+  padding: 10px 14px;
+  background: #fff5f5;
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--red);
+  font-weight: bold;
+}
+
+.student-prefilled {
+  color: var(--red) !important;
+  font-weight: bold !important;
+}
+
+/* Error message when form fails to load */
+.error-container {
+  width: 210mm;
+  margin: 8px auto 12px;
+  padding: 12px 14px;
+  background: #fff5f5;
+  border: 1px solid var(--red);
+  border-radius: 6px;
+  font-size: 13px;
+  color: var(--red);
+  font-weight: bold;
+}
+.error-container p { margin: 0; }
 
 .toolbar{
   width:210mm;
@@ -63,6 +97,9 @@ body{
   border:1px solid var(--line);
   padding:4px 6px;
   vertical-align:middle;
+  overflow-wrap:break-word;
+  word-wrap:break-word;
+  min-width:0;
 }
 .sta-bar{
   background: var(--bar);
@@ -80,9 +117,8 @@ body{
   display:block;
   min-height:16px;
   line-height:16px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
 }
 .sta-ifdiff{ font-size:11px; }
 
@@ -103,8 +139,8 @@ body{
   position:absolute;
   left:2px; top:1px;
   width:6px; height:3px;
-  border-left:2px solid #111;
-  border-bottom:2px solid #111;
+  border-left:2px solid #c00;
+  border-bottom:2px solid #c00;
   transform: rotate(-45deg);
 }
 
@@ -173,10 +209,11 @@ body{
   left:2px;
   bottom:2px;
   font-size:11px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
   max-width:100%;
+  min-width:0;
+  overflow:hidden;
 }
 .fillLine{
   display:inline-block;
@@ -193,10 +230,11 @@ body{
   left:2px;
   bottom:2px;
   font-size:11px;
-  white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
   max-width:100%;
+  min-width:0;
+  overflow:hidden;
 }
 
 .w-35{ width:35mm; }
@@ -485,6 +523,69 @@ body{
   overflow:hidden;
 }
 .p4CobOther, .p4CobPlace{ min-width:0; }
+
+/* Language & Cultural Diversity: "Other (please specify)" – let specified text show and wrap (Country of Birth Other, Language spoken at home Other) */
+.fillLine1.p4LineGrow{
+  display:inline-block;
+  min-width:6em;
+  max-width:100%;
+  min-height:14px;
+  height:auto;
+  padding-bottom:2px;
+  vertical-align:bottom;
+  box-sizing:border-box;
+}
+.fillLine1.p4LineGrow .fillVal{
+  position:static;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
+  white-space:normal;
+  overflow:visible;
+  display:block;
+  line-height:1.25;
+  font-size:11px;
+}
+
+/* Country of Birth right column: stack "Other (please specify)" and "Place of Birth" with clear spacing */
+.p4CobRight{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  max-width:100%;
+}
+.p4CobRight > .p4Opt{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:6px;
+}
+/* Place of Birth row: label and value on same line, value can wrap below if long */
+.p4CobPlace{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:baseline;
+  gap:6px;
+  min-width:0;
+}
+.p4CobPlace .fillLine1.p4LinePlace{
+  flex:1 1 120px;
+  min-width:0;
+  max-width:100%;
+  min-height:14px;
+  height:auto;
+  padding-bottom:2px;
+  display:block;
+}
+.p4CobPlace .fillLine1.p4LinePlace .fillVal{
+  position:static;
+  word-wrap:break-word;
+  overflow-wrap:break-word;
+  white-space:normal;
+  overflow:visible;
+  display:block;
+  line-height:1.25;
+}
+
 .p4LineFlex{ width:100%; max-width:100%; min-width:0; }
 
 /* Language spoken at home row: two parts */
@@ -673,4 +774,90 @@ body{
 #page11 .p7Ul li,
 #page12 .p7Ul li{
   margin-bottom: 2px;
+}
+
+/* ===== Photo and ID Card Section (Page 14) ===== */
+.photoIdSection{
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  width: 100%;
+}
+
+.photoIdCard{
+  border: 1px solid var(--line);
+  padding: 8px;
+  min-height: 80mm;
+  background: #fafbfc;
+  display: flex;
+  flex-direction: column;
+}
+
+.photoIdContainer{
+  flex: 1;
+  min-height: 70mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 1px dashed #ccc;
+  background: #fff;
+}
+
+.photoIdContainer .photoIdPlaceholder{
+  color: #999;
+  font-size: 11px;
+  font-style: italic;
+}
+
+.photoIdContainer img.photoIdImg{
+  max-width: 100%;
+  max-height: 75mm;
+  object-fit: contain;
+}
+
+.photoIdContainer .photoIdPdfNote{
+  color: var(--usiBlue);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  padding: 8px;
+}
+
+/* ===== Branded closing footer (Page 14 only - at very end) ===== */
+#page14 .footerLine{ bottom: 14mm; }
+#page14 .footerHr{ bottom: 19mm; }
+#page14 .footerCompany{ bottom: 24mm; }
+
+.footerBrand{
+  position: absolute;
+  left: 9mm;
+  right: 9mm;
+  bottom: 0;
+  padding: 6px 0 4px;
+  text-align: center;
+  border-top: 2px solid var(--usiBlue);
+  background: linear-gradient(to bottom, rgba(30, 63, 143, 0.08), transparent);
+}
+
+.footerBrandTitle{
+  font-weight: 900;
+  font-size: 14px;
+  letter-spacing: 0.3px;
+  color: var(--usiBlue);
+  margin-bottom: 2px;
+}
+
+.footerBrandSubtitle{
+  font-weight: 900;
+  font-size: 12px;
+  letter-spacing: 0.2px;
+  color: #111;
+  margin-bottom: 2px;
+}
+
+.footerBrandRto{
+  font-weight: 900;
+  font-size: 12px;
+  color: var(--usiBlue);
 }

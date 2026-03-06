@@ -10,7 +10,6 @@ import {
   LogOut,
   Menu,
   X,
-  ShoppingCart,
   ClipboardList,
   Home
 } from 'lucide-react';
@@ -23,7 +22,6 @@ import { StudentResults } from './student/StudentResults';
 import { StudentCertificates } from './student/StudentCertificates';
 import { StudentProfile } from './student/StudentProfile';
 import { StudentNotifications } from './student/StudentNotifications';
-import { StudentCart } from './student/StudentCart';
 import { StudentEnrollmentForm } from './student/StudentEnrollmentForm';
 
 interface StudentPortalProps {
@@ -32,13 +30,12 @@ interface StudentPortalProps {
   onNavigateToLanding?: () => void;
 }
 
-type StudentPage = 'dashboard' | 'courses' | 'schedule' | 'results' | 'certificates' | 'profile' | 'notifications' | 'cart' | 'enrollment-form';
+type StudentPage = 'dashboard' | 'courses' | 'schedule' | 'results' | 'certificates' | 'profile' | 'notifications' | 'enrollment-form';
 
 export function StudentPortal({ user, onLogout, onNavigateToLanding }: StudentPortalProps) {
   const [currentPage, setCurrentPage] = useState<StudentPage>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true); // Start with sidebar open on desktop
   const [navbarHidden, setNavbarHidden] = useState(false);
-  const [cartCount, setCartCount] = useState(2);
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
@@ -71,8 +68,6 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding }: StudentPo
         return <StudentProfile user={user} />;
       case 'notifications':
         return <StudentNotifications />;
-      case 'cart':
-        return <StudentCart onCartUpdate={setCartCount} />;
       default:
         return <StudentDashboard onNavigate={handleNavigate} />;
     }
@@ -117,19 +112,6 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding }: StudentPo
             </div>
 
             <div className="flex items-center gap-2">
-              <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setCurrentPage('cart')}
-              >
-                <ShoppingCart className="w-5 h-5" />
-                {cartCount > 0 && (
-                  <span className="absolute -top-1 -right-1 w-5 h-5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-full flex items-center justify-center text-xs">
-                    {cartCount}
-                  </span>
-                )}
-              </Button>
               <Button
                 variant="ghost"
                 size="icon"

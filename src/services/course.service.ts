@@ -12,6 +12,8 @@ export interface CourseListItem {
   duration?: string;
   price: number;
   originalPrice?: number;
+  promoPrice?: number;
+  promoOriginalPrice?: number;
   imageUrl?: string;
   hasTheory: boolean;
   hasPractical: boolean;
@@ -19,6 +21,7 @@ export interface CourseListItem {
   validityPeriod?: string;
   description?: string;
   enrolledStudentsCount: number;
+  displayOrder?: number;
   isActive: boolean;
   hasComboOffer: boolean;
   createdAt: string;
@@ -92,6 +95,8 @@ export interface CreateCourseRequest {
   duration?: string;
   price?: number;
   originalPrice?: number;
+  promoPrice?: number;
+  promoOriginalPrice?: number;
   imageUrl?: string;
   hasTheory?: boolean;
   hasPractical?: boolean;
@@ -243,6 +248,14 @@ class CourseService {
   async getCourseStats(): Promise<ApiResponse<CourseStats>> {
     return apiService.get<ApiResponse<CourseStats>>(
       API_CONFIG.ENDPOINTS.COURSE.STATS
+    );
+  }
+
+  // Reorder courses within a category (for landing page display)
+  async reorderCourses(categoryId: string, courseIds: string[]): Promise<ApiResponse<null>> {
+    return apiService.post<ApiResponse<null>>(
+      API_CONFIG.ENDPOINTS.COURSE.REORDER(categoryId),
+      courseIds
     );
   }
 

@@ -5493,7 +5493,7 @@ html {
 .resources-submenu-item {
   display: block !important;
   width: 100% !important;
-  text-align: left !important;
+  text-align: center !important;
   padding: 10px 16px !important;
   font-size: 14px !important;
   color: #d1d5db !important;
@@ -5977,9 +5977,9 @@ nav > div {
 
 .enrollment-form-scroll-area {
   flex: 1 !important;
+  min-height: 0 !important;
   overflow-y: auto !important;
-  overflow-x: hidden !important;
-  max-height: calc(90vh - 140px) !important;
+  overflow-x: auto !important;
 }
 
 .enrollment-form-scroll-area > div {

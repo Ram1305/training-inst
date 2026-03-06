@@ -53,6 +53,7 @@ export const API_CONFIG = {
       ACTIVE: '/course/active',
       FEATURED: '/course/featured',
       STATS: '/course/stats',
+      REORDER: (categoryId: string) => `/course/reorder?categoryId=${categoryId}`,
       CHECK_CODE: (code: string) => `/course/check-code/${code}`,
       BY_ID: (id: string) => `/course/${id}`,
       BY_CODE: (code: string) => `/course/code/${code}`,
@@ -77,6 +78,8 @@ export const API_CONFIG = {
     ENROLLMENT: {
       BASE: '/enrollment',
       BOOK: '/enrollment/book',  // NEW: Book course endpoint
+      BOOKING_STATS_WEEKLY: '/enrollment/booking-stats/weekly',
+      BOOKING_DETAILS: '/enrollment/booking-details',
       BROWSE: (studentId: string) => `/enrollment/browse/${studentId}`,
       STUDENT: (studentId: string) => `/enrollment/student/${studentId}`,
       CREATE: (studentId: string) => `/enrollment/${studentId}`,
@@ -98,6 +101,7 @@ export const API_CONFIG = {
       BASE: '/schedule',
       CALENDAR: '/schedule/calendar',
       BY_ID: (id: string) => `/schedule/${id}`,
+      OLD: '/schedule/old',
       UPDATE_STATUS: (id: string) => `/schedule/${id}/status`,
       STUDENT_CALENDAR: (studentId: string) => `/schedule/student/${studentId}/calendar`,
       TEACHER_CALENDAR: (teacherId: string) => `/schedule/teacher/${teacherId}/calendar`,
@@ -130,6 +134,21 @@ export const API_CONFIG = {
       // PDF
       PDF_HTML: (studentId: string) => `/studentenrollmentform/admin/${studentId}/pdf/html`,
       PDF_DOWNLOAD: (studentId: string) => `/studentenrollmentform/admin/${studentId}/pdf/download`,
+    },
+    GALLERY: {
+      BASE: '/gallery',
+      ADMIN: '/gallery/admin',
+      ADMIN_BY_ID: (id: string) => `/gallery/admin/${id}`,
+      BY_ID: (id: string) => `/gallery/${id}`,
+    },
+    GOOGLE_REVIEW: {
+      BASE: '/googlereview',
+      ADMIN: '/googlereview/admin',
+      ADMIN_STATS: '/googlereview/admin/stats',
+      ADMIN_BY_ID: (id: string) => `/googlereview/admin/${id}`,
+      BY_ID: (id: string) => `/googlereview/${id}`,
+      REORDER: '/googlereview/reorder',
+      TOGGLE_STATUS: (id: string) => `/googlereview/${id}/toggle-status`,
     },
     PUBLIC_ENROLLMENT: {
       // Dropdowns

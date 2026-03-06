@@ -1,5 +1,5 @@
 // src/components/CourseBooking.tsx
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   CreditCard,
@@ -19,10 +19,15 @@ import {
   Award,
   Lock,
   AlertCircle,
+  Calendar,
+  Clock,
+  Check,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ResourcesDropdown } from "./ui/ResourcesDropdown";
+import { PaymentSuccessCard } from "./PaymentSuccessCard";
+import { PaymentFailureCard } from "./PaymentFailureCard";
 import { courseDateService } from "../services/courseDate.service";
 import { enrollmentService } from "../services/enrollment.service";
 import { paymentService } from "../services/payment.service";
@@ -42,6 +47,9 @@ interface CourseBookingProps {
   onBookNow?: () => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onGallery?: () => void;
+  onLogin?: () => void;
+  onRegister?: () => void;
 }
 
 type PaymentMethod = "bank" | "card";
@@ -58,7 +66,10 @@ export function CourseBooking({
   onContact,
   onForms,
   onFeesRefund,
+  onGallery,
   onBookNow,
+  onLogin,
+  onRegister,
 }: CourseBookingProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank");
@@ -90,6 +101,20 @@ export function CourseBooking({
   const [cardType, setCardType] = useState<"visa" | "mastercard" | "amex" | "unknown">("unknown");
   
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
+  const [showAllCourseDates, setShowAllCourseDates] = useState(false);
+
+  // Group course dates by calendar date for grid layout
+  const courseDatesByDate = useMemo(() => {
+    const byDate = courseDates.reduce<Record<string, CourseDateSimple[]>>((acc, d) => {
+      const key = d.scheduledDate.split("T")[0];
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(d);
+      return acc;
+    }, {});
+    return Object.keys(byDate)
+      .sort()
+      .map((dateKey) => ({ dateKey, dates: byDate[dateKey] }));
+  }, [courseDates]);
 
   // Fetch available course dates
   useEffect(() => {
@@ -374,7 +399,7 @@ export function CourseBooking({
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
             <Phone className="w-4 h-4" />
-            1300 876 097
+            1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
             <Mail className="w-4 h-4" />
@@ -468,7 +493,7 @@ export function CourseBooking({
               <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
                 COURSES
               </button>
-              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} />
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
                 ABOUT
               </button>
@@ -484,7 +509,8 @@ export function CourseBooking({
                 </button>
               </div>
               <Button
-                className="bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 rounded-full px-6 cursor-default"
+                onClick={onBookNow}
+                className="bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 rounded-full px-6 hover:bg-cyan-400/20 transition-colors"
               >
                 Book now
               </Button>
@@ -495,6 +521,7 @@ export function CourseBooking({
                 VOC
               </Button>
               <Button
+                onClick={onLogin ?? onRegister}
                 variant="outline"
                 className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 rounded-full px-6 font-semibold"
               >
@@ -525,6 +552,15 @@ export function CourseBooking({
                 <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
                   COURSES
                 </button>
+                <button onClick={() => { setMobileMenuOpen(false); onForms?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  FORMS
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onFeesRefund?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  FEES & REFUND
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onGallery?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  GALLERY
+                </button>
                 <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
                   ABOUT
                 </button>
@@ -537,9 +573,10 @@ export function CourseBooking({
                 >
                   COMBO COURSES
                 </button>
-                <Button className="w-full bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 cursor-default">Book now</Button>
+                <Button onClick={onBookNow} className="w-full bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 hover:bg-cyan-400/20 transition-colors">Book now</Button>
                 <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
                 <Button
+                  onClick={onLogin ?? onRegister}
                   className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
                 >
                   Login / Register
@@ -590,23 +627,28 @@ export function CourseBooking({
         <div className="bg-white rounded-2xl shadow-xl p-8 md:p-12">
           {/* Success Message */}
           {success && (
-            <motion.div 
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="mb-6 p-6 bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl flex items-start gap-3 shadow-lg"
-            >
-              <CheckCircle className="w-6 h-6 text-green-600 flex-shrink-0 mt-0.5" />
-              <div className="flex-1">
-                <p className="text-green-800 font-bold text-lg">Booking Successful! 🎉</p>
-                <p className="text-green-700 text-sm mt-1">{success}</p>
-                <div className="mt-3 flex items-center gap-2 text-green-600">
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span className="text-sm font-medium">Taking you to your student portal...</span>
-                </div>
-              </div>
-            </motion.div>
+            <PaymentSuccessCard
+              title="Booking Successful!"
+              message="Payment successful! Course booked. Redirecting to your student portal..."
+              isRedirecting={true}
+              redirectLabel="Taking you to your student portal..."
+              className="mb-6"
+            />
           )}
 
+          {/* Payment error - single instance for both bank and card */}
+          {error && (
+            <PaymentFailureCard
+              message={error}
+              onDismiss={() => setError(null)}
+              onRetry={() => setError(null)}
+              retryLabel="Try again"
+              className="mb-6"
+            />
+          )}
+
+          {!success && (
+            <>
           <p className="text-sm text-gray-600 mb-8">
             <span className="text-red-500">*</span> indicates required fields
           </p>
@@ -746,50 +788,124 @@ export function CourseBooking({
               <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
             </div>
 
-            {/* Course Date Selection */}
+            {/* Course Date Selection - Grid view */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-medium text-gray-700 mb-3">
                 Select Course Date<span className="text-red-500">*</span>
               </label>
               {loadingDates ? (
-                <div className="w-full h-12 bg-gray-50 border border-gray-300 rounded-lg px-4 flex items-center text-gray-500">
+                <div className="w-full min-h-[140px] bg-gray-50 border border-gray-200 rounded-xl px-6 flex items-center justify-center text-gray-500">
+                  <Loader2 className="w-6 h-6 animate-spin mr-2" />
                   Loading available dates...
                 </div>
+              ) : courseDates.length === 0 ? (
+                <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                  No available dates for this course at the moment. Please contact us for more information.
+                </div>
               ) : (
-                <select
-                  value={selectedCourseDate}
-                  onChange={(e) => {
-                    setSelectedCourseDate(e.target.value);
-                    if (validationErrors.courseDate) {
-                      setValidationErrors({ ...validationErrors, courseDate: "" });
-                    }
-                  }}
-                  className={`w-full h-12 bg-gray-50 border border-gray-300 rounded-lg px-4 text-gray-700 ${validationErrors.courseDate ? 'border-red-500' : ''}`}
-                  disabled={isSubmitting}
+                <div
+                  className={`space-y-4 p-4 rounded-xl border-2 transition-colors ${
+                    validationErrors.courseDate ? "border-red-400 bg-red-50/30" : "border-gray-200 bg-gray-50/50"
+                  }`}
                 >
-                  <option value="">Select a date</option>
-                  {courseDates.map((date) => (
-                    <option key={date.courseDateId} value={date.courseDateId}>
-                      {new Date(date.scheduledDate).toLocaleDateString('en-AU', {
-                        weekday: 'long',
-                        year: 'numeric',
-                        month: 'long',
-                        day: 'numeric'
-                      })}
-                      {date.startTime && ` - ${date.startTime}`}
-                      {date.endTime && ` to ${date.endTime}`}
-                      {date.location && ` (${date.location})`}
-                    </option>
+                  {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
+                    <div key={dateKey} className="flex flex-col items-center w-full">
+                      <p className="text-sm font-semibold text-gray-700 mb-2 text-center">
+                        {new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", {
+                          weekday: "short",
+                          day: "numeric",
+                          month: "short",
+                          year: "numeric",
+                        })}
+                      </p>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
+                        {dates.map((date) => {
+                          const isSelected = selectedCourseDate === date.courseDateId;
+                          const isDisabled = isSubmitting || !date.isAvailable;
+                          return (
+                            <button
+                                key={date.courseDateId}
+                                type="button"
+                                disabled={isDisabled}
+                                onClick={() => {
+                                  if (isDisabled) return;
+                                  setSelectedCourseDate(date.courseDateId);
+                                  if (validationErrors.courseDate) {
+                                    setValidationErrors({ ...validationErrors, courseDate: "" });
+                                  }
+                                }}
+                                className={`
+                                  relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
+                                  focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2
+                                  ${isSelected
+                                    ? "border-cyan-500 bg-cyan-50 shadow-md shadow-cyan-100/50"
+                                    : "border-gray-200 bg-white hover:border-cyan-300 hover:bg-cyan-50/50 hover:shadow-sm"
+                                  }
+                                  ${isDisabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"}
+                                `}
+                              >
+                              {isSelected && (
+                                <span className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-slate-800 text-black">
+                                  <Check className="h-3.5 w-3.5 text-black" strokeWidth={2.5} />
+                                </span>
+                              )}
+                              <div className="flex items-start gap-3 pr-8">
+                                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-600">
+                                  <Calendar className="h-5 w-5" />
+                                </div>
+                                <div className="min-w-0 flex-1">
+                                  <div className="min-h-8 flex items-center">
+                                    {(date.startTime || date.endTime) ? (
+                                      <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                                        {date.startTime && date.endTime
+                                          ? `${date.startTime} – ${date.endTime}`
+                                          : date.startTime || date.endTime || ""}
+                                      </p>
+                                    ) : (
+                                      <p className="text-sm font-medium text-gray-500">All day</p>
+                                    )}
+                                  </div>
+                                  <div className="min-h-6 mt-1 flex items-center">
+                                    {date.location && date.location.toLowerCase() !== "face to face" && (
+                                      <p className="flex items-center gap-1 text-sm text-gray-500 truncate" title={date.location}>
+                                        <MapPin className="h-3.5 w-3.5 shrink-0" />
+                                        {date.location}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <div className="min-h-6 flex items-center mt-1.5">
+                                    {date.availableSpots !== undefined && (
+                                      <p className="text-xs font-medium text-cyan-600">
+                                        {date.availableSpots > 0 ? `${date.availableSpots} spot${date.availableSpots === 1 ? "" : "s"} left` : "Fully booked"}
+                                      </p>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
                   ))}
-                </select>
+                  {courseDatesByDate.length > 4 && (
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowAllCourseDates((prev) => !prev)}
+                        className="text-sm font-medium text-cyan-600 hover:text-cyan-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-500 focus-visible:ring-offset-2 rounded px-1"
+                      >
+                        {showAllCourseDates
+                          ? "Show less"
+                          : `Show more dates (${courseDatesByDate.length - 4} more)`}
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
               {validationErrors.courseDate && (
-                <p className="text-red-500 text-sm mt-1">{validationErrors.courseDate}</p>
-              )}
-              {courseDates.length === 0 && !loadingDates && (
-                <p className="text-xs text-amber-600 mt-2">
-                  No available dates for this course at the moment. Please contact us for more information.
-                </p>
+                <p className="text-red-500 text-sm mt-2">{validationErrors.courseDate}</p>
               )}
             </div>
 
@@ -941,17 +1057,6 @@ export function CourseBooking({
                     Accepted file types: jpg, gif, png, pdf, jpeg. Max. file size: 10 MB.
                   </p>
 
-                  {/* Error Message for bank transfer - positioned above submit button */}
-                  {error && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-4 p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-3"
-                    >
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-red-700 text-sm leading-relaxed">{error}</p>
-                    </motion.div>
-                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1145,17 +1250,6 @@ export function CourseBooking({
                     </div>
                   </div>
 
-                  {/* Error Message positioned above submit button for card payments */}
-                  {error && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: -10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-3"
-                    >
-                      <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                      <p className="text-red-700 text-sm leading-relaxed">{error}</p>
-                    </motion.div>
-                  )}
                 </motion.div>
               )}
             </AnimatePresence>
@@ -1183,6 +1277,8 @@ export function CourseBooking({
               </Button>
             </div>
           </form>
+            </>
+          )}
         </div>
       </div>
     </div>

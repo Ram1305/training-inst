@@ -14,6 +14,7 @@ import {
   EducationSection,
   AdditionalInfoSection,
   PrivacyTermsSection,
+  PhotoIdSection,
 } from './enrolment';
 import type {
   ApplicantDetails,
@@ -51,6 +52,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
   const [isSaving, setIsSaving] = useState(false);
   const [existingForm, setExistingForm] = useState<EnrollmentFormResponse | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [allErrors, setAllErrors] = useState<Record<string, string[]>>({});
 
   // Get studentId from auth context
   const studentId = user?.studentId;
@@ -246,9 +248,6 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
       if (!a.resState) newErrors.resState = 'State is required';
       if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
-      if (!a.emergencyName) newErrors.emergencyName = 'Emergency contact name is required';
-      if (!a.emergencyRelationship) newErrors.emergencyRelationship = 'Relationship is required';
-      if (!a.emergencyContactNumber) newErrors.emergencyContactNumber = 'Contact number is required';
       if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select an option';
 
       if (a.postalDifferent) {
@@ -263,32 +262,35 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       const u = formData.usi;
       if (!u.usiApply) newErrors.usiApply = 'Please select an option';
 
+      if (u.usiApply === 'No') {
+        if (!u.usi?.trim()) newErrors.usi = 'USI number is required when providing your own USI';
+      }
+
       if (u.usiApply === 'Yes') {
-        if (!u.usiAuthoriseName) newErrors.usiAuthoriseName = 'Name is required';
+        if (!u.usiAuthoriseName?.trim()) newErrors.usiAuthoriseName = 'Name is required';
         if (!u.usiConsent) newErrors.usiConsent = 'Consent is required';
-        if (!u.townCityBirth) newErrors.townCityBirth = 'Town/City of birth is required';
-        if (!u.overseasCityBirth) newErrors.overseasCityBirth = 'Overseas city is required';
+        if (!u.townCityBirth?.trim()) newErrors.townCityBirth = 'Town/City of birth is required';
+        if (!u.overseasCityBirth?.trim()) newErrors.overseasCityBirth = 'Overseas city is required';
         if (!u.usiIdType) newErrors.usiIdType = 'ID type is required';
+        if (!u.usiIdUpload) newErrors.usiIdUpload = 'ID document upload is required';
       }
     }
 
     if (section === 3) {
       const e = formData.education;
-      if (!e.schoolLevel) newErrors.schoolLevel = 'School level is required';
-      if (!e.schoolCompleteYear) newErrors.schoolCompleteYear = 'Year completed is required';
+      if (e.schoolLevel && e.schoolLevel !== '02 Never attended school') {
+        if (e.schoolInAus) {
+          if (!e.schoolPostcode?.trim()) newErrors.schoolPostcode = 'Postcode is required';
+        } else {
+          if (!e.schoolCountry?.trim()) newErrors.schoolCountry = 'Country is required';
+        }
+      }
       if (!e.hasPostQual) newErrors.hasPostQual = 'Please select an option';
       if (!e.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
       if (!e.trainingReason) newErrors.trainingReason = 'Training reason is required';
 
-      if (e.trainingReason === 'Other' && !e.trainingReasonOther) {
+      if (e.trainingReason === 'Other' && !e.trainingReasonOther?.trim()) {
         newErrors.trainingReasonOther = 'Please specify the reason';
-      }
-
-      if (e.schoolInAus) {
-        if (!e.schoolState) newErrors.schoolState = 'State is required';
-        if (!e.schoolPostcode) newErrors.schoolPostcode = 'Postcode is required';
-      } else {
-        if (!e.schoolCountry) newErrors.schoolCountry = 'Country is required';
       }
     }
 
@@ -306,11 +308,14 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
 
     if (section === 5) {
       const pt = formData.privacyTerms;
+      const a = formData.applicant;
       if (!pt.acceptPrivacy) newErrors.acceptPrivacy = 'You must accept the privacy notice';
       if (!pt.acceptTerms) newErrors.acceptTerms = 'You must accept the terms and conditions';
       if (!pt.declareName) newErrors.declareName = 'Name is required';
       if (!pt.declareDate) newErrors.declareDate = 'Date is required';
       if (!pt.signatureData) newErrors.signatureData = 'Signature is required';
+      if (!a.docPrimaryId) newErrors.docPrimaryId = 'Primary Photo ID is required';
+      if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
     }
 
     setErrors(newErrors);
@@ -338,14 +343,25 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       return;
     }
 
-    // Validate all sections
+    // Validate all sections and collect errors
+    const collectedErrors: Record<string, string[]> = {};
     for (let i = 1; i <= 5; i++) {
       if (!validateSection(i)) {
-        setCurrentSection(i);
-        toast.error('Please fill in all required fields');
-        return;
+        const sectionName = SECTIONS[i - 1].title;
+        collectedErrors[sectionName] = Object.values(errors);
       }
     }
+
+    // If there are errors, display them and return
+    if (Object.keys(collectedErrors).length > 0) {
+      setAllErrors(collectedErrors);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      toast.error('Please fill in all required fields');
+      return;
+    }
+
+    // Clear errors if validation passed
+    setAllErrors({});
 
     setIsSaving(true);
     try {
@@ -409,10 +425,10 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       postalSuburb: applicant.postSuburb || undefined,
       postalState: applicant.postState || undefined,
       postalPostcode: applicant.postPostcode || undefined,
-      emergencyContactName: applicant.emergencyName,
-      emergencyContactRelationship: applicant.emergencyRelationship,
-      emergencyContactNumber: applicant.emergencyContactNumber,
-      emergencyPermission: applicant.emergencyPermission,
+      emergencyContactName: applicant.emergencyName || '',
+      emergencyContactRelationship: applicant.emergencyRelationship || '',
+      emergencyContactNumber: applicant.emergencyContactNumber || '',
+      emergencyPermission: applicant.emergencyPermission || 'No',
 
       // Section 2
       usi: usi.usi || undefined,
@@ -439,8 +455,8 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       descentAcquisitionDate: usi.descentAcqDate || undefined,
 
       // Section 3
-      schoolLevel: education.schoolLevel,
-      schoolCompleteYear: education.schoolCompleteYear,
+      schoolLevel: education.schoolLevel || '',
+      schoolCompleteYear: education.schoolLevel === '02 Never attended school' ? '' : (education.schoolCompleteYear || ''),
       schoolName: education.schoolName || 'N/A',
       schoolInAustralia: education.schoolInAus,
       schoolState: education.schoolState || undefined,
@@ -607,6 +623,32 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
         </Alert>
       )}
 
+      {/* Validation Errors Alert */}
+      {Object.keys(allErrors).length > 0 && (
+        <Alert className="border-red-200 bg-red-50">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <AlertTitle className="text-red-900">
+            Form Validation Errors
+          </AlertTitle>
+          <AlertDescription className="text-red-800">
+            <div className="mt-2 space-y-2">
+              {Object.entries(allErrors).map(([section, sectionErrors]) => (
+                <div key={section}>
+                  <p className="font-semibold text-sm">{section}:</p>
+                  <ul className="list-disc list-inside ml-2 space-y-1">
+                    {sectionErrors.map((error, idx) => (
+                      <li key={idx} className="text-sm">
+                        {error}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
+
       {/* Form Sections */}
       <div className="min-h-[400px]">
         {currentSection === 1 && (
@@ -638,11 +680,20 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
           />
         )}
         {currentSection === 5 && (
-          <PrivacyTermsSection
-            data={formData.privacyTerms}
-            onChange={handlePrivacyTermsChange}
-            errors={errors}
-          />
+          <>
+            <PrivacyTermsSection
+              data={formData.privacyTerms}
+              onChange={handlePrivacyTermsChange}
+              errors={errors}
+            />
+            <div className="mt-8">
+              <PhotoIdSection
+                data={formData.applicant}
+                onChange={handleApplicantChange}
+                errors={errors}
+              />
+            </div>
+          </>
         )}
       </div>
 

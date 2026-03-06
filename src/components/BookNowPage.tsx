@@ -11,6 +11,7 @@ import type { CourseListItem } from '../services/course.service';
 import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from './ui/WhatsAppButton';
+import { ResourcesDropdown } from './ui/ResourcesDropdown';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 
 interface BookNowPageProps {
@@ -22,9 +23,10 @@ interface BookNowPageProps {
   onContact?: () => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onGallery?: () => void;
 }
 
-export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAbout, onContact, onForms, onFeesRefund }: BookNowPageProps) {
+export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAbout, onContact, onForms, onFeesRefund, onGallery }: BookNowPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -82,7 +84,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
             <Phone className="w-4 h-4" />
-            1300 876 097
+            1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
             <Mail className="w-4 h-4" />
@@ -251,9 +253,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
                   </motion.div>
                 )}
               </div>
-              <button className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                RESOURCES
-              </button>
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
                 ABOUT
               </button>
@@ -324,6 +324,15 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
                 <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
                   COURSES
                 </button>
+                <button onClick={() => { setMobileMenuOpen(false); onForms?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  FORMS
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onFeesRefund?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  FEES & REFUND
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onGallery?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  GALLERY
+                </button>
                 <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
                   ABOUT
                 </button>
@@ -339,7 +348,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
                 <Button className="w-full bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 cursor-default">Book now</Button>
                 <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
                 <Button
-                  onClick={onRegister}
+                  onClick={onLogin ?? onRegister}
                   className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
                 >
                   Login / Register

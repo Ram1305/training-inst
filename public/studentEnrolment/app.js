@@ -1,6 +1,24 @@
-const API_BASE_URL = window.location.hostname === 'localhost' 
-  ? 'https://localhost:7419' 
-  : 'https://safety-training-academy-api-dnfagvdpcee2e6gm.australiaeast-01.azurewebsites.net';
+// API base URL. Production frontend (safetytrainingacademy.edu.au) does not proxy /api, so use the Azure API origin.
+// Override by defining window.ENROLLMENT_FORM_API_ORIGIN before this script runs (e.g. in index.html).
+const PRODUCTION_API_ORIGIN = 'https://safety-academy-api-afh9eua2ctege9bz.australiasoutheast-01.azurewebsites.net';
+function getApiBaseUrl() {
+  if (typeof window === 'undefined') return '';
+  if (window.ENROLLMENT_FORM_API_ORIGIN) return window.ENROLLMENT_FORM_API_ORIGIN;
+  const host = window.location.hostname || '';
+  if (host === 'safetytrainingacademy.edu.au' || host.endsWith('.safetytrainingacademy.edu.au')) {
+    return PRODUCTION_API_ORIGIN;
+  }
+  return window.location.origin;
+}
+const API_BASE_URL = getApiBaseUrl();
+
+// Escape HTML for safe display in banner
+function escapeHtml(str) {
+  if (!str) return '';
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
 
 // Get enrollment ID from URL query parameter
 function getEnrollmentIdFromUrl() {
@@ -38,14 +56,22 @@ async function fetchEnrollmentFormData(formId) {
     }
     
     // Use the correct endpoint path - API routes include /api prefix
-    // Note: Using mode: 'cors' without credentials for cross-origin requests
-    const response = await fetch(`${API_BASE_URL}/api/StudentEnrollmentForm/admin/${formId}`, {
+    // credentials: 'include' sends the auth cookie so the API can authenticate the request
+    const url = `${API_BASE_URL}/api/StudentEnrollmentForm/admin/${formId}`;
+    console.log('[EnrollmentForm] Fetching:', { formId, API_BASE_URL, url, origin: window.location.origin });
+    const response = await fetch(url, {
       method: 'GET',
-      credentials: 'include', // Include cookies for same-origin requests
+      mode: 'cors',
+      credentials: 'include',
+      headers: headers
     });
     
     if (!response.ok) {
       throw new Error('Failed to fetch enrollment form');
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (!contentType.includes('application/json')) {
+      throw new Error('Server returned non-JSON (got ' + contentType + '). Check that the API is reachable at ' + url);
     }
     const result = await response.json();
     if (result.success && result.data) {
@@ -54,6 +80,7 @@ async function fetchEnrollmentFormData(formId) {
     throw new Error(result.message || 'Invalid response');
   } catch (error) {
     console.error('Error fetching enrollment form:', error);
+    console.error('[EnrollmentForm] Error details:', { name: error.name, message: error.message, cause: error.cause });
     throw error;
   }
 }
@@ -204,7 +231,11 @@ function mapApiDataToFormData(apiData) {
     courseName: apiData.courseName || '',
     courseCode: apiData.courseCode || '',
     startDate: apiData.startDate || '',
-    status: apiData.enrollmentFormStatus || ''
+    status: apiData.enrollmentFormStatus || '',
+
+    // Photo and ID documents (Page 14)
+    primaryIdDocumentUrl: apiData.primaryIdDocumentUrl || '',
+    secondaryIdDocumentUrl: apiData.secondaryIdDocumentUrl || ''
   };
 }
 
@@ -640,6 +671,41 @@ function fillPage14(d){
   setText("p14Phone", p.submission?.phone);
 }
 
+/* ---------------- Photo and ID Card Section ---------------- */
+function fillPhotoIdSection(d){
+  const primaryUrl = d.primaryIdDocumentUrl || '';
+  const secondaryUrl = d.secondaryIdDocumentUrl || '';
+
+  function setPhotoContainer(type, url){
+    const el = document.querySelector(`[data-photo="${type}"]`);
+    if (!el) return;
+    el.innerHTML = '';
+    if (!url){
+      const span = document.createElement('span');
+      span.className = 'photoIdPlaceholder';
+      span.textContent = 'Not provided';
+      el.appendChild(span);
+      return;
+    }
+    const isPdf = /\.pdf$/i.test(url);
+    if (isPdf){
+      const span = document.createElement('span');
+      span.className = 'photoIdPdfNote';
+      span.textContent = 'Document attached (PDF)';
+      el.appendChild(span);
+      return;
+    }
+    const img = document.createElement('img');
+    img.src = url;
+    img.alt = type === 'primaryId' ? 'Primary Photo ID' : 'Photo';
+    img.className = 'photoIdImg';
+    el.appendChild(img);
+  }
+
+  setPhotoContainer('primaryId', primaryUrl);
+  setPhotoContainer('secondaryId', secondaryUrl);
+}
+
 /* ---------------- PAGE 15 (and Page 13 declaration - same data) ---------------- */
 function fillPage15(d){
   const p = d.page15 || {};
@@ -666,6 +732,7 @@ function fillAll(d){
   fillPage6(d);
   fillPage14(d);
   fillPage15(d);
+  fillPhotoIdSection(d);
 }
 
 // Show/hide loading overlay
@@ -681,10 +748,12 @@ function showError(message) {
   const errorContainer = document.getElementById('errorContainer');
   const errorMessage = document.getElementById('errorMessage');
   const mainContent = document.getElementById('mainContent');
-  
+
   if (errorContainer && errorMessage) {
     errorMessage.textContent = message;
     errorContainer.style.display = 'block';
+  } else {
+    console.error('[EnrollmentForm]', message);
   }
   if (mainContent) {
     mainContent.style.display = 'none';
@@ -705,6 +774,7 @@ function showMainContent() {
 async function initializeForm() {
   const formId = getEnrollmentIdFromUrl();
   const autoPrint = shouldAutoPrint();
+  console.log('[EnrollmentForm] Initialize:', { formId, autoPrint, origin: window.location.origin });
   
   if (formId) {
     // Load from API
@@ -714,6 +784,19 @@ async function initializeForm() {
       const formData = mapApiDataToFormData(apiData);
       showMainContent();
       fillAll(formData);
+
+      // Show banner: form is student-ID based; details in red are pre-filled (commented out)
+      // const banner = document.getElementById('studentIdBanner');
+      // if (banner) {
+      //   banner.innerHTML = 'This form is loaded based on <strong>Student ID: ' + escapeHtml(formId) + '</strong>. All details shown in <span class="student-prefilled">red bold text</span> below are pre-filled from the student record and may be updated by the student.';
+      //   banner.style.display = 'block';
+      // }
+      // Mark only actual pre-filled value text as student-based (red bold).
+      // Do not add to .cb.checked so option labels (e.g. "14 Learning", "1101 Australia", "Country of Birth", "Place of Birth:") stay normal.
+      document.querySelectorAll('.value, .fillVal').forEach(function (el) {
+        const text = (el.textContent || '').trim();
+        if (text) el.classList.add('student-prefilled');
+      });
       
       // Auto-print if requested
       if (autoPrint) {

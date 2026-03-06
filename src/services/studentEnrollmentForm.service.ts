@@ -134,9 +134,9 @@ export interface SubmitEnrollmentFormRequest {
   postalState?: string;
   postalPostcode?: string;
 
-  emergencyContactName: string;
-  emergencyContactRelationship: string;
-  emergencyContactNumber: string;
+  emergencyContactName?: string;
+  emergencyContactRelationship?: string;
+  emergencyContactNumber?: string;
   emergencyPermission: string;
 
   // Section 2 - USI
@@ -165,8 +165,8 @@ export interface SubmitEnrollmentFormRequest {
   descentAcquisitionDate?: string;
 
   // Section 3 - Education and Employment
-  schoolLevel: string;
-  schoolCompleteYear: string;
+  schoolLevel?: string;
+  schoolCompleteYear?: string;
   schoolName: string;
   schoolInAustralia: boolean;
   schoolState?: string;
@@ -251,8 +251,18 @@ export interface ReviewEnrollmentFormRequest {
 
 export interface PublicEnrollmentFormRequest extends SubmitEnrollmentFormRequest {
   password: string;
+  paymentMethod?: string;
   transactionId?: string;
   paymentAmount?: number;
+  paymentProofDataUrl?: string;
+  paymentProofFileName?: string;
+  paymentProofContentType?: string;
+  primaryIdDataUrl?: string;
+  primaryIdFileName?: string;
+  primaryIdContentType?: string;
+  secondaryIdDataUrl?: string;
+  secondaryIdFileName?: string;
+  secondaryIdContentType?: string;
 }
 
 export interface PublicEnrollmentFormResponse {

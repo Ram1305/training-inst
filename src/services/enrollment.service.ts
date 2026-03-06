@@ -159,6 +159,49 @@ export interface BookCourseResponse {
   bookedAt: string;
 }
 
+// Booking dashboard types
+export interface DailyBookingStat {
+  date: string;
+  totalCount: number;
+}
+
+export interface WeeklyBookingStatsDto {
+  dailyStats: DailyBookingStat[];
+}
+
+export interface BookingDetailsCourseDto {
+  courseId: string;
+  courseCode: string;
+  courseName: string;
+  enrollmentCount: number;
+  categoryName?: string;
+  courseType: string;
+}
+
+export interface BookingDetailsEnrollmentDto {
+  enrollmentId: string;
+  studentId: string;
+  studentName: string;
+  studentEmail: string;
+  courseId: string;
+  courseCode: string;
+  courseName: string;
+  categoryName?: string;
+  courseType: string;
+  sessionTime?: string;
+  location?: string;
+  sessionType?: string;
+  paymentStatus: string;
+  status: string;
+  enrolledAt: string;
+}
+
+export interface BookingDetailsResponseDto {
+  date: string;
+  courses: BookingDetailsCourseDto[];
+  enrollments: BookingDetailsEnrollmentDto[];
+}
+
 class EnrollmentService {
   /**
    * Get available courses for a student to browse
@@ -301,6 +344,32 @@ class EnrollmentService {
     return apiService.put<ApiResponse<null>>(
       `${API_CONFIG.ENDPOINTS.ENROLLMENT.VERIFY_PAYMENT(paymentProofId)}?adminId=${adminId}`,
       { approve, rejectionReason }
+    );
+  }
+
+  /**
+   * Get weekly booking stats (counts per day based on CourseDate.ScheduledDate)
+   */
+  async getWeeklyBookingStats(weekStart: string): Promise<ApiResponse<WeeklyBookingStatsDto>> {
+    const params = new URLSearchParams({ weekStart });
+    return apiService.get<ApiResponse<WeeklyBookingStatsDto>>(
+      `${API_CONFIG.ENDPOINTS.ENROLLMENT.BOOKING_STATS_WEEKLY}?${params}`
+    );
+  }
+
+  /**
+   * Get booking details for a specific date with optional course and plan filters
+   */
+  async getBookingDetailsByDate(
+    date: string,
+    courseId?: string,
+    planFilter?: string
+  ): Promise<ApiResponse<BookingDetailsResponseDto>> {
+    const params = new URLSearchParams({ date });
+    if (courseId) params.append('courseId', courseId);
+    if (planFilter) params.append('planFilter', planFilter);
+    return apiService.get<ApiResponse<BookingDetailsResponseDto>>(
+      `${API_CONFIG.ENDPOINTS.ENROLLMENT.BOOKING_DETAILS}?${params}`
     );
   }
 

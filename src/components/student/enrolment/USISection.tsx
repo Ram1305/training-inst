@@ -50,15 +50,23 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
           <div className="grid gap-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-end">
               <div className="space-y-2">
-                <Label htmlFor="usi">Enter your USI (if you already have one)</Label>
+                <Label htmlFor="usi" className="flex items-center gap-1">
+                  Enter your USI {data.usiApply === 'No' && <span className="text-red-500 font-bold">*</span>}
+                </Label>
                 <Input
                   id="usi"
                   value={data.usi || ''}
                   onChange={(e) => onChange({ usi: e.target.value.toUpperCase() })}
                   maxLength={10}
                   placeholder="10-character USI"
+                  className={errors.usi ? 'border-red-500' : ''}
                 />
-                <p className="text-sm text-gray-500">If you don't have one, select "Apply through STA" below.</p>
+                <p className="text-sm text-gray-500">
+                  {data.usiApply === 'No'
+                    ? 'USI number is required when providing your own USI.'
+                    : "If you don't have one, select \"Apply through STA\" below."}
+                </p>
+                {errors.usi && <p className="text-sm text-red-500">{errors.usi}</p>}
               </div>
 
               <div className="flex items-center space-x-2">
@@ -193,7 +201,7 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                     value={data.usiIdType || ''}
                     onValueChange={(value) => onChange({ usiIdType: value })}
                   >
-                    <SelectTrigger className={errors.usiIdType ? 'border-red-500' : ''}>
+                    <SelectTrigger id="usiIdType" className={errors.usiIdType ? 'border-red-500' : ''}>
                       <SelectValue placeholder="Select..." />
                     </SelectTrigger>
                     <SelectContent>

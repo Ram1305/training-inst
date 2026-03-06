@@ -13,6 +13,7 @@ import { WhatsAppButton } from './ui/WhatsAppButton';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 import buildingImage from '/assets/Safety-Training-Academy-Office-in-Sydney.jpg';
 import classroomImage from '/assets/Safety-Training-Academy-Class-in-Sydney.jpg';
+import { ResourcesDropdown } from './ui/ResourcesDropdown';
 
 interface AboutUsPageProps {
   onBack: () => void;
@@ -24,9 +25,10 @@ interface AboutUsPageProps {
   onCourseDetails?: (courseId: string) => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onGallery?: () => void;
 }
 
-export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund }: AboutUsPageProps) {
+export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery }: AboutUsPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -118,7 +120,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
             <Phone className="w-4 h-4" />
-            1300 876 097
+            1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
             <Mail className="w-4 h-4" />
@@ -286,9 +288,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                   </motion.div>
                 )}
               </div>
-              <button className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                RESOURCES
-              </button>
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery}/>
               <a href="#" className="text-cyan-400 border-b-2 border-cyan-400 transition-colors text-sm font-bold">
                 ABOUT
               </a>

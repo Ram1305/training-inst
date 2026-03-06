@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -13,6 +13,8 @@ import {
   ClipboardCheck,
   FileEdit,
   Calendar,
+  Clock,
+  Check,
   DollarSign,
   Upload,
   X,
@@ -40,6 +42,7 @@ import {
 } from '../../services/publicEnrollmentWizard.service';
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest } from '../../services/studentEnrollmentForm.service';
 import { quizService, type SubmitGuestQuizRequest, type SubmitQuizSectionResult } from '../../services/quiz.service';
+import { authService } from '../../services/auth.service';
 import { QuizSection } from './QuizSection';
 import type { QuizSectionData } from './Quiz';
 import {
@@ -48,6 +51,7 @@ import {
   EducationSection,
   AdditionalInfoSection,
   PrivacyTermsSection,
+  PhotoIdSection,
 } from './enrolment';
 import type {
   ApplicantDetails,
@@ -65,6 +69,8 @@ import {
   initialPrivacyTerms,
 } from '../../types/studentEnrolment';
 import { paymentService } from '../../services/payment.service';
+import { PaymentSuccessCard } from '../PaymentSuccessCard';
+import { PaymentFailureCard } from '../PaymentFailureCard';
 
 interface PublicEnrollmentWizardProps {
   onComplete: (result: { userId: string; studentId: string; email: string; fullName: string }) => void;
@@ -290,6 +296,9 @@ const WIZARD_STEPS = [
   { id: 5, title: 'Enrollment Form', shortTitle: 'Form', icon: FileEdit },
 ];
 
+const MAX_REATTEMPTS = 3;
+const AUTO_PASS_ATTEMPT = 4;
+
 export function PublicEnrollmentWizard({ 
   onComplete, 
   onCancel, 
@@ -320,8 +329,23 @@ export function PublicEnrollmentWizard({
   const [courseDates, setCourseDates] = useState<CourseDateDropdownItem[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState(preSelectedCourseId || '');
   const [selectedCourseDateId, setSelectedCourseDateId] = useState(preSelectedCourseDateId || '');
+  const [showAllCourseDates, setShowAllCourseDates] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
+
+  // Group course dates by calendar date for grid layout (same as Booking Form)
+  const courseDatesByDate = useMemo(() => {
+    const byDate = courseDates.reduce<Record<string, CourseDateDropdownItem[]>>((acc, d) => {
+      const key = (d.startDate || '').split('T')[0];
+      if (!key) return acc;
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(d);
+      return acc;
+    }, {});
+    return Object.keys(byDate)
+      .sort()
+      .map((dateKey) => ({ dateKey, dates: byDate[dateKey] }));
+  }, [courseDates]);
 
   // Step 3: Payment (moved up)
   const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
@@ -352,6 +376,7 @@ export function PublicEnrollmentWizard({
   const quizSectionResultsRef = useRef<{ section: string; score: number; percentage: number; passed: boolean }[]>([]);
   const [quizCompleted, setQuizCompleted] = useState(false);
   const [quizPassed, setQuizPassed] = useState(false);
+  const [quizAttemptNumber, setQuizAttemptNumber] = useState(1);
   const [declarationChecks, setDeclarationChecks] = useState({ honest: false, understand: false });
   const [declarationName, setDeclarationName] = useState('');
   const [showQuizDeclaration, setShowQuizDeclaration] = useState(false);
@@ -359,6 +384,8 @@ export function PublicEnrollmentWizard({
   // Step 5: Enrollment Form (was step 4)
   const [currentFormSection, setCurrentFormSection] = useState(1);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+  const [submitValidationErrors, setSubmitValidationErrors] = useState<string[]>([]);
+  const formContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<StudentEnrolmentFormData>({
     applicant: { ...initialApplicantDetails },
     usi: { ...initialUSIDetails },
@@ -381,6 +408,7 @@ export function PublicEnrollmentWizard({
   useEffect(() => {
     if (selectedCourseId) {
       fetchCourseDates(selectedCourseId);
+      setShowAllCourseDates(false);
     } else {
       setCourseDates([]);
       setSelectedCourseDateId('');
@@ -562,6 +590,21 @@ export function PublicEnrollmentWizard({
   const handleNext = async () => {
     if (currentStep === 1) {
       if (!validateRegistration()) return;
+      
+      // Check if email is already registered
+      try {
+        const emailCheckResponse = await authService.checkEmail(registrationData.email);
+        if (emailCheckResponse.success && emailCheckResponse.data === true) {
+          toast.error('This email is already registered. Please use a different email or login to your account.');
+          setRegistrationErrors(prev => ({ ...prev, email: 'Email already registered' }));
+          return;
+        }
+      } catch (error) {
+        console.error('Error checking email:', error);
+        toast.error('Failed to verify email. Please try again.');
+        return;
+      }
+      
       // Pre-fill form data
       const nameParts = registrationData.fullName.trim().split(' ');
       setFormData(prev => ({
@@ -592,13 +635,28 @@ export function PublicEnrollmentWizard({
         toast.error('Please select a payment method');
         return;
       }
+
+      if (paymentMethod === 'bank_transfer') {
+        if (!transactionId.trim()) {
+          setPaymentError('Transaction ID is required for bank transfer');
+          toast.error('Please enter the transaction ID');
+          return;
+        }
+        if (!paymentProofFile) {
+          setPaymentError('Payment slip upload is required for bank transfer');
+          toast.error('Please upload the payment slip');
+          return;
+        }
+      }
       
-      // Only process card payment for "Pay Now" - other methods (bank_transfer, direct_pay) proceed directly
+      // Only process card payment for "Pay Now" - other methods (bank_transfer) proceed directly
       if (paymentMethod === 'card') {
         const paymentSuccess = await processCardPayment();
         if (!paymentSuccess) {
           return;
         }
+        // Do not advance yet; show success card and let user click "Continue to LLND Assessment"
+        return;
       }
 
       setCurrentStep(4);
@@ -607,17 +665,21 @@ export function PublicEnrollmentWizard({
         toast.error('Please complete the LLND assessment');
         return;
       }
+      if (!quizPassed) {
+        toast.error('LLND assessment failed. Please reattempt.');
+        return;
+      }
       setCurrentStep(5);
     } else if (currentStep === 5) {
       // Validate all form sections before completing enrollment
-      for (let i = 1; i <= 5; i++) {
-        if (!validateFormSection(i)) {
-          setCurrentFormSection(i);
-          toast.error('Please fill in all required fields');
-          return;
-        }
+      const result = validateAllSections();
+      if (!result.valid) {
+        setCurrentFormSection(result.firstInvalidSection);
+        toast.error('Please complete all required fields before submitting');
+        formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
       }
-      // Final enrollment submission
+      setSubmitValidationErrors([]);
       handleFinalSubmit();
     }
   };
@@ -671,13 +733,23 @@ export function PublicEnrollmentWizard({
       }
     });
 
-    const rawPercentage = (correct / section.questions.length) * 100;
-    const percentage = rawPercentage < 67 ? 67 : Math.round(rawPercentage);
-    const passed = true; // Always pass after bump (scores < 67% are bumped to 67%)
+    const shouldAutoPass = quizAttemptNumber >= AUTO_PASS_ATTEMPT;
+    
+    // On 4th attempt, auto-equalize answers to achieve exactly 67%
+    let finalCorrect = correct;
+    if (shouldAutoPass) {
+      // Calculate how many correct answers are needed for 67%
+      const requiredCorrect = Math.ceil((section.questions.length * 67) / 100);
+      finalCorrect = requiredCorrect;
+    }
+    
+    const rawPercentage = (finalCorrect / section.questions.length) * 100;
+    const percentage = Math.round(rawPercentage);
+    const passed = rawPercentage >= section.passingPercentage;
 
     const newResult = {
       section: section.title,
-      score: correct,
+      score: finalCorrect,
       percentage,
       passed
     };
@@ -699,10 +771,23 @@ export function PublicEnrollmentWizard({
       toast.error('Please complete all declaration fields');
       return;
     }
-    
+
+    // For attempts 1-3: Use actual section results
+    // For attempt 4+: Auto-pass (all sections will have been artificially set to 67%)
     const allPassed = quizSectionResults.every(r => r.passed);
     setQuizPassed(allPassed);
     setQuizCompleted(true);
+    setShowQuizDeclaration(false);
+  };
+
+  const handleQuizRetry = () => {
+    setQuizAttemptNumber((prev) => prev + 1);
+    setQuizSectionIndex(0);
+    setQuizAnswers({});
+    setQuizSectionResults([]);
+    setQuizCompleted(false);
+    setQuizPassed(false);
+    setDeclarationChecks({ honest: false, understand: false });
     setShowQuizDeclaration(false);
   };
 
@@ -744,37 +829,173 @@ export function PublicEnrollmentWizard({
       if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
       if (!a.resState) newErrors.resState = 'State is required';
       if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
-      if (!a.emergencyName) newErrors.emergencyName = 'Emergency contact name is required';
-      if (!a.emergencyRelationship) newErrors.emergencyRelationship = 'Relationship is required';
-      if (!a.emergencyContactNumber) newErrors.emergencyContactNumber = 'Contact number is required';
+      if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select Yes or No';
+      // Emergency contact name/relationship/number are optional when permission is No
     }
 
     if (section === 2) {
       const u = formData.usi;
       if (!u.usiApply) newErrors.usiApply = 'Please select an option';
+      if (u.usiApply === 'No') {
+        if (!u.usi?.trim()) newErrors.usi = 'USI number is required when providing your own USI';
+      }
+      if (u.usiApply === 'Yes') {
+        if (!u.usiAuthoriseName?.trim()) newErrors.usiAuthoriseName = 'Name is required';
+        if (!u.usiConsent) newErrors.usiConsent = 'Consent is required';
+        if (!u.townCityBirth?.trim()) newErrors.townCityBirth = 'Town/City of birth is required';
+        if (!u.overseasCityBirth?.trim()) newErrors.overseasCityBirth = 'Overseas city is required';
+        if (!u.usiIdType) newErrors.usiIdType = 'ID type is required';
+        if (!u.usiIdUpload) newErrors.usiIdUpload = 'ID document upload is required';
+      }
     }
 
     if (section === 3) {
       const e = formData.education;
-      if (!e.schoolLevel) newErrors.schoolLevel = 'School level is required';
       if (!e.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
+      if (!e.hasPostQual) newErrors.hasPostQual = 'Please select an option';
+      if (!e.trainingReason) newErrors.trainingReason = 'Training reason is required';
+      if (e.trainingReason === 'Other' && !e.trainingReasonOther?.trim()) {
+        newErrors.trainingReasonOther = 'Please specify the reason';
+      }
     }
 
     if (section === 4) {
       const ai = formData.additionalInfo;
       if (!ai.countryOfBirth) newErrors.countryOfBirth = 'Country of birth is required';
+      if (!ai.langOther) newErrors.langOther = 'Please select an option';
+      if (!ai.indigenousStatus) newErrors.indigenousStatus = 'Indigenous status is required';
+      if (!ai.hasDisability) newErrors.hasDisability = 'Please select an option';
+      if (ai.langOther === 'Yes' && !ai.homeLanguage?.trim()) newErrors.homeLanguage = 'Home language is required when you speak another language';
     }
 
     if (section === 5) {
       const pt = formData.privacyTerms;
+      const a = formData.applicant;
       if (!pt.acceptPrivacy) newErrors.acceptPrivacy = 'You must accept the privacy notice';
       if (!pt.acceptTerms) newErrors.acceptTerms = 'You must accept the terms';
-      if (!pt.declareName) newErrors.declareName = 'Name is required';
-      if (!pt.declareDate) newErrors.declareDate = 'Date is required';
+      if (!pt.declareName) newErrors.declareName = 'Declaration name is required';
+      if (!pt.declareDate) newErrors.declareDate = 'Declaration date is required';
+      if (!pt.signatureData?.trim()) newErrors.signatureData = 'Signature is required';
+      if (!a.docPrimaryId) newErrors.docPrimaryId = 'Primary Photo ID is required';
+      if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
     }
 
     setFormErrors(newErrors);
     return Object.keys(newErrors).length === 0;
+  };
+
+  // Human-readable labels for validation errors
+  const ERROR_LABELS: Record<string, string> = {
+    title: 'Title',
+    surname: 'Surname',
+    givenName: 'Given name',
+    dob: 'Date of birth',
+    gender: 'Gender',
+    mobile: 'Mobile phone',
+    email: 'Email',
+    resAddress: 'Residential address',
+    resSuburb: 'Suburb',
+    resState: 'State',
+    resPostcode: 'Postcode',
+    emergencyPermission: 'Emergency contact permission',
+    usiApply: 'USI application option',
+    usi: 'USI number',
+    usiAuthoriseName: 'Authorised name',
+    usiConsent: 'USI consent',
+    townCityBirth: 'Town/City of birth',
+    overseasCityBirth: 'Overseas city',
+    usiIdType: 'ID type',
+    usiIdUpload: 'ID document upload',
+    schoolCompleteYear: 'Year completed',
+    employmentStatus: 'Employment status',
+    hasPostQual: 'Post-secondary qualification',
+    trainingReason: 'Reason for undertaking',
+    trainingReasonOther: 'Other reason details',
+    countryOfBirth: 'Country of birth',
+    langOther: 'Language other than English',
+    homeLanguage: 'Home language',
+    indigenousStatus: 'Indigenous status',
+    hasDisability: 'Disability status',
+    docPrimaryId: 'Primary Photo ID',
+    docSecondaryId: 'Photo document',
+    acceptPrivacy: 'Privacy notice acceptance',
+    acceptTerms: 'Terms acceptance',
+    declareName: 'Declaration name',
+    declareDate: 'Declaration date',
+    signatureData: 'Signature',
+  };
+
+  const validateAllSections = (): { valid: boolean; firstInvalidSection: number; missingFields: string[] } => {
+    const allErrors: Record<string, string> = {};
+    let firstInvalidSection = 1;
+
+    for (let i = 1; i <= 5; i++) {
+      const newErrors: Record<string, string> = {};
+      if (i === 1) {
+        const a = formData.applicant;
+        if (!a.title) newErrors.title = 'Title is required';
+        if (!a.surname) newErrors.surname = 'Surname is required';
+        if (!a.givenName) newErrors.givenName = 'Given name is required';
+        if (!a.dob) newErrors.dob = 'Date of birth is required';
+        if (!a.gender) newErrors.gender = 'Gender is required';
+        if (!a.mobile) newErrors.mobile = 'Mobile phone is required';
+        if (!a.email) newErrors.email = 'Email is required';
+        if (!a.resAddress) newErrors.resAddress = 'Residential address is required';
+        if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
+        if (!a.resState) newErrors.resState = 'State is required';
+        if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
+        if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select Yes or No';
+      } else if (i === 2) {
+        const u = formData.usi;
+        if (!u.usiApply) newErrors.usiApply = 'Please select an option';
+        if (u.usiApply === 'No') { if (!u.usi?.trim()) newErrors.usi = 'USI number is required'; }
+        if (u.usiApply === 'Yes') {
+          if (!u.usiAuthoriseName?.trim()) newErrors.usiAuthoriseName = 'Name is required';
+          if (!u.usiConsent) newErrors.usiConsent = 'Consent is required';
+          if (!u.townCityBirth?.trim()) newErrors.townCityBirth = 'Town/City of birth is required';
+          if (!u.overseasCityBirth?.trim()) newErrors.overseasCityBirth = 'Overseas city is required';
+          if (!u.usiIdType) newErrors.usiIdType = 'ID type is required';
+          if (!u.usiIdUpload) newErrors.usiIdUpload = 'ID document upload is required';
+        }
+      } else if (i === 3) {
+        const e = formData.education;
+        if (!e.employmentStatus) newErrors.employmentStatus = 'Employment status is required';
+        if (!e.hasPostQual) newErrors.hasPostQual = 'Please select an option';
+        if (!e.trainingReason) newErrors.trainingReason = 'Reason for undertaking is required';
+        if (e.trainingReason === 'Other' && !e.trainingReasonOther?.trim()) newErrors.trainingReasonOther = 'Please specify the reason';
+      } else if (i === 4) {
+        const ai = formData.additionalInfo;
+        if (!ai.countryOfBirth) newErrors.countryOfBirth = 'Country of birth is required';
+        if (!ai.langOther) newErrors.langOther = 'Please select an option';
+        if (!ai.indigenousStatus) newErrors.indigenousStatus = 'Indigenous status is required';
+        if (!ai.hasDisability) newErrors.hasDisability = 'Please select an option';
+        if (ai.langOther === 'Yes' && !ai.homeLanguage?.trim()) newErrors.homeLanguage = 'Home language is required';
+      } else if (i === 5) {
+        const pt = formData.privacyTerms;
+        const a = formData.applicant;
+        if (!pt.acceptPrivacy) newErrors.acceptPrivacy = 'You must accept the privacy notice';
+        if (!pt.acceptTerms) newErrors.acceptTerms = 'You must accept the terms';
+        if (!pt.declareName) newErrors.declareName = 'Declaration name is required';
+        if (!pt.declareDate) newErrors.declareDate = 'Declaration date is required';
+        if (!pt.signatureData?.trim()) newErrors.signatureData = 'Signature is required';
+        if (!a.docPrimaryId) newErrors.docPrimaryId = 'Primary Photo ID is required';
+        if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
+      }
+
+      Object.assign(allErrors, newErrors);
+      if (Object.keys(newErrors).length > 0 && firstInvalidSection === 1) {
+        firstInvalidSection = i;
+      }
+    }
+
+    setFormErrors(allErrors);
+    const missingFields = Object.keys(allErrors).map((key) => ERROR_LABELS[key] || key);
+    setSubmitValidationErrors(missingFields);
+    return {
+      valid: Object.keys(allErrors).length === 0,
+      firstInvalidSection,
+      missingFields,
+    };
   };
 
   const handleFormNext = () => {
@@ -811,6 +1032,15 @@ export function PublicEnrollmentWizard({
     setPaymentProofPreview(null);
   };
 
+  const fileToDataUrl = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
   // Map form data to request
   const mapFormDataToRequest = (): SubmitEnrollmentFormRequest => {
     const { applicant, usi, education, additionalInfo, privacyTerms } = formData;
@@ -835,10 +1065,10 @@ export function PublicEnrollmentWizard({
       postalSuburb: applicant.postSuburb || undefined,
       postalState: applicant.postState || undefined,
       postalPostcode: applicant.postPostcode || undefined,
-      emergencyContactName: applicant.emergencyName,
-      emergencyContactRelationship: applicant.emergencyRelationship,
-      emergencyContactNumber: applicant.emergencyContactNumber,
-      emergencyPermission: applicant.emergencyPermission || 'Yes',
+      emergencyContactName: applicant.emergencyName || '',
+      emergencyContactRelationship: applicant.emergencyRelationship || '',
+      emergencyContactNumber: applicant.emergencyContactNumber || '',
+      emergencyPermission: applicant.emergencyPermission || 'No',
       usi: usi.usi || undefined,
       usiAccessPermission: usi.usiAccessPermission,
       usiApplyThroughSTA: usi.usiApply || 'No',
@@ -861,8 +1091,8 @@ export function PublicEnrollmentWizard({
       citizenshipStockNumber: usi.citizenshipStock || undefined,
       citizenshipAcquisitionDate: usi.citizenshipAcqDate || undefined,
       descentAcquisitionDate: usi.descentAcqDate || undefined,
-      schoolLevel: education.schoolLevel || 'Year 12 or equivalent',
-      schoolCompleteYear: education.schoolCompleteYear || '2020',
+      schoolLevel: education.schoolLevel || '',
+      schoolCompleteYear: education.schoolLevel === '02 Never attended school' ? '' : (education.schoolCompleteYear || ''),
       schoolName: education.schoolName || 'N/A',
       schoolInAustralia: education.schoolInAus,
       schoolState: education.schoolState || undefined,
@@ -920,6 +1150,12 @@ export function PublicEnrollmentWizard({
     setIsSubmitting(true);
     try {
       const formRequest = mapFormDataToRequest();
+      const docPrimaryId = formData.applicant.docPrimaryId;
+      const docSecondaryId = formData.applicant.docSecondaryId;
+      const [primaryIdDataUrl, secondaryIdDataUrl] = await Promise.all([
+        docPrimaryId ? fileToDataUrl(docPrimaryId) : Promise.resolve(''),
+        docSecondaryId ? fileToDataUrl(docSecondaryId) : Promise.resolve(''),
+      ]);
       // Use ref to ensure we have the latest quiz results (avoids stale closure)
       const resultsToSubmit = quizSectionResultsRef.current.length > 0 ? quizSectionResultsRef.current : quizSectionResults;
       const { totalQuestions, totalCorrect } = (() => {
@@ -935,17 +1171,16 @@ export function PublicEnrollmentWizard({
       })();
       const overallPercentage = totalQuestions > 0 ? parseFloat(((totalCorrect / totalQuestions) * 100).toFixed(2)) : 0;
 
-      // Prepare quiz section results for API (bump all sections < 67% to 67%)
+      // Prepare quiz section results for API
       const sectionResultsForApi: SubmitQuizSectionResult[] = resultsToSubmit.map((sr, index) => {
         const sectionData = quizSections[index];
         const sectionName = extractSectionName(sr.section);
-        const storedPercentage = sr.percentage < 67 ? 67 : sr.percentage;
         return {
           sectionName,
           totalQuestions: sectionData?.questions.length ?? 0,
           correctAnswers: sr.score,
-          sectionPercentage: storedPercentage,
-          sectionPassed: true // Always true after bump (scores < 67% are bumped to 67%)
+          sectionPercentage: sr.percentage,
+          sectionPassed: sr.passed
         };
       });
 
@@ -953,13 +1188,22 @@ export function PublicEnrollmentWizard({
       const coursePrice = getSelectedCourse()?.price || 0;
 
       // Build the full request with quiz data and payment info
-      const fullRequest: SubmitGuestQuizRequest & SubmitEnrollmentFormRequest & { 
-        password: string; 
-        courseId?: string; 
-        courseDateId?: string; 
+      const fullRequest: SubmitGuestQuizRequest & SubmitEnrollmentFormRequest & {
+        password: string;
+        courseId?: string;
+        courseDateId?: string;
         paymentMethod?: string;
         transactionId?: string;
         paymentAmount?: number;
+        paymentProofDataUrl?: string;
+        paymentProofFileName?: string;
+        paymentProofContentType?: string;
+        primaryIdDataUrl?: string;
+        primaryIdFileName?: string;
+        primaryIdContentType?: string;
+        secondaryIdDataUrl?: string;
+        secondaryIdFileName?: string;
+        secondaryIdContentType?: string;
       } = {
         ...formRequest,
         password: registrationData.password,
@@ -979,6 +1223,16 @@ export function PublicEnrollmentWizard({
         paymentMethod: paymentMethod,
         transactionId: transactionId || undefined,
         paymentAmount: coursePrice,
+        paymentProofDataUrl: paymentMethod === 'bank_transfer' ? (paymentProofPreview || undefined) : undefined,
+        paymentProofFileName: paymentMethod === 'bank_transfer' ? (paymentProofFile?.name || undefined) : undefined,
+        paymentProofContentType: paymentMethod === 'bank_transfer' ? (paymentProofFile?.type || undefined) : undefined,
+        // Primary Photo ID and Photo documents
+        primaryIdDataUrl: primaryIdDataUrl || undefined,
+        primaryIdFileName: docPrimaryId?.name || undefined,
+        primaryIdContentType: docPrimaryId?.type || undefined,
+        secondaryIdDataUrl: secondaryIdDataUrl || undefined,
+        secondaryIdFileName: docSecondaryId?.name || undefined,
+        secondaryIdContentType: docSecondaryId?.type || undefined,
       };
 
       // Submit public enrollment form (creates user + student + form + quiz + payment)
@@ -1225,73 +1479,164 @@ export function PublicEnrollmentWizard({
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
               <div>
-                <Label>Select Course <span className="text-red-500">*</span></Label>
-                <Select value={selectedCourseId} onValueChange={setSelectedCourseId} disabled={loadingCourses}>
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder={loadingCourses ? "Loading courses..." : "Select a course"} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {courses.map(course => (
-                      <SelectItem key={course.courseId} value={course.courseId}>
-                        <div className="flex items-center justify-between w-full">
-                          <span>{course.courseCode} - {course.courseName}</span>
-                          <Badge className="ml-2">${course.price}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Label className="block text-sm font-medium text-gray-700 mb-3">
+                  Select Course <span className="text-red-500">*</span>
+                </Label>
+                {loadingCourses ? (
+                  <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                    Loading courses...
+                  </div>
+                ) : courses.length === 0 ? (
+                  <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                    No courses available. Please contact us for more information.
+                  </div>
+                ) : (
+                  <>
+                    <Select
+                      value={selectedCourseId || undefined}
+                      onValueChange={setSelectedCourseId}
+                    >
+                      <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white hover:bg-violet-50/50 focus-visible:ring-violet-500 focus-visible:ring-offset-2 h-auto min-h-11 py-2.5">
+                        <SelectValue placeholder="Choose a course..." />
+                      </SelectTrigger>
+                      <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
+                        {courses.map((course) => {
+                          const parts = [
+                            `${course.courseCode} – ${course.courseName}`,
+                            `$${course.price}`,
+                            course.duration || null,
+                            course.categoryName || null,
+                          ].filter(Boolean);
+                          return (
+                            <SelectItem key={course.courseId} value={course.courseId}>
+                              {parts.join(' · ')}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    {(() => {
+                      const c = getSelectedCourse();
+                      if (!c) return null;
+                      const summaryParts = [`$${c.price}`, c.duration, c.categoryName].filter(Boolean);
+                      if (summaryParts.length === 0) return null;
+                      return (
+                        <p className="text-sm text-gray-500 mt-2">
+                          {summaryParts.join(' · ')}
+                        </p>
+                      );
+                    })()}
+                  </>
+                )}
               </div>
 
               {selectedCourseId && (
-                <div className="bg-violet-50 rounded-lg p-4 border border-violet-200">
-                  <h4 className="font-semibold text-violet-900 mb-2">Selected Course</h4>
-                  <p className="text-violet-700">{getSelectedCourse()?.courseName}</p>
-                  <div className="flex items-center gap-4 mt-2 text-sm text-violet-600">
-                    <span className="flex items-center gap-1">
-                      <DollarSign className="w-4 h-4" />
-                      ${getSelectedCourse()?.price}
-                    </span>
-                    {getSelectedCourse()?.duration && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
-                        {getSelectedCourse()?.duration}
-                      </span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {selectedCourseId && (
                 <div>
-                  <Label>Select Date <span className="text-red-500">*</span></Label>
-                  <Select 
-                    value={selectedCourseDateId} 
-                    onValueChange={setSelectedCourseDateId} 
-                    disabled={loadingDates || courseDates.length === 0}
-                  >
-                    <SelectTrigger className="mt-1">
-                      <SelectValue placeholder={
-                        loadingDates ? "Loading dates..." : 
-                        courseDates.length === 0 ? "No dates available" : 
-                        "Select a date"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {courseDates.filter(d => d.isAvailable).map(date => (
-                        <SelectItem key={date.courseDateId} value={date.courseDateId}>
-                          <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4" />
-                            <span>{new Date(date.startDate).toLocaleDateString()} - {new Date(date.endDate).toLocaleDateString()}</span>
-                            {date.location && <span className="text-gray-500">({date.location})</span>}
-                            <Badge variant="outline" className="ml-2">
-                              {date.availableSlots} slots left
-                            </Badge>
+                  <Label className="block text-sm font-medium text-gray-700 mb-3">
+                    Select a date <span className="text-red-500">*</span>
+                  </Label>
+                  {loadingDates ? (
+                    <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                      <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                      Loading available dates...
+                    </div>
+                  ) : courseDates.length === 0 ? (
+                    <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                      No available dates for this course at the moment. Please contact us for more information.
+                    </div>
+                  ) : (
+                    <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                      {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
+                        <div key={dateKey} className="flex flex-col items-center w-full">
+                          <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
+                            {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
+                              weekday: 'short',
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
+                            {dates.map((date) => {
+                              const isSelected = selectedCourseDateId === date.courseDateId;
+                              const isDisabled = !date.isAvailable;
+                              return (
+                                <button
+                                  key={date.courseDateId}
+                                  type="button"
+                                  disabled={isDisabled}
+                                  onClick={() => {
+                                    if (isDisabled) return;
+                                    setSelectedCourseDateId(date.courseDateId);
+                                  }}
+                                  className={`
+                                    relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
+                                    focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
+                                    ${isSelected
+                                      ? 'border-violet-500 bg-violet-100 shadow-md shadow-violet-100/50'
+                                      : 'border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-sm'
+                                    }
+                                    ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                                  `}
+                                >
+                                  {isSelected && (
+                                    <span className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-slate-800 text-black">
+                                      <Check className="h-3.5 w-3.5 text-black" strokeWidth={2.5} />
+                                    </span>
+                                  )}
+                                  <div className="flex items-start gap-3 pr-8">
+                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                                      <Calendar className="h-5 w-5" />
+                                    </div>
+                                    <div className="min-w-0 flex-1">
+                                      <div className="min-h-8 flex items-center">
+                                        <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                          <Clock className="h-3.5 w-3.5 shrink-0" />
+                                          {new Date(date.startDate).toLocaleDateString('en-AU')}
+                                          {date.startDate !== date.endDate && (
+                                            <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                          )}
+                                        </p>
+                                      </div>
+                                      <div className="min-h-6 mt-1 flex items-center">
+                                        {date.location && date.location.toLowerCase() !== 'face to face' && (
+                                          <p className="flex items-center gap-1 text-sm text-gray-500 truncate" title={date.location}>
+                                            <MapPin className="h-3.5 w-3.5 shrink-0" />
+                                            {date.location}
+                                          </p>
+                                        )}
+                                      </div>
+                                      <div className="min-h-6 flex items-center mt-1.5">
+                                        <p className="text-xs font-medium text-violet-600">
+                                          {date.availableSlots > 0
+                                            ? `${date.availableSlots} spot${date.availableSlots === 1 ? '' : 's'} left`
+                                            : 'Fully booked'}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
-                        </SelectItem>
+                        </div>
                       ))}
-                    </SelectContent>
-                  </Select>
+                      {courseDatesByDate.length > 4 && (
+                        <div className="pt-2">
+                          <button
+                            type="button"
+                            onClick={() => setShowAllCourseDates((prev) => !prev)}
+                            className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded px-1"
+                          >
+                            {showAllCourseDates
+                              ? 'Show less'
+                              : `Show more dates (${courseDatesByDate.length - 4} more)`}
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               )}
             </CardContent>
@@ -1305,6 +1650,38 @@ export function PublicEnrollmentWizard({
           const year = currentYear + i;
           return year.toString().padStart(2, '0');
         });
+
+        // Card payment success: show success card and "Continue to LLND Assessment" button
+        if (paymentMethod === 'card' && paymentCompleted) {
+          return (
+            <Card className="border-violet-100">
+              <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Step 3: Payment
+                </CardTitle>
+                <CardDescription className="text-violet-100">
+                  Choose your payment method and provide payment details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <PaymentSuccessCard
+                  title="Payment successful"
+                  message="Your card has been charged. You can now continue to the LLND Assessment."
+                  transactionId={paymentTransactionId ?? undefined}
+                  isRedirecting={false}
+                >
+                  <Button
+                    onClick={() => setCurrentStep(4)}
+                    className="bg-violet-600 hover:bg-violet-700 text-white"
+                  >
+                    Continue to LLND Assessment
+                  </Button>
+                </PaymentSuccessCard>
+              </CardContent>
+            </Card>
+          );
+        }
 
         return (
           <Card className="border-violet-100">
@@ -1373,18 +1750,6 @@ export function PublicEnrollmentWizard({
                       </Label>
                     </div>
 
-                    <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                      paymentMethod === 'direct_pay' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}>
-                      <RadioGroupItem value="direct_pay" id="direct_pay" />
-                      <Label htmlFor="direct_pay" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <MapPin className="w-4 h-4" />
-                          <span className="font-medium">Direct Pay</span>
-                        </div>
-                        <div className="text-sm text-gray-500">Pay at the Institute </div>
-                      </Label>
-                    </div>
                   </div>
                 </RadioGroup>
               </div>
@@ -1409,6 +1774,45 @@ export function PublicEnrollmentWizard({
                     <div className="flex justify-between">
                       <span className="text-gray-600">Account No:</span>
                       <span className="font-medium">10490235</span>
+                    </div>
+                    <div className="pt-3 mt-3 border-t border-gray-200">
+                      <Label htmlFor="transactionId" className="text-sm font-medium text-gray-700">
+                        Transaction ID / Reference <span className="text-red-500">*</span>
+                      </Label>
+                      <Input
+                        id="transactionId"
+                        type="text"
+                        placeholder="Enter your bank transaction ID"
+                        value={transactionId}
+                        onChange={(e) => setTransactionId(e.target.value)}
+                        className="mt-2"
+                        disabled={paymentProcessing}
+                      />
+                    </div>
+
+                    <div className="pt-3">
+                      <Label htmlFor="paymentProof" className="text-sm font-medium text-gray-700">
+                        Payment slip upload <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="mt-2 flex items-center gap-3">
+                        <Input
+                          id="paymentProof"
+                          type="file"
+                          accept=".pdf,.jpg,.jpeg,.png"
+                          onChange={handlePaymentProofChange}
+                          disabled={paymentProcessing}
+                        />
+                        {paymentProofFile && (
+                          <Button type="button" variant="outline" onClick={removePaymentProof}>
+                            <X className="w-4 h-4" />
+                          </Button>
+                        )}
+                      </div>
+                      {paymentProofFile && (
+                        <p className="text-xs text-gray-500 mt-2">
+                          Selected: {paymentProofFile.name}
+                        </p>
+                      )}
                     </div>
                     <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
                       Please use your name and course code as the payment reference.
@@ -1600,19 +2004,21 @@ export function PublicEnrollmentWizard({
                 </div>
               )}
 
-              {/* Error Message */}
+              {/* Payment error */}
               {paymentError && (
-                <div className="p-4 bg-red-50 border-2 border-red-200 rounded-xl flex items-start gap-3">
-                  <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-                  <p className="text-red-700 text-sm leading-relaxed">{paymentError}</p>
-                </div>
+                <PaymentFailureCard
+                  message={paymentError}
+                  onDismiss={() => setPaymentError(null)}
+                  onRetry={() => setPaymentError(null)}
+                  retryLabel="Try again"
+                />
               )}
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
                   <strong>Note:</strong> {paymentMethod === 'card' 
                     ? 'Your card will be charged immediately. Upon successful payment, you will proceed to the LLND Assessment.'
-                    : paymentMethod === 'bank_transfer' || paymentMethod === 'direct_pay'
+                    : paymentMethod === 'bank_transfer'
                     ? 'You will proceed to the LLND Assessment and then the Enrollment Form. Payment can be completed later.'
                     : 'After completing the payment step, you will proceed to the LLND Assessment and then the Enrollment Form.'}
                 </p>
@@ -1624,7 +2030,13 @@ export function PublicEnrollmentWizard({
       case 4:
         if (quizCompleted) {
           const { totalQuestions, totalCorrect } = calculateQuizTotals();
-          const percentage = totalQuestions > 0 ? ((totalCorrect / totalQuestions) * 100).toFixed(2) : '0';
+          const isAutoPassAttempt = quizAttemptNumber >= AUTO_PASS_ATTEMPT;
+          const canRetry = !quizPassed && quizAttemptNumber <= MAX_REATTEMPTS;
+          const percentage = isAutoPassAttempt
+            ? '67.00'
+            : totalQuestions > 0
+              ? ((totalCorrect / totalQuestions) * 100).toFixed(2)
+              : '0';
           
           return (
             <Card className="border-violet-100">
@@ -1643,8 +2055,14 @@ export function PublicEnrollmentWizard({
                   <p className="text-gray-600 mb-4">
                     {quizPassed 
                       ? 'Congratulations! You have successfully passed the LLND assessment.'
-                      : 'You have completed the assessment. Our team will review your results.'}
+                      : 'You have completed the assessment. Please reattempt to continue.'}
                   </p>
+                  <p className="text-sm text-gray-500 mb-2">
+                    Attempt {quizAttemptNumber} of {AUTO_PASS_ATTEMPT}
+                  </p>
+                  {isAutoPassAttempt && (
+                    <p className="text-sm text-violet-600 mb-2">Auto-pass applied at 67% on 4th attempt.</p>
+                  )}
                   <div className="text-sm mb-4">
                     <p>Total: {totalCorrect}/{totalQuestions} ({percentage}%)</p>
                   </div>
@@ -1658,6 +2076,13 @@ export function PublicEnrollmentWizard({
                       </div>
                     ))}
                   </div>
+                  {canRetry && (
+                    <div className="mt-4">
+                      <Button variant="outline" onClick={handleQuizRetry}>
+                        Retry Again
+                      </Button>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -1695,7 +2120,7 @@ export function PublicEnrollmentWizard({
             <QuizSection
               section={quizSections[quizSectionIndex]}
               onComplete={handleQuizSectionComplete}
-              onCancel={onCancel}
+              
             />
           </div>
         );
@@ -1721,7 +2146,7 @@ export function PublicEnrollmentWizard({
               <CardContent>
                 <Progress value={(currentFormSection / 5) * 100} className="h-2" />
                 <div className="flex justify-between mt-4">
-                  {['Applicant', 'USI', 'Education', 'Additional', 'Privacy'].map((label, i) => (
+                  {['Applicant', 'USI', 'Education', 'Additional', 'Privacy & ID'].map((label, i) => (
                     <button
                       key={i}
                       onClick={() => setCurrentFormSection(i + 1)}
@@ -1743,6 +2168,28 @@ export function PublicEnrollmentWizard({
               </CardContent>
             </Card>
 
+            <div ref={formContainerRef}>
+            {submitValidationErrors.length > 0 && (
+              <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-red-800">
+                      Please complete the following required fields:
+                    </h3>
+                    <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-700">
+                      {submitValidationErrors.map((field, idx) => (
+                        <li key={idx}>{field}</li>
+                      ))}
+                    </ul>
+                    <p className="mt-3 text-xs text-red-600">
+                      Click the section above to jump directly to the missing field(s).
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="min-h-[400px]">
               {currentFormSection === 1 && (
                 <ApplicantSection data={formData.applicant} onChange={handleApplicantChange} errors={formErrors} />
@@ -1754,11 +2201,29 @@ export function PublicEnrollmentWizard({
                 <EducationSection data={formData.education} onChange={handleEducationChange} errors={formErrors} />
               )}
               {currentFormSection === 4 && (
-                <AdditionalInfoSection data={formData.additionalInfo} onChange={handleAdditionalInfoChange} errors={formErrors} />
+                <AdditionalInfoSection
+                  data={formData.additionalInfo}
+                  onChange={handleAdditionalInfoChange}
+                  errors={formErrors}
+                />
               )}
               {currentFormSection === 5 && (
-                <PrivacyTermsSection data={formData.privacyTerms} onChange={handlePrivacyTermsChange} errors={formErrors} />
+                <>
+                  <PrivacyTermsSection
+                    data={formData.privacyTerms}
+                    onChange={handlePrivacyTermsChange}
+                    errors={formErrors}
+                  />
+                  <div className="mt-8">
+                    <PhotoIdSection
+                      data={formData.applicant}
+                      onChange={handleApplicantChange}
+                      errors={formErrors}
+                    />
+                  </div>
+                </>
               )}
+            </div>
             </div>
 
             {/* Navigation Buttons for Form Sections 1-4 */}
@@ -1780,9 +2245,15 @@ export function PublicEnrollmentWizard({
               </div>
             )}
 
-            {/* Submit Button for Enrollment Form Step */}
+            {/* Submit Button for Enrollment Form Step (section 5: Privacy, Signature + Photo & ID) */}
             {currentFormSection === 5 && (
-              <div className="pt-4 border-t">
+              <div className="pt-4 border-t flex flex-col gap-4">
+                <div className="flex justify-between">
+                  <Button variant="outline" onClick={handleFormPrevious}>
+                    <ArrowLeft className="w-4 h-4 mr-2" />
+                    Previous
+                  </Button>
+                </div>
                 <Button
                   onClick={handleNext}
                   disabled={isSubmitting}
@@ -1867,8 +2338,7 @@ export function PublicEnrollmentWizard({
       {currentStep <= 3 && (
         <Card className="border-violet-100">
           <CardContent className="py-4">
-            <div className="flex justify-between">
-              <Button variant="ghost" onClick={onCancel}>Cancel</Button>
+            <div className="flex justify-end">
               <div className="flex gap-3">
                 {currentStep > 1 && (
                   <Button variant="outline" onClick={handlePrevious} disabled={paymentProcessing}>
@@ -1907,7 +2377,7 @@ export function PublicEnrollmentWizard({
       )}
       
       {/* Navigation for step 4 (quiz completed) */}
-      {currentStep === 4 && quizCompleted && (
+      {currentStep === 4 && quizCompleted && quizPassed && (
         <Card className="border-violet-100">
           <CardContent className="py-4">
             <div className="flex justify-end">
@@ -1925,3 +2395,5 @@ export function PublicEnrollmentWizard({
     </div>
   );
 }
+
+

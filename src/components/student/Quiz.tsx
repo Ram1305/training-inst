@@ -231,7 +231,7 @@ const quizSections: QuizSectionData[] = [
         question: '"Your trainer asks you to find information about Safety training academy on the website.\n\nSteps:\n1. Open Search Engine (e.g Google) and search for: "Safety training academy".\n2. Go to the official website with this information.\n3. Write down the URL (web address) of the page:"',
         type: 'text',
         options: [],
-        correctAnswer: 'https://safetytrainingacademy.edu.au/',
+        correctAnswer: 'https://safetytrainingacademy.edu.au',
         image: 'url-search'
       }
     ]
@@ -246,6 +246,9 @@ const extractSectionName = (sectionTitle: string): string => {
   }
   return sectionTitle;
 };
+
+const MAX_STANDARD_ATTEMPTS = 3;
+const AUTO_PASS_ATTEMPT = 4;
 
 export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
   // Get user from auth context
@@ -265,6 +268,7 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
   const [totalQuestions, setTotalQuestions] = useState(0);
   const [correctAnswers, setCorrectAnswers] = useState(0);
   const [wrongAnswers, setWrongAnswers] = useState(0);
+  const [attemptNumber, setAttemptNumber] = useState(1);
 
   // Submission state
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -301,13 +305,23 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
       if (scoreQuestion(q, newAnswers)) correct++;
     });
 
-    const rawPercentage = (correct / section.questions.length) * 100;
-    const percentage = rawPercentage < 67 ? 67 : Math.round(rawPercentage);
-    const passed = true; // Always pass after bump (scores < 67% are bumped to 67%)
+    const shouldAutoPass = attemptNumber >= AUTO_PASS_ATTEMPT;
+    
+    // On 4th attempt, auto-equalize answers to achieve exactly 67%
+    let finalCorrect = correct;
+    if (shouldAutoPass) {
+      // Calculate how many correct answers are needed for 67%
+      const requiredCorrect = Math.ceil((section.questions.length * 67) / 100);
+      finalCorrect = requiredCorrect;
+    }
+    
+    const rawPercentage = (finalCorrect / section.questions.length) * 100;
+    const percentage = Math.round(rawPercentage);
+    const passed = rawPercentage >= section.passingPercentage;
 
     const newResult = {
       section: section.title,
-      score: correct,
+      score: finalCorrect,
       percentage,
       passed
     };
@@ -342,6 +356,21 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
     setCurrentStep('results');
   };
 
+  const handleRetryAgain = () => {
+    setAttemptNumber((prev) => prev + 1);
+    setCurrentStep('guidelines');
+    setCurrentSectionIndex(0);
+    setAnswers({});
+    setSectionResults([]);
+    setTotalQuestions(0);
+    setCorrectAnswers(0);
+    setWrongAnswers(0);
+    setDeclarationChecks({ honest: false, understand: false });
+    setSubmitError(null);
+    setQuizAttemptId(null);
+    setIsSubmitting(false);
+  };
+
   // Submit quiz results to the API
   const handleSubmitResults = async () => {
     if (!user?.studentId) {
@@ -353,8 +382,13 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
     setSubmitError(null);
 
     try {
-      const passed = sectionResults.every(r => r.passed);
-      const percentage = totalQuestions > 0 ? parseFloat(((correctAnswers / totalQuestions) * 100).toFixed(2)) : 0;
+      const isAutoPassAttempt = attemptNumber >= AUTO_PASS_ATTEMPT;
+      const passed = isAutoPassAttempt ? true : sectionResults.every(r => r.passed);
+      const percentage = isAutoPassAttempt
+        ? 67
+        : totalQuestions > 0
+          ? parseFloat(((correctAnswers / totalQuestions) * 100).toFixed(2))
+          : 0;
 
       const request: SubmitQuizRequest = {
         studentId: user.studentId,
@@ -366,13 +400,12 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
         sectionResults: sectionResults.map((sr, index) => {
           const sectionData = quizSections[index];
           const sectionName = extractSectionName(sr.section);
-          const storedPercentage = sr.percentage < 67 ? 67 : sr.percentage;
           return {
             sectionName,
             totalQuestions: sectionData?.questions.length ?? 0,
             correctAnswers: sr.score,
-            sectionPercentage: storedPercentage,
-            sectionPassed: true // Always true after bump (scores < 67% are bumped to 67%)
+            sectionPercentage: isAutoPassAttempt ? 67 : sr.percentage,
+            sectionPassed: isAutoPassAttempt ? true : sr.passed
           };
         })
       };
@@ -523,8 +556,14 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
   }
 
   if (currentStep === 'results') {
-    const percentage = totalQuestions > 0 ? ((correctAnswers / totalQuestions) * 100).toFixed(2) : '0';
-    const passed = sectionResults.every(r => r.passed);
+    const isAutoPassAttempt = attemptNumber >= AUTO_PASS_ATTEMPT;
+    const percentage = isAutoPassAttempt
+      ? '67.00'
+      : totalQuestions > 0
+        ? ((correctAnswers / totalQuestions) * 100).toFixed(2)
+        : '0';
+    const passed = isAutoPassAttempt ? true : sectionResults.every(r => r.passed);
+    const canRetry = !passed && attemptNumber < AUTO_PASS_ATTEMPT;
     
     return (
       <Card className="border-violet-100">
@@ -536,6 +575,14 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
             <span className={`text-xl font-bold ${passed ? 'text-green-500' : 'text-red-500'}`}>
               {passed ? 'Your Attempt has been Passed' : 'Your Attempt has been Failed'}
             </span>
+            <p className="text-sm text-gray-600 mt-2">
+              Attempt {attemptNumber} of {AUTO_PASS_ATTEMPT}
+            </p>
+            {isAutoPassAttempt && (
+              <p className="text-sm text-violet-600 mt-1">
+                Auto-pass applied on 4th attempt with 67%.
+              </p>
+            )}
           </div>
           
           <div className="space-y-1">
@@ -591,25 +638,36 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
           )}
         </CardContent>
         <CardFooter className="flex justify-end">
-          <Button 
-            onClick={handleSubmitResults}
-            disabled={isSubmitting || !!quizAttemptId}
-            className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
-          >
-            {isSubmitting ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Submitting...
-              </>
-            ) : quizAttemptId ? (
-              <>
-                <CheckCircle2 className="mr-2 h-4 w-4" />
-                Submitted
-              </>
-            ) : (
-              'Submit Form'
+          <div className="flex items-center gap-3">
+            {canRetry && (
+              <Button
+                variant="outline"
+                onClick={handleRetryAgain}
+                disabled={isSubmitting}
+              >
+                Retry Again
+              </Button>
             )}
-          </Button>
+            <Button 
+              onClick={handleSubmitResults}
+              disabled={isSubmitting || !!quizAttemptId}
+              className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Submitting...
+                </>
+              ) : quizAttemptId ? (
+                <>
+                  <CheckCircle2 className="mr-2 h-4 w-4" />
+                  Submitted
+                </>
+              ) : (
+                'Submit Form'
+              )}
+            </Button>
+          </div>
         </CardFooter>
       </Card>
     );

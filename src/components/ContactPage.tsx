@@ -14,6 +14,7 @@ import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from './ui/WhatsAppButton';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 import contactPersonImage from '/assets/Contact-Us.jpg.bv.jpg';
+import { ResourcesDropdown } from './ui/ResourcesDropdown';
 
 interface ContactPageProps {
   onBack: () => void;
@@ -25,9 +26,10 @@ interface ContactPageProps {
   onCourseDetails?: (courseId: string) => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onGallery?: () => void;
 }
 
-export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund }: ContactPageProps) {
+export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery }: ContactPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -94,7 +96,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
             <Phone className="w-4 h-4" />
-            1300 876 097
+            1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
             <Mail className="w-4 h-4" />
@@ -262,9 +264,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                   </motion.div>
                 )}
               </div>
-              <button className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                RESOURCES
-              </button>
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery}/>
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
                 ABOUT
               </button>
@@ -412,8 +412,8 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                       </div>
                       <div>
                         <p className="text-sm text-gray-600 font-semibold mb-1">Contact Us</p>
-                        <a href="tel:1300975097" className="text-2xl font-bold text-slate-900 hover:text-cyan-600 transition-colors">
-                          1300 975 097
+                        <a href="tel:1300976097" className="text-2xl font-bold text-slate-900 hover:text-cyan-600 transition-colors">
+                          1300 976 097
                         </a>
                       </div>
                     </div>
@@ -657,7 +657,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                     <Phone className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Phone</h3>
-                  <p className="text-gray-700">1300 975 097<br />0403 415 066</p>
+                  <p className="text-gray-700">1300 976 097<br />0403 415 066</p>
                 </CardContent>
               </Card>
 

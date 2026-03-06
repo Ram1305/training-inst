@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { ArrowLeft, GraduationCap, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -13,6 +13,10 @@ interface LoginPageProps {
   onBack: () => void;
 }
 
+const REMEMBER_KEY_EMAIL = 'login_remembered_email';
+const REMEMBER_KEY_PASSWORD = 'login_remembered_password';
+const REMEMBER_KEY_CHECKED = 'login_remember_me';
+
 export function LoginPage({ onLogin, onBack }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -22,6 +26,20 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(false);
+
+  // Load saved email, password, and Remember me from last session
+  useEffect(() => {
+    try {
+      const savedEmail = localStorage.getItem(REMEMBER_KEY_EMAIL);
+      const savedPassword = localStorage.getItem(REMEMBER_KEY_PASSWORD);
+      const savedChecked = localStorage.getItem(REMEMBER_KEY_CHECKED);
+      if (savedEmail) setLoginEmail(savedEmail);
+      if (savedPassword) setLoginPassword(savedPassword);
+      if (savedChecked === 'true') setRememberMe(true);
+    } catch {
+      // ignore localStorage errors (e.g. private mode)
+    }
+  }, []);
   
   // Registration form states
   const [regName, setRegName] = useState('');
@@ -43,15 +61,28 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
       });
 
       if (response.success) {
-      onLogin({
-        id: response.data.userId,
-        name: response.data.fullName,
-        email: response.data.email,
-        role: response.data.userType.toLowerCase() as 'student' | 'teacher' | 'admin' | 'superadmin',
-        avatar: undefined,
-        studentId: response.data.studentId, 
-      });
-    }
+        try {
+          if (rememberMe) {
+            localStorage.setItem(REMEMBER_KEY_EMAIL, loginEmail);
+            localStorage.setItem(REMEMBER_KEY_PASSWORD, loginPassword);
+            localStorage.setItem(REMEMBER_KEY_CHECKED, 'true');
+          } else {
+            localStorage.removeItem(REMEMBER_KEY_EMAIL);
+            localStorage.removeItem(REMEMBER_KEY_PASSWORD);
+            localStorage.removeItem(REMEMBER_KEY_CHECKED);
+          }
+        } catch {
+          // ignore localStorage errors
+        }
+        onLogin({
+          id: response.data.userId,
+          name: response.data.fullName,
+          email: response.data.email,
+          role: response.data.userType.toLowerCase() as 'student' | 'teacher' | 'admin' | 'superadmin',
+          avatar: undefined,
+          studentId: response.data.studentId, 
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Login failed. Please try again.');
     } finally {

@@ -18,6 +18,14 @@
     <button class="btn btn-outline-secondary fw-bold rounded-3 px-3" id="btnPrint">Print A4</button>
   </div>
 
+  <!-- Student ID notice: shown when form is loaded with ?id= (pre-filled from student record) -->
+  <div id="studentIdBanner" class="student-id-banner" style="display: none;" aria-live="polite"></div>
+
+  <!-- Error message: shown when form fails to load (e.g. API error) -->
+  <div id="errorContainer" class="error-container" style="display: none;" role="alert">
+    <p id="errorMessage"></p>
+  </div>
+
   <!-- ======================= PAGE 1 ======================= -->
   <div class="sheet" id="page1">
     <!-- Header -->
@@ -960,7 +968,7 @@
     <td>
       <div class="p4Opt">
         <span class="cb" data-check="atsi" data-value="Both"></span>
-        <span class="p4Code">13</span> Aboriginal &amp; Torres Strait Islander
+        <span class="p4Code">3</span> Aboriginal &amp; Torres Strait Islander
       </div>
     </td>
   </tr>
@@ -2320,6 +2328,31 @@
     </tr>
   </table>
 
+  <!-- Photo and ID Card Section -->
+  <table class="sta-table mb-3">
+    <tr>
+      <td class="sta-bar">PHOTO AND ID CARD</td>
+    </tr>
+    <tr>
+      <td class="p7Body">
+        <div class="photoIdSection">
+          <div class="photoIdCard">
+            <div class="fw-bold p2BlueText mb-2">Primary Photo ID</div>
+            <div class="photoIdContainer" data-photo="primaryId">
+              <span class="photoIdPlaceholder">Not provided</span>
+            </div>
+          </div>
+          <div class="photoIdCard">
+            <div class="fw-bold p2BlueText mb-2">Photo</div>
+            <div class="photoIdContainer" data-photo="secondaryId">
+              <span class="photoIdPlaceholder">Not provided</span>
+            </div>
+          </div>
+        </div>
+      </td>
+    </tr>
+  </table>
+
   <!-- Footer -->
   <div class="footerCompany">
     Australian International Education and Training Pty Ltd Trading as Safety Training Academy<br/>
@@ -2330,6 +2363,12 @@
     <div>Form 36.</div>
     <div>Page 14 of 14</div>
     <div>230802</div>
+  </div>
+  <!-- Branded closing block -->
+  <div class="footerBrand">
+    <div class="footerBrandTitle">SAFETY TRAINING ACADEMY</div>
+    <div class="footerBrandSubtitle">ENROLMENT FORM</div>
+    <div class="footerBrandRto">RTO : 45234</div>
   </div>
 </div>
 

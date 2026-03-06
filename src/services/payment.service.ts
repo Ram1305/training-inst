@@ -65,17 +65,16 @@ class PaymentService {
       );
       return result;
     } catch (error: unknown) {
-      if (error instanceof Error) {
-        return {
-          success: false,
-          message: error.message,
-          errors: [error.message],
-        };
-      }
+      const err = error as Error & { responseBody?: { message?: string; errors?: string[] } };
+      const body = err?.responseBody;
+      const message = body?.message ?? (error instanceof Error ? error.message : "Unknown error occurred");
+      const errors = body?.errors?.length ? body.errors : [message];
+      // Log so you can see the real reason for 400 in the console
+      console.error("[Payment] process-card 400/error:", { message, errors, responseBody: body });
       return {
         success: false,
-        message: "Unknown error occurred",
-        errors: ["Unknown error occurred"],
+        message,
+        errors,
       };
     }
   }

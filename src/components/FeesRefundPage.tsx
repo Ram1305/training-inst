@@ -7,9 +7,11 @@ import type { CourseListItem } from '../services/course.service';
 import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from './ui/WhatsAppButton';
+import { ResourcesDropdown } from './ui/ResourcesDropdown';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 
 interface FeesRefundPageProps {
+  onGallery?: () => void;
   onBack: () => void;
   onLogin: () => void;
   onRegister: () => void;
@@ -19,11 +21,9 @@ interface FeesRefundPageProps {
   onCourseDetails?: (courseId: string) => void;
 }
 
-export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact, onBookNow, onCourseDetails }: FeesRefundPageProps) {
+export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact, onBookNow, onCourseDetails, onGallery }: FeesRefundPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
-  const [resourcesDropdownOpen, setResourcesDropdownOpen] = useState(false);
-  const [codeOfPracticeOpen, setCodeOfPracticeOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
@@ -56,7 +56,7 @@ export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
             <Phone className="w-4 h-4" />
-            1300 876 097
+            1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
             <Mail className="w-4 h-4" />
@@ -221,120 +221,7 @@ export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact
                 )}
               </div>
 
-              {/* Resources Dropdown */}
-              <div 
-                className="relative"
-                onMouseEnter={() => setResourcesDropdownOpen(true)}
-                onMouseLeave={() => {
-                  setResourcesDropdownOpen(false);
-                  setCodeOfPracticeOpen(false);
-                }}
-              >
-                <a
-                  href="#resources"
-                  className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-sm font-medium cursor-pointer"
-                >
-                  RESOURCES
-                  <ChevronDown className={`w-4 h-4 transition-transform ${resourcesDropdownOpen ? 'rotate-180' : ''}`} />
-                </a>
-                
-                {resourcesDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 top-full pt-2 z-50 w-72"
-                  >
-                    <div className="bg-slate-900 rounded-xl shadow-2xl border border-slate-700 overflow-hidden">
-                      <div className="py-2">
-                        {/* Forms */}
-                        <a
-                          href="https://safetytrainingacademy.edu.au/wp-content/uploads/2023/08/STA-49-Student-Handbook-PDF.pdf"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm font-medium"
-                        >
-                          Forms
-                        </a>
-
-                        {/* Unique Student Identifier */}
-                        <a
-                          href="#usi"
-                          className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm font-medium"
-                        >
-                          Unique Student Identifier (USI)
-                        </a>
-
-                        {/* Gallery */}
-                        <a
-                          href="#gallery"
-                          className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm font-medium"
-                        >
-                          Gallery
-                        </a>
-
-                        {/* Code of Practice - Nested Dropdown */}
-                        <div
-                          className="relative"
-                          onMouseEnter={() => setCodeOfPracticeOpen(true)}
-                          onMouseLeave={() => setCodeOfPracticeOpen(false)}
-                        >
-                          <a
-                            href="#code-of-practice"
-                            className="flex items-center justify-between px-4 py-3 text-cyan-400 hover:bg-cyan-500 hover:text-white transition-colors text-sm font-medium"
-                          >
-                            <span>Code of Practice</span>
-                            <ChevronRight className="w-4 h-4" />
-                          </a>
-
-                          {codeOfPracticeOpen && (
-                            <motion.div
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              className="absolute left-full top-0 ml-1 w-80"
-                            >
-                              <div className="bg-slate-900 rounded-xl shadow-2xl border border-slate-700 overflow-hidden">
-                                <a
-                                  href="https://safetytrainingacademy.edu.au/wp-content/uploads/2025/08/How-to-safely-remove-asbestos-COP.pdf"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm"
-                                >
-                                  Manage and Control Asbestos in Workplace
-                                </a>
-                                <a
-                                  href="https://safetytrainingacademy.edu.au/wp-content/uploads/2021/12/How-to-safely-remove-asbestos-COP-2019-1.pdf"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm"
-                                >
-                                  Asbestos Removal
-                                </a>
-                                <a
-                                  href="https://www.safework.nsw.gov.au/__data/assets/pdf_file/0015/50073/Confined-spaces-COP.pdf"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm"
-                                >
-                                  Confined Space
-                                </a>
-                                <a
-                                  href="https://www.safework.nsw.gov.au/__data/assets/pdf_file/0018/50076/Managing-the-risk-of-falls-at-workplaces-COP.pdf"
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="block px-4 py-3 text-white hover:bg-cyan-500 hover:text-white transition-colors text-sm"
-                                >
-                                  Working at Heights
-                                </a>
-                              </div>
-                            </motion.div>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
+              <ResourcesDropdown onForms={undefined} onFeesRefund={undefined} onGallery={onGallery} />
 
               <button
                 onClick={onAbout}

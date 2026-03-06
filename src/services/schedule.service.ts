@@ -176,10 +176,17 @@ class ScheduleService {
     );
   }
 
-  // Delete a schedule
-  async deleteSchedule(scheduleId: string): Promise<ApiResponse<null>> {
-    return apiService.delete<ApiResponse<null>>(
+  // Delete a schedule (deactivates if it has enrollments)
+  async deleteSchedule(scheduleId: string): Promise<ApiResponse<{ wasDeactivated?: boolean }>> {
+    return apiService.delete<ApiResponse<{ wasDeactivated?: boolean }>>(
       API_CONFIG.ENDPOINTS.SCHEDULE.BY_ID(scheduleId)
+    );
+  }
+
+  // Delete old schedules (past dates with no enrollments)
+  async deleteOldSchedules(): Promise<ApiResponse<{ deletedCount?: number }>> {
+    return apiService.delete<ApiResponse<{ deletedCount?: number }>>(
+      API_CONFIG.ENDPOINTS.SCHEDULE.OLD
     );
   }
 

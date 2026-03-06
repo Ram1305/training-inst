@@ -48,6 +48,25 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
     return () => window.removeEventListener('resize', fitCanvasToSize);
   }, [fitCanvasToSize]);
 
+  // Restore signature from data when component mounts or user navigates back
+  useEffect(() => {
+    if (!data.signatureData) return;
+
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    const img = new Image();
+    img.onload = () => {
+      fitCanvasToSize();
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+      const rect = canvas.getBoundingClientRect();
+      ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      setHasInk(true);
+    };
+    img.src = data.signatureData;
+  }, [data.signatureData, fitCanvasToSize]);
+
   const getPos = (e: React.MouseEvent | React.TouchEvent) => {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };

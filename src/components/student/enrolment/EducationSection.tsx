@@ -12,6 +12,8 @@ import {
   TRAINING_REASON_OPTIONS,
 } from '../../../types/studentEnrolment';
 
+const NEVER_ATTENDED_SCHOOL_VALUE = '02 Never attended school';
+
 interface EducationSectionProps {
   data: EducationDetails;
   onChange: (data: Partial<EducationDetails>) => void;
@@ -19,6 +21,8 @@ interface EducationSectionProps {
 }
 
 export function EducationSection({ data, onChange, errors }: EducationSectionProps) {
+  const isNeverAttendedSchool = data.schoolLevel === NEVER_ATTENDED_SCHOOL_VALUE;
+
   const handleQualLevelChange = (level: string, checked: boolean) => {
     const currentLevels = data.qualLevels || [];
     if (checked) {
@@ -59,7 +63,10 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-4">
             <RadioGroup
               value={data.schoolLevel}
-              onValueChange={(value) => onChange({ schoolLevel: value })}
+              onValueChange={(value) => onChange({
+                schoolLevel: value,
+                schoolCompleteYear: value === NEVER_ATTENDED_SCHOOL_VALUE ? '' : data.schoolCompleteYear,
+              })}
               className="space-y-2"
             >
               {SCHOOL_LEVEL_OPTIONS.slice(0, 3).map((option) => (
@@ -73,7 +80,10 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
             </RadioGroup>
             <RadioGroup
               value={data.schoolLevel}
-              onValueChange={(value) => onChange({ schoolLevel: value })}
+              onValueChange={(value) => onChange({
+                schoolLevel: value,
+                schoolCompleteYear: value === NEVER_ATTENDED_SCHOOL_VALUE ? '' : data.schoolCompleteYear,
+              })}
               className="space-y-2"
             >
               {SCHOOL_LEVEL_OPTIONS.slice(3).map((option) => (
@@ -86,16 +96,21 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
               ))}
             </RadioGroup>
           </div>
+          <p className="text-sm text-gray-500 italic mb-4">Prior education is optional. Year completed is not required if you never attended school.</p>
           {errors.schoolLevel && <p className="text-sm text-red-500 mb-4">{errors.schoolLevel}</p>}
 
           <hr className="my-4" />
 
           <div className="grid gap-4">
+            {data.schoolLevel === '02 Never attended school' ? (
+              <p className="text-sm text-gray-500">Year completed and school details are not required.</p>
+            ) : (
+            <>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="schoolCompleteYear" className="flex items-center gap-1">
                   Year completed
-                  <span className="text-red-500 font-bold">*</span>
+                  {!isNeverAttendedSchool && <span className="text-red-500 font-bold">*</span>}
                 </Label>
                 <Input
                   id="schoolCompleteYear"
@@ -104,9 +119,11 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                   max={2100}
                   value={data.schoolCompleteYear}
                   onChange={(e) => onChange({ schoolCompleteYear: e.target.value })}
-                  className={errors.schoolCompleteYear ? 'border-red-500' : ''}
+                  disabled={isNeverAttendedSchool}
+                  placeholder={isNeverAttendedSchool ? 'Not required for never attended school' : ''}
+                  className={!isNeverAttendedSchool && errors.schoolCompleteYear ? 'border-red-500' : ''}
                 />
-                {errors.schoolCompleteYear && <p className="text-sm text-red-500">{errors.schoolCompleteYear}</p>}
+                {!isNeverAttendedSchool && errors.schoolCompleteYear && <p className="text-sm text-red-500">{errors.schoolCompleteYear}</p>}
               </div>
 
               <div className="space-y-2 md:col-span-2">
@@ -136,9 +153,8 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
             {data.schoolInAus ? (
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="schoolState" className="flex items-center gap-1">
+                  <Label htmlFor="schoolState">
                     State
-                    <span className="text-red-500 font-bold">*</span>
                   </Label>
                   <Input
                     id="schoolState"
@@ -151,7 +167,6 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                 <div className="space-y-2">
                   <Label htmlFor="schoolPostcode" className="flex items-center gap-1">
                     Postcode
-                    <span className="text-red-500 font-bold">*</span>
                   </Label>
                   <Input
                     id="schoolPostcode"
@@ -159,9 +174,7 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                     onChange={(e) => onChange({ schoolPostcode: e.target.value })}
                     maxLength={4}
                     pattern="\d{4}"
-                    className={errors.schoolPostcode ? 'border-red-500' : ''}
                   />
-                  {errors.schoolPostcode && <p className="text-sm text-red-500">{errors.schoolPostcode}</p>}
                 </div>
               </div>
             ) : (
@@ -178,6 +191,8 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                 />
                 {errors.schoolCountry && <p className="text-sm text-red-500">{errors.schoolCountry}</p>}
               </div>
+            )}
+            </>
             )}
           </div>
         </CardContent>
@@ -261,19 +276,16 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                 <div className="space-y-2">
                   <Label htmlFor="qualEvidenceUpload" className="flex items-center gap-1">
                     Upload qualification evidence
-                    <span className="text-red-500 font-bold">*</span>
                   </Label>
                   <Input
                     id="qualEvidenceUpload"
                     type="file"
                     accept=".pdf,.jpg,.jpeg,.png"
                     onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
-                    className={errors.qualEvidenceUpload ? 'border-red-500' : ''}
                   />
                   <p className="text-sm text-gray-500">
                     Certificate, Statement of Attainment, Transcript, or overseas equivalent.
                   </p>
-                  {errors.qualEvidenceUpload && <p className="text-sm text-red-500">{errors.qualEvidenceUpload}</p>}
                 </div>
               </CardContent>
             </Card>

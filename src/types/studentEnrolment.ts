@@ -170,7 +170,7 @@ export const initialApplicantDetails: ApplicantDetails = {
   emergencyName: '',
   emergencyRelationship: '',
   emergencyContactNumber: '',
-  emergencyPermission: '',
+  emergencyPermission: 'No',
 };
 
 export const initialUSIDetails: USIDetails = {
@@ -260,7 +260,7 @@ export const SCHOOL_LEVEL_OPTIONS = [
   { value: '10 Year 10 or equivalent', label: '10 — Year 10 or equivalent' },
   { value: '09 Year 9 or equivalent', label: '09 — Year 9 or equivalent' },
   { value: '08 Year 8 or below', label: '08 — Year 8 or below' },
-  { value: '02 Never attended school', label: '02 — Never attended school' },
+  { value: '02 Never attended school', label: 'Never attended school' },
 ] as const;
 
 export const QUALIFICATION_LEVELS = [
@@ -280,6 +280,7 @@ export const EMPLOYMENT_STATUS_OPTIONS = [
   { value: 'Self-employed', label: 'Self-employed' },
   { value: 'Unemployed seeking', label: 'Unemployed — seeking work' },
   { value: 'Not seeking', label: 'Not employed — not seeking' },
+  { value: 'Casual employee', label: 'Casual employee' },
 ] as const;
 
 export const TRAINING_REASON_OPTIONS = [
@@ -322,3 +323,4 @@ export const USI_ID_TYPE_OPTIONS = [
 ] as const;
 
 export const MEDICARE_COLOR_OPTIONS = ['Green', 'Yellow', 'Blue'] as const;
+
