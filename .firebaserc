@@ -1,8 +1,0 @@
-{
-  "projects": {
-    "default": "training-institute-lms-dev",
-    "staging": "safety-training-academy"
-  },
-  "targets": {},
-  "etags": {}
-}
