@@ -18,6 +18,19 @@ export interface ProcessCardPaymentRequest {
   cvv: string;
 }
 
+export interface ProcessCardPaymentExistingStudentRequest {
+  studentId: string;
+  courseId: string;
+  selectedCourseDateId: string;
+  amountCents: number;
+  currency?: string;
+  cardName: string;
+  cardNumber: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+}
+
 export interface CardPaymentResult {
   success: boolean;
   transactionId: number;
@@ -71,6 +84,35 @@ class PaymentService {
       const errors = body?.errors?.length ? body.errors : [message];
       // Log so you can see the real reason for 400 in the console
       console.error("[Payment] process-card 400/error:", { message, errors, responseBody: body });
+      return {
+        success: false,
+        message,
+        errors,
+      };
+    }
+  }
+
+  /**
+   * Process a credit card payment for an existing logged-in student and create enrollment
+   */
+  async processCardPaymentExistingStudent(
+    request: ProcessCardPaymentExistingStudentRequest
+  ): Promise<ApiResponse<CardPaymentResult>> {
+    try {
+      const result = await apiService.post<ApiResponse<CardPaymentResult>>(
+        "/payment/process-card-existing-student",
+        {
+          ...request,
+          currency: request.currency || "AUD",
+        }
+      );
+      return result;
+    } catch (error: unknown) {
+      const err = error as Error & { responseBody?: { message?: string; errors?: string[] } };
+      const body = err?.responseBody;
+      const message = body?.message ?? (error instanceof Error ? error.message : "Unknown error occurred");
+      const errors = body?.errors?.length ? body.errors : [message];
+      console.error("[Payment] process-card-existing-student 400/error:", { message, errors, responseBody: body });
       return {
         success: false,
         message,

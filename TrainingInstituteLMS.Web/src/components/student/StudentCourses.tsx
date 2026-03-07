@@ -18,7 +18,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Progress } from '../ui/progress';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Quiz } from './Quiz';
-import { PaymentUpload } from './PaymentUpload';
+import { EnrollmentPaymentModal } from './EnrollmentPaymentModal';
 import { StudentEnrollmentForm } from './StudentEnrollmentForm';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useQuizStatus } from '../../hooks/useQuizStatus';
@@ -228,9 +228,15 @@ export function StudentCourses() {
   };
 
   const handlePaymentCancel = () => {
-    // No enrollment was created, so just close the dialog
     setShowPaymentUpload(false);
     setSelectedCourseForPayment(null);
+  };
+
+  const handleCreditCardSuccess = async () => {
+    await Promise.all([fetchAvailableCourses(), fetchEnrolledCourses()]);
+    setShowPaymentUpload(false);
+    setSelectedCourseForPayment(null);
+    alert('Payment successful! Please complete the LLND Assessment in your enrolled courses section.');
   };
 
   const handleDateSelect = (courseId: string, dateId: string) => {
@@ -290,12 +296,14 @@ export function StudentCourses() {
     );
   }
 
-  if (showPaymentUpload && selectedCourseForPayment) {
+  if (showPaymentUpload && selectedCourseForPayment && user?.studentId) {
     return (
-      <PaymentUpload
-        courseName={selectedCourseForPayment.courseName}
-        coursePrice={selectedCourseForPayment.price}
-        onUpload={handlePaymentUpload}
+      <EnrollmentPaymentModal
+        course={selectedCourseForPayment}
+        selectedDateId={selectedDates[selectedCourseForPayment.courseId]}
+        studentId={user.studentId}
+        onBankTransferSubmit={handlePaymentUpload}
+        onCreditCardSuccess={handleCreditCardSuccess}
         onCancel={handlePaymentCancel}
       />
     );
