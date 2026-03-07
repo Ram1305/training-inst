@@ -69,6 +69,55 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Payment
         }
 
         /// <summary>
+        /// Process a credit card payment for an existing logged-in student and create enrollment
+        /// </summary>
+        [HttpPost("process-card-existing-student")]
+        public async Task<IActionResult> ProcessCardPaymentExistingStudent([FromBody] ProcessCardPaymentExistingStudentRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errorList = ModelState
+                    .Where(ms => ms.Value?.Errors.Count > 0)
+                    .SelectMany(ms => ms.Value!.Errors.Select(e =>
+                        string.IsNullOrEmpty(ms.Key) ? e.ErrorMessage ?? "Invalid value" : $"{ms.Key}: {e.ErrorMessage ?? "Invalid value"}"))
+                    .ToList();
+                var message = errorList.Count > 0 ? "Validation failed." : "Invalid request data.";
+                return BadRequest(ApiResponse<CardPaymentResultResponseDto>.FailureResponse(message, errorList));
+            }
+
+            try
+            {
+                var result = await _paymentGatewayService.ProcessCardPaymentExistingStudentAsync(request);
+
+                if (result.Success)
+                {
+                    _logger.LogInformation(
+                        "Card payment successful for existing student {StudentId} - TransactionId: {TransactionId}",
+                        request.StudentId, result.TransactionId);
+
+                    return Ok(ApiResponse<CardPaymentResultResponseDto>.SuccessResponse(result, "Payment processed successfully"));
+                }
+                else
+                {
+                    var exactError = result.ErrorMessages ?? result.ResponseMessage ?? "Payment failed";
+                    _logger.LogWarning(
+                        "Card payment failed for existing student {StudentId} - Error: {Error}",
+                        request.StudentId, exactError);
+
+                    return BadRequest(ApiResponse<CardPaymentResultResponseDto>.FailureResponse(
+                        exactError,
+                        new[] { exactError }));
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing card payment for existing student {StudentId}", request.StudentId);
+                return StatusCode(500, ApiResponse<CardPaymentResultResponseDto>.FailureResponse(
+                    $"An error occurred while processing your payment: {ex.Message}"));
+            }
+        }
+
+        /// <summary>
         /// Health check for payment gateway
         /// </summary>
         [HttpGet("health")]

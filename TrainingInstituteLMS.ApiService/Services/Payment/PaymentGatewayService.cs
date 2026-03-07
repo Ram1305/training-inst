@@ -317,6 +317,325 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
             }
         }
 
+        public async Task<CardPaymentResultResponseDto> ProcessCardPaymentExistingStudentAsync(ProcessCardPaymentExistingStudentRequestDto request)
+        {
+            var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8]}";
+            var invoiceReference = $"LMS-{request.CourseId.ToString()[..8]}-{DateTime.UtcNow:yyyyMMdd}";
+
+            try
+            {
+                var student = await _context.Students
+                    .Include(s => s.User)
+                    .FirstOrDefaultAsync(s => s.StudentId == request.StudentId && s.IsActive);
+                if (student == null || student.User == null)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Student not found or inactive",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var course = await _context.Courses
+                    .Include(c => c.Category)
+                    .FirstOrDefaultAsync(c => c.CourseId == request.CourseId && c.IsActive);
+                if (course == null)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Course not found or inactive",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var courseDate = await _context.CourseDates
+                    .FirstOrDefaultAsync(d => d.CourseDateId == request.SelectedCourseDateId
+                                              && d.CourseId == request.CourseId
+                                              && d.IsActive
+                                              && d.ScheduledDate.Date >= DateTime.UtcNow.Date);
+                if (courseDate == null)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Invalid or unavailable course date selected",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                if (courseDate.MaxCapacity.HasValue && courseDate.CurrentEnrollments >= courseDate.MaxCapacity.Value)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Selected course date is fully booked",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var fullName = student.FullName ?? student.User.FullName ?? "Student";
+                var email = student.Email ?? student.User.Email ?? "";
+                var phone = student.PhoneNumber ?? student.User.PhoneNumber ?? "";
+
+                var ewayRequest = new EwayDirectPaymentRequest
+                {
+                    Customer = new EwayCustomer
+                    {
+                        FirstName = GetFirstName(fullName),
+                        LastName = GetLastName(fullName),
+                        Email = email,
+                        Phone = phone,
+                        Reference = email,
+                        CardDetails = new EwayCardDetails
+                        {
+                            Name = request.CardName,
+                            Number = request.CardNumber,
+                            ExpiryMonth = request.ExpiryMonth,
+                            ExpiryYear = request.ExpiryYear,
+                            CVN = request.CVV
+                        }
+                    },
+                    Payment = new EwayPayment
+                    {
+                        TotalAmount = request.AmountCents,
+                        InvoiceNumber = invoiceNumber,
+                        InvoiceDescription = GetEwayInvoiceDescription(course.CourseDescription, course.CourseName),
+                        InvoiceReference = invoiceReference,
+                        CurrencyCode = request.Currency ?? "AUD"
+                    },
+                    TransactionType = "Purchase",
+                    Method = "ProcessPayment"
+                };
+
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var json = JsonSerializer.Serialize(ewayRequest, jsonOptions);
+                _logger.LogInformation("eWay Request (existing student): {Request}", json);
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync("/Transaction", content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                _logger.LogInformation("eWay API Response Status: {Status}, Body: {Response}", response.StatusCode, responseBody);
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    _logger.LogError("eWay API Error: {Status} - {Response}", response.StatusCode, responseBody);
+                    var gatewayError = string.IsNullOrWhiteSpace(responseBody)
+                        ? $"Payment gateway error ({(int)response.StatusCode} {response.StatusCode}). Please try again or contact support."
+                        : $"Payment gateway error: {responseBody.Trim().TrimEnd('.')}";
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = gatewayError,
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var deserializeOptions = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    NumberHandling = JsonNumberHandling.AllowReadingFromString
+                };
+                var ewayResponse = JsonSerializer.Deserialize<EwayTransactionResponse>(responseBody, deserializeOptions);
+
+                var paymentSuccess = ewayResponse?.TransactionStatus == true;
+                var responseCode = ewayResponse?.ResponseCode;
+                var responseMessage = ewayResponse?.ResponseMessage;
+                var transactionId = ewayResponse?.TransactionID ?? 0;
+                var authorisationCode = ewayResponse?.AuthorisationCode;
+
+                _logger.LogInformation(
+                    "Payment processed for existing student {StudentId} - Transaction ID: {TransactionId}, Success: {Success}",
+                    request.StudentId, transactionId, paymentSuccess);
+
+                if (!paymentSuccess)
+                {
+                    var userFriendlyMessage = EwayResponseHelper.GetUserFriendlyMessage(responseMessage);
+                    var errorDetails = ewayResponse?.Errors != null && ewayResponse.Errors.Count > 0
+                        ? string.Join(", ", ewayResponse.Errors)
+                        : null;
+
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        TransactionId = transactionId,
+                        ResponseCode = responseCode,
+                        ResponseMessage = userFriendlyMessage,
+                        ErrorMessages = errorDetails ?? userFriendlyMessage,
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var enrollmentId = await CreateEnrollmentForExistingStudentAsync(
+                    request.StudentId,
+                    student,
+                    request.CourseId,
+                    request.SelectedCourseDateId,
+                    request.AmountCents,
+                    course,
+                    courseDate,
+                    transactionId,
+                    invoiceNumber);
+
+                try
+                {
+                    await _emailService.SendEnrollmentConfirmationAsync(
+                        email,
+                        fullName,
+                        email,
+                        phone ?? string.Empty,
+                        null,
+                        course.CourseName,
+                        course.CourseCode ?? string.Empty,
+                        courseDate.ScheduledDate,
+                        courseDate.StartTime,
+                        courseDate.EndTime,
+                        courseDate.Location,
+                        invoiceNumber,
+                        DateTime.UtcNow,
+                        request.AmountCents / 100m,
+                        "Credit Card",
+                        string.Empty,
+                        string.Empty);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Failed to send enrollment confirmation email to {Email}", email);
+                }
+
+                return new CardPaymentResultResponseDto
+                {
+                    Success = true,
+                    TransactionId = transactionId,
+                    ResponseCode = responseCode,
+                    ResponseMessage = "Payment successful!",
+                    AuthorisationCode = authorisationCode,
+                    AmountPaidCents = request.AmountCents,
+                    InvoiceNumber = invoiceNumber,
+                    UserId = student.UserId,
+                    StudentId = student.StudentId,
+                    EnrollmentId = enrollmentId,
+                    StudentName = fullName,
+                    Email = email,
+                    CourseName = course.CourseName,
+                    CourseCode = course.CourseCode,
+                    SelectedDate = courseDate.ScheduledDate,
+                    PaymentStatus = "Verified",
+                    EnrollmentStatus = "Active",
+                    BookedAt = DateTime.UtcNow
+                };
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "JSON parsing error processing card payment for existing student {StudentId}", request.StudentId);
+                return new CardPaymentResultResponseDto
+                {
+                    Success = false,
+                    ErrorMessages = $"Payment gateway response error: {jsonEx.Message}",
+                    AmountPaidCents = request.AmountCents,
+                    InvoiceNumber = invoiceNumber
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing card payment for existing student {StudentId}", request.StudentId);
+                return new CardPaymentResultResponseDto
+                {
+                    Success = false,
+                    ErrorMessages = ex.Message,
+                    AmountPaidCents = request.AmountCents,
+                    InvoiceNumber = invoiceNumber
+                };
+            }
+        }
+
+        private async Task<Guid> CreateEnrollmentForExistingStudentAsync(
+            Guid studentId,
+            Student student,
+            Guid courseId,
+            Guid selectedCourseDateId,
+            int amountCents,
+            Data.Entities.Courses.Course course,
+            Data.Entities.Courses.CourseDate courseDate,
+            long transactionId,
+            string invoiceNumber)
+        {
+            var strategy = _context.Database.CreateExecutionStrategy();
+
+            return await strategy.ExecuteAsync(async () =>
+            {
+                using var dbTransaction = await _context.Database.BeginTransactionAsync();
+
+                try
+                {
+                    var enrollment = new Data.Entities.Enrollments.Enrollment
+                    {
+                        EnrollmentId = Guid.NewGuid(),
+                        StudentId = studentId,
+                        CourseId = courseId,
+                        QuizAttemptId = null,
+                        SelectedExamDateId = selectedCourseDateId,
+                        AmountPaid = amountCents / 100m,
+                        PaymentStatus = "Verified",
+                        IsAdminBypassed = false,
+                        QuizCompleted = false,
+                        Status = "Active",
+                        EnrolledAt = DateTime.UtcNow,
+                        PaymentVerifiedAt = DateTime.UtcNow
+                    };
+                    _context.Enrollments.Add(enrollment);
+
+                    var paymentProof = new PaymentProof
+                    {
+                        PaymentProofId = Guid.NewGuid(),
+                        EnrollmentId = enrollment.EnrollmentId,
+                        StudentId = studentId,
+                        ReceiptFileUrl = $"card-payment-{transactionId}",
+                        TransactionId = transactionId.ToString(),
+                        AmountPaid = amountCents / 100m,
+                        PaymentDate = DateTime.UtcNow,
+                        PaymentMethod = "Credit Card",
+                        BankName = "eWay Payment Gateway",
+                        ReferenceNumber = invoiceNumber,
+                        UploadedAt = DateTime.UtcNow,
+                        Status = "Verified",
+                        VerifiedAt = DateTime.UtcNow
+                    };
+                    _context.PaymentProofs.Add(paymentProof);
+
+                    courseDate.CurrentEnrollments++;
+                    course.EnrolledStudentsCount++;
+
+                    await _context.SaveChangesAsync();
+                    await dbTransaction.CommitAsync();
+
+                    _logger.LogInformation(
+                        "Created enrollment for existing student {StudentId} - EnrollmentId: {EnrollmentId}",
+                        studentId, enrollment.EnrollmentId);
+
+                    return enrollment.EnrollmentId;
+                }
+                catch
+                {
+                    await dbTransaction.RollbackAsync();
+                    throw;
+                }
+            });
+        }
+
         private async Task<(Guid UserId, Guid StudentId, Guid EnrollmentId)> CreateEnrollmentAfterPaymentAsync(
             ProcessCardPaymentRequestDto request,
             Data.Entities.Courses.Course course,
