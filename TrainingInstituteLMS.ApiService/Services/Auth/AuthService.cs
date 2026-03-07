@@ -1,6 +1,7 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
+using TrainingInstituteLMS.Data.Entities.Companies;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.Auth;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Auth;
@@ -19,7 +20,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
         public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
         {
             var user = await _context.Users
-                .Include(u => u.Student) // Include Student navigation property
+                .Include(u => u.Student)
+                .Include(u => u.Company)
                 .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
 
             if (user == null)
@@ -42,32 +44,46 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
 
         public async Task<AuthResponseDto?> RegisterAsync(RegisterRequestDto request)
         {
-            // Check if email already exists
             if (await EmailExistsAsync(request.Email))
             {
                 return null;
             }
 
-            // Create User
+            var isCompany = string.Equals(request.AccountType, "Company", StringComparison.OrdinalIgnoreCase);
+            var fullName = isCompany ? (request.CompanyName ?? request.FullName) : request.FullName;
+
             var user = new User
             {
                 UserId = Guid.NewGuid(),
-                FullName = request.FullName,
+                FullName = fullName,
                 Email = request.Email,
-                PhoneNumber = request.PhoneNumber,
+                PhoneNumber = isCompany ? null : request.PhoneNumber,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                UserType = "Student", // Default user type
+                UserType = isCompany ? "Company" : "Student",
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
-                CreatedBy = null, // Self-registration
+                CreatedBy = null,
                 CreatedByRole = null
             };
 
             _context.Users.Add(user);
 
-            // Create corresponding Student record for Student user type
             Student? student = null;
-            if (user.UserType == "Student")
+            Company? company = null;
+
+            if (isCompany)
+            {
+                company = new Company
+                {
+                    CompanyId = Guid.NewGuid(),
+                    UserId = user.UserId,
+                    CompanyName = request.CompanyName ?? fullName,
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Companies.Add(company);
+            }
+            else
             {
                 student = new Student
                 {
@@ -79,14 +95,13 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
-
                 _context.Students.Add(student);
             }
 
             await _context.SaveChangesAsync();
 
-            // Set the student navigation property for mapping
             user.Student = student;
+            user.Company = company;
 
             return MapToAuthResponse(user);
         }
@@ -99,7 +114,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
         public async Task<AuthResponseDto?> GetUserByIdAsync(Guid userId)
         {
             var user = await _context.Users
-                .Include(u => u.Student) // Include Student navigation property
+                .Include(u => u.Student)
+                .Include(u => u.Company)
                 .FirstOrDefaultAsync(u => u.UserId == userId && u.IsActive);
 
             return user == null ? null : MapToAuthResponse(user);
@@ -116,7 +132,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
                 PhoneNumber = user.PhoneNumber,
                 LastLoginAt = user.LastLoginAt,
                 IsActive = user.IsActive,
-                StudentId = user.Student?.StudentId // Include StudentId from navigation property
+                StudentId = user.Student?.StudentId,
+                CompanyId = user.Company?.CompanyId
             };
         }
     }

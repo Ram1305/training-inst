@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Linq;
@@ -9,9 +9,20 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.Auth
 {
     public class RegisterRequestDto
     {
+        /// <summary>
+        /// "Individual" (default) or "Company"
+        /// </summary>
+        public string AccountType { get; set; } = "Individual";
+
         [Required(ErrorMessage = "Full name is required")]
         [StringLength(200, MinimumLength = 2, ErrorMessage = "Full name must be between 2 and 200 characters")]
         public string FullName { get; set; } = string.Empty;
+
+        /// <summary>
+        /// Required when AccountType is "Company"
+        /// </summary>
+        [StringLength(200, MinimumLength = 2, ErrorMessage = "Company name must be between 2 and 200 characters")]
+        public string? CompanyName { get; set; }
 
         [Required(ErrorMessage = "Email is required")]
         [EmailAddress(ErrorMessage = "Invalid email format")]

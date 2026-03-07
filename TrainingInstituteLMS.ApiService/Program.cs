@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TrainingInstituteLMS.ApiService.Configuration;
 using TrainingInstituteLMS.ApiService.Services.Auth;
@@ -10,6 +10,7 @@ using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.ApiService.Services.Quiz;
 using TrainingInstituteLMS.ApiService.Services.Schedule;
 using TrainingInstituteLMS.ApiService.Services.StudentEnrollment;
+using TrainingInstituteLMS.ApiService.Services.CompanyManagement;
 using TrainingInstituteLMS.ApiService.Services.StudentManagement;
 using TrainingInstituteLMS.ApiService.Services.SuperAdmin;
 using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
@@ -81,6 +82,9 @@ builder.Services.AddScoped<IAdminManagementService, AdminManagementService>();
 
 // Register Student Management Service
 builder.Services.AddScoped<IStudentManagementService, StudentManagementService>();
+
+// Register Company Management Service
+builder.Services.AddScoped<ICompanyManagementService, CompanyManagementService>();
 
 // Add Quiz Service
 builder.Services.AddScoped<IQuizService, QuizService>();

@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Certifications;
+using TrainingInstituteLMS.Data.Entities.Companies;
 using TrainingInstituteLMS.Data.Entities.Courses;
 using TrainingInstituteLMS.Data.Entities.Enrollments;
 using TrainingInstituteLMS.Data.Entities.Exams;
@@ -31,6 +32,7 @@ namespace TrainingInstituteLMS.Data.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<UserRole> UserRoles { get; set; }
         public DbSet<Student> Students { get; set; }
+        public DbSet<Company> Companies { get; set; }
         public DbSet<PreEnrollmentQuizAttempt> PreEnrollmentQuizAttempts { get; set; }
         public DbSet<QuizSectionResult> QuizSectionResults { get; set; }
         public DbSet<AdminBypass> AdminBypasses { get; set; }
@@ -85,6 +87,13 @@ namespace TrainingInstituteLMS.Data.Data
                 .HasOne(u => u.Student)
                 .WithOne(s => s.User)
                 .HasForeignKey<Student>(s => s.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // User -> Company
+            modelBuilder.Entity<User>()
+                .HasOne(u => u.Company)
+                .WithOne(c => c.User)
+                .HasForeignKey<Company>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
             // AdminBypass relationships

@@ -1,10 +1,11 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using TrainingInstituteLMS.Data.Entities.Companies;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.Data.Entities.System;
 
@@ -51,6 +52,7 @@ namespace TrainingInstituteLMS.Data.Entities.Auth
         public virtual User? Creator { get; set; }
 
         public virtual Student? Student { get; set; }
+        public virtual Company? Company { get; set; }
         public virtual ICollection<UserRole> UserRoles { get; set; } = new List<UserRole>();
         public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
     }
