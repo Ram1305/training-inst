@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
+  LayoutDashboard,
+  BookOpen,
   Users,
   DollarSign,
   LogOut,
@@ -9,79 +11,61 @@ import {
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type { User as UserType } from '../App';
-import { AdminStudents } from './admin/AdminStudents';
-import { AdminCompanyPayments } from './admin/AdminCompanyPayments';
-import { adminPaymentService } from '../services/adminPayment.service';
+import { CompanyDashboard } from './company/CompanyDashboard';
+import { CompanyCourses } from './company/CompanyCourses';
+import { CompanyPayments } from './company/CompanyPayments';
+import { CompanyStudentsEnrolled } from './company/CompanyStudentsEnrolled';
+import { companyManagementService } from '../services/companyManagement.service';
+import type { CompanyResponse } from '../services/companyManagement.service';
 
-interface AdminPortalProps {
+interface CompanyPortalProps {
   user: UserType;
   onLogout: () => void;
   onNavigateToLanding?: () => void;
 }
 
-type AdminPage = 'students' | 'company-payments';
+type CompanyPage = 'dashboard' | 'courses' | 'payments' | 'students-enrolled';
 
-const VALID_ADMIN_PAGES: AdminPage[] = ['students', 'company-payments'];
+const VALID_COMPANY_PAGES: CompanyPage[] = ['dashboard', 'courses', 'payments', 'students-enrolled'];
 
-function getInitialPageFromUrl(): AdminPage {
-  if (typeof window === 'undefined') return 'students';
+function getInitialTabFromUrl(): CompanyPage {
+  if (typeof window === 'undefined') return 'dashboard';
   const tab = new URLSearchParams(window.location.search).get('tab');
-  if (tab && (VALID_ADMIN_PAGES as string[]).includes(tab)) return tab as AdminPage;
-  return 'students';
+  if (tab && (VALID_COMPANY_PAGES as string[]).includes(tab)) return tab as CompanyPage;
+  return 'dashboard';
 }
 
-export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortalProps) {
-  const [currentPage, setCurrentPage] = useState<AdminPage>(getInitialPageFromUrl);
+export function CompanyPortal({ user, onLogout, onNavigateToLanding }: CompanyPortalProps) {
+  const [currentPage, setCurrentPage] = useState<CompanyPage>(getInitialTabFromUrl);
   const [navbarHidden, setNavbarHidden] = useState(false);
-  const [companyPaymentCount, setCompanyPaymentCount] = useState(0);
-  const [statsLoading, setStatsLoading] = useState(true);
+  const [company, setCompany] = useState<CompanyResponse | null>(null);
+  const [companyLoading, setCompanyLoading] = useState(true);
+
+  const navigation = [
+    { id: 'dashboard' as const, name: 'Dashboard', icon: LayoutDashboard },
+    { id: 'courses' as const, name: 'Courses', icon: BookOpen },
+    { id: 'payments' as const, name: 'Payments', icon: DollarSign },
+    { id: 'students-enrolled' as const, name: 'Student Enrolled', icon: Users },
+  ];
 
   useEffect(() => {
     let cancelled = false;
-    async function loadStats() {
-      setStatsLoading(true);
+    async function fetchCompany() {
+      setCompanyLoading(true);
       try {
-        const statsRes = await adminPaymentService.getPaymentStats();
-        if (!cancelled && statsRes.success && statsRes.data) {
-          const count = statsRes.data.companyPaymentCount ?? 0;
-          setCompanyPaymentCount(count);
+        const response = await companyManagementService.getCompanyByUserId(user.id);
+        if (!cancelled && response.success && response.data) {
+          setCompany(response.data);
         }
       } catch {
-        try {
-          const payRes = await adminPaymentService.getCompanyPayments({ pageSize: 50 });
-          if (!cancelled && payRes.success && payRes.data) {
-            const list = payRes.data.paymentProofs ?? [];
-            const total = payRes.data.totalCount ?? list.length;
-            setCompanyPaymentCount(Math.max(total, list.length));
-          }
-        } catch {
-          if (!cancelled) setCompanyPaymentCount(0);
-        }
+        if (!cancelled) setCompany(null);
       } finally {
-        if (!cancelled) setStatsLoading(false);
+        if (!cancelled) setCompanyLoading(false);
       }
     }
-    loadStats();
+    fetchCompany();
     return () => { cancelled = true; };
-  }, []);
-
-  const showCompanyPayment = !statsLoading && companyPaymentCount > 0;
-
-  useEffect(() => {
-    if (!statsLoading && !showCompanyPayment && currentPage === 'company-payments') {
-      setCurrentPage('students');
-    }
-  }, [statsLoading, showCompanyPayment, currentPage]);
-
-  const baseNavigation: { id: AdminPage; name: string; icon: typeof Users }[] = [
-    { id: 'students', name: 'Students & Companies', icon: Users },
-  ];
-
-  const companyPaymentNav = showCompanyPayment
-    ? [{ id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign }]
-    : [];
-
-  const navigation = [...baseNavigation, ...companyPaymentNav];
+  }, [user.id]);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -94,13 +78,28 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
   }, [currentPage]);
 
   const renderPage = () => {
+    if (companyLoading) {
+      return (
+        <div className="flex items-center justify-center py-16">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-violet-600 mx-auto" />
+            <p className="mt-4 text-gray-600">Loading company dashboard...</p>
+          </div>
+        </div>
+      );
+    }
+
     switch (currentPage) {
-      case 'students':
-        return <AdminStudents />;
-      case 'company-payments':
-        return <AdminCompanyPayments />;
+      case 'dashboard':
+        return <CompanyDashboard company={company} userName={user.name} />;
+      case 'courses':
+        return <CompanyCourses />;
+      case 'payments':
+        return <CompanyPayments companyId={company?.companyId} />;
+      case 'students-enrolled':
+        return <CompanyStudentsEnrolled companyId={company?.companyId} />;
       default:
-        return <AdminStudents />;
+        return <CompanyDashboard company={company} userName={user.name} />;
     }
   };
 
@@ -113,7 +112,10 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setNavbarHidden(!navbarHidden)}
+                onClick={() => {
+                  const newState = !navbarHidden;
+                  setNavbarHidden(newState);
+                }}
                 className="gap-2"
                 title={navbarHidden ? 'Show Navigation' : 'Hide Navigation'}
               >
@@ -122,7 +124,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
                   {navbarHidden ? 'Show Nav' : 'Hide Nav'}
                 </span>
               </Button>
-              <div className="tracking-tight">Admin Portal</div>
+              <div className="tracking-tight">Company Portal</div>
               {onNavigateToLanding && (
                 <Button
                   variant="outline"

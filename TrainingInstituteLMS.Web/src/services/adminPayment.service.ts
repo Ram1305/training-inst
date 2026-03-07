@@ -1,158 +1,129 @@
 import { apiService } from './api.service';
 import { API_CONFIG } from '../config/api.config';
 
-// Types
 export interface AdminPaymentProof {
   paymentProofId: string;
   enrollmentId: string;
   studentId: string;
-  studentName: string;
-  studentEmail: string;
+  studentName?: string;
+  studentEmail?: string;
   courseId: string;
-  courseCode: string;
   courseName: string;
-  coursePrice: number;
-  receiptFileUrl: string;
-  receiptFileName: string;
-  transactionId: string;
   amountPaid: number;
   paymentDate: string;
-  paymentMethod?: string;
-  bankName?: string;
-  referenceNumber?: string;
-  uploadedAt: string;
-  status: 'Pending' | 'Verified' | 'Rejected';
-  verifiedBy?: string;
-  verifiedByName?: string;
-  verifiedAt?: string;
-  rejectionReason?: string;
+  status: string;
+  transactionId?: string;
+  accountType?: 'Individual' | 'Company';
+  companyId?: string;
+  companyName?: string;
 }
 
 export interface AdminPaymentListResponse {
   paymentProofs: AdminPaymentProof[];
   totalCount: number;
-  page: number;
+  pageNumber: number;
   pageSize: number;
   totalPages: number;
 }
 
-export interface RecentPaymentActivity {
-  paymentProofId: string;
-  studentName: string;
-  courseName: string;
-  amount: number;
-  status: string;
-  activityDate: string;
-}
-
-export interface AdminPaymentStats {
-  pendingCount: number;
-  verifiedCount: number;
-  rejectedCount: number;
+export interface AdminPaymentStatsResponse {
   totalCount: number;
-  totalVerifiedAmount: number;
-  totalPendingAmount: number;
-  recentActivity: RecentPaymentActivity[];
+  verifiedCount: number;
+  pendingCount: number;
+  companyPaymentCount?: number;
 }
 
-export interface AdminPaymentFilter {
-  status?: string;
+export interface AdminPaymentFilterRequest {
   studentId?: string;
-  courseId?: string;
-  fromDate?: string;
-  toDate?: string;
-  searchQuery?: string;
-  sortBy?: string;
-  sortDescending?: boolean;
-  page?: number;
+  accountType?: 'Individual' | 'Company';
+  status?: string;
+  pageNumber?: number;
   pageSize?: number;
-}
-
-export interface VerifyPaymentRequest {
-  approve: boolean;
-  rejectionReason?: string;
+  searchQuery?: string;
 }
 
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
   data?: T;
+  timestamp?: string;
 }
 
 class AdminPaymentService {
-  /**
-   * Get all payment proofs for admin review
-   */
-  async getPaymentProofs(filter?: AdminPaymentFilter): Promise<ApiResponse<AdminPaymentListResponse>> {
+  async getPaymentProofs(filter: AdminPaymentFilterRequest = {}): Promise<ApiResponse<AdminPaymentListResponse>> {
     const params = new URLSearchParams();
-    if (filter) {
-      Object.entries(filter).forEach(([key, value]) => {
-        if (value !== undefined && value !== null && value !== '') {
-          params.append(key, String(value));
-        }
-      });
-    }
+    if (filter.studentId) params.append('studentId', filter.studentId);
+    if (filter.accountType) params.append('accountType', filter.accountType);
+    if (filter.status) params.append('status', filter.status);
+    if (filter.pageNumber) params.append('pageNumber', filter.pageNumber.toString());
+    if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
+    if (filter.searchQuery) params.append('searchQuery', filter.searchQuery);
+
     const queryString = params.toString();
     const endpoint = queryString
       ? `${API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.BASE}?${queryString}`
       : API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.BASE;
+
     return apiService.get<ApiResponse<AdminPaymentListResponse>>(endpoint);
   }
 
-  /**
-   * Get a single payment proof by ID
-   */
-  async getPaymentProofById(paymentProofId: string): Promise<ApiResponse<AdminPaymentProof>> {
-    return apiService.get<ApiResponse<AdminPaymentProof>>(
-      API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.BY_ID(paymentProofId)
-    );
-  }
-
-  /**
-   * Get payment statistics
-   */
-  async getPaymentStats(): Promise<ApiResponse<AdminPaymentStats>> {
-    return apiService.get<ApiResponse<AdminPaymentStats>>(
+  async getPaymentStats(): Promise<ApiResponse<AdminPaymentStatsResponse>> {
+    return apiService.get<ApiResponse<AdminPaymentStatsResponse>>(
       API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.STATS
     );
   }
 
-  /**
-   * Verify or reject a payment
-   */
-  async verifyPayment(
-    paymentProofId: string,
-    adminId: string,
-    request: VerifyPaymentRequest
-  ): Promise<ApiResponse<null>> {
-    return apiService.put<ApiResponse<null>>(
-      `${API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.VERIFY(paymentProofId)}?adminId=${adminId}`,
-      request
+  async verifyPayment(paymentProofId: string): Promise<ApiResponse<boolean>> {
+    return apiService.post<ApiResponse<boolean>>(
+      API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.VERIFY(paymentProofId),
+      {}
     );
   }
 
-  /**
-   * Download payment receipt file
-   */
-  async downloadReceipt(paymentProofId: string): Promise<Blob> {
-    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.DOWNLOAD(paymentProofId)}`;
-    const response = await fetch(url, {
-      method: 'GET',
-      credentials: 'include',
-    });
-
-    if (!response.ok) {
-      throw new Error('Failed to download receipt');
-    }
-
-    return response.blob();
+  getReceiptDownloadUrl(paymentProofId: string): string {
+    return `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.DOWNLOAD(paymentProofId)}`;
   }
 
   /**
-   * Get the download URL for a receipt (for direct linking)
+   * Fetch payments made by company accounts.
+   * Tries accountType=Company filter; filters client-side if backend does not support it.
    */
-  getReceiptDownloadUrl(paymentProofId: string): string {
-    return `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.DOWNLOAD(paymentProofId)}`;
+  async getCompanyPayments(filter: {
+    pageNumber?: number;
+    pageSize?: number;
+    searchQuery?: string;
+    companyId?: string;
+  } = {}): Promise<ApiResponse<AdminPaymentListResponse>> {
+    const response = await this.getPaymentProofs({
+      accountType: 'Company',
+      pageNumber: filter.pageNumber ?? 1,
+      pageSize: filter.pageSize ?? 50,
+      searchQuery: filter.searchQuery,
+    });
+
+    if (!response.success || !response.data) return response;
+
+    let proofs = response.data.paymentProofs;
+    const companyOnly = proofs.filter(
+      (p) =>
+        p.accountType === 'Company' ||
+        !!p.companyId ||
+        !!p.companyName
+    );
+    if (companyOnly.length < proofs.length) {
+      proofs = companyOnly;
+    }
+    if (filter.companyId) {
+      proofs = proofs.filter((p) => p.companyId === filter.companyId);
+    }
+    return {
+      ...response,
+      data: {
+        ...response.data,
+        paymentProofs: proofs,
+        totalCount: proofs.length,
+      },
+    };
   }
 }
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Search, Edit, Trash2, Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, FileText, ClipboardList, CheckCircle, XCircle, X } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, FileText, ClipboardList, CheckCircle, XCircle, X, BookOpen, DollarSign, Download, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -13,6 +13,7 @@ import { toast } from 'sonner';
 import { studentManagementService, type StudentResponse } from '../../services/studentManagement.service';
 import { quizService } from '../../services/quiz.service';
 import { studentEnrollmentFormService } from '../../services/studentEnrollmentForm.service';
+import { adminPaymentService, type AdminPaymentProof } from '../../services/adminPayment.service';
 import { AdminCompanies } from './AdminCompanies';
 
 interface AdminStudentsProps {
@@ -38,6 +39,14 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<StudentResponse | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // View Details modal
+  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+  const [detailsStudent, setDetailsStudent] = useState<StudentResponse | null>(null);
+  const [detailsPayments, setDetailsPayments] = useState<AdminPaymentProof[]>([]);
+  const [detailsStatus, setDetailsStatus] = useState<StudentStatus | null>(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [detailsError, setDetailsError] = useState<string | null>(null);
 
   // Student status tracking (quiz and enrollment)
   const [studentStatuses, setStudentStatuses] = useState<Map<string, StudentStatus>>(new Map());
@@ -209,6 +218,40 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     setEditDialogOpen(true);
   };
 
+  const openDetailsModal = async (student: StudentResponse) => {
+    setDetailsModalOpen(true);
+    setDetailsStudent(null);
+    setDetailsPayments([]);
+    setDetailsStatus(null);
+    setDetailsError(null);
+    setDetailsLoading(true);
+
+    try {
+      const [studentRes, paymentsRes, quizStatusRes, enrollmentRes] = await Promise.all([
+        studentManagementService.getStudentById(student.studentId),
+        adminPaymentService.getPaymentProofs({ studentId: student.studentId, pageSize: 100 }),
+        quizService.getStudentQuizStatus(student.studentId).catch(() => null),
+        studentEnrollmentFormService.getEnrollmentFormByStudentId(student.studentId).catch(() => null),
+      ]);
+
+      if (studentRes.success && studentRes.data) {
+        setDetailsStudent(studentRes.data);
+      }
+      if (paymentsRes.success && paymentsRes.data?.paymentProofs) {
+        setDetailsPayments(paymentsRes.data.paymentProofs);
+      }
+      setDetailsStatus({
+        hasPassedQuiz: !!quizStatusRes?.hasPassedQuiz || !!quizStatusRes?.hasAdminBypass,
+        hasCompletedEnrollment: !!(enrollmentRes?.success && enrollmentRes.data?.enrollmentFormCompleted),
+      });
+    } catch (error) {
+      setDetailsError(error instanceof Error ? error.message : 'Failed to load details');
+      toast.error(error instanceof Error ? error.message : 'Failed to load student details');
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setFormData({
       fullName: '',
@@ -223,6 +266,15 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const formatDateLong = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+  };
+
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(amount);
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -559,6 +611,15 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             <Button
                               size="sm"
                               variant="outline"
+                              onClick={() => openDetailsModal(student)}
+                              disabled={loading}
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
                               onClick={() => openEditDialog(student)}
                               disabled={loading}
                               title="Edit Student"
@@ -741,6 +802,215 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
               </Button>
             </div>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Details Modal */}
+      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold">Student Details</DialogTitle>
+            <DialogDescription>View student profile, purchased courses, and payment history</DialogDescription>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto pr-2 -mr-2">
+            {detailsLoading ? (
+              <div className="flex flex-col items-center justify-center py-16">
+                <Loader2 className="w-12 h-12 animate-spin text-violet-600 mb-4" />
+                <p className="text-gray-500">Loading student details...</p>
+              </div>
+            ) : detailsError ? (
+              <div className="text-center py-12">
+                <XCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
+                <p className="text-red-600">{detailsError}</p>
+              </div>
+            ) : detailsStudent ? (
+              <div className="space-y-6">
+                {/* Profile Header */}
+                <div className="rounded-2xl bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 border border-violet-100 p-6">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
+                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
+                      {detailsStudent.fullName?.charAt(0)?.toUpperCase() || '?'}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h2 className="text-xl font-bold text-gray-900 truncate">{detailsStudent.fullName}</h2>
+                      {detailsStudent.preferredName && (
+                        <p className="text-gray-500 text-sm">Preferred: {detailsStudent.preferredName}</p>
+                      )}
+                      <div className="flex flex-wrap gap-3 mt-2">
+                        <span className="inline-flex items-center gap-1.5 text-gray-600">
+                          <Mail className="w-4 h-4 text-violet-500" />
+                          <a href={`mailto:${detailsStudent.email}`} className="hover:text-violet-600">{detailsStudent.email}</a>
+                        </span>
+                        {detailsStudent.phoneNumber && (
+                          <span className="inline-flex items-center gap-1.5 text-gray-600">
+                            <Phone className="w-4 h-4 text-violet-500" />
+                            {detailsStudent.phoneNumber}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-2 mt-3">
+                        <Badge className={detailsStudent.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                          {detailsStudent.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                        {detailsStatus && (
+                          <>
+                            <Badge variant="outline" className={detailsStatus.hasPassedQuiz ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'}>
+                              <CheckCircle className="w-3 h-3 mr-1" />
+                              LLND: {detailsStatus.hasPassedQuiz ? 'Completed' : 'Not Completed'}
+                            </Badge>
+                            <Badge variant="outline" className={detailsStatus.hasCompletedEnrollment ? 'border-green-200 bg-green-50 text-green-700' : 'border-amber-200 bg-amber-50 text-amber-700'}>
+                              <FileText className="w-3 h-3 mr-1" />
+                              Form: {detailsStatus.hasCompletedEnrollment ? 'Completed' : 'Not Completed'}
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Purchased Courses */}
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                    <BookOpen className="w-5 h-5 text-violet-600" />
+                    Purchased Courses
+                  </h3>
+                  {detailsPayments.length === 0 ? (
+                    <Card className="border-dashed border-violet-200 bg-violet-50/50">
+                      <CardContent className="py-12 text-center">
+                        <BookOpen className="w-12 h-12 text-violet-300 mx-auto mb-3" />
+                        <p className="text-gray-600 font-medium">No courses purchased yet</p>
+                        <p className="text-gray-500 text-sm mt-1">This student has not enrolled in any courses</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      {detailsPayments.map((payment) => (
+                        <Card key={payment.paymentProofId} className="overflow-hidden border-violet-100 hover:shadow-md transition-shadow">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <CardTitle className="text-base">{payment.courseName}</CardTitle>
+                                <CardDescription>{payment.courseCode}</CardDescription>
+                              </div>
+                              <Badge
+                                className={
+                                  payment.status === 'Verified'
+                                    ? 'bg-green-100 text-green-700'
+                                    : payment.status === 'Pending'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-red-100 text-red-700'
+                                }
+                              >
+                                {payment.status}
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-2 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Amount paid</span>
+                              <span className="font-semibold text-gray-900">{formatCurrency(payment.amountPaid)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Payment date</span>
+                              <span>{formatDateLong(payment.paymentDate)}</span>
+                            </div>
+                            {payment.transactionId && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Transaction ID</span>
+                                <span className="font-mono text-xs">{payment.transactionId}</span>
+                              </div>
+                            )}
+                            <a
+                              href={adminPaymentService.getReceiptDownloadUrl(payment.paymentProofId)}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 text-sm mt-2"
+                            >
+                              <Download className="w-4 h-4" />
+                              Download receipt
+                            </a>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Payment Details Summary */}
+                {detailsPayments.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <DollarSign className="w-5 h-5 text-violet-600" />
+                      Payment Summary
+                    </h3>
+                    <Card className="border-violet-100">
+                      <CardContent className="pt-6">
+                        <div className="overflow-x-auto">
+                          <Table>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Course</TableHead>
+                                <TableHead>Amount</TableHead>
+                                <TableHead>Date</TableHead>
+                                <TableHead>Status</TableHead>
+                                <TableHead className="text-right">Receipt</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                              {detailsPayments.map((payment) => (
+                                <TableRow key={payment.paymentProofId}>
+                                  <TableCell>
+                                    <div>
+                                      <div className="font-medium">{payment.courseName}</div>
+                                      <div className="text-xs text-gray-500">{payment.transactionId}</div>
+                                    </div>
+                                  </TableCell>
+                                  <TableCell className="font-medium">{formatCurrency(payment.amountPaid)}</TableCell>
+                                  <TableCell>{formatDateLong(payment.paymentDate)}</TableCell>
+                                  <TableCell>
+                                    <Badge
+                                      variant="outline"
+                                      className={
+                                        payment.status === 'Verified'
+                                          ? 'border-green-200 bg-green-50 text-green-700'
+                                          : payment.status === 'Pending'
+                                          ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                          : 'border-red-200 bg-red-50 text-red-700'
+                                      }
+                                    >
+                                      {payment.status}
+                                    </Badge>
+                                  </TableCell>
+                                  <TableCell className="text-right">
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      asChild
+                                    >
+                                      <a href={adminPaymentService.getReceiptDownloadUrl(payment.paymentProofId)} target="_blank" rel="noopener noreferrer">
+                                        <Download className="w-4 h-4" />
+                                      </a>
+                                    </Button>
+                                  </TableCell>
+                                </TableRow>
+                              ))}
+                            </TableBody>
+                          </Table>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-gray-100 flex justify-between items-center">
+                          <span className="font-medium text-gray-700">Total paid</span>
+                          <span className="text-lg font-bold text-violet-700">
+                            {formatCurrency(detailsPayments.reduce((sum, p) => sum + p.amountPaid, 0))}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+              </div>
+            ) : null}
+          </div>
         </DialogContent>
       </Dialog>
         </TabsContent>

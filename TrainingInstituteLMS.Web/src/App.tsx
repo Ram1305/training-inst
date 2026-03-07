@@ -5,6 +5,7 @@ import { StudentPortal } from './components/StudentPortal';
 import { TeacherPortal } from './components/TeacherPortal';
 import { AdminPortal } from './components/AdminPortal';
 import { SuperAdminPortal } from './components/SuperAdminPortal';
+import { CompanyPortal } from './components/CompanyPortal';
 import { CourseDetailsPage } from './components/CourseDetails';
 import { HandbookViewerPage } from './components/HandbookViewerPage';
 import { CourseBooking } from './components/CourseBooking';
@@ -558,8 +559,9 @@ export default function App() {
 
   if (isAuthenticated && user) {
     switch (user.role) {
-      case 'student':
       case 'company':
+        return <CompanyPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
+      case 'student':
         return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
       case 'teacher':
         return <TeacherPortal user={user} onLogout={handleLogout} />;
