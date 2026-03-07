@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { ArrowLeft, GraduationCap, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { ArrowLeft, GraduationCap, Mail, Lock, Eye, EyeOff, User as UserIcon, Building2 } from 'lucide-react';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
 import { Label } from './ui/label';
@@ -42,7 +42,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
   }, []);
   
   // Registration form states
+  const [regAccountType, setRegAccountType] = useState<'Individual' | 'Company'>('Individual');
   const [regName, setRegName] = useState('');
+  const [regCompanyName, setRegCompanyName] = useState('');
   const [regEmail, setRegEmail] = useState('');
   const [regPassword, setRegPassword] = useState('');
   const [regPhone, setRegPhone] = useState('');
@@ -78,9 +80,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
           id: response.data.userId,
           name: response.data.fullName,
           email: response.data.email,
-          role: response.data.userType.toLowerCase() as 'student' | 'teacher' | 'admin' | 'superadmin',
+          role: (response.data.userType?.toLowerCase() === 'company' ? 'company' : response.data.userType?.toLowerCase()) as 'student' | 'teacher' | 'admin' | 'superadmin' | 'company',
           avatar: undefined,
-          studentId: response.data.studentId, 
+          studentId: response.data.studentId,
         });
       }
     } catch (err) {
@@ -95,25 +97,28 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
     setError(null);
     setIsLoading(true);
 
+    const isCompany = regAccountType === 'Company';
     try {
       const response = await authService.register({
-        fullName: regName,
+        accountType: regAccountType,
+        fullName: isCompany ? regCompanyName : regName,
+        companyName: isCompany ? regCompanyName : undefined,
         email: regEmail,
         password: regPassword,
-        phoneNumber: regPhone,
+        phoneNumber: isCompany ? undefined : regPhone,
         acceptTerms: acceptTerms,
       });
 
       if (response.success) {
-      onLogin({
-        id: response.data.userId,
-        name: response.data.fullName,
-        email: response.data.email,
-        role: response.data.userType.toLowerCase() as 'student' | 'teacher' | 'admin' | 'superadmin',
-        avatar: undefined,
-        studentId: response.data.studentId, 
-      });
-    }
+        onLogin({
+          id: response.data.userId,
+          name: response.data.fullName,
+          email: response.data.email,
+          role: (response.data.userType?.toLowerCase() === 'company' ? 'company' : response.data.userType?.toLowerCase()) as 'student' | 'teacher' | 'admin' | 'superadmin' | 'company',
+          avatar: undefined,
+          studentId: response.data.studentId,
+        });
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Registration failed. Please try again.');
     } finally {
@@ -268,18 +273,71 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
 
                 <TabsContent value="register">
                   <form className="space-y-4" onSubmit={handleRegister}>
-                    <div className="space-y-2">
-                      <Label htmlFor="reg-name">Full Name</Label>
-                      <Input
-                        id="reg-name"
-                        type="text"
-                        placeholder="John Doe"
-                        value={regName}
-                        onChange={(e) => setRegName(e.target.value)}
-                        required
-                        disabled={isLoading}
-                      />
+                    <div className="space-y-3">
+                      <Label>Register as</Label>
+                      <div className="flex gap-4">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="regAccountType"
+                            value="Individual"
+                            checked={regAccountType === 'Individual'}
+                            onChange={() => setRegAccountType('Individual')}
+                            disabled={isLoading}
+                            className="rounded-full border-gray-300"
+                          />
+                          <span className="text-sm font-medium">Individual</span>
+                        </label>
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="radio"
+                            name="regAccountType"
+                            value="Company"
+                            checked={regAccountType === 'Company'}
+                            onChange={() => setRegAccountType('Company')}
+                            disabled={isLoading}
+                            className="rounded-full border-gray-300"
+                          />
+                          <span className="text-sm font-medium">Company</span>
+                        </label>
+                      </div>
                     </div>
+
+                    {regAccountType === 'Individual' ? (
+                      <div className="space-y-2">
+                        <Label htmlFor="reg-name">Full Name</Label>
+                        <div className="relative">
+                          <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="reg-name"
+                            type="text"
+                            placeholder="John Doe"
+                            value={regName}
+                            onChange={(e) => setRegName(e.target.value)}
+                            className="pl-10"
+                            required
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Label htmlFor="reg-company-name">Company Name</Label>
+                        <div className="relative">
+                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="reg-company-name"
+                            type="text"
+                            placeholder="Acme Corp"
+                            value={regCompanyName}
+                            onChange={(e) => setRegCompanyName(e.target.value)}
+                            className="pl-10"
+                            required
+                            disabled={isLoading}
+                          />
+                        </div>
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <Label htmlFor="reg-email">Email</Label>
@@ -298,17 +356,19 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="reg-phone">Phone Number</Label>
-                      <Input
-                        id="reg-phone"
-                        type="tel"
-                        placeholder="+1 (555) 123-4567"
-                        value={regPhone}
-                        onChange={(e) => setRegPhone(e.target.value)}
-                        disabled={isLoading}
-                      />
-                    </div>
+                    {regAccountType === 'Individual' && (
+                      <div className="space-y-2">
+                        <Label htmlFor="reg-phone">Phone Number (optional)</Label>
+                        <Input
+                          id="reg-phone"
+                          type="tel"
+                          placeholder="+1 (555) 123-4567"
+                          value={regPhone}
+                          onChange={(e) => setRegPhone(e.target.value)}
+                          disabled={isLoading}
+                        />
+                      </div>
+                    )}
 
                     <div className="space-y-2">
                       <Label htmlFor="reg-password">Password</Label>

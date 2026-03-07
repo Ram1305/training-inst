@@ -31,6 +31,12 @@ export const API_CONFIG = {
       TOGGLE_STATUS: (studentId: string) => `/StudentManagement/${studentId}/toggle-status`,
       STATS: '/StudentManagement/stats',
     },
+    COMPANY_MANAGEMENT: {
+      BASE: '/CompanyManagement',
+      BY_ID: (companyId: string) => `/CompanyManagement/${companyId}`,
+      BY_USER_ID: (userId: string) => `/CompanyManagement/user/${userId}`,
+      TOGGLE_STATUS: (companyId: string) => `/CompanyManagement/${companyId}/toggle-status`,
+    },
     QUIZ: {
       SUBMIT: '/quiz/submit',
       SUBMIT_GUEST: '/quiz/submit-guest',

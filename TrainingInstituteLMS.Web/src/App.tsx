@@ -22,7 +22,7 @@ import type { AuthUser } from './contexts/AuthContext';
 import { publicEnrollmentWizardService } from './services/publicEnrollmentWizard.service';
 import { toast } from 'sonner';
 
-export type UserRole = 'student' | 'teacher' | 'admin' | 'superadmin' | null;
+export type UserRole = 'student' | 'teacher' | 'admin' | 'superadmin' | 'company' | null;
 
 // Legacy User interface for portal components
 export interface User {
@@ -48,6 +48,8 @@ const mapAuthUserToUser = (authUser: AuthUser): User => {
     role = 'teacher';
   } else if (userTypeLower === 'student') {
     role = 'student';
+  } else if (userTypeLower === 'company') {
+    role = 'company';
   }
 
   console.log('Auth User Type:', authUser.userType, '-> Mapped Role:', role);
@@ -557,6 +559,7 @@ export default function App() {
   if (isAuthenticated && user) {
     switch (user.role) {
       case 'student':
+      case 'company':
         return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
       case 'teacher':
         return <TeacherPortal user={user} onLogout={handleLogout} />;

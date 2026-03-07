@@ -8,7 +8,9 @@ export interface LoginRequest {
 }
 
 export interface RegisterRequest {
+  accountType?: 'Individual' | 'Company';
   fullName: string;
+  companyName?: string;
   email: string;
   password: string;
   phoneNumber?: string;
