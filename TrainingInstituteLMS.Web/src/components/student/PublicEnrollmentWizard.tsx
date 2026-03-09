@@ -72,6 +72,7 @@ import { paymentService } from '../../services/payment.service';
 import { PaymentSuccessCard } from '../PaymentSuccessCard';
 import { PaymentFailureCard } from '../PaymentFailureCard';
 import { API_CONFIG } from '../../config/api.config';
+import { usePublicSiteUrl } from '../../contexts/PublicSiteUrlContext';
 
 interface PublicEnrollmentWizardProps {
   onComplete: (result: { userId: string; studentId: string; email: string; fullName: string }) => void;
@@ -320,6 +321,7 @@ export function PublicEnrollmentWizard({
   isOneTimeLink = false,
   enrollCode = ''
 }: PublicEnrollmentWizardProps) {
+  const { publicSiteUrl } = usePublicSiteUrl();
   // Wizard step state
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -879,7 +881,9 @@ export function PublicEnrollmentWizard({
     let correct = 0;
     section.questions.forEach(q => {
       const userAnswerRaw = newAnswers[q.id];
-      const correctAnswerRaw = typeof q.correctAnswer === 'string' ? q.correctAnswer : '';
+      // Use canonical enrollment URL from API (context) for the "website URL" question (d3)
+      const effectiveCorrect = (q.id === 'd3') ? `${publicSiteUrl}/` : (typeof q.correctAnswer === 'string' ? q.correctAnswer : '');
+      const correctAnswerRaw = effectiveCorrect;
       
       if (q.type === 'drag-drop') {
         if (userAnswerRaw?.toLowerCase().trim() === 'completed') {

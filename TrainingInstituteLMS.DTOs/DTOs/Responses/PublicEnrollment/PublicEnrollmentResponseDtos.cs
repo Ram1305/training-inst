@@ -1,5 +1,10 @@
 namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
 {
+    public class EnrollmentBaseUrlResponseDto
+    {
+        public string EnrollmentBaseUrl { get; set; } = string.Empty;
+    }
+
     public class CourseDropdownItemDto
     {
         public Guid CourseId { get; set; }

@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Common;
+using TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment;
 
 namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
 {
@@ -11,11 +13,13 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
     public class PublicEnrollmentController : ControllerBase
     {
         private readonly IPublicEnrollmentService _publicEnrollmentService;
+        private readonly ISiteSettingsService _siteSettingsService;
         private readonly ILogger<PublicEnrollmentController> _logger;
 
-        public PublicEnrollmentController(IPublicEnrollmentService publicEnrollmentService, ILogger<PublicEnrollmentController> logger)
+        public PublicEnrollmentController(IPublicEnrollmentService publicEnrollmentService, ISiteSettingsService siteSettingsService, ILogger<PublicEnrollmentController> logger)
         {
             _publicEnrollmentService = publicEnrollmentService;
+            _siteSettingsService = siteSettingsService;
             _logger = logger;
         }
 
@@ -100,6 +104,24 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             catch (Exception ex)
             {
                 return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Get the canonical enrollment base URL (from SiteSettings collection). Used by the frontend so enrollment link is consistent everywhere.
+        /// </summary>
+        [HttpGet("site-url")]
+        public async Task<IActionResult> GetEnrollmentBaseUrl()
+        {
+            try
+            {
+                var url = await _siteSettingsService.GetEnrollmentBaseUrlAsync();
+                return Ok(ApiResponse<object>.SuccessResponse(new EnrollmentBaseUrlResponseDto { EnrollmentBaseUrl = url }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting enrollment base URL");
+                return StatusCode(500, ApiResponse<object>.FailureResponse("Failed to get site URL"));
             }
         }
 

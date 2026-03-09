@@ -46,6 +46,7 @@ namespace TrainingInstituteLMS.Data.Data
         public DbSet<Certificate> Certificates { get; set; }
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        public DbSet<SiteSetting> SiteSettings { get; set; }
 
         // Courses
         public DbSet<Course> Courses { get; set; }
@@ -300,6 +301,21 @@ namespace TrainingInstituteLMS.Data.Data
                 .WithMany()
                 .HasForeignKey(el => el.CourseDateId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // SiteSettings: unique key for key-value store
+            modelBuilder.Entity<SiteSetting>()
+                .HasIndex(s => s.Key)
+                .IsUnique();
+
+            // Seed enrollment base URL (canonical link for enrollment links and frontend)
+            modelBuilder.Entity<SiteSetting>().HasData(
+                new SiteSetting
+                {
+                    Id = Guid.Parse("a0000001-0001-0001-0001-000000000001"),
+                    Key = "EnrollmentBaseUrl",
+                    Value = "https://safetytrainingacademy.edu.au",
+                    UpdatedAt = null
+                });
 
             // Seed default roles
             var seedDate = new DateTime(2025, 1, 1, 0, 0, 0, DateTimeKind.Utc);

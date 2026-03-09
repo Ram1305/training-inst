@@ -1,7 +1,9 @@
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
+using TrainingInstituteLMS.Data.Entities.Courses;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment;
@@ -13,49 +15,24 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 {
     public class PublicEnrollmentService : IPublicEnrollmentService
     {
-        /// <summary>Default base URL for enrollment links when FrontendUrl is not set in config.</summary>
-        private const string DefaultEnrollmentBaseUrl = "https://safetytrainingacademy.edu.au";
-
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<PublicEnrollmentService> _logger;
-        private readonly IConfiguration _configuration;
+        private readonly ISiteSettingsService _siteSettingsService;
 
         public PublicEnrollmentService(
             TrainingLMSDbContext context,
             ILogger<PublicEnrollmentService> logger,
-            IConfiguration configuration)
+            ISiteSettingsService siteSettingsService)
         {
             _context = context;
             _logger = logger;
-            _configuration = configuration;
+            _siteSettingsService = siteSettingsService;
         }
 
         /// <summary>
-        /// Gets the frontend base URL for enrollment links and QR codes.
-        /// Uses FrontendUrl from config when set; otherwise falls back to environment-specific defaults.
+        /// Gets the frontend base URL for enrollment links and QR codes (from SiteSettings collection, then config, then default).
         /// </summary>
-        private string GetFrontendBaseUrl()
-        {
-            var configuredUrl = _configuration["FrontendUrl"];
-            if (!string.IsNullOrWhiteSpace(configuredUrl))
-            {
-                _logger.LogInformation("Using configured FrontendUrl: {Url}", configuredUrl);
-                return configuredUrl.TrimEnd('/');
-            }
-
-            var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
-            var isDevelopment = string.Equals(environment, "Development", StringComparison.OrdinalIgnoreCase);
-
-            if (isDevelopment)
-            {
-                _logger.LogInformation("Using localhost for development");
-                return "http://localhost:5173";
-            }
-
-            // Production fallback when FrontendUrl is not set (e.g. main domain for enrollment links)
-            _logger.LogInformation("Using production fallback URL: {Url}", DefaultEnrollmentBaseUrl);
-            return DefaultEnrollmentBaseUrl;
-        }
+        private Task<string> GetFrontendBaseUrlAsync() => _siteSettingsService.GetEnrollmentBaseUrlAsync();
 
         public async Task<List<CourseDropdownItemDto>> GetCoursesForDropdownAsync()
         {
@@ -211,7 +188,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         public async Task<EnrollmentLinkResponseDto> CreateEnrollmentLinkAsync(CreateEnrollmentLinkRequestDto request, Guid createdBy)
         {
             var uniqueCode = GenerateUniqueCode();
-            var baseUrl = GetFrontendBaseUrl();
+            var baseUrl = await GetFrontendBaseUrlAsync();
             var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
 
             var link = new EnrollmentLinkEntity
@@ -334,7 +311,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var link = await _context.EnrollmentLinks.FindAsync(linkId);
             if (link == null) return null;
 
-            var baseUrl = GetFrontendBaseUrl();
+            var baseUrl = await GetFrontendBaseUrlAsync();
             var fullUrl = $"{baseUrl}/enroll/{link.UniqueCode}";
 
             link.QrCodeData = GenerateQRCode(fullUrl);
@@ -371,7 +348,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 };
                 await _context.CompanyOrders.AddAsync(order);
 
-                var baseUrl = GetFrontendBaseUrl();
+                var baseUrl = await GetFrontendBaseUrlAsync();
                 var links = new List<CompanyOrderLinkDto>();
 
                 foreach (var item in request.Items)
@@ -482,8 +459,29 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     .OrderBy(cd => cd.ScheduledDate)
                     .FirstOrDefaultAsync();
                 if (firstDate == null)
-                    throw new InvalidOperationException("No available course date found for this course");
-                courseDateId = firstDate.CourseDateId;
+                {
+                    // No future course date: create one for today so enrollment can proceed
+                    var today = DateTime.UtcNow.Date;
+                    var newCourseDate = new CourseDate
+                    {
+                        CourseDateId = Guid.NewGuid(),
+                        CourseId = link.CourseId!.Value,
+                        ScheduledDate = today,
+                        IsActive = true,
+                        CurrentEnrollments = 0,
+                        MaxCapacity = 30,
+                        DateType = "Default",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.CourseDates.Add(newCourseDate);
+                    await _context.SaveChangesAsync();
+                    courseDateId = newCourseDate.CourseDateId;
+                    _logger.LogInformation("Created default course date for today ({Date}) for course {CourseId} (no existing date).", today, link.CourseId);
+                }
+                else
+                {
+                    courseDateId = firstDate.CourseDateId;
+                }
             }
 
             var user = new User
@@ -559,11 +557,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             };
         }
 
-        private Task<EnrollmentLinkResponseDto> MapToResponseDto(EnrollmentLinkEntity link)
+        private async Task<EnrollmentLinkResponseDto> MapToResponseDto(EnrollmentLinkEntity link)
         {
-            var baseUrl = GetFrontendBaseUrl();
+            var baseUrl = await GetFrontendBaseUrlAsync();
 
-            return Task.FromResult(new EnrollmentLinkResponseDto
+            return new EnrollmentLinkResponseDto
             {
                 LinkId = link.LinkId.ToString(),
                 Name = link.Name,
@@ -582,7 +580,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 MaxUses = link.MaxUses,
                 UsedCount = link.UsedCount,
                 IsActive = link.IsActive
-            });
+            };
         }
 
         /// <summary>

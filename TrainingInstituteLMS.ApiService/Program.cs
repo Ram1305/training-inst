@@ -14,6 +14,7 @@ using TrainingInstituteLMS.ApiService.Services.CompanyManagement;
 using TrainingInstituteLMS.ApiService.Services.StudentManagement;
 using TrainingInstituteLMS.ApiService.Services.SuperAdmin;
 using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.ApiService.Services.Payment;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Reviews;
@@ -112,6 +113,12 @@ builder.Services.AddScoped<IScheduleService, ScheduleService>();
 // Student Enrollment Form service
 builder.Services.AddScoped<IStudentEnrollmentFormService, StudentEnrollmentFormService>();
 builder.Services.AddScoped<IEnrollmentFormPdfService, EnrollmentFormPdfService>();
+
+// Memory cache (for site settings etc.)
+builder.Services.AddMemoryCache();
+
+// Site settings (enrollment base URL from DB)
+builder.Services.AddScoped<ISiteSettingsService, SiteSettingsService>();
 
 // Public Enrollment Service (for enrollment links and wizard)
 builder.Services.AddScoped<IPublicEnrollmentService, PublicEnrollmentService>();

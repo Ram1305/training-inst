@@ -144,6 +144,11 @@ export const publicEnrollmentWizardService = {
     return apiService.post<ApiResponse<CourseEnrollmentResponse>>('/PublicEnrollment/enroll', request);
   },
 
+  // Get canonical enrollment base URL from API (from SiteSettings collection)
+  async getEnrollmentBaseUrl(): Promise<ApiResponse<{ enrollmentBaseUrl: string }>> {
+    return apiService.get<ApiResponse<{ enrollmentBaseUrl: string }>>('/PublicEnrollment/site-url');
+  },
+
   // Get enrollment wizard data by link code
   async getWizardDataByCode(code: string): Promise<ApiResponse<{
     linkId: string;
