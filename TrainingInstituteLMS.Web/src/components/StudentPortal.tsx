@@ -24,6 +24,7 @@ import { StudentCertificates } from './student/StudentCertificates';
 import { StudentProfile } from './student/StudentProfile';
 import { StudentNotifications } from './student/StudentNotifications';
 import { StudentEnrollmentForm } from './student/StudentEnrollmentForm';
+import { useQuizStatus } from '../hooks/useQuizStatus';
 import { enrollmentService, type StudentEnrolledCourse } from '../services/enrollment.service';
 import { studentEnrollmentFormService, type EnrollmentFormResponse } from '../services/studentEnrollmentForm.service';
 
@@ -46,6 +47,8 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
   const [enrollmentFormData, setEnrollmentFormData] = useState<EnrollmentFormResponse | null>(null);
   const [enrolledCourses, setEnrolledCourses] = useState<StudentEnrolledCourse[]>([]);
   const [isLoadingRequirements, setIsLoadingRequirements] = useState(true);
+
+  const { hasPassedQuiz, canEnroll } = useQuizStatus();
 
   const fetchRequirements = useCallback(async () => {
     if (!user?.studentId) {
@@ -79,6 +82,7 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
 
   const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
   const hasEnrolledCourseNeedingQuiz = enrolledCourses.some((c) => !c.quizCompleted);
+  const isEnrollmentFormBlockedByLLND = !hasPassedQuiz && !canEnroll;
   const hasPendingRequirements =
     !isLoadingRequirements &&
     enrolledCourses.length > 0 &&
@@ -190,15 +194,26 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
           <div className="p-4 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
-              const isBlocked = hasPendingRequirements && PENDING_BLOCKED_PAGES.includes(item.id as StudentPage);
+              const isBlockedByPending = hasPendingRequirements && PENDING_BLOCKED_PAGES.includes(item.id as StudentPage);
+              const isBlockedByLLND = item.id === 'enrollment-form' && isEnrollmentFormBlockedByLLND;
+              const isBlocked = isBlockedByPending || isBlockedByLLND;
+              const blockTitle = isBlockedByLLND
+                ? 'Complete the LLND assessment first'
+                : isBlockedByPending
+                  ? 'Complete your enrollment form and LLND assessment in My Courses first'
+                  : undefined;
               return (
                 <button
                   key={item.id}
                   type="button"
-                  title={isBlocked ? 'Complete your enrollment form and LLND assessment in My Courses first' : undefined}
+                  title={blockTitle}
                   onClick={() => {
                     if (isBlocked) {
-                      toast.error('Complete your enrollment form and LLND assessment in My Courses first.');
+                      if (isBlockedByLLND) {
+                        toast.error('Please complete the LLND assessment first.');
+                      } else {
+                        toast.error('Complete your enrollment form and LLND assessment in My Courses first.');
+                      }
                       return;
                     }
                     setCurrentPage(item.id as StudentPage);

@@ -21,6 +21,7 @@ import { Quiz } from './Quiz';
 import { EnrollmentPaymentModal } from './EnrollmentPaymentModal';
 import { StudentEnrollmentForm } from './StudentEnrollmentForm';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { toast } from 'sonner';
 import { useQuizStatus } from '../../hooks/useQuizStatus';
 import { useAuth } from '../../contexts/AuthContext';
 import { enrollmentService, type StudentBrowseCourse, type StudentEnrolledCourse } from '../../services/enrollment.service';
@@ -246,6 +247,14 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
     setSelectedCourseForPayment(null);
   };
 
+  const handleEnrollmentFormClick = () => {
+    if (!hasPassedQuiz && !canEnroll) {
+      toast.error('Please complete the LLND assessment first.');
+      return;
+    }
+    setShowEnrollmentForm(true);
+  };
+
   const handleCreditCardSuccess = async () => {
     await Promise.all([fetchAvailableCourses(), fetchEnrolledCourses()]);
     setShowPaymentUpload(false);
@@ -377,7 +386,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                     </div>
                   </div>
                   <Button 
-                    onClick={() => setShowEnrollmentForm(true)}
+                    onClick={handleEnrollmentFormClick}
                     className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     <FileText className="w-4 h-4 mr-2" />
@@ -394,7 +403,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
               <AlertTitle className="text-yellow-900">Enrollment Form Under Review</AlertTitle>
               <AlertDescription className="text-yellow-800">
                 Your enrollment form has been submitted and is being reviewed by an administrator.
-                <Button variant="link" className="ml-2 p-0 h-auto text-yellow-700" onClick={() => setShowEnrollmentForm(true)}>
+                <Button variant="link" className="ml-2 p-0 h-auto text-yellow-700" onClick={handleEnrollmentFormClick}>
                   View/Edit Form
                 </Button>
               </AlertDescription>
@@ -410,7 +419,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                 {enrollmentFormData?.enrollmentFormReviewNotes && (
                   <span className="block mt-1 font-medium">Notes: {enrollmentFormData.enrollmentFormReviewNotes}</span>
                 )}
-                <Button variant="link" className="ml-2 p-0 h-auto text-red-700" onClick={() => setShowEnrollmentForm(true)}>
+                <Button variant="link" className="ml-2 p-0 h-auto text-red-700" onClick={handleEnrollmentFormClick}>
                   Edit Form
                 </Button>
               </AlertDescription>
@@ -423,7 +432,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
               <AlertTitle className="text-green-900">Enrollment Form Approved</AlertTitle>
               <AlertDescription className="text-green-800">
                 Your enrollment form has been approved.
-                <Button variant="link" className="ml-2 p-0 h-auto text-green-700" onClick={() => setShowEnrollmentForm(true)}>
+                <Button variant="link" className="ml-2 p-0 h-auto text-green-700" onClick={handleEnrollmentFormClick}>
                   View Form
                 </Button>
               </AlertDescription>
@@ -591,7 +600,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                         {/* Show Complete Enrollment Form button if not completed */}
                         {needsEnrollmentForm && (
                           <Button 
-                            onClick={() => setShowEnrollmentForm(true)}
+                            onClick={handleEnrollmentFormClick}
                             variant="outline"
                             className="border-orange-300 text-orange-700 hover:bg-orange-50"
                           >

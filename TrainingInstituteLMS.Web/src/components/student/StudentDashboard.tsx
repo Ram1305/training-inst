@@ -1,7 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { BookOpen, Award, TrendingUp, Clock, CheckCircle, AlertTriangle, FileText } from 'lucide-react';
+import { toast } from 'sonner';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
+import { Badge } from '../ui/badge';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '../../contexts/AuthContext';
 import { useQuizStatus } from '../../hooks/useQuizStatus';
@@ -75,6 +77,14 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
     fetchEnrollmentFormStatus();
   };
 
+  const handleEnrollmentFormClick = () => {
+    if (!hasPassedQuiz && !canEnroll) {
+      toast.error('Please complete the LLND assessment first.');
+      return;
+    }
+    setShowEnrollmentForm(true);
+  };
+
   // Enrollment form status flags - Match My Courses logic
   const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
   const enrollmentFormPending = enrollmentFormData?.enrollmentFormStatus === 'Pending';
@@ -136,21 +146,22 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
 
       {/* LLND Assessment Banner - Show when quiz not attempted (first priority) */}
       {!isLoadingQuizStatus && !hasAttemptedQuiz && (
-        <Card className="border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50">
+        <Card className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
           <CardContent className="py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-full flex items-center justify-center">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-full flex items-center justify-center">
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-gray-900">LLND Assessment Required</h3>
-                  <p className="text-gray-600 text-sm">Complete the LLND assessment to fully activate your enrollment</p>
+                  <Badge className="mb-1.5 bg-red-100 text-red-700 border-red-200 text-xs">Action required</Badge>
+                  <h3 className="font-semibold text-red-900">LLND Assessment Required</h3>
+                  <p className="text-red-800/80 text-sm">Complete the LLND assessment to fully activate your enrollment</p>
                 </div>
               </div>
               <Button 
                 onClick={() => setShowQuiz(true)}
-                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+                className="bg-red-600 hover:bg-red-700 text-white"
               >
                 <BookOpen className="w-4 h-4 mr-2" />
                 Take Assessment
@@ -164,21 +175,22 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
       {!isLoadingEnrollmentForm && (
         <>
           {needsEnrollmentForm && !enrollmentFormPending && !enrollmentFormApproved && (
-            <Card className="border-orange-200 bg-gradient-to-r from-orange-50 to-amber-50">
+            <Card className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
               <CardContent className="py-6">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-full flex items-center justify-center">
+                    <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-full flex items-center justify-center">
                       <FileText className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-semibold text-gray-900">Enrollment Form Required</h3>
-                      <p className="text-gray-600 text-sm">Complete your enrollment form to finalize your course registration</p>
+                      <Badge className="mb-1.5 bg-red-100 text-red-700 border-red-200 text-xs">Action required</Badge>
+                      <h3 className="font-semibold text-red-900">Enrollment Form Required</h3>
+                      <p className="text-red-800/80 text-sm">Complete your enrollment form to finalize your course registration</p>
                     </div>
                   </div>
                   <Button 
-                    onClick={() => setShowEnrollmentForm(true)}
-                    className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                    onClick={handleEnrollmentFormClick}
+                    className="bg-red-600 hover:bg-red-700 text-white"
                   >
                     <FileText className="w-4 h-4 mr-2" />
                     Complete Form
@@ -194,7 +206,7 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
               <AlertTitle className="text-yellow-900">Enrollment Form Under Review</AlertTitle>
               <AlertDescription className="text-yellow-800">
                 Your enrollment form has been submitted and is being reviewed by an administrator.
-                <Button variant="link" className="ml-2 p-0 h-auto text-yellow-700" onClick={() => setShowEnrollmentForm(true)}>
+                <Button variant="link" className="ml-2 p-0 h-auto text-yellow-700" onClick={handleEnrollmentFormClick}>
                   View/Edit Form
                 </Button>
               </AlertDescription>
@@ -210,7 +222,7 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
                 {enrollmentFormData?.enrollmentFormReviewNotes && (
                   <span className="block mt-1 font-medium">Notes: {enrollmentFormData.enrollmentFormReviewNotes}</span>
                 )}
-                <Button variant="link" className="ml-2 p-0 h-auto text-red-700" onClick={() => setShowEnrollmentForm(true)}>
+                <Button variant="link" className="ml-2 p-0 h-auto text-red-700" onClick={handleEnrollmentFormClick}>
                   Edit Form
                 </Button>
               </AlertDescription>
@@ -223,7 +235,7 @@ export function StudentDashboard({ onNavigate }: StudentDashboardProps) {
               <AlertTitle className="text-green-900">Enrollment Form Approved</AlertTitle>
               <AlertDescription className="text-green-800">
                 Your enrollment form has been approved.
-                <Button variant="link" className="ml-2 p-0 h-auto text-green-700" onClick={() => setShowEnrollmentForm(true)}>
+                <Button variant="link" className="ml-2 p-0 h-auto text-green-700" onClick={handleEnrollmentFormClick}>
                   View Form
                 </Button>
               </AlertDescription>
