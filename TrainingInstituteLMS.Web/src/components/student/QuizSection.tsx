@@ -81,6 +81,10 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Ref for drag ID - updates synchronously so drop works on first try (state is async)
   const draggedItemRef = useRef<string | null>(null);
 
+  // Mobile: tap-to-select, tap-to-drop (HTML5 DnD doesn't work on touch devices)
+  const [tappedFileItem, setTappedFileItem] = useState<string | null>(null);
+  const [tappedLabelItem, setTappedLabelItem] = useState<string | null>(null);
+
   // Reset state when section changes
   useEffect(() => {
     setCurrentQuestionIndex(0);
@@ -113,6 +117,8 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     });
     draggedItemRef.current = null;
     setDraggedItem(null);
+    setTappedFileItem(null);
+    setTappedLabelItem(null);
   }, [section.id]);
 
   const currentQuestion = section.questions[currentQuestionIndex];
@@ -364,12 +370,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     draggedItemRef.current = fileType;
   };
 
-  const handleFileDrop = (e: React.DragEvent, folder: 'checklistBook' | 'imagesFolder') => {
-    e.preventDefault();
-    e.stopPropagation();
-    const draggedId = e.dataTransfer.getData('text/plain') || draggedItemRef.current || draggedItem;
-    if (!draggedId) return;
-    
+  const performFileDrop = (draggedId: string, folder: 'checklistBook' | 'imagesFolder') => {
     if (folder === 'checklistBook' && (draggedId === 'pdf1' || draggedId === 'pdf2')) {
       if (!filesDragState.checklistBook.includes(draggedId)) {
         setFilesDragState(prev => ({
@@ -389,6 +390,21 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     }
     draggedItemRef.current = null;
     setDraggedItem(null);
+    setTappedFileItem(null);
+  };
+
+  const handleFileDrop = (e: React.DragEvent, folder: 'checklistBook' | 'imagesFolder') => {
+    e.preventDefault();
+    e.stopPropagation();
+    const draggedId = e.dataTransfer.getData('text/plain') || draggedItemRef.current || draggedItem;
+    if (!draggedId) return;
+    performFileDrop(draggedId, folder);
+  };
+
+  const handleFileTapDrop = (folder: 'checklistBook' | 'imagesFolder') => {
+    const id = tappedFileItem;
+    if (!id) return;
+    performFileDrop(id, folder);
   };
 
   const resetFiles = () => {
@@ -399,6 +415,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
       checklistBook: [],
       imagesFolder: []
     });
+    setTappedFileItem(null);
     setAnswers(prev => {
       const next = { ...prev };
       if (currentQuestion?.id) delete next[currentQuestion.id];
@@ -413,18 +430,28 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     draggedItemRef.current = labelId;
   };
 
-  const handleDeviceDrop = (e: React.DragEvent, deviceId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    const draggedId = e.dataTransfer.getData('text/plain') || draggedItemRef.current || draggedItem;
-    if (!draggedId) return;
-    
+  const performDeviceDrop = (draggedId: string, deviceId: string) => {
     setDevicesDragState(prev => ({
       labels: prev.labels.map(l => l.id === draggedId ? { ...l, placed: true } : l),
       devices: prev.devices.map(d => d.id === deviceId ? { ...d, matchedLabel: draggedId } : d)
     }));
     draggedItemRef.current = null;
     setDraggedItem(null);
+    setTappedLabelItem(null);
+  };
+
+  const handleDeviceDrop = (e: React.DragEvent, deviceId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const draggedId = e.dataTransfer.getData('text/plain') || draggedItemRef.current || draggedItem;
+    if (!draggedId) return;
+    performDeviceDrop(draggedId, deviceId);
+  };
+
+  const handleDeviceTapDrop = (deviceId: string) => {
+    const id = tappedLabelItem;
+    if (!id) return;
+    performDeviceDrop(id, deviceId);
   };
 
   const resetDevices = () => {
@@ -444,6 +471,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
         { id: 'device5', name: 'Barcode Scanner', matchedLabel: null }
       ]
     });
+    setTappedLabelItem(null);
     setAnswers(prev => {
       const next = { ...prev };
       if (currentQuestion?.id) delete next[currentQuestion.id];
@@ -454,60 +482,68 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Desktop Files Drag and Drop Component
   const DesktopFilesDragDrop = () => (
     <div className="my-6">
-      <div className="quiz-desktop-files-container">
+      <p className="text-sm text-gray-600 mb-3 md:hidden">On mobile: Tap an item to select, then tap a folder to drop.</p>
+      <div className="quiz-desktop-files-container flex flex-col md:flex-row gap-4 md:gap-6">
         {/* Left side - Draggable files */}
-        <div className="quiz-draggable-files-left">
+        <div className="quiz-draggable-files-left flex flex-wrap gap-3 min-w-0">
           {filesDragState.pdf1 && (
             <div 
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'pdf1')}
-              className="quiz-draggable-file"
-              style={{ cursor: 'grab' }}
+              onClick={() => setTappedFileItem(tappedFileItem === 'pdf1' ? null : 'pdf1')}
+              className={`quiz-draggable-file p-3 rounded-lg border-2 border-gray-200 bg-white cursor-grab active:cursor-grabbing touch-manipulation select-none min-w-[80px] ${
+                tappedFileItem === 'pdf1' ? 'ring-2 ring-violet-500 ring-offset-2 border-violet-500' : 'hover:border-gray-300'
+              }`}
             >
-              <img src="/assets/pngimage.png" alt="PDF" className="quiz-pdf-icon" />
+              <img src="/assets/pngimage.png" alt="PDF" className="w-12 h-12 object-contain" draggable={false} />
             </div>
           )}
           {filesDragState.pdf2 && (
             <div 
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'pdf2')}
-              className="quiz-draggable-file"
-              style={{ cursor: 'grab' }}
+              onClick={() => setTappedFileItem(tappedFileItem === 'pdf2' ? null : 'pdf2')}
+              className={`quiz-draggable-file p-3 rounded-lg border-2 border-gray-200 bg-white cursor-grab active:cursor-grabbing touch-manipulation select-none min-w-[80px] ${
+                tappedFileItem === 'pdf2' ? 'ring-2 ring-violet-500 ring-offset-2 border-violet-500' : 'hover:border-gray-300'
+              }`}
             >
-              <img src="/assets/pngimage.png" alt="PDF" className="quiz-pdf-icon" />
+              <img src="/assets/pngimage.png" alt="PDF" className="w-12 h-12 object-contain" draggable={false} />
             </div>
           )}
           {filesDragState.image && (
             <div 
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'image')}
-              className="quiz-draggable-file"
-              style={{ cursor: 'grab' }}
+              onClick={() => setTappedFileItem(tappedFileItem === 'image' ? null : 'image')}
+              className={`quiz-draggable-file p-3 rounded-lg border-2 border-gray-200 bg-white cursor-grab active:cursor-grabbing touch-manipulation select-none min-w-[80px] ${
+                tappedFileItem === 'image' ? 'ring-2 ring-violet-500 ring-offset-2 border-violet-500' : 'hover:border-gray-300'
+              }`}
             >
-              <img src="/assets/imagefordraganddrop.png" alt="Image" className="quiz-image-icon" />
+              <img src="/assets/imagefordraganddrop.png" alt="Image" className="w-12 h-12 object-contain" draggable={false} />
             </div>
           )}
         </div>
 
         {/* Right side - Desktop with folders */}
-        <div className="quiz-desktop-screen-right">
+        <div className="quiz-desktop-screen-right flex-1 min-w-0">
           <img 
             src="/assets/dekstop-computer.png" 
             alt="Desktop" 
-            className="quiz-desktop-image"
+            className="quiz-desktop-image max-w-full h-auto rounded-lg"
           />
           {/* Drop zones - Folders */}
-          <div className="quiz-desktop-folders">
+          <div className="quiz-desktop-folders flex flex-col sm:flex-row gap-3 mt-4">
             <div 
               onDragOver={(e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
               }}
               onDrop={(e) => handleFileDrop(e, 'checklistBook')}
-              className={`quiz-drop-zone ${
+              onClick={() => handleFileTapDrop('checklistBook')}
+              className={`quiz-drop-zone flex items-center gap-2 p-4 rounded-lg border-2 min-h-[60px] cursor-pointer touch-manipulation transition-colors ${
                 filesDragState.checklistBook.length === 2 
-                  ? 'quiz-drop-zone-complete' 
-                  : 'quiz-drop-zone-active'
+                  ? 'quiz-drop-zone-complete border-green-500 bg-green-50' 
+                  : 'quiz-drop-zone-active border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
               }`}
             >
               <span className="text-xl">📁</span>
@@ -522,10 +558,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 e.dataTransfer.dropEffect = 'move';
               }}
               onDrop={(e) => handleFileDrop(e, 'imagesFolder')}
-              className={`quiz-drop-zone ${
+              onClick={() => handleFileTapDrop('imagesFolder')}
+              className={`quiz-drop-zone flex items-center gap-2 p-4 rounded-lg border-2 min-h-[60px] cursor-pointer touch-manipulation transition-colors ${
                 filesDragState.imagesFolder.length === 1 
-                  ? 'quiz-drop-zone-complete' 
-                  : 'quiz-drop-zone-active'
+                  ? 'quiz-drop-zone-complete border-green-500 bg-green-50' 
+                  : 'quiz-drop-zone-active border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
               }`}
             >
               <span className="text-xl">📁</span>
@@ -540,7 +577,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
       <div className="mt-6 text-center">
         <button 
           onClick={resetFiles}
-          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg border hover:bg-gray-200 transition-colors"
+          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg border hover:bg-gray-200 transition-colors touch-manipulation"
         >
           Reset
         </button>
@@ -551,31 +588,36 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Digital Devices Drag and Drop Component  
   const DigitalDevicesDragDrop = () => (
     <div className="my-6">
-      <div className="quiz-devices-container">
-        {/* Left side - Sticky Labels */}
+      <p className="text-sm text-gray-600 mb-3 md:hidden">On mobile: Tap a label to select, then tap a device to match.</p>
+      <div className="quiz-devices-container flex flex-col gap-6">
+        {/* Labels - tap to select */}
         <div className="quiz-devices-labels-sticky">
           <div className="text-sm font-semibold text-gray-700 mb-3">Labels:</div>
-          <div className="space-y-2">
+          <div className="flex flex-wrap gap-2">
             {devicesDragState.labels.filter(l => !l.placed).map(label => (
               <div 
                 key={label.id}
                 draggable="true"
                 onDragStart={(e) => handleLabelDragStart(e, label.id)}
-                className="quiz-device-label"
-                style={{ cursor: 'grab' }}
+                onClick={() => setTappedLabelItem(tappedLabelItem === label.id ? null : label.id)}
+                className={`quiz-device-label px-4 py-2 rounded-lg border-2 bg-white cursor-grab active:cursor-grabbing touch-manipulation select-none text-sm ${
+                  tappedLabelItem === label.id 
+                    ? 'ring-2 ring-violet-500 ring-offset-2 border-violet-500' 
+                    : 'border-gray-200 hover:border-gray-300'
+                }`}
               >
                 {label.text}
               </div>
             ))}
             {devicesDragState.labels.every(l => l.placed) && (
-              <div className="text-center text-green-600 font-semibold py-3 text-sm">
+              <div className="text-center text-green-600 font-semibold py-3 text-sm w-full">
                 ✓ All labels placed!
               </div>
             )}
           </div>
         </div>
 
-        {/* Right side - Scrollable Device images with drop zones */}
+        {/* Device images with drop zones - tap to drop */}
         <div className="quiz-devices-scroll-area">
           <div className="grid grid-cols-2 gap-4">
             {/* Desktop Computer */}
@@ -583,7 +625,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               <img 
                 src="/assets/dekstop-computer.png" 
                 alt="Desktop Computer" 
-                className="w-24 h-20 object-cover rounded-lg shadow-md mb-2"
+                className="w-20 h-16 md:w-24 md:h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
                 onDragOver={(e) => {
@@ -591,15 +633,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   e.dataTransfer.dropEffect = 'move';
                 }}
                 onDrop={(e) => handleDeviceDrop(e, 'device1')}
-                className={`quiz-device-drop-zone ${
+                onClick={() => handleDeviceTapDrop('device1')}
+                className={`quiz-device-drop-zone w-full min-h-[44px] px-2 py-2 rounded-lg border-2 text-center text-sm cursor-pointer touch-manipulation transition-colors ${
                   devicesDragState.devices[0].matchedLabel 
-                    ? 'quiz-device-drop-zone-filled' 
-                    : ''
+                    ? 'quiz-device-drop-zone-filled border-green-500 bg-green-50' 
+                    : 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
                 }`}
               >
                 {devicesDragState.devices[0].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[0].matchedLabel)?.text
-                  : 'Drop here'}
+                  : 'Tap to drop'}
               </div>
             </div>
             
@@ -608,7 +651,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               <img 
                 src="/assets/phone.png" 
                 alt="iPhone" 
-                className="w-20 h-20 object-cover rounded-lg shadow-md mb-2"
+                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
                 onDragOver={(e) => {
@@ -616,15 +659,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   e.dataTransfer.dropEffect = 'move';
                 }}
                 onDrop={(e) => handleDeviceDrop(e, 'device2')}
-                className={`quiz-device-drop-zone ${
+                onClick={() => handleDeviceTapDrop('device2')}
+                className={`quiz-device-drop-zone w-full min-h-[44px] px-2 py-2 rounded-lg border-2 text-center text-sm cursor-pointer touch-manipulation transition-colors ${
                   devicesDragState.devices[1].matchedLabel 
-                    ? 'quiz-device-drop-zone-filled' 
-                    : ''
+                    ? 'quiz-device-drop-zone-filled border-green-500 bg-green-50' 
+                    : 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
                 }`}
               >
                 {devicesDragState.devices[1].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[1].matchedLabel)?.text
-                  : 'Drop here'}
+                  : 'Tap to drop'}
               </div>
             </div>
 
@@ -633,7 +677,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               <img 
                 src="/assets/photocopier.jpg" 
                 alt="Photocopier" 
-                className="w-20 h-20 object-cover rounded-lg shadow-md mb-2"
+                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
                 onDragOver={(e) => {
@@ -641,15 +685,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   e.dataTransfer.dropEffect = 'move';
                 }}
                 onDrop={(e) => handleDeviceDrop(e, 'device3')}
-                className={`quiz-device-drop-zone ${
+                onClick={() => handleDeviceTapDrop('device3')}
+                className={`quiz-device-drop-zone w-full min-h-[44px] px-2 py-2 rounded-lg border-2 text-center text-sm cursor-pointer touch-manipulation transition-colors ${
                   devicesDragState.devices[2].matchedLabel 
-                    ? 'quiz-device-drop-zone-filled' 
-                    : ''
+                    ? 'quiz-device-drop-zone-filled border-green-500 bg-green-50' 
+                    : 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
                 }`}
               >
                 {devicesDragState.devices[2].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[2].matchedLabel)?.text
-                  : 'Drop here'}
+                  : 'Tap to drop'}
               </div>
             </div>
 
@@ -658,7 +703,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               <img 
                 src="/assets/laptop.jpg" 
                 alt="Laptop" 
-                className="w-24 h-16 object-cover rounded-lg shadow-md mb-2"
+                className="w-20 h-14 md:w-24 md:h-16 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
                 onDragOver={(e) => {
@@ -666,15 +711,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   e.dataTransfer.dropEffect = 'move';
                 }}
                 onDrop={(e) => handleDeviceDrop(e, 'device4')}
-                className={`quiz-device-drop-zone ${
+                onClick={() => handleDeviceTapDrop('device4')}
+                className={`quiz-device-drop-zone w-full min-h-[44px] px-2 py-2 rounded-lg border-2 text-center text-sm cursor-pointer touch-manipulation transition-colors ${
                   devicesDragState.devices[3].matchedLabel 
-                    ? 'quiz-device-drop-zone-filled' 
-                    : ''
+                    ? 'quiz-device-drop-zone-filled border-green-500 bg-green-50' 
+                    : 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
                 }`}
               >
                 {devicesDragState.devices[3].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[3].matchedLabel)?.text
-                  : 'Drop here'}
+                  : 'Tap to drop'}
               </div>
             </div>
 
@@ -683,7 +729,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               <img 
                 src="/assets/barcode-scanner.jpg" 
                 alt="Barcode Scanner" 
-                className="w-20 h-20 object-cover rounded-lg shadow-md mb-2"
+                className="w-16 h-16 md:w-20 md:h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
                 onDragOver={(e) => {
@@ -691,15 +737,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   e.dataTransfer.dropEffect = 'move';
                 }}
                 onDrop={(e) => handleDeviceDrop(e, 'device5')}
-                className={`quiz-device-drop-zone ${
+                onClick={() => handleDeviceTapDrop('device5')}
+                className={`quiz-device-drop-zone w-full min-h-[44px] px-2 py-2 rounded-lg border-2 text-center text-sm cursor-pointer touch-manipulation transition-colors ${
                   devicesDragState.devices[4].matchedLabel 
-                    ? 'quiz-device-drop-zone-filled' 
-                    : ''
+                    ? 'quiz-device-drop-zone-filled border-green-500 bg-green-50' 
+                    : 'border-dashed border-gray-300 bg-gray-50 hover:bg-gray-100'
                 }`}
               >
                 {devicesDragState.devices[4].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[4].matchedLabel)?.text
-                  : 'Drop here'}
+                  : 'Tap to drop'}
               </div>
             </div>
           </div>
@@ -708,7 +755,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
       <div className="mt-4 text-center">
         <button 
           onClick={resetDevices}
-          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg border hover:bg-gray-200 transition-colors text-sm"
+          className="px-6 py-2 bg-gray-100 text-gray-600 rounded-lg border hover:bg-gray-200 transition-colors text-sm touch-manipulation"
         >
           Reset
         </button>
