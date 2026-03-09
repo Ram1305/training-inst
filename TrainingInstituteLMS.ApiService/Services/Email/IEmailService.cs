@@ -16,6 +16,21 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             string? loginBaseUrl);
 
         /// <summary>
+        /// Sends a confirmation email to the student when they complete registration via an enrollment link.
+        /// Includes course details and login URL (they use the password they just set).
+        /// </summary>
+        Task SendEnrollmentLinkRegistrationConfirmationAsync(
+            string toEmail,
+            string studentName,
+            string courseName,
+            string? courseCode,
+            DateTime? scheduledDate,
+            TimeSpan? startTime,
+            TimeSpan? endTime,
+            string? location,
+            string loginBaseUrl);
+
+        /// <summary>
         /// Sends an enrollment confirmation email to the student after successful payment.
         /// Includes login credentials for the student portal.
         /// </summary>

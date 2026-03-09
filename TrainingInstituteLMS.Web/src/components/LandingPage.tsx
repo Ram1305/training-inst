@@ -57,7 +57,6 @@ interface LandingPageProps {
   onAbout?: () => void;
   onContact?: () => void;
   onBookNow?: () => void;
-  onLLNDTest?: () => void;
   onEnrollNow?: () => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
@@ -89,7 +88,7 @@ const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
 ];
 
-export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onLLNDTest, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse }: LandingPageProps) {
+export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse }: LandingPageProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -625,12 +624,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                     className="w-full bg-slate-900/90 hover:bg-slate-950 text-white rounded-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all border border-slate-700/50"
                   >
                     ENROL NOW
-                  </Button>
-                  <Button 
-                    onClick={onLLNDTest}
-                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white rounded-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
-                  >
-                    LLND TEST
                   </Button>
                   <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all">
                     VOC
@@ -1436,13 +1429,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
                 >
                   ENROL NOW
-                </Button>
-                <Button
-                  onClick={onLLNDTest}
-                  variant="outline"
-                  className="bg-cyan-500 hover:bg-cyan-600 border-0 text-white rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
-                >
-                  LLND TEST
                 </Button>
                 <Button
                   variant="outline"

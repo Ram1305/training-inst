@@ -719,6 +719,18 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
             await _context.SaveChangesAsync();
 
+            var loginBaseUrl = await GetFrontendBaseUrlAsync();
+            await _emailService.SendEnrollmentLinkRegistrationConfirmationAsync(
+                user.Email,
+                user.FullName,
+                link.Course?.CourseName ?? "Course",
+                link.Course?.CourseCode,
+                courseDate.ScheduledDate,
+                courseDate.StartTime,
+                courseDate.EndTime,
+                courseDate.Location,
+                loginBaseUrl);
+
             return new OneTimeLinkCompleteResponseDto
             {
                 UserId = user.UserId.ToString(),

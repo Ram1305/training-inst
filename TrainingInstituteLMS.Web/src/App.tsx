@@ -399,7 +399,6 @@ export default function App() {
         onAbout={handleGoToAbout}
         onContact={handleGoToContact}
         onBookNow={handleGoToBookNow}
-        onLLNDTest={handleGoToPublicQuiz}
         onEnrollNow={handleGoToPublicEnrollmentWizard}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}

@@ -146,6 +146,117 @@ info@safetytrainingacademy.edu.au";
             }
         }
 
+        public async Task SendEnrollmentLinkRegistrationConfirmationAsync(
+            string toEmail,
+            string studentName,
+            string courseName,
+            string? courseCode,
+            DateTime? scheduledDate,
+            TimeSpan? startTime,
+            TimeSpan? endTime,
+            string? location,
+            string loginBaseUrl)
+        {
+            if (!_settings.IsConfigured)
+            {
+                _logger.LogWarning("Email not configured - skipping enrollment link registration confirmation to {Email}", toEmail);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(toEmail))
+            {
+                _logger.LogWarning("Cannot send enrollment link registration confirmation - recipient email is empty");
+                return;
+            }
+
+            var dateStr = scheduledDate.HasValue
+                ? scheduledDate.Value.ToString("dddd, d MMMM yyyy")
+                : "To be confirmed";
+            var timeStr = (startTime.HasValue && endTime.HasValue)
+                ? $"{DateTime.Today.Add(startTime.Value):h:mm tt} - {DateTime.Today.Add(endTime.Value):h:mm tt}"
+                : "To be confirmed";
+            var locationStr = string.IsNullOrWhiteSpace(location)
+                ? "3/14-16 Marjorie Street, Sefton NSW 2162"
+                : location.Trim();
+            var loginUrl = (loginBaseUrl ?? "").TrimEnd('/');
+
+            var subject = $"Registration complete – {courseName}";
+            var plainBody = $@"Dear {studentName},
+
+You have successfully completed your registration via the enrollment link.
+
+Your course details:
+
+Course: {courseName}
+{(courseCode != null ? $"Course Code: {courseCode}\n" : "")}Date: {dateStr}
+Time: {timeStr}
+Location: {locationStr}
+
+You can log in to the student portal at {loginUrl} using this email address and the password you just set.
+
+If you need any assistance, please contact us.
+
+Kind regards,
+Safety Training Academy
+1300 976 097
+info@safetytrainingacademy.edu.au";
+
+            var courseCodeRow = !string.IsNullOrWhiteSpace(courseCode)
+                ? $@"<tr><td style='font-size:13px;color:#64748b;'>Course Code</td><td style='font-size:14px;font-weight:600;color:#334155;'>{courseCode}</td></tr>"
+                : "";
+            var htmlBody = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Registration complete</title></head>
+<body style='margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#333;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color:#f4f4f4;padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
+<tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:22px;font-weight:700;'>Registration complete – {courseName}</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p style='margin:0 0 16px;font-size:15px;color:#555;'>Dear <strong>{studentName}</strong>,</p>
+<p style='margin:0 0 24px;font-size:15px;color:#555;'>You have successfully completed your registration via the enrollment link.</p>
+<p style='margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;'>Your course details:</p>
+<table width='100%' cellpadding='12' cellspacing='0' border='0' style='background-color:#f8fafc;border-radius:6px;margin-bottom:24px;border:1px solid #e2e8f0;'>
+<tr><td style='font-size:13px;color:#64748b;width:120px;'>Course</td><td style='font-size:14px;font-weight:600;color:#334155;'>{courseName}</td></tr>
+{courseCodeRow}
+<tr><td style='font-size:13px;color:#64748b;'>Date</td><td style='font-size:14px;font-weight:600;color:#334155;'>{dateStr}</td></tr>
+<tr><td style='font-size:13px;color:#64748b;'>Time</td><td style='font-size:14px;font-weight:600;color:#334155;'>{timeStr}</td></tr>
+<tr><td style='font-size:13px;color:#64748b;'>Location</td><td style='font-size:14px;font-weight:600;color:#334155;'>{locationStr}</td></tr>
+</table>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;background-color:#eff6ff;border-radius:8px;border:1px solid #3b82f6;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:1px;'>Student portal login</p>
+<p style='margin:0;font-size:14px;color:#334155;'>You can log in at <a href='{loginUrl}' style='color:#3b82f6;'>{loginUrl}</a> using this email address and the password you just set.</p>
+</td></tr></table>
+<p style='margin:20px 0 0;font-size:14px;color:#334155;'>If you need any assistance, please contact us.</p>
+</td></tr>
+<tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;'>
+<p style='margin:0;font-size:13px;color:#64748b;'>Kind regards,<br/><strong style='color:#334155;'>Safety Training Academy</strong><br/>1300 976 097<br/><a href='mailto:info@safetytrainingacademy.edu.au' style='color:#3b82f6;'>info@safetytrainingacademy.edu.au</a></p>
+</td></tr></table></td></tr></table></body></html>";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.AuthenticateAsync(user, smtpPassword);
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_settings.FromName, user));
+                message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Enrollment link registration confirmation sent to {Email}", toEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send enrollment link registration confirmation to {Email}", toEmail);
+            }
+        }
+
         public async Task SendEnrollmentConfirmationAsync(
             string toEmail,
             string studentName,
