@@ -413,6 +413,13 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     Links = links
                 };
             }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "CreateCompanyOrder database error. Company: {Company}, Email: {Email}", request.CompanyName, request.CompanyEmail);
+                var inner = dbEx.InnerException?.Message ?? dbEx.Message;
+                throw new InvalidOperationException(
+                    "Database update failed. If this persists, ensure all migrations have been applied to the database. Details: " + inner, dbEx);
+            }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "CreateCompanyOrder failed. Company: {Company}, Email: {Email}", request.CompanyName, request.CompanyEmail);

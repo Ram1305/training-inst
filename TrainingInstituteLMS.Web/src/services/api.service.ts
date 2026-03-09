@@ -28,10 +28,11 @@ class ApiService {
 
       if (!response.ok) {
         let message = 'An error occurred';
-        let body: { message?: string; errors?: string[] } = {};
+        let body: { message?: string; Message?: string; errors?: string[] } = {};
         try {
           body = text ? JSON.parse(text) : {};
-          message = body.message || text || response.statusText || message;
+          // API may return camelCase (message) or PascalCase (Message)
+          message = body.message ?? body.Message ?? (text || response.statusText || message);
         } catch {
           message = text || response.statusText || message;
         }
