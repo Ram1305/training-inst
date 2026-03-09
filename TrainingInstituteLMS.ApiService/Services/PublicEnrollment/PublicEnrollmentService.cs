@@ -344,65 +344,80 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<CompanyOrderResponseDto> CreateCompanyOrderAsync(CompanyOrderRequestDto request)
         {
+            if (request == null)
+                throw new InvalidOperationException("Request is required");
+
+            if (string.IsNullOrWhiteSpace(request.CompanyName))
+                throw new InvalidOperationException("Company name is required");
+            if (string.IsNullOrWhiteSpace(request.CompanyEmail))
+                throw new InvalidOperationException("Company email is required");
             if (request.Items == null || request.Items.Count == 0)
                 throw new InvalidOperationException("At least one course is required for a company order");
 
-            var order = new CompanyOrderEntity
+            try
             {
-                OrderId = Guid.NewGuid(),
-                CompanyEmail = request.CompanyEmail.Trim(),
-                CompanyName = request.CompanyName.Trim(),
-                CompanyMobile = request.CompanyMobile?.Trim(),
-                TotalAmount = request.Items.Sum(i => i.Price),
-                PaymentMethod = request.PaymentMethod,
-                Status = "Completed",
-                CreatedAt = DateTime.UtcNow
-            };
-            await _context.CompanyOrders.AddAsync(order);
-
-            var baseUrl = GetFrontendBaseUrl();
-            var links = new List<CompanyOrderLinkDto>();
-
-            foreach (var item in request.Items)
-            {
-                var uniqueCode = GenerateUniqueCode();
-                var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
-
-                var course = await _context.Courses.FindAsync(item.CourseId);
-                var courseName = course?.CourseName ?? "Course";
-
-                var link = new EnrollmentLinkEntity
+                var order = new CompanyOrderEntity
                 {
-                    LinkId = Guid.NewGuid(),
-                    Name = $"Company order {order.OrderId:N} - {courseName}",
-                    Description = $"One-time link for {request.CompanyName}",
-                    UniqueCode = uniqueCode,
-                    CourseId = item.CourseId,
-                    CourseDateId = item.CourseDateId,
-                    MaxUses = 1,
-                    UsedCount = 0,
-                    QrCodeData = GenerateQRCode(fullUrl),
-                    IsActive = true,
+                    OrderId = Guid.NewGuid(),
+                    CompanyEmail = request.CompanyEmail.Trim(),
+                    CompanyName = request.CompanyName.Trim(),
+                    CompanyMobile = request.CompanyMobile?.Trim(),
+                    TotalAmount = request.Items.Sum(i => i.Price),
+                    PaymentMethod = request.PaymentMethod ?? "pay_later",
+                    Status = "Completed",
                     CreatedAt = DateTime.UtcNow
                 };
-                await _context.EnrollmentLinks.AddAsync(link);
-                links.Add(new CompanyOrderLinkDto
+                await _context.CompanyOrders.AddAsync(order);
+
+                var baseUrl = GetFrontendBaseUrl();
+                var links = new List<CompanyOrderLinkDto>();
+
+                foreach (var item in request.Items)
                 {
-                    LinkId = link.LinkId.ToString(),
-                    FullUrl = fullUrl,
-                    CourseName = courseName
-                });
+                    var uniqueCode = GenerateUniqueCode();
+                    var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
+
+                    var course = await _context.Courses.FindAsync(item.CourseId);
+                    var courseName = course?.CourseName ?? "Course";
+
+                    var link = new EnrollmentLinkEntity
+                    {
+                        LinkId = Guid.NewGuid(),
+                        Name = $"Company order {order.OrderId:N} - {courseName}",
+                        Description = $"One-time link for {request.CompanyName.Trim()}",
+                        UniqueCode = uniqueCode,
+                        CourseId = item.CourseId,
+                        CourseDateId = item.CourseDateId,
+                        MaxUses = 1,
+                        UsedCount = 0,
+                        QrCodeData = GenerateQRCode(fullUrl),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _context.EnrollmentLinks.AddAsync(link);
+                    links.Add(new CompanyOrderLinkDto
+                    {
+                        LinkId = link.LinkId.ToString(),
+                        FullUrl = fullUrl,
+                        CourseName = courseName
+                    });
+                }
+
+                await _context.SaveChangesAsync();
+
+                return new CompanyOrderResponseDto
+                {
+                    OrderId = order.OrderId.ToString(),
+                    CompanyEmail = order.CompanyEmail,
+                    TotalAmount = order.TotalAmount,
+                    Links = links
+                };
             }
-
-            await _context.SaveChangesAsync();
-
-            return new CompanyOrderResponseDto
+            catch (Exception ex)
             {
-                OrderId = order.OrderId.ToString(),
-                CompanyEmail = order.CompanyEmail,
-                TotalAmount = order.TotalAmount,
-                Links = links
-            };
+                _logger.LogError(ex, "CreateCompanyOrder failed. Company: {Company}, Email: {Email}", request.CompanyName, request.CompanyEmail);
+                throw;
+            }
         }
 
         /// <summary>
@@ -552,13 +567,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             });
         }
 
+        /// <summary>
+        /// Generates a unique 8-character code for enrollment links. Uses Guid to avoid collisions when creating multiple links in one request.
+        /// </summary>
         private string GenerateUniqueCode()
         {
-            var chars = "abcdefghijklmnopqrstuvwxyz0123456789";
-            var random = new Random();
-            var code = new string(Enumerable.Repeat(chars, 8)
-                .Select(s => s[random.Next(s.Length)]).ToArray());
-            return code;
+            return Guid.NewGuid().ToString("N")[..8];
         }
 
         private string GenerateQRCode(string url)
