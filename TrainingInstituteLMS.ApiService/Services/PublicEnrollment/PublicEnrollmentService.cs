@@ -444,6 +444,15 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request)
         {
+            if (string.IsNullOrWhiteSpace(request.FullName?.Trim()))
+                throw new InvalidOperationException("Full name is required.");
+            if (string.IsNullOrWhiteSpace(request.Email?.Trim()))
+                throw new InvalidOperationException("Email is required.");
+            if (string.IsNullOrWhiteSpace(request.Phone?.Trim()))
+                throw new InvalidOperationException("Phone is required.");
+            if (string.IsNullOrWhiteSpace(request.Password))
+                throw new InvalidOperationException("Password is required.");
+
             var link = await _context.EnrollmentLinks
                 .Include(l => l.Course)
                 .Include(l => l.CourseDate)

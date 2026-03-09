@@ -335,6 +335,7 @@ export function PublicEnrollmentWizard({
   const [companyOrderLinks, setCompanyOrderLinks] = useState<{ fullUrl: string; courseName: string }[]>([]);
   const [oneTimeLinkSubmitting, setOneTimeLinkSubmitting] = useState(false);
   const [oneTimeLinkSuccess, setOneTimeLinkSuccess] = useState(false);
+  const [oneTimeLinkError, setOneTimeLinkError] = useState<string | null>(null);
 
   // Personal details (collected on Payment step)
   const [registrationData, setRegistrationData] = useState({
@@ -2635,6 +2636,7 @@ export function PublicEnrollmentWizard({
         toast.error('Please fill in all fields');
         return;
       }
+      setOneTimeLinkError(null);
       setOneTimeLinkSubmitting(true);
       try {
         const response = await publicEnrollmentWizardService.completeEnrollmentViaLink(enrollCode, {
@@ -2644,6 +2646,7 @@ export function PublicEnrollmentWizard({
           password: '123456',
         });
         if (response.success && response.data) {
+          setOneTimeLinkError(null);
           setOneTimeLinkSuccess(true);
           onComplete({
             userId: response.data.userId,
@@ -2652,10 +2655,18 @@ export function PublicEnrollmentWizard({
             fullName: response.data.fullName,
           });
         } else {
-          toast.error(response.message || 'Registration failed');
+          const msg = response.message || 'Registration failed';
+          setOneTimeLinkError(msg);
+          toast.error(msg);
         }
       } catch (err) {
-        toast.error(err instanceof Error ? err.message : 'Registration failed');
+        const errWithBody = err as Error & { responseBody?: { message?: string; Message?: string } };
+        const message =
+          errWithBody?.responseBody?.message ??
+          errWithBody?.responseBody?.Message ??
+          (err instanceof Error ? err.message : 'Registration failed');
+        setOneTimeLinkError(message);
+        toast.error(message);
       } finally {
         setOneTimeLinkSubmitting(false);
       }
@@ -2696,7 +2707,7 @@ export function PublicEnrollmentWizard({
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
             Complete Your Registration
           </h1>
-          <p className="text-gray-600">Enter your details to complete enrollment (no payment or assessment required).</p>
+          <p className="text-gray-600">Enter your details to complete enrollment (no payment required).</p>
         </div>
         <Card className="border-violet-100">
           <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
@@ -2715,7 +2726,10 @@ export function PublicEnrollmentWizard({
                 id="otl-fullName"
                 placeholder="Enter your full name"
                 value={registrationData.fullName}
-                onChange={(e) => setRegistrationData((prev) => ({ ...prev, fullName: e.target.value }))}
+                onChange={(e) => {
+                  setOneTimeLinkError(null);
+                  setRegistrationData((prev) => ({ ...prev, fullName: e.target.value }));
+                }}
                 className="mt-1"
                 disabled={oneTimeLinkSubmitting}
               />
@@ -2727,7 +2741,10 @@ export function PublicEnrollmentWizard({
                 type="email"
                 placeholder="Enter your email"
                 value={registrationData.email}
-                onChange={(e) => setRegistrationData((prev) => ({ ...prev, email: e.target.value }))}
+                onChange={(e) => {
+                  setOneTimeLinkError(null);
+                  setRegistrationData((prev) => ({ ...prev, email: e.target.value }));
+                }}
                 className="mt-1"
                 disabled={oneTimeLinkSubmitting}
               />
@@ -2738,11 +2755,19 @@ export function PublicEnrollmentWizard({
                 id="otl-phone"
                 placeholder="Enter your phone"
                 value={registrationData.phone}
-                onChange={(e) => setRegistrationData((prev) => ({ ...prev, phone: e.target.value }))}
+                onChange={(e) => {
+                  setOneTimeLinkError(null);
+                  setRegistrationData((prev) => ({ ...prev, phone: e.target.value }));
+                }}
                 className="mt-1"
                 disabled={oneTimeLinkSubmitting}
               />
             </div>
+            {oneTimeLinkError && (
+              <div className="rounded-md bg-red-50 border border-red-200 px-3 py-2 text-sm text-red-700" role="alert">
+                {oneTimeLinkError}
+              </div>
+            )}
             <Button
               onClick={handleOneTimeLinkSubmit}
               disabled={oneTimeLinkSubmitting}

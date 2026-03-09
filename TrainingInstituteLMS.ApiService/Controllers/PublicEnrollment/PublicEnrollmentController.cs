@@ -178,6 +178,8 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         [HttpPost("link/{code}/complete")]
         public async Task<IActionResult> CompleteEnrollmentViaLink(string code, [FromBody] OneTimeLinkCompleteRequestDto request)
         {
+            if (request == null)
+                return BadRequest(ApiResponse<object>.FailureResponse("Request body is required. Send JSON with fullName, email, phone, and password."));
             try
             {
                 var result = await _publicEnrollmentService.CompleteEnrollmentViaLinkAsync(code, request);
