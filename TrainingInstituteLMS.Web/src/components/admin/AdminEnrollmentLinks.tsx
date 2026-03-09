@@ -117,7 +117,8 @@ export function AdminEnrollmentLinks() {
         toast.error(response.message || 'Failed to create link');
       }
     } catch (error) {
-      toast.error('Failed to create enrollment link');
+      const message = error instanceof Error ? error.message : 'Failed to create enrollment link';
+      toast.error(message);
     } finally {
       setIsCreating(false);
     }

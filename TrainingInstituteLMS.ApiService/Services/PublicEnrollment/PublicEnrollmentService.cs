@@ -219,15 +219,31 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<EnrollmentLinkResponseDto> CreateEnrollmentLinkAsync(CreateEnrollmentLinkRequestDto request, Guid createdBy)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+                throw new InvalidOperationException("Name is required");
+
+            // When CourseDateId is provided, validate it belongs to the Course
+            if (request.CourseDateId.HasValue && request.CourseId.HasValue)
+            {
+                var courseDateExists = await _context.CourseDates
+                    .AnyAsync(cd => cd.CourseDateId == request.CourseDateId.Value && cd.CourseId == request.CourseId.Value);
+                if (!courseDateExists)
+                    throw new InvalidOperationException("The selected course date does not belong to the selected course");
+            }
+            else if (request.CourseDateId.HasValue && !request.CourseId.HasValue)
+            {
+                throw new InvalidOperationException("Course must be selected when a course date is specified");
+            }
+
             var uniqueCode = GenerateUniqueCode();
             var baseUrl = await GetFrontendBaseUrlAsync();
-            var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
+            var fullUrl = $"{baseUrl.TrimEnd('/')}/enroll/{uniqueCode}";
 
             var link = new EnrollmentLinkEntity
             {
                 LinkId = Guid.NewGuid(),
-                Name = request.Name,
-                Description = request.Description,
+                Name = request.Name.Trim(),
+                Description = request.Description?.Trim(),
                 UniqueCode = uniqueCode,
                 CourseId = request.CourseId,
                 CourseDateId = request.CourseDateId,

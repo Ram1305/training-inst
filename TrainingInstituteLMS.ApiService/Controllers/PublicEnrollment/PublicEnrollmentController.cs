@@ -225,16 +225,26 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         /// Create a new enrollment link
         /// </summary>
         [HttpPost("admin/links")]
-        public async Task<IActionResult> CreateEnrollmentLink([FromBody] CreateEnrollmentLinkRequestDto request)
+        public async Task<IActionResult> CreateEnrollmentLink([FromBody] CreateEnrollmentLinkRequestDto? request)
         {
+            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+            {
+                return BadRequest(ApiResponse<object>.FailureResponse("Name is required"));
+            }
             try
             {
                 var createdBy = GetCurrentUserId() ?? Guid.Empty;
                 var result = await _publicEnrollmentService.CreateEnrollmentLinkAsync(request, createdBy);
                 return Ok(ApiResponse<object>.SuccessResponse(result, "Enrollment link created successfully"));
             }
+            catch (InvalidOperationException ex)
+            {
+                _logger.LogWarning(ex, "CreateEnrollmentLink validation failed");
+                return BadRequest(ApiResponse<object>.FailureResponse(ex.Message));
+            }
             catch (Exception ex)
             {
+                _logger.LogError(ex, "CreateEnrollmentLink failed. Name: {Name}, CourseId: {CourseId}", request.Name, request.CourseId);
                 return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
             }
         }
