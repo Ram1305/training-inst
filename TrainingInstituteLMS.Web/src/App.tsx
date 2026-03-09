@@ -162,6 +162,7 @@ export default function App() {
     courseDateId?: string;
     linkId?: string;
     isOneTimeLink?: boolean;
+    allowPayLater?: boolean;
   } | null>(null);
   const [enrollCode, setEnrollCode] = useState<string | null>(null);
   const [isLoadingEnrollmentLink, setIsLoadingEnrollmentLink] = useState(false);
@@ -189,6 +190,7 @@ export default function App() {
               courseDateId: response.data.courseDateId,
               linkId: response.data.linkId,
               isOneTimeLink: response.data.isOneTimeLink,
+              allowPayLater: response.data.allowPayLater,
             });
             setCurrentPage('publicEnrollmentWizard');
             // Update URL to clean state (optional)
@@ -596,6 +598,7 @@ export default function App() {
         preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
         preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? selectedCourseDateId ?? undefined}
         isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
+        allowPayLater={enrollmentLinkData?.allowPayLater}
         enrollCode={enrollCode ?? ''}
       />
     );

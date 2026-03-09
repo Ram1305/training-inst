@@ -61,6 +61,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public int? MaxUses { get; set; }
         public int UsedCount { get; set; }
         public bool IsActive { get; set; }
+        public bool AllowPayLater { get; set; }
     }
     
     public class EnrollmentLinkListResponseDto
@@ -82,6 +83,10 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         /// When true, the user should see only name/email/phone/password and complete via link (no payment, no LLN).
         /// </summary>
         public bool IsOneTimeLink { get; set; }
+        /// <summary>
+        /// When true, users complete full flow without payment (name, email, mobile, LLN, enrollment form only).
+        /// </summary>
+        public bool AllowPayLater { get; set; }
     }
 
     public class CompanyOrderResponseDto

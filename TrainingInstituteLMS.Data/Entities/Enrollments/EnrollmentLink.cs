@@ -58,6 +58,11 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         /// When set, this link was created as part of a company order (one-time link per course).
         /// </summary>
         public Guid? CompanyOrderId { get; set; }
+
+        /// <summary>
+        /// When true, users opening this link complete enrollment without payment (name, email, mobile, LLN, enrollment form only).
+        /// </summary>
+        public bool AllowPayLater { get; set; }
         
         // Navigation properties
         [ForeignKey(nameof(CourseId))]

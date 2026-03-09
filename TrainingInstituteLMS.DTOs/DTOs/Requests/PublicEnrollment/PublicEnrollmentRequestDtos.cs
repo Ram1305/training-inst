@@ -24,6 +24,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public Guid? CourseDateId { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public int? MaxUses { get; set; }
+        /// <summary>When true, users opening this link complete enrollment without payment (name, email, mobile, LLN, enrollment form only).</summary>
+        public bool AllowPayLater { get; set; }
     }
 
     /// <summary>

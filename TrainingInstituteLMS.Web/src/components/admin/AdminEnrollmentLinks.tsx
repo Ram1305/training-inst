@@ -15,7 +15,8 @@ import {
   ExternalLink,
   Calendar,
   Users,
-  X
+  X,
+  Clock
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -51,7 +52,8 @@ export function AdminEnrollmentLinks() {
     courseId: undefined,
     courseDateId: undefined,
     maxUses: undefined,
-    expiresAt: undefined
+    expiresAt: undefined,
+    allowPayLater: false
   });
 
   // View dialog
@@ -109,7 +111,7 @@ export function AdminEnrollmentLinks() {
       if (response.success) {
         toast.success('Enrollment link created successfully');
         setCreateDialogOpen(false);
-        setNewLink({ name: '', description: '', courseId: undefined, courseDateId: undefined, maxUses: undefined, expiresAt: undefined });
+        setNewLink({ name: '', description: '', courseId: undefined, courseDateId: undefined, maxUses: undefined, expiresAt: undefined, allowPayLater: false });
         fetchLinks();
       } else {
         toast.error(response.message || 'Failed to create link');
@@ -314,9 +316,16 @@ export function AdminEnrollmentLinks() {
                         </TableCell>
                         <TableCell>{formatDate(link.expiresAt)}</TableCell>
                         <TableCell>
-                          <Badge className={link.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                            {link.isActive ? 'Active' : 'Inactive'}
-                          </Badge>
+                          <div className="flex flex-wrap gap-1">
+                            <Badge className={link.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                              {link.isActive ? 'Active' : 'Inactive'}
+                            </Badge>
+                            {link.allowPayLater && (
+                              <Badge variant="outline" className="border-violet-300 text-violet-700">
+                                Pay Later
+                              </Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
@@ -432,6 +441,23 @@ export function AdminEnrollmentLinks() {
                 onChange={(e) => setNewLink({ ...newLink, description: e.target.value })}
               />
             </div>
+
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="allowPayLater"
+                checked={newLink.allowPayLater || false}
+                onChange={(e) => setNewLink({ ...newLink, allowPayLater: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
+              />
+              <Label htmlFor="allowPayLater" className="cursor-pointer flex items-center gap-2">
+                <Clock className="w-4 h-4 text-violet-600" />
+                Pay Later
+              </Label>
+            </div>
+            <p className="text-xs text-gray-500 -mt-2 ml-6">
+              Users opening this link can complete enrollment without payment (name, email, mobile, LLN, enrollment form).
+            </p>
 
             <div>
               <Label>Pre-select Course (Optional)</Label>
@@ -562,6 +588,11 @@ export function AdminEnrollmentLinks() {
                   <div className="col-span-2">
                     <span className="text-gray-500">Description:</span>
                     <p>{selectedLink.description}</p>
+                  </div>
+                )}
+                {selectedLink.allowPayLater && (
+                  <div className="col-span-2">
+                    <Badge variant="outline" className="border-violet-300 text-violet-700">Pay Later</Badge>
                   </div>
                 )}
               </div>

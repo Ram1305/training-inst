@@ -233,6 +233,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateId = request.CourseDateId,
                 ExpiresAt = request.ExpiresAt,
                 MaxUses = request.MaxUses,
+                AllowPayLater = request.AllowPayLater,
                 QrCodeData = GenerateQRCode(fullUrl),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
@@ -313,7 +314,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateRange = link.CourseDate != null 
                     ? $"{link.CourseDate.ScheduledDate:dd/MM/yyyy}"
                     : null,
-                IsOneTimeLink = link.MaxUses == 1
+                IsOneTimeLink = link.MaxUses == 1,
+                AllowPayLater = link.AllowPayLater
             };
         }
 
@@ -796,7 +798,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 ExpiresAt = link.ExpiresAt,
                 MaxUses = link.MaxUses,
                 UsedCount = link.UsedCount,
-                IsActive = link.IsActive
+                IsActive = link.IsActive,
+                AllowPayLater = link.AllowPayLater
             };
         }
 

@@ -82,6 +82,8 @@ interface PublicEnrollmentWizardProps {
   preSelectedCourseDateId?: string;
   /** When true, show only name/email/phone/password and complete via one-time link (no payment, no LLN). */
   isOneTimeLink?: boolean;
+  /** When true, users complete full flow without payment (name, email, mobile, LLN, enrollment form only). */
+  allowPayLater?: boolean;
   /** Link code for one-time link completion API. */
   enrollCode?: string;
 }
@@ -321,6 +323,7 @@ export function PublicEnrollmentWizard({
   preSelectedCourseId, 
   preSelectedCourseDateId,
   isOneTimeLink = false,
+  allowPayLater = false,
   enrollCode = ''
 }: PublicEnrollmentWizardProps) {
   const { publicSiteUrl } = usePublicSiteUrl();
@@ -384,8 +387,11 @@ export function PublicEnrollmentWizard({
       .map((dateKey) => ({ dateKey, dates: byDate[dateKey] }));
   }, [courseDates]);
 
-  // Step 3: Payment (moved up)
-  const [paymentMethod, setPaymentMethod] = useState('bank_transfer');
+  // Step 3: Payment (moved up). When allowPayLater, force pay_later.
+  const [paymentMethod, setPaymentMethod] = useState(allowPayLater ? 'pay_later' : 'bank_transfer');
+  useEffect(() => {
+    if (allowPayLater) setPaymentMethod('pay_later');
+  }, [allowPayLater]);
   const [transactionId, setTransactionId] = useState('');
   const [paymentProofFile, setPaymentProofFile] = useState<File | null>(null);
   const [paymentProofPreview, setPaymentProofPreview] = useState<string | null>(null);
@@ -705,11 +711,12 @@ export function PublicEnrollmentWizard({
             return;
           }
         }
-        if (!paymentMethod) {
+        if (!allowPayLater && !paymentMethod) {
           toast.error('Please select a payment method');
           return;
         }
-        if (paymentMethod === 'bank_transfer') {
+        const effectiveCompanyPaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
+        if (effectiveCompanyPaymentMethod === 'bank_transfer') {
           if (!transactionId.trim()) {
             toast.error('Please enter the transaction ID');
             return;
@@ -719,7 +726,7 @@ export function PublicEnrollmentWizard({
             return;
           }
         }
-        if (paymentMethod === 'card') {
+        if (effectiveCompanyPaymentMethod === 'card') {
           if (!validateCardPayment()) return;
           setPaymentError(null);
           setPaymentProcessing(true);
@@ -794,6 +801,7 @@ export function PublicEnrollmentWizard({
         }
         setIsSubmitting(true);
         setPaymentError(null);
+        const companyPayMethod = allowPayLater ? 'pay_later' : paymentMethod;
         try {
           const items = selectedCompanyCourses.map((item) => ({
             courseId: item.courseId,
@@ -806,11 +814,11 @@ export function PublicEnrollmentWizard({
             companyMobile: companyMobile.trim() || undefined,
             password: companyPassword.trim() || undefined,
             items,
-            paymentMethod,
-            transactionId: paymentMethod === 'bank_transfer' ? transactionId.trim() : undefined,
-            paymentProofDataUrl: paymentMethod === 'bank_transfer' && paymentProofPreview ? paymentProofPreview : undefined,
-            paymentProofFileName: paymentMethod === 'bank_transfer' ? paymentProofFile?.name : undefined,
-            paymentProofContentType: paymentMethod === 'bank_transfer' ? paymentProofFile?.type : undefined,
+            paymentMethod: companyPayMethod,
+            transactionId: companyPayMethod === 'bank_transfer' ? transactionId.trim() : undefined,
+            paymentProofDataUrl: companyPayMethod === 'bank_transfer' && paymentProofPreview ? paymentProofPreview : undefined,
+            paymentProofFileName: companyPayMethod === 'bank_transfer' ? paymentProofFile?.name : undefined,
+            paymentProofContentType: companyPayMethod === 'bank_transfer' ? paymentProofFile?.type : undefined,
           };
           const response = await publicEnrollmentWizardService.createCompanyOrder(request);
           if (response.success && response.data) {
@@ -846,12 +854,12 @@ export function PublicEnrollmentWizard({
         return;
       }
 
-      if (!paymentMethod) {
+      if (!allowPayLater && !paymentMethod) {
         toast.error('Please select a payment method');
         return;
       }
 
-      if (paymentMethod === 'bank_transfer') {
+      if (!allowPayLater && paymentMethod === 'bank_transfer') {
         if (!transactionId.trim()) {
           setPaymentError('Transaction ID is required for bank transfer');
           toast.error('Please enter the transaction ID');
@@ -864,7 +872,7 @@ export function PublicEnrollmentWizard({
         }
       }
 
-      if (paymentMethod === 'card') {
+      if (!allowPayLater && paymentMethod === 'card') {
         const paymentSuccess = await processCardPayment();
         if (!paymentSuccess) return;
         return;
@@ -1363,7 +1371,8 @@ export function PublicEnrollmentWizard({
 
   // Final submit
   const handleFinalSubmit = async () => {
-    if (!paymentMethod) {
+    const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
+    if (!effectivePaymentMethod) {
       toast.error('Please select a payment method');
       return;
     }
@@ -1441,12 +1450,12 @@ export function PublicEnrollmentWizard({
         courseId: selectedCourseId,
         courseDateId: selectedCourseDateId,
         // Payment details
-        paymentMethod: paymentMethod,
+        paymentMethod: effectivePaymentMethod,
         transactionId: transactionId || undefined,
         paymentAmount: coursePrice,
-        paymentProofDataUrl: paymentMethod === 'bank_transfer' ? (paymentProofPreview || undefined) : undefined,
-        paymentProofFileName: paymentMethod === 'bank_transfer' ? (paymentProofFile?.name || undefined) : undefined,
-        paymentProofContentType: paymentMethod === 'bank_transfer' ? (paymentProofFile?.type || undefined) : undefined,
+        paymentProofDataUrl: effectivePaymentMethod === 'bank_transfer' ? (paymentProofPreview || undefined) : undefined,
+        paymentProofFileName: effectivePaymentMethod === 'bank_transfer' ? (paymentProofFile?.name || undefined) : undefined,
+        paymentProofContentType: effectivePaymentMethod === 'bank_transfer' ? (paymentProofFile?.type || undefined) : undefined,
         // Primary Photo ID and Photo documents
         primaryIdDataUrl: primaryIdDataUrl || undefined,
         primaryIdFileName: docPrimaryId?.name || undefined,
@@ -2083,10 +2092,10 @@ export function PublicEnrollmentWizard({
             <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
-                Step 2: Payment
+                Step 2: {allowPayLater ? 'Your Details' : 'Payment'}
               </CardTitle>
               <CardDescription className="text-violet-100">
-                Enter your details and choose your payment method
+                {allowPayLater ? 'Enter your details (payment will be collected later)' : 'Enter your details and choose your payment method'}
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
@@ -2277,7 +2286,15 @@ export function PublicEnrollmentWizard({
                 </div>
               </div>
 
+              {allowPayLater && (
+                <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-4 text-sm text-violet-800">
+                  <p className="font-medium">Pay Later</p>
+                  <p className="text-violet-600 mt-1">Payment will be collected after you complete your enrollment.</p>
+                </div>
+              )}
+
               {/* Payment Method Selection */}
+              {!allowPayLater && (
               <div>
                 <Label className="text-base font-semibold mb-3 block">Select Payment Method <span className="text-red-500">*</span></Label>
                 <RadioGroup value={paymentMethod} onValueChange={(value) => {
@@ -2328,9 +2345,10 @@ export function PublicEnrollmentWizard({
                   </div>
                 </RadioGroup>
               </div>
+              )}
 
               {/* Bank Details (shown when bank transfer selected - informational only) */}
-              {paymentMethod === 'bank_transfer' && (
+              {!allowPayLater && paymentMethod === 'bank_transfer' && (
                 <div className="bg-gray-50 rounded-lg p-4 border">
                   <h4 className="font-semibold mb-3">Bank Details</h4>
                   <div className="space-y-2 text-sm">
@@ -2397,7 +2415,7 @@ export function PublicEnrollmentWizard({
               )}
 
               {/* Credit Card Form (shown when card selected) */}
-              {paymentMethod === 'card' && (
+              {!allowPayLater && paymentMethod === 'card' && (
                 <div className="space-y-6">
                   {/* Secure Payment Notice */}
                   <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-4 border border-blue-200 flex items-center gap-3">

@@ -57,6 +57,7 @@ export interface EnrollmentLinkRequest {
   courseDateId?: string; // Optional - if set, pre-selects the date
   expiresAt?: string;
   maxUses?: number;
+  allowPayLater?: boolean;
 }
 
 export interface EnrollmentLinkResponse {
@@ -75,6 +76,7 @@ export interface EnrollmentLinkResponse {
   maxUses?: number;
   usedCount: number;
   isActive: boolean;
+  allowPayLater?: boolean;
 }
 
 export interface EnrollmentLinkListResponse {
@@ -160,6 +162,7 @@ export const publicEnrollmentWizardService = {
     courseDateId?: string;
     courseDateRange?: string;
     isOneTimeLink?: boolean;
+    allowPayLater?: boolean;
   }>> {
     return apiService.get<ApiResponse<{
       linkId: string;
@@ -168,6 +171,7 @@ export const publicEnrollmentWizardService = {
       courseDateId?: string;
       courseDateRange?: string;
       isOneTimeLink?: boolean;
+      allowPayLater?: boolean;
     }>>(`/PublicEnrollment/link/${code}`);
   },
 

@@ -627,6 +627,16 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             >
                               {student.isActive ? 'Deactivate' : 'Activate'}
                             </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                              onClick={() => handleDeleteStudent(student.studentId, student.fullName)}
+                              disabled={loading}
+                              title="Delete Student"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
