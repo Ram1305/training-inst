@@ -60,10 +60,10 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         public Guid? CompanyOrderId { get; set; }
 
         /// <summary>
-        /// When true, users opening this link complete enrollment without payment (name, email, mobile, LLN, enrollment form only).
+        /// Optional settings stored in separate table (e.g. AllowPayLater). Use Option?.AllowPayLater ?? false.
         /// </summary>
-        public bool AllowPayLater { get; set; }
-        
+        public virtual EnrollmentLinkOption? Option { get; set; }
+
         // Navigation properties
         [ForeignKey(nameof(CourseId))]
         public virtual Courses.Course? Course { get; set; }

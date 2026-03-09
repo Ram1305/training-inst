@@ -18,7 +18,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
     
     public class CreateEnrollmentLinkRequestDto
     {
-        public required string Name { get; set; }
+        /// <summary>Required. Validated in controller.</summary>
+        public string Name { get; set; } = string.Empty;
         public string? Description { get; set; }
         public Guid? CourseId { get; set; }
         public Guid? CourseDateId { get; set; }

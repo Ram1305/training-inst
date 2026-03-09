@@ -227,7 +227,12 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         [HttpPost("admin/links")]
         public async Task<IActionResult> CreateEnrollmentLink([FromBody] CreateEnrollmentLinkRequestDto? request)
         {
-            if (request == null || string.IsNullOrWhiteSpace(request.Name))
+            if (request == null)
+            {
+                _logger.LogWarning("CreateEnrollmentLink received null request body");
+                return BadRequest(ApiResponse<object>.FailureResponse("Request body is required. Send JSON with name (required), description (optional), courseId (optional), maxUses (optional), expiresAt (optional), and allowPayLater (optional)."));
+            }
+            if (string.IsNullOrWhiteSpace(request.Name))
             {
                 return BadRequest(ApiResponse<object>.FailureResponse("Name is required"));
             }

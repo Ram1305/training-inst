@@ -249,7 +249,6 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateId = request.CourseDateId,
                 ExpiresAt = request.ExpiresAt,
                 MaxUses = request.MaxUses,
-                AllowPayLater = request.AllowPayLater,
                 QrCodeData = GenerateQRCode(fullUrl),
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow,
@@ -259,6 +258,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             try
             {
                 await _context.EnrollmentLinks.AddAsync(link);
+                await _context.EnrollmentLinkOptions.AddAsync(new Data.Entities.Enrollments.EnrollmentLinkOption
+                {
+                    LinkId = link.LinkId,
+                    AllowPayLater = request.AllowPayLater
+                });
                 await _context.SaveChangesAsync();
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
@@ -277,6 +281,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var query = _context.EnrollmentLinks
                 .Include(l => l.Course)
                 .Include(l => l.CourseDate)
+                .Include(l => l.Option)
                 .OrderByDescending(l => l.CreatedAt);
 
             var totalCount = await query.CountAsync();
@@ -305,6 +310,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var link = await _context.EnrollmentLinks
                 .Include(l => l.Course)
                 .Include(l => l.CourseDate)
+                .Include(l => l.Option)
                 .FirstOrDefaultAsync(l => l.LinkId == linkId);
 
             return link != null ? await MapToResponseDto(link) : null;
@@ -341,7 +347,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     ? $"{link.CourseDate.ScheduledDate:dd/MM/yyyy}"
                     : null,
                 IsOneTimeLink = link.MaxUses == 1,
-                AllowPayLater = link.AllowPayLater
+                AllowPayLater = link.Option?.AllowPayLater ?? false
             };
         }
 
@@ -490,6 +496,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                         CreatedAt = DateTime.UtcNow
                     };
                     await _context.EnrollmentLinks.AddAsync(link);
+                    await _context.EnrollmentLinkOptions.AddAsync(new Data.Entities.Enrollments.EnrollmentLinkOption
+                    {
+                        LinkId = link.LinkId,
+                        AllowPayLater = false
+                    });
                     links.Add(new CompanyOrderLinkDto
                     {
                         LinkId = link.LinkId.ToString(),
@@ -805,17 +816,19 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         private async Task<EnrollmentLinkResponseDto> MapToResponseDto(EnrollmentLinkEntity link)
         {
             var baseUrl = await GetFrontendBaseUrlAsync();
+            var course = link.Course;
+            var courseDate = link.CourseDate;
 
             return new EnrollmentLinkResponseDto
             {
                 LinkId = link.LinkId.ToString(),
-                Name = link.Name,
+                Name = link.Name ?? string.Empty,
                 Description = link.Description,
                 CourseId = link.CourseId?.ToString(),
-                CourseName = link.Course?.CourseName,
+                CourseName = course?.CourseName,
                 CourseDateId = link.CourseDateId?.ToString(),
-                CourseDateRange = link.CourseDate != null
-                    ? $"{link.CourseDate.ScheduledDate:dd/MM/yyyy}"
+                CourseDateRange = courseDate != null
+                    ? $"{courseDate.ScheduledDate:dd/MM/yyyy}"
                     : null,
                 UniqueCode = link.UniqueCode,
                 FullUrl = $"{baseUrl}/enroll/{link.UniqueCode}",
@@ -825,7 +838,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 MaxUses = link.MaxUses,
                 UsedCount = link.UsedCount,
                 IsActive = link.IsActive,
-                AllowPayLater = link.AllowPayLater
+                AllowPayLater = link.Option?.AllowPayLater ?? false
             };
         }
 
