@@ -554,7 +554,7 @@ export function PublicEnrollmentWizard({
         fullName: registrationData.fullName.trim(),
         email: registrationData.email.trim(),
         phone: registrationData.phone.trim(),
-        password: registrationData.password,
+        password: enrollmentType === 'individual' ? '123456' : registrationData.password,
         courseId: selectedCourseId,
         selectedCourseDateId: selectedCourseDateId,
         amountCents: Math.round(coursePrice * 100),
@@ -602,10 +602,13 @@ export function PublicEnrollmentWizard({
       errors.email = 'Please enter a valid email address';
     }
     if (!registrationData.phone.trim()) errors.phone = 'Phone number is required';
-    if (!registrationData.password) {
-      errors.password = 'Password is required';
-    } else if (registrationData.password.length < 6) {
-      errors.password = 'Password must be at least 6 characters';
+    // Password required only for company enrollment; individual uses a backend-stored default
+    if (enrollmentType === 'company') {
+      if (!registrationData.password) {
+        errors.password = 'Password is required';
+      } else if (registrationData.password.length < 6) {
+        errors.password = 'Password must be at least 6 characters';
+      }
     }
     if (!agreedToTerms) errors.terms = 'Please agree to the terms';
     setRegistrationErrors(errors);
@@ -1360,7 +1363,7 @@ export function PublicEnrollmentWizard({
         secondaryIdContentType?: string;
       } = {
         ...formRequest,
-        password: registrationData.password,
+        password: enrollmentType === 'individual' ? '123456' : registrationData.password,
         fullName: registrationData.fullName,
         phone: registrationData.phone,
         // Quiz data
@@ -1894,6 +1897,31 @@ export function PublicEnrollmentWizard({
                         className="mt-1"
                       />
                     </div>
+                    <div>
+                      <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+                      <div className="relative mt-1">
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Default: 123456"
+                          value={registrationData.password}
+                          onChange={(e) => {
+                            setRegistrationData({ ...registrationData, password: e.target.value });
+                            if (registrationErrors.password) setRegistrationErrors({ ...registrationErrors, password: '' });
+                          }}
+                          className={`pr-12 ${registrationErrors.password ? 'border-red-500' : ''}`}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                        >
+                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                        </button>
+                      </div>
+                      {registrationErrors.password && <p className="text-red-500 text-sm mt-1">{registrationErrors.password}</p>}
+                      <p className="text-xs text-gray-500 mt-1">Minimum 6 characters (default: 123456)</p>
+                    </div>
                   </div>
                 </>
               ) : (
@@ -1944,31 +1972,7 @@ export function PublicEnrollmentWizard({
                   />
                   {registrationErrors.email && <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>}
                 </div>
-                <div>
-                  <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
-                  <div className="relative mt-1">
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Default: 123456"
-                      value={registrationData.password}
-                      onChange={(e) => {
-                        setRegistrationData({ ...registrationData, password: e.target.value });
-                        if (registrationErrors.password) setRegistrationErrors({ ...registrationErrors, password: '' });
-                      }}
-                      className={`pr-12 ${registrationErrors.password ? 'border-red-500' : ''}`}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                    </button>
-                  </div>
-                  {registrationErrors.password && <p className="text-red-500 text-sm mt-1">{registrationErrors.password}</p>}
-                  <p className="text-xs text-gray-500 mt-1">Minimum 6 characters (default: 123456)</p>
-                </div>
+                {/* Individual: no password field; backend stores default password */}
                 <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                   <Checkbox
                     id="terms"
@@ -2340,11 +2344,13 @@ export function PublicEnrollmentWizard({
                 />
               )}
 
+              {enrollmentType === 'individual' && (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
                   <strong>Note:</strong> After completing the payment step, you will proceed to the LLND Assessment and then the Enrollment Form.
                 </p>
               </div>
+              )}
             </CardContent>
           </Card>
         );
