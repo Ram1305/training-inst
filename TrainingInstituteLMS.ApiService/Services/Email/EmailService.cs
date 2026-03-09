@@ -62,38 +62,54 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
 </td></tr></table>"
                 : "";
 
-            var subject = $"Your course purchase – Order #{orderId}";
+            var subject = $"Thank you for your booking – Order #{orderId}";
             var plainBody = $@"Dear {companyName},
 
-Thank you for your order. Your company order has been received successfully.
+Thank you for your booking with Safety Training Academy.
+
+Instructions:
+Please share the links with your employees to continue their LLN (Language, Literacy and Numeracy) assessment and complete their Enrolment.
+
+Please share the links below:
+
+{linksPlain}
+
+Please ask them to complete the form and assessment before their course date to finalise your registration.
+
+We have shared these details in Email for your reference and confirmation.
 
 Order #: {orderId}
 Order Date: {orderDateStr}
 Total: {priceStr}
 
-------------------------------------------------------------
-PURCHASED COURSES – ONE-TIME ENROLLMENT LINKS
-------------------------------------------------------------
-Each link below is for one enrolment. Share each link with the person who will take that course.
-
-{linksPlain}
+If you need any assistance, please contact us.
 {loginNotePlain}
-Best regards,
-{_settings.FromName}";
+Kind regards,
+Safety Training Academy
+Training Team
+1300 976 097
+info@safetytrainingacademy.edu.au";
 
             var htmlBody = $@"<!DOCTYPE html>
 <html>
-<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Order Confirmation</title></head>
+<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Booking Confirmation</title></head>
 <body style='margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#333;background-color:#f4f4f4;'>
 <table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color:#f4f4f4;padding:20px 0;'>
 <tr><td align='center'>
 <table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
 <tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
-<h1 style='margin:0;font-size:22px;font-weight:700;'>Order #{orderId} – Course purchase</h1>
+<h1 style='margin:0;font-size:22px;font-weight:700;'>Thank you for your booking – Order #{orderId}</h1>
 </td></tr>
 <tr><td style='padding:30px;'>
 <p style='margin:0 0 16px;font-size:15px;color:#555;'>Dear <strong>{companyName}</strong>,</p>
-<p style='margin:0 0 24px;font-size:15px;color:#555;'>Thank you for your order. Your company order has been received successfully.</p>
+<p style='margin:0 0 24px;font-size:15px;color:#555;'>Thank you for your booking with Safety Training Academy.</p>
+<p style='margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;'>Instructions:</p>
+<p style='margin:0 0 16px;font-size:14px;color:#334155;'>Please share the links with your employees to continue their LLN (Language, Literacy and Numeracy) assessment and complete their Enrolment.</p>
+<p style='margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;'>Please share the links below:</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:20px;border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;'>{linksHtml}
+</table>
+<p style='margin:0 0 16px;font-size:14px;color:#334155;'>Please ask them to complete the form and assessment before their course date to finalise your registration.</p>
+<p style='margin:0 0 20px;font-size:14px;color:#334155;'>We have shared these details in Email for your reference and confirmation.</p>
 <table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;'>
 <tr><td style='padding:20px;'>
 <p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Order details</p>
@@ -101,14 +117,11 @@ Best regards,
 <p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order date: <strong>{orderDateStr}</strong></p>
 <p style='margin:0;font-size:14px;color:#334155;'>Total: <strong>{priceStr}</strong></p>
 </td></tr></table>
-<p style='margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;'>Purchased courses – one-time enrollment links</p>
-<p style='margin:0 0 16px;font-size:13px;color:#64748b;'>Each link is for one enrolment. Share each link with the person who will take that course.</p>
-<table width='100%' cellpadding='0' cellspacing='0' border='0' style='border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;'>{linksHtml}
-</table>
+<p style='margin:0 0 20px;font-size:14px;color:#334155;'>If you need any assistance, please contact us.</p>
 {loginNoteHtml}
 </td></tr>
 <tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;'>
-<p style='margin:0;font-size:13px;color:#64748b;'>Best regards,<br/><strong style='color:#334155;'>{_settings.FromName}</strong></p>
+<p style='margin:0;font-size:13px;color:#64748b;'>Kind regards,<br/><strong style='color:#334155;'>Safety Training Academy</strong><br/>Training Team<br/>1300 976 097<br/><a href='mailto:info@safetytrainingacademy.edu.au' style='color:#3b82f6;'>info@safetytrainingacademy.edu.au</a></p>
 </td></tr></table></td></tr></table></body></html>";
 
             try
