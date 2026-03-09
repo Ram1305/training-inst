@@ -64,23 +64,84 @@ const mapAuthUserToUser = (authUser: AuthUser): User => {
   };
 };
 
+// URL path constants for shareable links
+const PATHS = {
+  landing: '/',
+  about: '/about',
+  contact: '/contact',
+  bookNow: '/book-now',
+  enroll: '/enroll',
+  register: '/register',
+  forms: '/forms',
+  feesRefund: '/fees-refund',
+  gallery: '/gallery',
+  quiz: '/quiz',
+  login: '/login',
+  course: (id: string, slug?: string) => slug ? `/course/${id}/${slug}` : `/course/${id}`,
+  enrollWithCode: (code: string) => `/enroll/${code}`,
+} as const;
+
+// Create URL-safe slug from course name (e.g. "White Card Training" -> "white-card-training")
+const courseNameToSlug = (name: string): string =>
+  name
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '') || 'course';
+
+// Map pathname to page (for parsing URLs)
+type PublicPage = 'landing' | 'about' | 'contact' | 'bookNow' | 'publicEnrollmentWizard' | 'publicEnrollment' | 'forms' | 'feesRefund' | 'gallery' | 'publicQuiz' | 'login';
+const PATHNAME_TO_PAGE: Record<string, PublicPage> = {
+  '/': 'landing',
+  '/home': 'landing',
+  '/about': 'about',
+  '/contact': 'contact',
+  '/book-now': 'bookNow',
+  '/enroll': 'publicEnrollmentWizard',
+  '/register': 'publicEnrollment',
+  '/forms': 'forms',
+  '/fees-refund': 'feesRefund',
+  '/gallery': 'gallery',
+  '/quiz': 'publicQuiz',
+  '/login': 'login',
+};
+
 // Helper function to parse URL path
-const parseUrlPath = (): { path: string; enrollCode?: string; courseId?: string } => {
+const parseUrlPath = (): { path: string; page?: PublicPage; enrollCode?: string; courseId?: string } => {
   const pathname = window.location.pathname;
   
-  // Check for /enroll/:code pattern
-  const enrollMatch = pathname.match(/^\/enroll\/([a-zA-Z0-9]+)$/);
-  if (enrollMatch) {
-    return { path: 'enroll', enrollCode: enrollMatch[1] };
+  // Check for /enroll/:code pattern (enrollment link - must be before /enroll)
+  const enrollCodeMatch = pathname.match(/^\/enroll\/([a-zA-Z0-9]+)$/);
+  if (enrollCodeMatch) {
+    return { path: 'enroll', enrollCode: enrollCodeMatch[1] };
   }
   
-  // Check for /course/:id pattern (shareable course details URL)
-  const courseMatch = pathname.match(/^\/course\/([a-zA-Z0-9\-]+)$/);
+  // Check for /course/:id or /course/:id/:slug pattern (slug = course name for readable URLs)
+  const courseMatch = pathname.match(/^\/course\/([a-zA-Z0-9\-]+)(?:\/([a-zA-Z0-9\-]+))?$/);
   if (courseMatch) {
     return { path: 'course', courseId: courseMatch[1] };
   }
   
-  return { path: pathname === '/' ? 'landing' : pathname };
+  // Check known pathnames
+  const page = PATHNAME_TO_PAGE[pathname];
+  if (page) {
+    return { path: page, page };
+  }
+  
+  return { path: 'landing', page: 'landing' };
+};
+
+// Helper to update URL when navigating (use replace: true to replace history entry)
+const updateUrl = (path: string, replace = false) => {
+  if (window.location.pathname !== path) {
+    if (replace) {
+      window.history.replaceState({}, '', path);
+    } else {
+      window.history.pushState({}, '', path);
+    }
+  }
 };
 
 export default function App() {
@@ -111,10 +172,10 @@ export default function App() {
 
   const user: User | null = authUser ? mapAuthUserToUser(authUser) : null;
 
-  // Check URL path on mount for enrollment links and shareable course URLs
+  // Check URL path on mount for enrollment links and shareable URLs
   useEffect(() => {
     const checkUrlPath = async () => {
-      const { path, enrollCode, courseId } = parseUrlPath();
+      const { path, page, enrollCode, courseId } = parseUrlPath();
       
       if (path === 'enroll' && enrollCode) {
         setIsLoadingEnrollmentLink(true);
@@ -146,9 +207,14 @@ export default function App() {
           setIsLoadingEnrollmentLink(false);
         }
       } else if (path === 'course' && courseId) {
-        // Direct link to course details - show the course page
         setSelectedCourseId(courseId);
         setCurrentPage('courseDetails');
+      } else if (page) {
+        // Direct link to any public page
+        setCurrentPage(page);
+        if (page === 'landing') {
+          setSelectedCourseId(null);
+        }
       }
     };
     
@@ -169,13 +235,15 @@ export default function App() {
   // Handle browser back/forward - sync state with URL
   useEffect(() => {
     const handlePopState = () => {
-      const { path, courseId } = parseUrlPath();
+      const { path, page, courseId } = parseUrlPath();
       if (path === 'course' && courseId) {
         setSelectedCourseId(courseId);
         setCurrentPage('courseDetails');
-      } else if (path === 'landing' || path === '/') {
-        setCurrentPage('landing');
-        setSelectedCourseId(null);
+      } else if (page) {
+        setCurrentPage(page);
+        if (page === 'landing') {
+          setSelectedCourseId(null);
+        }
       }
     };
     window.addEventListener('popstate', handlePopState);
@@ -200,28 +268,28 @@ export default function App() {
     allowLandingViewRef.current = false;
     setCurrentPage('landing');
     setSelectedCourseId(null);
+    updateUrl(PATHS.landing, true);
   };
 
   const handleGoToLogin = () => {
     allowLandingViewRef.current = false;
     setCurrentPage('login');
+    updateUrl(PATHS.login);
   };
 
   const handleBackToLanding = () => {
-    allowLandingViewRef.current = true; // Allow authenticated users to stay on landing when they chose "Go to Landing Page"
+    allowLandingViewRef.current = true;
     setCurrentPage('landing');
     setSelectedCourseId(null);
     setEnrollmentLinkData(null);
     setEnrollCode(null);
-    // Update URL when leaving course details so shared links work correctly
-    if (window.location.pathname.startsWith('/course/')) {
-      window.history.replaceState({}, '', '/');
-    }
+    updateUrl(PATHS.landing, true);
   };
 
   const handleViewCourses = () => {
     setCurrentPage('landing');
     setSelectedCourseId(null);
+    updateUrl(PATHS.landing);
     setTimeout(() => {
       const coursesSection = document.getElementById('courses');
       if (coursesSection) {
@@ -232,10 +300,12 @@ export default function App() {
 
   const handleGoToAbout = () => {
     setCurrentPage('about');
+    updateUrl(PATHS.about);
   };
 
   const handleGoToContact = () => {
     setCurrentPage('contact');
+    updateUrl(PATHS.contact);
   };
 
   const handleGoToBookNow = () => {
@@ -243,32 +313,39 @@ export default function App() {
     setEnrollmentLinkData(null);
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
+    updateUrl(PATHS.enroll);
   };
 
   const handleGoToPublicQuiz = () => {
     setCurrentPage('publicQuiz');
+    updateUrl(PATHS.quiz);
   };
 
   const handleGoToPublicEnrollment = () => {
     setCurrentPage('publicEnrollment');
+    updateUrl(PATHS.register);
   };
 
   const handleGoToPublicEnrollmentWizard = () => {
     setEnrollmentLinkData(null);
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
+    updateUrl(PATHS.enroll);
   };
 
   const handleGoToForms = () => {
     setCurrentPage('forms');
+    updateUrl(PATHS.forms);
   };
 
   const handleGoToFeesRefund = () => {
     setCurrentPage('feesRefund');
+    updateUrl(PATHS.feesRefund);
   };
 
   const handleGoToGallery = () => {
     setCurrentPage('gallery');
+    updateUrl(PATHS.gallery);
   };
 
   const handlePublicQuizComplete = (result: { userId: string; studentId: string; email: string; fullName: string; isPassed: boolean }) => {
@@ -317,8 +394,7 @@ export default function App() {
   const handleCourseDetails = (courseId: string) => {
     setSelectedCourseId(courseId);
     setCurrentPage('courseDetails');
-    // Update URL so the link can be copied and shared
-    window.history.pushState({}, '', `/course/${courseId}`);
+    updateUrl(PATHS.course(courseId));
   };
 
   const handleViewHandbook = (url: string, title?: string, courseName?: string) => {
@@ -329,6 +405,9 @@ export default function App() {
   const handleBackFromHandbookViewer = () => {
     setHandbookViewerState(null);
     setCurrentPage('courseDetails');
+    if (selectedCourseId) {
+      updateUrl(PATHS.course(selectedCourseId));
+    }
   };
 
   const handleCourseBooking = (courseData?: { courseName?: string; courseCode?: string; coursePrice?: number; experienceType?: 'with' | 'without' }) => {
@@ -337,6 +416,7 @@ export default function App() {
     }
     setEnrollmentLinkData(null);
     setCurrentPage('publicEnrollmentWizard');
+    updateUrl(PATHS.enroll);
   };
 
   const handleBookCourse = (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => {
@@ -350,6 +430,7 @@ export default function App() {
     setEnrollmentLinkData(null);
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
+    updateUrl(PATHS.enroll);
   };
 
   const handleNavigateToEnrollFromPortal = (courseData?: {
@@ -372,13 +453,16 @@ export default function App() {
     setEnrollmentLinkData(null);
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
+    updateUrl(PATHS.enroll);
   };
 
   const handleBackFromBooking = () => {
     if (selectedCourseId) {
       setCurrentPage('courseDetails');
+      updateUrl(PATHS.course(selectedCourseId));
     } else {
       setCurrentPage('landing');
+      updateUrl(PATHS.landing);
     }
   };
 
@@ -578,6 +662,11 @@ export default function App() {
     );
   }
 
+  const handleCourseUrlReady = (courseId: string, courseName: string) => {
+    const slug = courseNameToSlug(courseName);
+    updateUrl(PATHS.course(courseId, slug), true);
+  };
+
   if (currentPage === 'courseDetails' && selectedCourseId) {
     return (
       <CourseDetailsPage
@@ -595,6 +684,7 @@ export default function App() {
         onFeesRefund={handleGoToFeesRefund}
         onGallery={handleGoToGallery}
         onViewHandbook={handleViewHandbook}
+        onCourseUrlReady={handleCourseUrlReady}
       />
     );
   }

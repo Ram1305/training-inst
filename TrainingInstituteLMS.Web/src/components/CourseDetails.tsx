@@ -37,6 +37,8 @@ interface CourseDetailsPageProps {
   onFeesRefund?: () => void;
   onGallery?: () => void;
   onViewHandbook?: (url: string, title?: string, courseName?: string) => void;
+  /** Called when course is loaded so the URL can be updated with the course name slug */
+  onCourseUrlReady?: (courseId: string, courseName: string) => void;
 }
 
 // Helper function to map API response to display format
@@ -105,7 +107,8 @@ export function CourseDetailsPage({
   onForms,
   onFeesRefund,
   onGallery,
-  onViewHandbook
+  onViewHandbook,
+  onCourseUrlReady
 }: CourseDetailsPageProps) {
   const [course, setCourse] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -164,6 +167,11 @@ export function CourseDetailsPage({
         });
         const mappedCourse = mapApiCourseToDisplay(response.data);
         setCourse(mappedCourse);
+        // Update URL with course name slug for shareable links (e.g. /course/id/white-card-training)
+        const name = response.data.courseName?.trim();
+        if (name && onCourseUrlReady) {
+          onCourseUrlReady(response.data.courseId, name);
+        }
       } else {
         setError(response.message || 'Failed to load course details');
       }

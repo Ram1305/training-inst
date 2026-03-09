@@ -340,6 +340,8 @@ export function PublicEnrollmentWizard({
   const [companyConfirmPassword, setCompanyConfirmPassword] = useState('');
   const [companyOrderSuccess, setCompanyOrderSuccess] = useState(false);
   const [companyOrderLinks, setCompanyOrderLinks] = useState<{ fullUrl: string; courseName: string }[]>([]);
+  const [individualEnrollmentSuccess, setIndividualEnrollmentSuccess] = useState(false);
+  const [individualEnrollmentResult, setIndividualEnrollmentResult] = useState<{ userId: string; studentId: string; email: string; fullName: string } | null>(null);
   const [oneTimeLinkSubmitting, setOneTimeLinkSubmitting] = useState(false);
   const [oneTimeLinkSuccess, setOneTimeLinkSuccess] = useState(false);
   const [oneTimeLinkError, setOneTimeLinkError] = useState<string | null>(null);
@@ -1449,12 +1451,22 @@ export function PublicEnrollmentWizard({
 
       if (response.success && response.data) {
         toast.success('Enrollment completed successfully!');
-        onComplete({
-          userId: response.data.userId,
-          studentId: response.data.studentId,
-          email: response.data.email,
-          fullName: response.data.fullName,
-        });
+        if (enrollmentType === 'individual') {
+          setIndividualEnrollmentSuccess(true);
+          setIndividualEnrollmentResult({
+            userId: response.data.userId,
+            studentId: response.data.studentId,
+            email: response.data.email,
+            fullName: response.data.fullName,
+          });
+        } else {
+          onComplete({
+            userId: response.data.userId,
+            studentId: response.data.studentId,
+            email: response.data.email,
+            fullName: response.data.fullName,
+          });
+        }
       } else {
         toast.error(response.message || 'Failed to submit enrollment');
       }
@@ -2992,6 +3004,63 @@ export function PublicEnrollmentWizard({
                 'Complete Registration'
               )}
             </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Individual enrollment thank-you screen (after enrollment + LLN complete)
+  if (enrollmentType === 'individual' && individualEnrollmentSuccess && individualEnrollmentResult) {
+    return (
+      <div className="max-w-2xl mx-auto p-6 space-y-6">
+        <Card className="overflow-hidden border-0 shadow-xl shadow-violet-100/50">
+          <div className="bg-gradient-to-br from-violet-600 via-violet-700 to-fuchsia-700 px-8 py-10 text-white text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-6">
+              <CheckCircle className="w-10 h-10 text-white" strokeWidth={2.5} />
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight mb-2">
+              Thank you for your booking with Safety Training Academy
+            </h1>
+            <p className="text-violet-100 text-sm sm:text-base max-w-md mx-auto">
+              Your enrollment has been completed successfully.
+            </p>
+          </div>
+          <CardContent className="px-8 py-8 sm:px-10 sm:py-10 space-y-6">
+            <div className="prose prose-gray max-w-none text-gray-700 space-y-4 text-[15px] leading-relaxed">
+              <p className="text-gray-600">
+                Please follow the instructions sent in your confirmation email.
+              </p>
+              <p className="text-gray-600">
+                If you need any assistance, please contact us.
+              </p>
+            </div>
+            <div className="border-t border-gray-100 pt-6 mt-6">
+              <p className="text-gray-600 text-sm mb-1">Kind regards,</p>
+              <p className="font-semibold text-gray-800">Safety Training Academy</p>
+              <p className="text-gray-600 text-sm">Training Team</p>
+              <p className="text-gray-700 font-medium mt-2">1300 976 097</p>
+              <a
+                href="mailto:info@safetytrainingacademy.edu.au"
+                className="inline-block mt-1 text-violet-600 hover:text-violet-700 font-medium hover:underline transition-colors"
+              >
+                info@safetytrainingacademy.edu.au
+              </a>
+            </div>
+            <div className="pt-4">
+              <Button
+                onClick={() => {
+                  if (individualEnrollmentResult) {
+                    onComplete(individualEnrollmentResult);
+                  } else {
+                    onCancel();
+                  }
+                }}
+                className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-medium px-8"
+              >
+                Continue to Dashboard
+              </Button>
+            </div>
           </CardContent>
         </Card>
       </div>
