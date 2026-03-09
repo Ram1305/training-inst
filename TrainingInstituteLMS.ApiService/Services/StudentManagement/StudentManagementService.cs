@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
+using TrainingInstituteLMS.Data.Entities.Quiz;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.Student;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Student;
@@ -332,6 +333,39 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                     _logger.LogWarning("Cannot delete student with existing enrollments: {StudentId}", studentId);
                     return false;
                 }
+
+                // Get quiz attempts for this student (must delete before student due to FK)
+                var quizAttemptIds = await _context.PreEnrollmentQuizAttempts
+                    .Where(q => q.StudentId == studentId)
+                    .Select(q => q.QuizAttemptId)
+                    .ToListAsync();
+
+                if (quizAttemptIds.Count > 0)
+                {
+                    // Delete AdminBypass records (reference QuizAttempt)
+                    var adminBypasses = await _context.AdminBypasses
+                        .Where(ab => quizAttemptIds.Contains(ab.QuizAttemptId))
+                        .ToListAsync();
+                    _context.AdminBypasses.RemoveRange(adminBypasses);
+
+                    // Delete QuizSectionResults (reference QuizAttempt)
+                    var sectionResults = await _context.QuizSectionResults
+                        .Where(qsr => quizAttemptIds.Contains(qsr.QuizAttemptId))
+                        .ToListAsync();
+                    _context.QuizSectionResults.RemoveRange(sectionResults);
+
+                    // Delete PreEnrollmentQuizAttempts
+                    var quizAttempts = await _context.PreEnrollmentQuizAttempts
+                        .Where(q => q.StudentId == studentId)
+                        .ToListAsync();
+                    _context.PreEnrollmentQuizAttempts.RemoveRange(quizAttempts);
+                }
+
+                // Remove UserRoles (User has Restrict/Cascade - ensure clean delete order)
+                var userRoles = await _context.UserRoles
+                    .Where(ur => ur.UserId == student.UserId)
+                    .ToListAsync();
+                _context.UserRoles.RemoveRange(userRoles);
 
                 _context.Students.Remove(student);
                 _context.Users.Remove(student.User);
