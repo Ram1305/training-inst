@@ -71,7 +71,7 @@ export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboa
       const apiDate = typeof s.date === 'string' ? s.date.slice(0, 10) : formatDateForApi(new Date(s.date));
       return apiDate === dateStr;
     });
-    return found?.count ?? 0;
+    return found?.totalCount ?? 0;
   };
 
   return (
@@ -83,14 +83,19 @@ export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboa
         <p className="text-gray-600">Welcome back! Here's an overview of your institute</p>
       </div>
 
-      {/* Bookings This Week */}
+      {/* Bookings This Week - by selected course date */}
       <Card className="border-violet-100">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="w-5 h-5" />
-              Bookings This Week (by Course Selected Date)
-            </CardTitle>
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="w-5 h-5" />
+                Bookings This Week
+              </CardTitle>
+              <p className="text-sm text-gray-500 mt-1">
+                By selected course date — counts the session date each student chose when enrolling
+              </p>
+            </div>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handlePrevWeek} disabled={loading}>
                 <ChevronLeft className="w-4 h-4" />

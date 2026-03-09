@@ -57,16 +57,17 @@ export interface BookingDetailsResponseDto {
   enrollments: BookingDetailsEnrollmentDto[];
 }
 
-// Weekly booking stats for admin dashboard
+// Weekly booking stats for admin dashboard (based on selected course date)
 export interface DailyBookingStat {
   date: string;
-  count: number;
+  /** Number of enrollments whose selected course/session date falls on this day */
+  totalCount: number;
 }
 
 export interface WeeklyBookingStatsDto {
-  weekStart: string;
+  weekStart?: string;
   dailyStats: DailyBookingStat[];
-  totalBookings: number;
+  totalBookings?: number;
 }
 
 // Enrolled course - student's current enrollments

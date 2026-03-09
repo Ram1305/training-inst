@@ -932,6 +932,14 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             </div>
                           </CardHeader>
                           <CardContent className="space-y-2 text-sm">
+                            {(payment.selectedCourseDate ?? payment.enrolledAt) && (
+                              <div className="flex justify-between">
+                                <span className="text-gray-500">Date selected (enrollment)</span>
+                                <span className="font-medium">
+                                  {formatDateLong(payment.selectedCourseDate ?? payment.enrolledAt)}
+                                </span>
+                              </div>
+                            )}
                             <div className="flex justify-between">
                               <span className="text-gray-500">Amount paid</span>
                               <span className="font-semibold text-gray-900">{formatCurrency(payment.amountPaid)}</span>
@@ -976,6 +984,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Course</TableHead>
+                                <TableHead>Date selected</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>When purchased</TableHead>
                                 <TableHead>Status</TableHead>
@@ -990,6 +999,11 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                                       <div className="font-medium">{payment.courseName}</div>
                                       <div className="text-xs text-gray-500">{payment.transactionId}</div>
                                     </div>
+                                  </TableCell>
+                                  <TableCell>
+                                    {(payment.selectedCourseDate ?? payment.enrolledAt)
+                                      ? formatDateLong(payment.selectedCourseDate ?? payment.enrolledAt)
+                                      : '—'}
                                   </TableCell>
                                   <TableCell className="font-medium">{formatCurrency(payment.amountPaid)}</TableCell>
                                   <TableCell>{formatDateLong(payment.paymentDate)}</TableCell>

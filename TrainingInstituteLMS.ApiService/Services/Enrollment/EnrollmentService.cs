@@ -515,6 +515,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     .ThenInclude(e => e.Student)
                 .Include(p => p.Enrollment)
                     .ThenInclude(e => e.Course)
+                .Include(p => p.Enrollment)
+                    .ThenInclude(e => e.CourseDate)
                 .AsQueryable();
 
             // Apply filters
@@ -587,6 +589,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     .ThenInclude(e => e.Student)
                 .Include(p => p.Enrollment)
                     .ThenInclude(e => e.Course)
+                .Include(p => p.Enrollment)
+                    .ThenInclude(e => e.CourseDate)
                 .FirstOrDefaultAsync(p => p.PaymentProofId == paymentProofId);
 
             if (paymentProof == null) return null;
@@ -669,6 +673,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                 CourseCode = paymentProof.Enrollment.Course.CourseCode,
                 CourseName = paymentProof.Enrollment.Course.CourseName,
                 CoursePrice = paymentProof.Enrollment.Course.Price,
+                EnrolledAt = paymentProof.Enrollment.EnrolledAt,
+                SelectedCourseDate = paymentProof.Enrollment.CourseDate?.ScheduledDate,
                 ReceiptFileUrl = _fileStorageService.GetFileUrl(paymentProof.ReceiptFileUrl),
                 ReceiptFileName = fileName,
                 TransactionId = paymentProof.TransactionId,
@@ -690,6 +696,10 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
 
         #region Admin Booking Dashboard
 
+        /// <summary>
+        /// Gets weekly booking counts by selected course date (the session date the student chose when enrolling).
+        /// Dashboard performs based on CourseDate.ScheduledDate, not enrollment creation date.
+        /// </summary>
         public async Task<WeeklyBookingStatsDto> GetWeeklyBookingStatsAsync(DateTime weekStart)
         {
             var weekEnd = weekStart.Date.AddDays(7);
@@ -697,6 +707,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
 
             for (var date = weekStart.Date; date < weekEnd; date = date.AddDays(1))
             {
+                // Count by selected course date (session date they chose when enrolling)
                 var count = await _context.Enrollments
                     .Where(e => e.CourseDateId != null &&
                                 e.Status != "Cancelled" &&
@@ -714,6 +725,10 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
             return new WeeklyBookingStatsDto { DailyStats = dailyStats };
         }
 
+        /// <summary>
+        /// Gets booking details for a given date. Uses selected course date (CourseDate.ScheduledDate),
+        /// so the list shows enrollments whose chosen session date is the target date.
+        /// </summary>
         public async Task<BookingDetailsResponseDto> GetBookingDetailsByDateAsync(DateTime date, Guid? courseId = null, string? planFilter = null)
         {
             var targetDate = date.Date;

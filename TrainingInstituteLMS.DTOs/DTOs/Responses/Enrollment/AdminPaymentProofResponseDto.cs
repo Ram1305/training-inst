@@ -18,6 +18,16 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Enrollment
         public string CourseCode { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;
         public decimal CoursePrice { get; set; }
+
+        /// <summary>
+        /// Date when the student enrolled in this course (enrollment selected/created).
+        /// </summary>
+        public DateTime EnrolledAt { get; set; }
+
+        /// <summary>
+        /// The course session date the student selected when enrolling (e.g. the date they chose for the course).
+        /// </summary>
+        public DateTime? SelectedCourseDate { get; set; }
         
         // Payment Details
         public string ReceiptFileUrl { get; set; } = string.Empty;

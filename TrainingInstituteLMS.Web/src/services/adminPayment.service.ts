@@ -10,6 +10,10 @@ export interface AdminPaymentProof {
   courseId: string;
   courseName: string;
   courseCode?: string;
+  /** Date when the student enrolled in this course (enrollment selected/created). */
+  enrolledAt?: string;
+  /** The course session date the student selected when enrolling (date they chose for the course). */
+  selectedCourseDate?: string;
   amountPaid: number;
   paymentDate: string;
   status: string;
