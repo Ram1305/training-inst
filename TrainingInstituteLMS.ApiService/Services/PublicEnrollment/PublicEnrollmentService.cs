@@ -720,16 +720,23 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             await _context.SaveChangesAsync();
 
             var loginBaseUrl = await GetFrontendBaseUrlAsync();
-            await _emailService.SendEnrollmentLinkRegistrationConfirmationAsync(
-                user.Email,
-                user.FullName,
-                link.Course?.CourseName ?? "Course",
-                link.Course?.CourseCode,
-                courseDate.ScheduledDate,
-                courseDate.StartTime,
-                courseDate.EndTime,
-                courseDate.Location,
-                loginBaseUrl);
+            try
+            {
+                await _emailService.SendEnrollmentLinkRegistrationConfirmationAsync(
+                    user.Email,
+                    user.FullName,
+                    link.Course?.CourseName ?? "Course",
+                    link.Course?.CourseCode,
+                    courseDate.ScheduledDate,
+                    courseDate.StartTime,
+                    courseDate.EndTime,
+                    courseDate.Location,
+                    loginBaseUrl);
+            }
+            catch (Exception emailEx)
+            {
+                _logger.LogWarning(emailEx, "Failed to send enrollment confirmation email to {Email}. Enrollment via link {Code} completed successfully.", user.Email, code);
+            }
 
             return new OneTimeLinkCompleteResponseDto
             {
