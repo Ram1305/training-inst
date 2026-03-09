@@ -1,47 +1,24 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { publicEnrollmentWizardService } from '../services/publicEnrollmentWizard.service';
-import { API_CONFIG } from '../config/api.config';
+import { createContext, useContext, type ReactNode } from 'react';
+import { ENROLLMENT_BASE_URL } from '../config/api.config';
 
 interface PublicSiteUrlContextType {
-  /** Canonical enrollment base URL from API (SiteSettings). Fallback until loaded. */
+  /** Manual enrollment base URL used everywhere for enrollment links. */
   publicSiteUrl: string;
   isLoading: boolean;
 }
 
 const PublicSiteUrlContext = createContext<PublicSiteUrlContextType | undefined>(undefined);
 
-const FALLBACK_URL = (import.meta.env.VITE_PUBLIC_SITE_URL as string)?.trim() || API_CONFIG.PUBLIC_SITE_URL;
-
 interface PublicSiteUrlProviderProps {
   children: ReactNode;
 }
 
 export function PublicSiteUrlProvider({ children }: PublicSiteUrlProviderProps) {
-  const [publicSiteUrl, setPublicSiteUrl] = useState<string>(FALLBACK_URL);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    publicEnrollmentWizardService
-      .getEnrollmentBaseUrl()
-      .then((res) => {
-        if (cancelled || !res?.data?.enrollmentBaseUrl) return;
-        const url = (res.data.enrollmentBaseUrl || '').trim().replace(/\/+$/, '') || FALLBACK_URL;
-        setPublicSiteUrl(url);
-      })
-      .catch(() => {
-        // Keep fallback on error
-      })
-      .finally(() => {
-        if (!cancelled) setIsLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
+  // Manually use the fixed enrollment link everywhere (no API fetch).
+  const publicSiteUrl = ENROLLMENT_BASE_URL;
 
   return (
-    <PublicSiteUrlContext.Provider value={{ publicSiteUrl, isLoading }}>
+    <PublicSiteUrlContext.Provider value={{ publicSiteUrl, isLoading: false }}>
       {children}
     </PublicSiteUrlContext.Provider>
   );

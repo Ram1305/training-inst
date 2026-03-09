@@ -309,6 +309,7 @@ type EnrollmentType = 'individual' | 'company';
 interface CompanyCourseItem {
   courseId: string;
   courseDateId?: string;
+  courseDateLabel?: string;
   price: number;
   courseName?: string;
 }
@@ -330,6 +331,7 @@ export function PublicEnrollmentWizard({
   const [enrollmentType, setEnrollmentType] = useState<EnrollmentType>('individual');
   // Company: multiple courses selected
   const [selectedCompanyCourses, setSelectedCompanyCourses] = useState<CompanyCourseItem[]>([]);
+  const [pendingCompanyCourse, setPendingCompanyCourse] = useState<{ courseId: string; courseName: string; price: number } | null>(null);
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [companyMobile, setCompanyMobile] = useState('');
@@ -644,6 +646,11 @@ export function PublicEnrollmentWizard({
           toast.error('Please add at least one course');
           return;
         }
+        if (selectedCompanyCourses.some((item) => !item.courseDateId)) {
+          toast.error('Please select a date for each course');
+          return;
+        }
+        setPendingCompanyCourse(null);
       } else {
         if (!selectedCourseId) {
           toast.error('Please select a course');
@@ -711,6 +718,11 @@ export function PublicEnrollmentWizard({
               setPaymentProcessing(false);
               return;
             }
+            if (selectedCompanyCourses.some((item) => !item.courseDateId)) {
+              toast.error('Please ensure each course has a date selected');
+              setPaymentProcessing(false);
+              return;
+            }
             setIsSubmitting(true);
             const items = selectedCompanyCourses.map((item) => ({
               courseId: item.courseId,
@@ -744,6 +756,10 @@ export function PublicEnrollmentWizard({
         // Pay Later or Bank Transfer
         if (selectedCompanyCourses.length === 0 || selectedCompanyCourses.some((item) => !item.courseId || typeof item.courseId !== 'string' || !String(item.courseId).trim())) {
           toast.error('Please add at least one course');
+          return;
+        }
+        if (selectedCompanyCourses.some((item) => !item.courseDateId)) {
+          toast.error('Please ensure each course has a date selected');
           return;
         }
         setIsSubmitting(true);
@@ -1590,14 +1606,13 @@ export function PublicEnrollmentWizard({
                     ) : (
                       <div className="space-y-2">
                         <Select
-                          value=""
+                          value={pendingCompanyCourse?.courseId ?? ''}
                           onValueChange={(courseId) => {
                             const c = courses.find((x) => x.courseId === courseId);
                             if (c && !selectedCompanyCourses.some((x) => x.courseId === courseId)) {
-                              setSelectedCompanyCourses((prev) => [
-                                ...prev,
-                                { courseId: c.courseId, price: c.price, courseName: c.courseName },
-                              ]);
+                              setPendingCompanyCourse({ courseId: c.courseId, courseName: c.courseName, price: c.price });
+                              setSelectedCourseId(c.courseId);
+                              setSelectedCourseDateId('');
                             }
                           }}
                         >
@@ -1626,9 +1641,14 @@ export function PublicEnrollmentWizard({
                                 key={`${item.courseId}-${idx}`}
                                 className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-violet-100"
                               >
-                                <span className="text-sm font-medium">
-                                  {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price}
-                                </span>
+                                <div className="text-sm">
+                                  <span className="font-medium">
+                                    {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price}
+                                  </span>
+                                  {item.courseDateLabel && (
+                                    <p className="text-gray-500 text-xs mt-0.5">Date: {item.courseDateLabel}</p>
+                                  )}
+                                </div>
                                 <Button
                                   type="button"
                                   variant="ghost"
@@ -1648,6 +1668,120 @@ export function PublicEnrollmentWizard({
                           <p className="text-sm font-semibold text-violet-700 mt-2">
                             Total: ${selectedCompanyCourses.reduce((sum, i) => sum + i.price, 0)}
                           </p>
+                        )}
+                        {pendingCompanyCourse && (
+                          <div className="mt-4">
+                            <Label className="block text-sm font-medium text-gray-700 mb-3">
+                              Select a date for {pendingCompanyCourse.courseName} <span className="text-red-500">*</span>
+                            </Label>
+                            {loadingDates ? (
+                              <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                                <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                                Loading available dates...
+                              </div>
+                            ) : courseDates.length === 0 ? (
+                              <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                                No available dates for this course at the moment.
+                              </div>
+                            ) : (
+                              <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                                {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
+                                  <div key={dateKey} className="flex flex-col items-center w-full">
+                                    <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
+                                      {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
+                                        weekday: 'short',
+                                        day: 'numeric',
+                                        month: 'short',
+                                        year: 'numeric',
+                                      })}
+                                    </p>
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
+                                      {dates.map((date) => {
+                                        const isDisabled = !date.isAvailable;
+                                        return (
+                                          <button
+                                            key={date.courseDateId}
+                                            type="button"
+                                            disabled={isDisabled}
+                                            onClick={() => {
+                                              if (isDisabled || !pendingCompanyCourse) return;
+                                              const courseDateLabel = date.startDate !== date.endDate
+                                                ? `${new Date(date.startDate).toLocaleDateString('en-AU')} – ${new Date(date.endDate).toLocaleDateString('en-AU')}`
+                                                : new Date(date.startDate).toLocaleDateString('en-AU');
+                                              setSelectedCompanyCourses((prev) => [
+                                                ...prev,
+                                                {
+                                                  courseId: pendingCompanyCourse.courseId,
+                                                  courseName: pendingCompanyCourse.courseName,
+                                                  price: pendingCompanyCourse.price,
+                                                  courseDateId: date.courseDateId,
+                                                  courseDateLabel,
+                                                },
+                                              ]);
+                                              setPendingCompanyCourse(null);
+                                              setSelectedCourseId('');
+                                              setSelectedCourseDateId('');
+                                            }}
+                                            className={`
+                                              relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
+                                              focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
+                                              border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-sm
+                                              ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
+                                            `}
+                                          >
+                                            <div className="flex items-start gap-3 pr-8">
+                                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                                                <Calendar className="h-5 w-5" />
+                                              </div>
+                                              <div className="min-w-0 flex-1">
+                                                <div className="min-h-8 flex items-center">
+                                                  <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                    {new Date(date.startDate).toLocaleDateString('en-AU')}
+                                                    {date.startDate !== date.endDate && (
+                                                      <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                                    )}
+                                                  </p>
+                                                </div>
+                                                {date.location && date.location.toLowerCase() !== 'face to face' && (
+                                                  <div className="min-h-6 mt-1 flex items-center">
+                                                    <p className="text-sm text-gray-500 truncate" title={date.location}>
+                                                      <MapPin className="h-3.5 w-3.5 shrink-0 inline mr-1" />
+                                                      {date.location}
+                                                    </p>
+                                                  </div>
+                                                )}
+                                                <div className="min-h-6 flex items-center mt-1.5">
+                                                  <p className="text-xs font-medium text-violet-600">
+                                                    {date.availableSlots > 0
+                                                      ? `${date.availableSlots} spot${date.availableSlots === 1 ? '' : 's'} left`
+                                                      : 'Fully booked'}
+                                                  </p>
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </button>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
+                                ))}
+                                {courseDatesByDate.length > 4 && (
+                                  <div className="pt-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => setShowAllCourseDates((prev) => !prev)}
+                                      className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded px-1"
+                                    >
+                                      {showAllCourseDates
+                                        ? 'Show less'
+                                        : `Show more dates (${courseDatesByDate.length - 4} more)`}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         )}
                       </div>
                     )}
@@ -2018,8 +2152,13 @@ export function PublicEnrollmentWizard({
                         <span className="font-medium">{selectedCompanyCourses.length} selected</span>
                       </div>
                       {selectedCompanyCourses.map((item, i) => (
-                        <div key={i} className="flex justify-between">
-                          <span className="text-gray-600">{item.courseName || item.courseId}</span>
+                        <div key={i} className="flex justify-between gap-2">
+                          <span className="text-gray-600">
+                            {item.courseName || item.courseId}
+                            {item.courseDateLabel && (
+                              <span className="block text-xs text-gray-500">Date: {item.courseDateLabel}</span>
+                            )}
+                          </span>
                           <span className="font-medium">${item.price}</span>
                         </div>
                       ))}
@@ -2904,7 +3043,11 @@ export function PublicEnrollmentWizard({
                 <Button
                   onClick={handleNext}
                   className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
-                  disabled={paymentProcessing || isSubmitting}
+                  disabled={
+                    paymentProcessing ||
+                    isSubmitting ||
+                    (currentStep === 1 && enrollmentType === 'company' && pendingCompanyCourse !== null)
+                  }
                 >
                   {isSubmitting ? (
                     <>

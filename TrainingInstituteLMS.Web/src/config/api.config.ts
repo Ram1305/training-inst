@@ -12,13 +12,13 @@ function getBaseUrl(): string {
   return 'https://localhost:7419/api';
 }
 
-// Public site URL: build-time/fallback only. Runtime value comes from API (GET /api/PublicEnrollment/site-url) via PublicSiteUrlContext.
-export const PUBLIC_SITE_URL =
-  (import.meta.env.VITE_PUBLIC_SITE_URL as string)?.trim() || 'https://safetytrainingacademy.edu.au';
+// Manual enrollment link: always use this URL for enrollment links everywhere.
+export const ENROLLMENT_BASE_URL = 'https://safetytrainingacademy.edu.au';
+export const PUBLIC_SITE_URL = ENROLLMENT_BASE_URL;
 
 export const API_CONFIG = {
   BASE_URL: getBaseUrl(),
-  /** Base URL for public site (fallback); use usePublicSiteUrl() for canonical value from API. Enrollment links: ${url}/enroll/{code} */
+  /** Base URL for public site (manual enrollment link). Enrollment links: ${url}/enroll/{code} */
   PUBLIC_SITE_URL,  
   ENDPOINTS: {
     AUTH: {

@@ -1175,15 +1175,15 @@ export function CourseDetailsPage({
               <ul className="space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-2">
                   <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>admin@safetytrainingacademy.edu.au</span>
+                  <span>info@safetytrainingacademy.edu.au</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>0403 415 066</span>
+                  <span>0483 878 887</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>0431 298 768</span>
+                  <span>1300 976 097</span>
                 </li>
                 <li className="text-xs">RTO: 45234</li>
               </ul>

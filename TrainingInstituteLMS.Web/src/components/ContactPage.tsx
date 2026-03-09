@@ -657,7 +657,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                     <Phone className="w-8 h-8 text-white" />
                   </div>
                   <h3 className="text-xl font-bold text-slate-900 mb-2">Phone</h3>
-                  <p className="text-gray-700">1300 976 097<br />0403 415 066</p>
+                  <p className="text-gray-700">1300 976 097<br />0483 878 887</p>
                 </CardContent>
               </Card>
 
@@ -746,15 +746,15 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               <ul className="space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-2">
                   <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>admin@safetytrainingacademy.edu.au</span>
+                  <span>info@safetytrainingacademy.edu.au</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>0403 415 066</span>
+                  <span>0483 878 887</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>0431 298 768</span>
+                  <span>1300 976 097</span>
                 </li>
                 <li className="text-xs">RTO: 45234</li>
               </ul>

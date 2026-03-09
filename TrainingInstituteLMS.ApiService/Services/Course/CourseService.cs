@@ -630,19 +630,62 @@ namespace TrainingInstituteLMS.ApiService.Services.Course
         {
             var course = await _context.Courses
                 .Include(c => c.Enrollments)
+                .Include(c => c.CourseRule)
+                .Include(c => c.EntryRequirements)
+                .Include(c => c.TrainingOverviews)
+                .Include(c => c.VocationalOutcomes)
+                .Include(c => c.Pathways)
+                .Include(c => c.FeesAndCharges)
+                .Include(c => c.OptionalCharges)
+                .Include(c => c.ComboOffer)
                 .FirstOrDefaultAsync(c => c.CourseId == courseId);
 
             if (course == null) return false;
 
             if (course.Enrollments.Any())
             {
+                // Soft delete when course has enrollments
                 course.IsActive = false;
                 course.UpdatedAt = DateTime.UtcNow;
+                await _context.SaveChangesAsync();
+                return true;
             }
-            else
-            {
-                _context.Courses.Remove(course);
-            }
+
+            // Hard delete: remove all child entities first (DB uses Restrict, no cascade)
+            // 1. EnrollmentLinks for this course
+            var enrollmentLinks = await _context.EnrollmentLinks
+                .Where(el => el.CourseId == courseId)
+                .ToListAsync();
+            _context.EnrollmentLinks.RemoveRange(enrollmentLinks);
+
+            // 2. CourseDates for this course (no enrollments at this point)
+            var courseDates = await _context.CourseDates
+                .Where(cd => cd.CourseId == courseId)
+                .ToListAsync();
+            _context.CourseDates.RemoveRange(courseDates);
+
+            // 3. Child collections
+            if (course.EntryRequirements?.Any() == true)
+                _context.CourseEntryRequirements.RemoveRange(course.EntryRequirements);
+            if (course.TrainingOverviews?.Any() == true)
+                _context.CourseTrainingOverviews.RemoveRange(course.TrainingOverviews);
+            if (course.VocationalOutcomes?.Any() == true)
+                _context.CourseVocationalOutcomes.RemoveRange(course.VocationalOutcomes);
+            if (course.Pathways?.Any() == true)
+                _context.CoursePathways.RemoveRange(course.Pathways);
+            if (course.FeesAndCharges?.Any() == true)
+                _context.CourseFeeCharges.RemoveRange(course.FeesAndCharges);
+            if (course.OptionalCharges?.Any() == true)
+                _context.CourseOptionalCharges.RemoveRange(course.OptionalCharges);
+
+            // 4. One-to-one and optional
+            if (course.CourseRule != null)
+                _context.CourseRules.Remove(course.CourseRule);
+            if (course.ComboOffer != null)
+                _context.CourseComboOffers.Remove(course.ComboOffer);
+
+            // 5. Course
+            _context.Courses.Remove(course);
 
             await _context.SaveChangesAsync();
             return true;
