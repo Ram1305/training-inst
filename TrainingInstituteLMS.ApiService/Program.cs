@@ -235,11 +235,45 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Apply pending migrations on startup (creates missing tables like GoogleReviews)
+// Apply pending migrations on startup (e.g. CompanyOrders.CompanyMobile, new tables)
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TrainingLMSDbContext>();
-    db.Database.Migrate();
+    var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+    try
+    {
+        var pending = db.Database.GetPendingMigrations().ToList();
+        if (pending.Count > 0)
+        {
+            logger.LogInformation("Applying {Count} pending migration(s): {Migrations}", pending.Count, string.Join(", ", pending));
+            db.Database.Migrate();
+            logger.LogInformation("Migrations applied successfully.");
+        }
+    }
+    catch (Exception ex)
+    {
+        logger.LogError(ex, "Failed to apply migrations. The app will continue but database schema may be outdated.");
+        throw;
+    }
+
+    // Alternative path: ensure CompanyMobile column exists via raw SQL (works even if migration was not in the bundle)
+    try
+    {
+        const string ensureColumnSql = @"
+IF NOT EXISTS (
+    SELECT 1 FROM sys.columns
+    WHERE object_id = OBJECT_ID('CompanyOrders') AND name = 'CompanyMobile'
+)
+BEGIN
+    ALTER TABLE CompanyOrders ADD CompanyMobile nvarchar(50) NULL;
+END";
+        db.Database.ExecuteSqlRaw(ensureColumnSql);
+        logger.LogInformation("CompanyOrders.CompanyMobile column ensured (raw SQL).");
+    }
+    catch (Exception ex)
+    {
+        logger.LogWarning(ex, "Could not ensure CompanyMobile column via raw SQL (table may not exist yet).");
+    }
 }
 
 //  IMPORTANT: Swagger MUST come before UseCors and other middleware
