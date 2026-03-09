@@ -92,18 +92,18 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
   return (
     <div className="min-h-screen bg-white">
       {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2 md:py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
+      <div className="bg-cyan-400 text-white py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4 flex-shrink-0" />
+            <Phone className="w-4 h-4" />
             1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4 flex-shrink-0" />
+            <Mail className="w-4 h-4" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium text-center md:text-left">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
+          <span className="flex items-center gap-2 font-medium">
+            <MapPin className="w-4 h-4" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -111,7 +111,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
 
       {/* Logo and Info Section - White Background */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
           {/* Logo */}
           <motion.div
             className="flex items-center cursor-pointer"
@@ -128,9 +128,9 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -145,7 +145,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -160,7 +160,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -325,21 +325,21 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <motion.div 
-              className="md:hidden py-6 pb-8 border-t border-slate-700"
+              className="md:hidden py-6 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col gap-1">
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">HOME</button>
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">COURSES</button>
-                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">ABOUT</button>
-                <button className="text-cyan-400 font-bold px-4 py-3 text-left text-base min-h-[44px]">CONTACT</button>
-                <button onClick={onBack} className="text-white font-bold px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center text-base min-h-[44px] mt-2">COMBO COURSES</button>
-                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white min-h-[44px] mt-2">Book now</Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400 min-h-[44px]">VOC</Button>
+              <div className="flex flex-col gap-4">
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">HOME</button>
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">COURSES</button>
+                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">ABOUT</button>
+                <button className="text-cyan-400 font-bold px-4 py-2 text-left">CONTACT</button>
+                <button onClick={onBack} className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center">COMBO COURSES</button>
+                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">Book now</Button>
+                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
                 <Button
                   onClick={onRegister}
-                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 min-h-[44px]"
+                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
                 >
                   Login / Register
                 </Button>
@@ -365,10 +365,10 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               <Phone className="w-4 h-4 inline mr-2" />
               Get In Touch
             </Badge>
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold text-white mb-4 sm:mb-6">
+            <h1 className="text-5xl md:text-7xl font-bold text-white mb-6">
               Contact <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-blue-400">Us</span>
             </h1>
-            <p className="text-base sm:text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto px-2">
+            <p className="text-xl md:text-2xl text-blue-100 max-w-3xl mx-auto">
               We're here to answer your questions and help you get started
             </p>
           </motion.div>
@@ -461,12 +461,12 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               transition={{ duration: 0.7 }}
             >
               <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-cyan-500/30 shadow-2xl rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border-b border-cyan-500/30 pb-6 px-4 sm:px-8">
-                  <CardTitle className="text-2xl sm:text-3xl font-bold text-white">
+                <CardHeader className="bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border-b border-cyan-500/30 pb-6">
+                  <CardTitle className="text-3xl font-bold text-white">
                     Our Training
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-8">
+                <CardContent className="p-8">
                   <div className="space-y-3">
                     {trainingCourses.map((course, index) => (
                       <motion.div
@@ -520,8 +520,8 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               transition={{ duration: 0.7 }}
             >
               <Card className="bg-white border-2 border-blue-100 shadow-2xl rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 pb-6 px-4 sm:px-6">
-                  <CardTitle className="text-xl sm:text-2xl text-slate-900">
+                <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 pb-6">
+                  <CardTitle className="text-2xl text-slate-900">
                     Fill in the form below with your enquiry and submit. We do our best to reply at our earliest.
                     <br />
                     <span className="text-sm text-gray-600 mt-2 block">
@@ -529,7 +529,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                     </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-4 sm:p-8">
+                <CardContent className="p-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                       <label className="block text-sm font-bold text-slate-900 mb-2">
@@ -541,7 +541,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12 min-h-[44px] px-4"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12"
                         placeholder="Your full name"
                       />
                     </div>
@@ -556,7 +556,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12 min-h-[44px] px-4"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12"
                         placeholder="your.email@example.com"
                       />
                     </div>
@@ -571,7 +571,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.phone}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12 min-h-[44px] px-4"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12"
                         placeholder="Your phone number"
                       />
                     </div>
@@ -585,14 +585,14 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.message}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl min-h-32 resize-none px-4 py-3"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl min-h-32 resize-none"
                         placeholder="Your message or enquiry..."
                       />
                     </div>
 
                     <Button 
                       type="submit"
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-14 min-h-[44px] text-lg font-semibold shadow-lg"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-14 text-lg font-semibold shadow-lg"
                     >
                       Submit
                       <Send className="w-5 h-5 ml-2" />

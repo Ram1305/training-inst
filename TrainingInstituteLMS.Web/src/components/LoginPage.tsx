@@ -127,22 +127,22 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 flex items-center justify-center p-4 sm:p-6">
+    <div className="min-h-screen bg-gradient-to-br from-violet-50 via-white to-fuchsia-50 flex items-center justify-center p-4">
       {/* Background Decorative Elements */}
       <div className="absolute top-20 left-10 w-72 h-72 bg-violet-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob" />
       <div className="absolute bottom-20 right-10 w-72 h-72 bg-fuchsia-200 rounded-full mix-blend-multiply filter blur-xl opacity-30 animate-blob animation-delay-2000" />
 
-      <div className="w-full max-w-md md:max-w-5xl relative z-10">
+      <div className="w-full max-w-5xl relative z-10">
         <Button
           variant="ghost"
           onClick={onBack}
-          className="mb-4 min-h-[44px] px-2 -ml-2"
+          className="mb-4"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Home
         </Button>
 
-        <div className="grid md:grid-cols-2 gap-6 md:gap-8 items-center">
+        <div className="grid md:grid-cols-2 gap-8 items-center">
           {/* Left Side - Branding */}
           <div className="hidden md:block">
             <div className="bg-gradient-to-br from-violet-600 to-fuchsia-600 rounded-3xl p-12 text-white h-full">
@@ -184,12 +184,12 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
           </div>
 
           {/* Right Side - Login/Register Form */}
-          <Card className="border-violet-100 w-full">
-            <CardHeader className="px-4 sm:px-6">
-              <CardTitle className="text-xl sm:text-2xl">Welcome Back</CardTitle>
-              <CardDescription className="text-sm sm:text-base">Sign in to your account or create a new one</CardDescription>
+          <Card className="border-violet-100">
+            <CardHeader>
+              <CardTitle>Welcome Back</CardTitle>
+              <CardDescription>Sign in to your account or create a new one</CardDescription>
             </CardHeader>
-            <CardContent className="px-4 sm:px-6 pb-6">
+            <CardContent>
               {error && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-lg text-sm">
                   {error}
@@ -197,9 +197,9 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
               )}
 
               <Tabs defaultValue="login" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 mb-6 min-h-[44px] h-auto py-2">
-                  <TabsTrigger value="login" className="min-h-[40px] py-2 text-sm sm:text-base">Sign In</TabsTrigger>
-                  <TabsTrigger value="register" className="min-h-[40px] py-2 text-sm sm:text-base">Register</TabsTrigger>
+                <TabsList className="grid w-full grid-cols-2 mb-6">
+                  <TabsTrigger value="login">Sign In</TabsTrigger>
+                  <TabsTrigger value="register">Register</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login">
@@ -214,7 +214,7 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
                           placeholder="you@example.com"
                           value={loginEmail}
                           onChange={(e) => setLoginEmail(e.target.value)}
-                          className="pl-10 min-h-[44px]"
+                          className="pl-10"
                           required
                           disabled={isLoading}
                         />
@@ -231,40 +231,39 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
                           placeholder="••••••••"
                           value={loginPassword}
                           onChange={(e) => setLoginPassword(e.target.value)}
-                          className="pl-10 pr-10 min-h-[44px]"
+                          className="pl-10 pr-10"
                           required
                           disabled={isLoading}
                         />
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <label className="flex items-center gap-2 cursor-pointer min-h-[44px] py-1">
+                    <div className="flex items-center justify-between">
+                      <label className="flex items-center gap-2 cursor-pointer">
                         <input 
                           type="checkbox" 
-                          className="rounded border-gray-300 w-4 h-4"
+                          className="rounded border-gray-300"
                           checked={rememberMe}
                           onChange={(e) => setRememberMe(e.target.checked)}
                           disabled={isLoading}
                         />
                         <span className="text-sm text-gray-600">Remember me</span>
                       </label>
-                      <Button variant="link" className="text-violet-600 p-2 min-h-[44px] h-auto text-sm -mr-2">
+                      <Button variant="link" className="text-violet-600 p-0 h-auto text-sm">
                         Forgot password?
                       </Button>
                     </div>
 
                     <Button 
                       type="submit"
-                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 min-h-[44px]"
+                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                       disabled={isLoading}
                     >
                       {isLoading ? 'Signing in...' : 'Sign In'}
@@ -315,12 +314,12 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
                             placeholder="John Doe"
                             value={regName}
                             onChange={(e) => setRegName(e.target.value)}
-className="pl-10 min-h-[44px]"
-                          required
-                          disabled={isLoading}
-                        />
+                            className="pl-10"
+                            required
+                            disabled={isLoading}
+                          />
+                        </div>
                       </div>
-                    </div>
                     ) : (
                       <div className="space-y-2">
                         <Label htmlFor="reg-company-name">Company Name</Label>
@@ -332,7 +331,7 @@ className="pl-10 min-h-[44px]"
                             placeholder="Acme Corp"
                             value={regCompanyName}
                             onChange={(e) => setRegCompanyName(e.target.value)}
-                            className="pl-10 min-h-[44px]"
+                            className="pl-10"
                             required
                             disabled={isLoading}
                           />
@@ -350,7 +349,7 @@ className="pl-10 min-h-[44px]"
                           placeholder="you@example.com"
                           value={regEmail}
                           onChange={(e) => setRegEmail(e.target.value)}
-                          className="pl-10 min-h-[44px]"
+                          className="pl-10"
                           required
                           disabled={isLoading}
                         />
@@ -366,7 +365,6 @@ className="pl-10 min-h-[44px]"
                           placeholder="+1 (555) 123-4567"
                           value={regPhone}
                           onChange={(e) => setRegPhone(e.target.value)}
-                          className="min-h-[44px]"
                           disabled={isLoading}
                         />
                       </div>
@@ -382,7 +380,7 @@ className="pl-10 min-h-[44px]"
                           placeholder="••••••••"
                           value={regPassword}
                           onChange={(e) => setRegPassword(e.target.value)}
-                          className="pl-10 pr-10 min-h-[44px]"
+                          className="pl-10 pr-10"
                           required
                           minLength={6}
                           disabled={isLoading}
@@ -390,8 +388,7 @@ className="pl-10 min-h-[44px]"
                         <button
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 min-w-[44px] min-h-[44px] flex items-center justify-center touch-manipulation"
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                         >
                           {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -401,7 +398,7 @@ className="pl-10 min-h-[44px]"
                     <div className="flex items-start gap-2">
                       <input 
                         type="checkbox" 
-                        className="mt-1 rounded border-gray-300 w-4 h-4 flex-shrink-0" 
+                        className="mt-1 rounded border-gray-300" 
                         required
                         checked={acceptTerms}
                         onChange={(e) => setAcceptTerms(e.target.checked)}
@@ -414,7 +411,7 @@ className="pl-10 min-h-[44px]"
 
                     <Button 
                       type="submit"
-                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 min-h-[44px]"
+                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                       disabled={isLoading}
                     >
                       {isLoading ? 'Creating Account...' : 'Create Account'}

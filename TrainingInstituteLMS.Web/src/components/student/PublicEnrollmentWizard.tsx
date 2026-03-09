@@ -1476,7 +1476,7 @@ export function PublicEnrollmentWizard({
     
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-        <div className="bg-white rounded-lg p-4 sm:p-8 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
+        <div className="bg-white rounded-lg p-8 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
           <div className="flex items-center gap-3 mb-6">
             <span className="text-4xl">??</span>
             <h2 className="text-2xl font-bold text-gray-800">Assessment Complete</h2>
@@ -1610,7 +1610,7 @@ export function PublicEnrollmentWizard({
                     </div>
                   </RadioGroup>
                 </div>
-                <div className="shrink-0 w-[80px] h-[56px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
+                <div className="shrink-0 w-[100px] h-[100px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
                   {(() => {
                     const previewCourse =
                       enrollmentType === 'individual'
@@ -2448,7 +2448,7 @@ export function PublicEnrollmentWizard({
                   </div>
 
                   {/* Expiry and CVV */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="expiryMonth">Expiry Month <span className="text-red-500">*</span></Label>
                       <Select 
@@ -3043,43 +3043,43 @@ export function PublicEnrollmentWizard({
   const visibleSteps = enrollmentType === 'company' ? WIZARD_STEPS.slice(0, 2) : WIZARD_STEPS;
 
   return (
-    <div className="max-w-4xl mx-auto space-y-6 p-4 sm:p-6">
+    <div className="max-w-4xl mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-4 sm:mb-6">
-        <Button variant="outline" onClick={onCancel} className="flex items-center gap-2 min-h-[44px]">
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Button>
       </div>
 
       <div>
-        <h1 className="text-2xl sm:text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+        <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
           Student Enrollment
         </h1>
-        <p className="text-sm sm:text-base text-gray-600">Complete all steps to enroll in your course</p>
+        <p className="text-gray-600">Complete all steps to enroll in your course</p>
       </div>
 
       {/* Progress Steps */}
       <Card className="border-violet-100">
-        <CardContent className="pt-4 sm:pt-6 px-4 sm:px-6">
-          <div className="flex justify-between gap-2 overflow-x-auto pb-1 -mx-1 min-w-0">
+        <CardContent className="pt-6">
+          <div className="flex justify-between">
             {visibleSteps.map((step) => {
               const Icon = step.icon;
               return (
                 <div
                   key={step.id}
-                  className={`flex flex-col items-center text-xs flex-shrink-0 min-w-[64px] ${
+                  className={`flex flex-col items-center text-xs ${
                     currentStep === step.id ? 'text-violet-600 font-semibold' :
                     currentStep > step.id ? 'text-green-600' : 'text-gray-400'
                   }`}
                 >
-                  <div className={`w-10 h-10 sm:w-10 sm:h-10 min-w-[40px] min-h-[40px] rounded-full flex items-center justify-center mb-1 ${
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${
                     currentStep === step.id ? 'bg-violet-600 text-white' :
                     currentStep > step.id ? 'bg-green-100 text-green-600' : 'bg-gray-100'
                   }`}>
                     {currentStep > step.id ? <CheckCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
-                  <span className="hidden sm:block text-center">{step.shortTitle}</span>
+                  <span className="hidden sm:block">{step.shortTitle}</span>
                 </div>
               );
             })}
@@ -3094,18 +3094,18 @@ export function PublicEnrollmentWizard({
       {/* Navigation (for steps 1-2: Course Selection, Payment) */}
       {currentStep <= 2 && (
         <Card className="border-violet-100">
-          <CardContent className="py-4 px-4 sm:px-6">
-            <div className="flex flex-col-reverse sm:flex-row justify-end gap-3">
-              <div className="flex gap-3 justify-end">
+          <CardContent className="py-4">
+            <div className="flex justify-end">
+              <div className="flex gap-3">
                 {currentStep > 1 && (
-                  <Button variant="outline" onClick={handlePrevious} disabled={paymentProcessing || isSubmitting} className="min-h-[44px] flex-1 sm:flex-initial">
+                  <Button variant="outline" onClick={handlePrevious} disabled={paymentProcessing || isSubmitting}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
                   </Button>
                 )}
                 <Button
                   onClick={handleNext}
-                  className="bg-gradient-to-r from-violet-600 to-fuchsia-600 min-h-[44px] flex-1 sm:flex-initial"
+                  className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
                   disabled={
                     paymentProcessing ||
                     isSubmitting ||
@@ -3147,11 +3147,11 @@ export function PublicEnrollmentWizard({
       {/* Navigation for step 3 (LLND quiz completed) */}
       {currentStep === 3 && quizCompleted && quizPassed && (
         <Card className="border-violet-100">
-          <CardContent className="py-4 px-4 sm:px-6">
+          <CardContent className="py-4">
             <div className="flex justify-end">
               <Button
                 onClick={handleNext}
-                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 min-h-[44px] w-full sm:w-auto"
+                className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
               >
                 Continue to Enrollment Form
                 <ArrowRight className="w-4 h-4 ml-2" />

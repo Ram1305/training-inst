@@ -80,18 +80,18 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
   return (
     <div className="min-h-screen bg-gradient-to-br from-cyan-50 via-blue-50 to-purple-50">
       {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2 md:py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
+      <div className="bg-cyan-400 text-white py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4 flex-shrink-0" />
+            <Phone className="w-4 h-4" />
             1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4 flex-shrink-0" />
+            <Mail className="w-4 h-4" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium text-center md:text-left">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
+          <span className="flex items-center gap-2 font-medium">
+            <MapPin className="w-4 h-4" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -99,7 +99,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
 
       {/* Logo and Info Section - White Background */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
           {/* Logo */}
           <motion.div
             className="flex items-center cursor-pointer"
@@ -116,9 +116,9 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -133,7 +133,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -148,7 +148,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -313,22 +313,44 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <motion.div
-              className="md:hidden py-6 pb-8 border-t border-slate-700"
+              className="md:hidden py-6 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col gap-1">
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">HOME</button>
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">COURSES</button>
-                <button onClick={() => { setMobileMenuOpen(false); onForms?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">FORMS</button>
-                <button onClick={() => { setMobileMenuOpen(false); onFeesRefund?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">FEES & REFUND</button>
-                <button onClick={() => { setMobileMenuOpen(false); onGallery?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">GALLERY</button>
-                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">ABOUT</button>
-                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">CONTACT</button>
-                <button onClick={onBack} className="text-white font-bold px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center text-base min-h-[44px] mt-2">COMBO COURSES</button>
-                <Button className="w-full bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 cursor-default min-h-[44px]">Book now</Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400 min-h-[44px]">VOC</Button>
-                <Button onClick={onLogin ?? onRegister} className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 min-h-[44px]">
+              <div className="flex flex-col gap-4">
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  HOME
+                </button>
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  COURSES
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onForms?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  FORMS
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onFeesRefund?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  FEES & REFUND
+                </button>
+                <button onClick={() => { setMobileMenuOpen(false); onGallery?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  GALLERY
+                </button>
+                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  ABOUT
+                </button>
+                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
+                  CONTACT
+                </button>
+                <button
+                  onClick={onBack}
+                  className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center"
+                >
+                  COMBO COURSES
+                </button>
+                <Button className="w-full bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 cursor-default">Book now</Button>
+                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
+                <Button
+                  onClick={onLogin ?? onRegister}
+                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
+                >
                   Login / Register
                 </Button>
               </div>
@@ -375,7 +397,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
               <Sparkles className="w-5 h-5" />
               <span className="font-semibold">Book Your Course Today</span>
             </div>
-            <h1 className="text-3xl sm:text-5xl md:text-7xl font-bold mb-4 sm:mb-6 pb-4 leading-tight bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ paddingBottom: '0.5rem' }}>
+            <h1 className="text-5xl md:text-7xl font-bold mb-6 pb-4 leading-tight bg-gradient-to-r from-cyan-600 via-blue-600 to-purple-600 bg-clip-text text-transparent" style={{ paddingBottom: '0.5rem' }}>
               Start Your Training Journey
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">

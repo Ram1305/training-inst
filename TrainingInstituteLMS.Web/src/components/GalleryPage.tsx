@@ -51,18 +51,18 @@ export function GalleryPage({
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar with Contact Info */}
-      <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white py-2 md:py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
+      <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4 flex-shrink-0" />
+            <Phone className="w-4 h-4" />
             1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4 flex-shrink-0" />
+            <Mail className="w-4 h-4" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium text-center md:text-left">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
+          <span className="flex items-center gap-2 font-medium">
+            <MapPin className="w-4 h-4" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -70,7 +70,7 @@ export function GalleryPage({
 
       {/* Logo and Header */}
       <div className="bg-white border-b border-gray-200 shadow-sm py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="max-w-7xl mx-auto flex justify-between items-center">
           <motion.div
             className="flex items-center cursor-pointer"
             initial={{ opacity: 0, x: -20 }}
@@ -125,7 +125,7 @@ export function GalleryPage({
           <Button
             variant="ghost"
             size="icon"
-            className="md:hidden min-w-[44px] min-h-[44px]"
+            className="md:hidden"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -136,37 +136,37 @@ export function GalleryPage({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="md:hidden mt-4 pb-6 border-t border-gray-100 pt-4 flex flex-col gap-1"
+            className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 flex flex-col gap-2"
           >
-            <button onClick={onBack} className="text-left py-3 px-4 text-base text-gray-600 hover:text-violet-600 font-medium min-h-[44px]">
+            <button onClick={onBack} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
               Home
             </button>
             {onForms && (
-              <button onClick={onForms} className="text-left py-3 px-4 text-base text-gray-600 hover:text-violet-600 font-medium min-h-[44px]">
+              <button onClick={onForms} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
                 Forms
               </button>
             )}
             {onFeesRefund && (
-              <button onClick={onFeesRefund} className="text-left py-3 px-4 text-base text-gray-600 hover:text-violet-600 font-medium min-h-[44px]">
+              <button onClick={onFeesRefund} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
                 Fees & Refund
               </button>
             )}
             {onAbout && (
-              <button onClick={onAbout} className="text-left py-3 px-4 text-base text-gray-600 hover:text-violet-600 font-medium min-h-[44px]">
+              <button onClick={onAbout} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
                 About
               </button>
             )}
             {onContact && (
-              <button onClick={onContact} className="text-left py-3 px-4 text-base text-gray-600 hover:text-violet-600 font-medium min-h-[44px]">
+              <button onClick={onContact} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
                 Contact
               </button>
             )}
             {onBookNow && (
-              <Button onClick={onBookNow} className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 min-h-[44px]">
+              <Button onClick={onBookNow} className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600">
                 Book Now
               </Button>
             )}
-            <Button variant="outline" onClick={onLogin} className="w-full min-h-[44px]">
+            <Button variant="outline" onClick={onLogin} className="w-full">
               Login
             </Button>
           </motion.div>
@@ -202,11 +202,11 @@ export function GalleryPage({
       </div>
 
       {/* Main heading with blue gradient text */}
-      <h1 className="text-3xl sm:text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-600 bg-clip-text text-transparent mb-4 sm:mb-5 tracking-tight">
+      <h1 className="text-4xl sm:text-5xl md:text-6xl font-extrabold bg-gradient-to-r from-blue-700 via-indigo-600 to-blue-600 bg-clip-text text-transparent mb-5 tracking-tight">
         Gallery
       </h1>
 
-      <p className="text-base sm:text-xl md:text-2xl text-gray-700 max-w-3xl mx-auto font-medium leading-relaxed px-2">
+      <p className="text-xl sm:text-2xl text-gray-700 max-w-3xl mx-auto font-medium leading-relaxed">
         Explore our training facilities, sessions, and success stories
       </p>
 
@@ -219,7 +219,7 @@ export function GalleryPage({
 </div>
 
       {/* Gallery Grid */}
-      <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12 pb-16 sm:pb-20">
+      <div className="max-w-7xl mx-auto px-4 py-12 pb-20">
         {isLoading ? (
           <div className="flex justify-center py-20">
             <Loader2 className="w-12 h-12 animate-spin text-violet-600" />

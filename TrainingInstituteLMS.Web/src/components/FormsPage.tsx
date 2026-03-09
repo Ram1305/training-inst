@@ -53,18 +53,18 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Top Bar with Contact Info */}
-      <div className="bg-cyan-400 text-white py-2 md:py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
+      <div className="bg-cyan-400 text-white py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4 flex-shrink-0" />
+            <Phone className="w-4 h-4" />
             1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4 flex-shrink-0" />
+            <Mail className="w-4 h-4" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium text-center md:text-left">
-            <MapPin className="w-4 h-4 flex-shrink-0" />
+          <span className="flex items-center gap-2 font-medium">
+            <MapPin className="w-4 h-4" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -72,7 +72,7 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
 
       {/* Logo and Info Section */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
+        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
           <motion.div
             className="flex items-center cursor-pointer"
             initial={{ opacity: 0, x: -20 }}
@@ -87,9 +87,9 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
             />
           </motion.div>
 
-          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -104,7 +104,7 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -119,7 +119,7 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -277,16 +277,16 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
       </nav>
 
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 py-8 sm:py-12">
+      <div className="max-w-5xl mx-auto px-4 py-12">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          <h1 className="text-2xl sm:text-4xl font-bold text-slate-900 mb-6 sm:mb-8">Forms</h1>
+          <h1 className="text-4xl font-bold text-slate-900 mb-8">Forms</h1>
 
           {/* Forms Section */}
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-8">
+          <div className="bg-white rounded-lg shadow-md p-8">
             <div className="flex items-center justify-between mb-8 pb-6 border-b border-gray-200">
               <div className="flex items-center gap-4">
                 <img
