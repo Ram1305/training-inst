@@ -256,18 +256,18 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   return (
     <div className="min-h-screen bg-white">
       {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
+      <div className="bg-cyan-400 text-white py-2 md:py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
           <a href="tel:1300976097" className="flex items-center gap-2 font-semibold phone-number-link hover:text-slate-900 transition-colors">
-            <Phone className="w-4 h-4" />
+            <Phone className="w-4 h-4 flex-shrink-0" />
             1300 976 097
           </a>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4 flex-shrink-0" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium">
-            <MapPin className="w-4 h-4" />
+          <span className="flex items-center gap-2 font-medium text-center md:text-left">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -275,7 +275,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
       {/* Logo and Info Section - White Background */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
           {/* Logo */}
           <motion.div
             className="flex items-center"
@@ -291,9 +291,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4 flex-1 md:justify-center">
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -308,7 +308,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -323,7 +323,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -337,6 +337,26 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               </div>
             </motion.div>
           </div>
+
+          {/* Course image - right side of logo section (not at bottom) */}
+          <motion.div
+            className="hidden sm:block shrink-0 w-[200px] h-[200px] rounded-xl overflow-hidden shadow-md ring-2 ring-gray-100 bg-gray-50"
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            {courses.length > 0 ? (
+              <ImageWithFallback
+                src={courses[0].imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=400"}
+                alt={courses[0].courseName}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-cyan-50 text-cyan-600">
+                <BookOpen className="w-12 h-12 opacity-70" />
+              </div>
+            )}
+          </motion.div>
         </div>
       </div>
 
@@ -498,21 +518,21 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <motion.div
-              className="md:hidden py-6 border-t border-slate-700"
+              className="md:hidden py-6 pb-8 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col gap-4">
-                <a href="#home" className="text-white hover:text-cyan-400 transition-colors px-4 py-2">
+              <div className="flex flex-col gap-1">
+                <a href="#home" className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-base min-h-[44px] flex items-center">
                   HOME
                 </a>
-                <a href="#courses" className="text-white hover:text-cyan-400 transition-colors px-4 py-2">
+                <a href="#courses" className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-base min-h-[44px] flex items-center">
                   COURSES
                 </a>
-                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 w-full text-left">
+                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 w-full text-left text-base min-h-[44px]">
                   ABOUT
                 </button>
-                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 w-full text-left">
+                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 w-full text-left text-base min-h-[44px]">
                   CONTACT
                 </button>
                 <a
@@ -522,19 +542,19 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                     setMobileMenuOpen(false);
                     document.getElementById('combo')?.scrollIntoView({ behavior: 'smooth' });
                   }}
-                  className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center cursor-pointer"
+                  className="text-white font-bold px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center cursor-pointer text-base min-h-[44px] flex items-center justify-center mt-2"
                 >
                   COMBO COURSES
                 </a>
-                <Button onClick={onBookNow || onLogin} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
+                <Button onClick={onBookNow || onLogin} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white min-h-[44px] mt-2">
                   Book now
                 </Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">
+                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400 min-h-[44px]">
                   VOC
                 </Button>
                 <Button
                   onClick={onRegister}
-                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
+                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 min-h-[44px]"
                 >
                   Login / Register
                 </Button>
@@ -546,7 +566,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
       {/* Hero Slider Section with Search */}
       <section id="home" className="relative">
-        <div className="relative h-[600px] md:h-[700px]">
+        <div className="relative h-[480px] sm:h-[560px] md:h-[700px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
@@ -573,15 +593,15 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-4 sm:mb-6 leading-tight">
                 {heroSlides[currentSlide].title}
               </h1>
-              <p className="text-lg md:text-xl text-blue-100 mb-8">
+              <p className="text-base sm:text-lg md:text-xl text-blue-100 mb-6 sm:mb-8">
                 {heroSlides[currentSlide].subtitle}
               </p>
 
               {/* Search Bar */}
-              <div className="flex flex-col sm:flex-row gap-4 max-w-2xl">
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-2xl w-full">
                 <div className="flex-1 relative">
                   <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                   <Input
@@ -636,26 +656,27 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           {/* Slider Controls */}
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+            className="absolute left-2 sm:left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all min-w-[44px] min-h-[44px]"
           >
-            <ChevronLeft className="w-6 h-6 text-white" />
+            <ChevronLeft className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+            className="absolute right-2 sm:right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all min-w-[44px] min-h-[44px]"
           >
-            <ChevronRight className="w-6 h-6 text-white" />
+            <ChevronRight className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
           </button>
 
           {/* Slider Dots */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-6 sm:bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all ${
+                className={`min-w-[12px] min-h-[12px] sm:w-3 sm:h-3 rounded-full transition-all touch-manipulation ${
                   currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50"
                 }`}
+                aria-label={`Go to slide ${index + 1}`}
               />
             ))}
           </div>
@@ -692,7 +713,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             </h3>
 
             {/* Course Categories */}
-            <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4 text-lg md:text-xl lg:text-2xl font-semibold text-slate-800 pt-2">
+            <div className="flex flex-wrap justify-center items-center gap-2 sm:gap-3 md:gap-4 text-base md:text-xl lg:text-2xl font-semibold text-slate-800 pt-2">
               <span>Construction Short Courses</span>
               <span className="text-slate-400">•</span>
               <span>Earthmoving</span>
@@ -1187,13 +1208,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 client training needs.
               </p>
 
-              <div className="grid grid-cols-2 gap-6 pt-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 pt-6">
                 <div className="flex items-start gap-3">
                   <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center flex-shrink-0">
                     <Building className="w-6 h-6 text-blue-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-slate-900">2019</div>
+                    <div className="text-xl sm:text-2xl font-bold text-slate-900">2019</div>
                     <div className="text-sm text-gray-600">Year Established</div>
                   </div>
                 </div>
@@ -1202,7 +1223,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                     <Users className="w-6 h-6 text-cyan-600" />
                   </div>
                   <div>
-                    <div className="text-2xl font-bold text-slate-900">Over 50</div>
+                    <div className="text-xl sm:text-2xl font-bold text-slate-900">Over 50</div>
                     <div className="text-sm text-gray-600">Years of combined experience</div>
                   </div>
                 </div>
@@ -1218,30 +1239,30 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
-              className="grid grid-cols-2 gap-4"
+              className="grid grid-cols-1 sm:grid-cols-2 gap-4"
             >
               <div className="space-y-4">
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=400"
                   alt="Training facility"
-                  className="w-full h-64 object-cover rounded-2xl shadow-lg"
+                  className="w-full h-48 sm:h-64 object-cover rounded-2xl shadow-lg"
                 />
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400"
                   alt="Equipment training"
-                  className="w-full h-48 object-cover rounded-2xl shadow-lg"
+                  className="w-full h-40 sm:h-48 object-cover rounded-2xl shadow-lg"
                 />
               </div>
-              <div className="space-y-4 mt-8">
+              <div className="space-y-4 sm:mt-8">
                 <ImageWithFallback
                   src="/assets/workers.png"
                   alt="Student learning"
-                  className="w-full h-48 object-cover rounded-2xl shadow-lg"
+                  className="w-full h-40 sm:h-48 object-cover rounded-2xl shadow-lg"
                 />
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1513467535987-fd81bc7d62f8?w=400"
                   alt="Practical training"
-                  className="w-full h-64 object-cover rounded-2xl shadow-lg"
+                  className="w-full h-48 sm:h-64 object-cover rounded-2xl shadow-lg"
                 />
               </div>
             </motion.div>
@@ -1388,19 +1409,19 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               transition={{ duration: 0.7 }}
             >
               <Card className="bg-gradient-to-br from-cyan-400 to-cyan-500 border-0 shadow-2xl rounded-3xl">
-                <CardHeader>
-                  <CardTitle className="text-3xl font-bold text-white">Send Us A Message!</CardTitle>
+                <CardHeader className="px-4 sm:px-6">
+                  <CardTitle className="text-2xl sm:text-3xl font-bold text-white">Send Us A Message!</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <Input placeholder="Name*" className="bg-white border-0 rounded-xl h-12" />
-                    <Input placeholder="Phone*" className="bg-white border-0 rounded-xl h-12" />
+                <CardContent className="space-y-4 px-4 sm:px-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <Input placeholder="Name*" className="bg-white border-0 rounded-xl h-12 min-h-[44px] px-4" />
+                    <Input placeholder="Phone*" className="bg-white border-0 rounded-xl h-12 min-h-[44px] px-4" />
                   </div>
-                  <Input placeholder="Email*" type="email" className="bg-white border-0 rounded-xl h-12" />
-                  <Input placeholder="Subject" className="bg-white border-0 rounded-xl h-12" />
+                  <Input placeholder="Email*" type="email" className="bg-white border-0 rounded-xl h-12 min-h-[44px] px-4" />
+                  <Input placeholder="Subject" className="bg-white border-0 rounded-xl h-12 min-h-[44px] px-4" />
                   <Textarea
                     placeholder="Message"
-                    className="bg-white border-0 rounded-xl min-h-32 resize-none"
+                    className="bg-white border-0 rounded-xl min-h-32 resize-none px-4 py-3"
                   />
                   <Button className="bg-slate-900 hover:bg-slate-800 text-white rounded-full px-8 h-12 font-semibold">
                     SEND
@@ -1443,9 +1464,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-600 text-white py-12">
+      <footer className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-600 text-white py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
             <div>
               <div className="flex items-center gap-3 mb-4 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-fit">
                 <img
@@ -1553,7 +1574,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         <button
           type="button"
           onClick={scrollToTop}
-          className="fixed bottom-6 right-6 z-40 p-3 rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2"
+          className="fixed bottom-20 sm:bottom-6 right-4 sm:right-6 z-40 p-3 min-w-[44px] min-h-[44px] rounded-full bg-cyan-500 hover:bg-cyan-600 text-white shadow-lg transition-all hover:scale-110 focus:outline-none focus:ring-2 focus:ring-cyan-400 focus:ring-offset-2 flex items-center justify-center"
           aria-label="Back to top"
         >
           <ChevronUp className="w-5 h-5" />
