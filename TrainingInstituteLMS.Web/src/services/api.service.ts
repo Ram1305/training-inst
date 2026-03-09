@@ -28,11 +28,32 @@ class ApiService {
 
       if (!response.ok) {
         let message = 'An error occurred';
-        let body: { message?: string; Message?: string; errors?: string[] } = {};
+        let body: {
+          message?: string;
+          Message?: string;
+          detail?: string;
+          Detail?: string;
+          title?: string;
+          Title?: string;
+          errors?: string[] | Record<string, string[]>;
+        } = {};
         try {
           body = text ? JSON.parse(text) : {};
-          // API may return camelCase (message) or PascalCase (Message)
-          message = body.message ?? body.Message ?? (text || response.statusText || message);
+          // Prefer our API shape (message/Message), then ProblemDetails (detail/title), then errors array
+          const apiMessage = body.message ?? body.Message;
+          const problemDetail = body.detail ?? body.Detail;
+          const problemTitle = body.title ?? body.Title;
+          const errorsArr = Array.isArray(body.errors)
+            ? body.errors
+            : body.errors && typeof body.errors === 'object'
+              ? (Object.values(body.errors).flat() as string[])
+              : [];
+          const errorsStr = errorsArr.length > 0 ? errorsArr.join(', ') : '';
+          message =
+            apiMessage ??
+            problemDetail ??
+            problemTitle ??
+            (errorsStr || (text || response.statusText || message));
         } catch {
           message = text || response.statusText || message;
         }

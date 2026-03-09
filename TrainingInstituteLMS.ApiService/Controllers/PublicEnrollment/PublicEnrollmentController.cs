@@ -11,10 +11,12 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
     public class PublicEnrollmentController : ControllerBase
     {
         private readonly IPublicEnrollmentService _publicEnrollmentService;
+        private readonly ILogger<PublicEnrollmentController> _logger;
 
-        public PublicEnrollmentController(IPublicEnrollmentService publicEnrollmentService)
+        public PublicEnrollmentController(IPublicEnrollmentService publicEnrollmentService, ILogger<PublicEnrollmentController> logger)
         {
             _publicEnrollmentService = publicEnrollmentService;
+            _logger = logger;
         }
 
         private Guid? GetCurrentUserId()
@@ -156,6 +158,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             }
             catch (InvalidOperationException ex)
             {
+                _logger.LogWarning(ex, "Company order rejected: {Message}", ex.Message);
                 return BadRequest(ApiResponse<object>.FailureResponse(ex.Message));
             }
             catch (Exception ex)

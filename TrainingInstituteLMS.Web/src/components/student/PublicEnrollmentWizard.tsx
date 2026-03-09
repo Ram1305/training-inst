@@ -702,6 +702,11 @@ export function PublicEnrollmentWizard({
               return;
             }
             const txId = cardResult.data.transactionId;
+            if (selectedCompanyCourses.length === 0 || selectedCompanyCourses.some((item) => !item.courseId || typeof item.courseId !== 'string' || !String(item.courseId).trim())) {
+              toast.error('Please add at least one course');
+              setPaymentProcessing(false);
+              return;
+            }
             setIsSubmitting(true);
             const items = selectedCompanyCourses.map((item) => ({
               courseId: item.courseId,
@@ -733,6 +738,10 @@ export function PublicEnrollmentWizard({
           return;
         }
         // Pay Later or Bank Transfer
+        if (selectedCompanyCourses.length === 0 || selectedCompanyCourses.some((item) => !item.courseId || typeof item.courseId !== 'string' || !String(item.courseId).trim())) {
+          toast.error('Please add at least one course');
+          return;
+        }
         setIsSubmitting(true);
         setPaymentError(null);
         try {
