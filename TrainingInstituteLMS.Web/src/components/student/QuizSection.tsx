@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
@@ -80,6 +80,76 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
   // Ref for drag ID - updates synchronously so drop works on first try (state is async)
   const draggedItemRef = useRef<string | null>(null);
+  // Touch/pointer drag: 'file' | 'device' | null
+  const pointerDragModeRef = useRef<'file' | 'device' | null>(null);
+  const lastPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
+
+  // Shared drop logic for both HTML5 drag and pointer/touch
+  const applyFileDrop = useCallback((draggedId: string, folder: 'checklistBook' | 'imagesFolder') => {
+    if (folder === 'checklistBook' && (draggedId === 'pdf1' || draggedId === 'pdf2')) {
+      setFilesDragState(prev => {
+        if (prev.checklistBook.includes(draggedId)) return prev;
+        return {
+          ...prev,
+          [draggedId]: null,
+          checklistBook: [...prev.checklistBook, draggedId]
+        };
+      });
+    } else if (folder === 'imagesFolder' && draggedId === 'image') {
+      setFilesDragState(prev => {
+        if (prev.imagesFolder.includes(draggedId)) return prev;
+        return {
+          ...prev,
+          image: null,
+          imagesFolder: [...prev.imagesFolder, draggedId]
+        };
+      });
+    }
+  }, []);
+
+  const applyDeviceDrop = useCallback((draggedId: string, deviceId: string) => {
+    setDevicesDragState(prev => ({
+      labels: prev.labels.map(l => l.id === draggedId ? { ...l, placed: true } : l),
+      devices: prev.devices.map(d => d.id === deviceId ? { ...d, matchedLabel: draggedId } : d)
+    }));
+  }, []);
+
+  // Handle pointer up for touch drag (resolve drop zone from element under pointer)
+  const handlePointerUpForTouchDrag = useCallback((e: PointerEvent) => {
+    const mode = pointerDragModeRef.current;
+    const draggedId = draggedItemRef.current;
+    pointerDragModeRef.current = null;
+    draggedItemRef.current = null;
+    lastPointerRef.current = null;
+    document.removeEventListener('pointerup', handlePointerUpForTouchDrag);
+    document.removeEventListener('pointercancel', handlePointerUpForTouchDrag);
+
+    if (!draggedId || !mode) return;
+
+    const el = document.elementFromPoint(e.clientX, e.clientY);
+    const dropZone = el?.closest('[data-drop-folder], [data-drop-device]');
+    if (!dropZone) return;
+
+    const folder = dropZone.getAttribute('data-drop-folder');
+    const deviceId = dropZone.getAttribute('data-drop-device');
+    if (mode === 'file' && folder && (folder === 'checklistBook' || folder === 'imagesFolder')) {
+      applyFileDrop(draggedId, folder);
+    } else if (mode === 'device' && deviceId) {
+      applyDeviceDrop(draggedId, deviceId);
+    }
+  }, [applyFileDrop, applyDeviceDrop]);
+
+  // Start pointer/touch drag (used when HTML5 drag doesn't fire)
+  const handlePointerDownForDrag = useCallback((e: React.PointerEvent, dragType: 'file' | 'device', id: string) => {
+    // Only use pointer path for touch (pointerType === 'touch'); mouse uses native drag
+    if (e.pointerType !== 'touch') return;
+    e.preventDefault();
+    draggedItemRef.current = id;
+    pointerDragModeRef.current = dragType;
+    lastPointerRef.current = { clientX: e.clientX, clientY: e.clientY };
+    document.addEventListener('pointerup', handlePointerUpForTouchDrag);
+    document.addEventListener('pointercancel', handlePointerUpForTouchDrag);
+  }, [handlePointerUpForTouchDrag]);
 
   // Reset state when section changes
   useEffect(() => {
@@ -112,6 +182,8 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
       ]
     });
     draggedItemRef.current = null;
+    pointerDragModeRef.current = null;
+    lastPointerRef.current = null;
     setDraggedItem(null);
   }, [section.id]);
 
@@ -369,24 +441,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     e.stopPropagation();
     const draggedId = e.dataTransfer.getData('text/plain') || draggedItemRef.current || draggedItem;
     if (!draggedId) return;
-    
-    if (folder === 'checklistBook' && (draggedId === 'pdf1' || draggedId === 'pdf2')) {
-      if (!filesDragState.checklistBook.includes(draggedId)) {
-        setFilesDragState(prev => ({
-          ...prev,
-          [draggedId]: null,
-          checklistBook: [...prev.checklistBook, draggedId]
-        }));
-      }
-    } else if (folder === 'imagesFolder' && draggedId === 'image') {
-      if (!filesDragState.imagesFolder.includes(draggedId)) {
-        setFilesDragState(prev => ({
-          ...prev,
-          image: null,
-          imagesFolder: [...prev.imagesFolder, draggedId]
-        }));
-      }
-    }
+    applyFileDrop(draggedId, folder);
     draggedItemRef.current = null;
     setDraggedItem(null);
   };
@@ -418,11 +473,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     e.stopPropagation();
     const draggedId = e.dataTransfer.getData('text/plain') || draggedItemRef.current || draggedItem;
     if (!draggedId) return;
-    
-    setDevicesDragState(prev => ({
-      labels: prev.labels.map(l => l.id === draggedId ? { ...l, placed: true } : l),
-      devices: prev.devices.map(d => d.id === deviceId ? { ...d, matchedLabel: draggedId } : d)
-    }));
+    applyDeviceDrop(draggedId, deviceId);
     draggedItemRef.current = null;
     setDraggedItem(null);
   };
@@ -461,8 +512,9 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
             <div 
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'pdf1')}
+              onPointerDown={(e) => handlePointerDownForDrag(e, 'file', 'pdf1')}
               className="quiz-draggable-file"
-              style={{ cursor: 'grab' }}
+              style={{ cursor: 'grab', touchAction: 'none' }}
             >
               <img src="/assets/pngimage.png" alt="PDF" className="quiz-pdf-icon" />
             </div>
@@ -471,8 +523,9 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
             <div 
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'pdf2')}
+              onPointerDown={(e) => handlePointerDownForDrag(e, 'file', 'pdf2')}
               className="quiz-draggable-file"
-              style={{ cursor: 'grab' }}
+              style={{ cursor: 'grab', touchAction: 'none' }}
             >
               <img src="/assets/pngimage.png" alt="PDF" className="quiz-pdf-icon" />
             </div>
@@ -481,8 +534,9 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
             <div 
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'image')}
+              onPointerDown={(e) => handlePointerDownForDrag(e, 'file', 'image')}
               className="quiz-draggable-file"
-              style={{ cursor: 'grab' }}
+              style={{ cursor: 'grab', touchAction: 'none' }}
             >
               <img src="/assets/imagefordraganddrop.png" alt="Image" className="quiz-image-icon" />
             </div>
@@ -499,6 +553,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
           {/* Drop zones - Folders */}
           <div className="quiz-desktop-folders">
             <div 
+              data-drop-folder="checklistBook"
               onDragOver={(e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -517,6 +572,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               )}
             </div>
             <div 
+              data-drop-folder="imagesFolder"
               onDragOver={(e) => {
                 e.preventDefault();
                 e.dataTransfer.dropEffect = 'move';
@@ -561,8 +617,9 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 key={label.id}
                 draggable="true"
                 onDragStart={(e) => handleLabelDragStart(e, label.id)}
+                onPointerDown={(e) => handlePointerDownForDrag(e, 'device', label.id)}
                 className="quiz-device-label"
-                style={{ cursor: 'grab' }}
+                style={{ cursor: 'grab', touchAction: 'none' }}
               >
                 {label.text}
               </div>
@@ -586,6 +643,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 className="w-24 h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
+                data-drop-device="device1"
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
@@ -611,6 +669,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 className="w-20 h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
+                data-drop-device="device2"
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
@@ -636,6 +695,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 className="w-20 h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
+                data-drop-device="device3"
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
@@ -661,6 +721,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 className="w-24 h-16 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
+                data-drop-device="device4"
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';
@@ -686,6 +747,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 className="w-20 h-20 object-cover rounded-lg shadow-md mb-2"
               />
               <div 
+                data-drop-device="device5"
                 onDragOver={(e) => {
                   e.preventDefault();
                   e.dataTransfer.dropEffect = 'move';

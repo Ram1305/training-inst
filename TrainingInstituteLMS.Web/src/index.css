@@ -5655,6 +5655,13 @@ nav > div {
 
 /* Quiz Section Fixes */
 
+/* LLN assessment desktop-mode wrapper (mobile: min-width + scroll for drag-drop) */
+.lln-desktop-mode-wrapper {
+  min-width: 1024px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 /* Quiz Section Header Text Visibility - Force Black Text */
 .quiz-section-header {
   color: #000000 !important;

@@ -418,6 +418,16 @@ export function PublicEnrollmentWizard({
   const [declarationName, setDeclarationName] = useState('');
   const [showQuizDeclaration, setShowQuizDeclaration] = useState(false);
 
+  // Mobile detection for LLN assessment (drag-drop requires desktop or desktop-mode)
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handler = () => setIsMobile(mq.matches);
+    handler(); // Initial
+    mq.addEventListener('change', handler);
+    return () => mq.removeEventListener('change', handler);
+  }, []);
+
   // Step 5: Enrollment Form (was step 4)
   const [currentFormSection, setCurrentFormSection] = useState(1);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
@@ -2654,37 +2664,45 @@ export function PublicEnrollmentWizard({
 
         return (
           <div className="space-y-4">
-            <Card className="border-violet-100">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ClipboardCheck className="w-5 h-5" />
-                  Step 3: LLND Assessment
-                </CardTitle>
-                <CardDescription>
-                  Section {quizSectionIndex + 1} of {quizSections.length}: {quizSections[quizSectionIndex].title}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Progress value={((quizSectionIndex + 1) / quizSections.length) * 100} className="h-2" />
-                <div className="flex gap-2 mt-4 flex-wrap">
-                  {quizSections.map((s, i) => (
-                    <Badge 
-                      key={s.id} 
-                      variant={i < quizSectionIndex ? 'default' : i === quizSectionIndex ? 'secondary' : 'outline'}
-                      className={i < quizSectionIndex ? 'bg-green-500' : ''}
-                    >
-                      {i + 1}. {s.id.charAt(0).toUpperCase() + s.id.slice(1)}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-            
-            <QuizSection
-              section={quizSections[quizSectionIndex]}
-              onComplete={handleQuizSectionComplete}
+            {isMobile && (
+              <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-4 text-amber-900">
+                <p className="text-sm font-medium">
+                  For the best experience with drag-and-drop questions, please use a desktop or tablet, or use your browser&apos;s &quot;Request desktop site&quot; / &quot;Desktop site&quot; option in the menu.
+                </p>
+              </div>
+            )}
+            <div className={isMobile ? 'lln-desktop-mode-wrapper' : ''}>
+              <Card className="border-violet-100">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <ClipboardCheck className="w-5 h-5" />
+                    Step 3: LLND Assessment
+                  </CardTitle>
+                  <CardDescription>
+                    Section {quizSectionIndex + 1} of {quizSections.length}: {quizSections[quizSectionIndex].title}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Progress value={((quizSectionIndex + 1) / quizSections.length) * 100} className="h-2" />
+                  <div className="flex gap-2 mt-4 flex-wrap">
+                    {quizSections.map((s, i) => (
+                      <Badge 
+                        key={s.id} 
+                        variant={i < quizSectionIndex ? 'default' : i === quizSectionIndex ? 'secondary' : 'outline'}
+                        className={i < quizSectionIndex ? 'bg-green-500' : ''}
+                      >
+                        {i + 1}. {s.id.charAt(0).toUpperCase() + s.id.slice(1)}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
               
-            />
+              <QuizSection
+                section={quizSections[quizSectionIndex]}
+                onComplete={handleQuizSectionComplete}
+              />
+            </div>
           </div>
         );
 
