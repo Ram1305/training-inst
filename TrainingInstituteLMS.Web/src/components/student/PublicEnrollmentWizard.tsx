@@ -1610,7 +1610,7 @@ export function PublicEnrollmentWizard({
                     </div>
                   </RadioGroup>
                 </div>
-                <div className="shrink-0 w-[200px] h-[200px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
+                <div className="shrink-0 w-[100px] h-[100px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
                   {(() => {
                     const previewCourse =
                       enrollmentType === 'individual'
