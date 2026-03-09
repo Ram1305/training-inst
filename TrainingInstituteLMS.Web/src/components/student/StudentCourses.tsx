@@ -485,7 +485,15 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
       <Tabs
         value={activeTab}
         onValueChange={(value) => {
-          if (value === 'available' && hasPendingRequirements) return;
+          if (value === 'available' && hasPendingRequirements) {
+            const msg = hasEnrolledCourseNeedingQuiz && needsEnrollmentForm
+              ? 'Please complete your LLN assessment and enrollment form first to browse courses.'
+              : hasEnrolledCourseNeedingQuiz
+                ? 'Your LLN assessment is pending. Please complete it first to browse courses.'
+                : 'Please complete your enrollment form first to browse courses.';
+            toast.warning(msg);
+            return;
+          }
           setActiveTab(value);
         }}
         className="w-full"
@@ -494,7 +502,6 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
           <TabsTrigger value="enrolled">Enrolled Courses</TabsTrigger>
           <TabsTrigger
             value="available"
-            disabled={hasPendingRequirements}
             title={hasPendingRequirements ? 'Complete enrollment form and LLND assessment first' : undefined}
             className={hasPendingRequirements ? 'opacity-60 cursor-not-allowed' : ''}
           >
@@ -558,13 +565,13 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                             }>
                               Payment: {course.paymentStatus}
                             </Badge>
-                            {/* Quiz Status Badge */}
+                            {/* LLN Status Badge */}
                             <Badge className={
                               course.quizCompleted
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-orange-100 text-orange-700'
                             }>
-                              Quiz: {course.quizCompleted ? 'Completed' : 'Pending'}
+                              LLN: {course.quizCompleted ? 'Completed' : 'Pending'}
                             </Badge>
                             {/* Enrollment Form Status Badge */}
                             {!isLoadingEnrollmentForm && (
