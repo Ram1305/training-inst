@@ -811,8 +811,14 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
       <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
           <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">Student Details</DialogTitle>
-            <DialogDescription>View student profile, purchased courses, and payment history</DialogDescription>
+            <DialogTitle className="text-xl font-semibold">
+              {detailsStudent ? `Student details: ${detailsStudent.fullName}` : 'Student details'}
+            </DialogTitle>
+            <DialogDescription>
+              {detailsStudent
+                ? `Profile, courses purchased, payment dates and history for ${detailsStudent.email}`
+                : 'View student profile, purchased courses, and payment history'}
+            </DialogDescription>
           </DialogHeader>
           <div className="flex-1 overflow-y-auto pr-2 -mr-2">
             {detailsLoading ? (
@@ -873,10 +879,27 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
 
                 {/* Purchased Courses */}
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <BookOpen className="w-5 h-5 text-violet-600" />
-                    Purchased Courses
-                  </h3>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <BookOpen className="w-5 h-5 text-violet-600" />
+                      Courses purchased: {detailsPayments.length}
+                    </h3>
+                    {detailsPayments.length > 0 && (
+                      <span className="text-sm text-gray-500">
+                        Total paid: {formatCurrency(detailsPayments.reduce((sum, p) => sum + p.amountPaid, 0))}
+                        {detailsPayments.length > 0 && (() => {
+                          const dates = detailsPayments.map((p) => new Date(p.paymentDate).getTime()).filter(Boolean);
+                          if (dates.length === 0) return null;
+                          const first = new Date(Math.min(...dates));
+                          const latest = new Date(Math.max(...dates));
+                          const same = first.getTime() === latest.getTime();
+                          return (
+                            <> · {same ? `Purchased: ${formatDateLong(first.toISOString())}` : `First: ${formatDateLong(first.toISOString())} · Latest: ${formatDateLong(latest.toISOString())}`}</>
+                          );
+                        })()}
+                      </span>
+                    )}
+                  </div>
                   {detailsPayments.length === 0 ? (
                     <Card className="border-dashed border-violet-200 bg-violet-50/50">
                       <CardContent className="py-12 text-center">
@@ -914,8 +937,8 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                               <span className="font-semibold text-gray-900">{formatCurrency(payment.amountPaid)}</span>
                             </div>
                             <div className="flex justify-between">
-                              <span className="text-gray-500">Payment date</span>
-                              <span>{formatDateLong(payment.paymentDate)}</span>
+                              <span className="text-gray-500">When purchased</span>
+                              <span className="font-medium">{formatDateLong(payment.paymentDate)}</span>
                             </div>
                             {payment.transactionId && (
                               <div className="flex justify-between">
@@ -954,7 +977,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                               <TableRow>
                                 <TableHead>Course</TableHead>
                                 <TableHead>Amount</TableHead>
-                                <TableHead>Date</TableHead>
+                                <TableHead>When purchased</TableHead>
                                 <TableHead>Status</TableHead>
                                 <TableHead className="text-right">Receipt</TableHead>
                               </TableRow>

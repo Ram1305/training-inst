@@ -401,56 +401,70 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             {
                 Guid? companyId = null;
                 var accountCreated = false;
+                var companyPassword = string.IsNullOrWhiteSpace(request.Password) ? "123456" : request.Password;
 
-                if (!string.IsNullOrWhiteSpace(request.Password))
+                var companyEmail = request.CompanyEmail.Trim();
+                var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == companyEmail);
+                if (existingUser != null)
                 {
-                    var companyEmail = request.CompanyEmail.Trim();
-                    var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == companyEmail);
-                    if (existingUser != null)
+                    var existingCompany = await _context.Companies.FirstOrDefaultAsync(c => c.UserId == existingUser.UserId);
+                    if (existingCompany != null)
                     {
-                        var existingCompany = await _context.Companies.FirstOrDefaultAsync(c => c.UserId == existingUser.UserId);
-                        if (existingCompany != null)
-                            companyId = existingCompany.CompanyId;
+                        companyId = existingCompany.CompanyId;
                     }
                     else
                     {
-                        var user = new User
-                        {
-                            UserId = Guid.NewGuid(),
-                            FullName = request.CompanyName.Trim(),
-                            Email = companyEmail,
-                            PhoneNumber = request.CompanyMobile?.Trim(),
-                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
-                            UserType = "Company",
-                            IsActive = true,
-                            CreatedAt = DateTime.UtcNow
-                        };
-                        await _context.Users.AddAsync(user);
-
+                        // Enrolled account must be in Companies collection: create Company for existing user
                         var company = new Company
                         {
                             CompanyId = Guid.NewGuid(),
-                            UserId = user.UserId,
+                            UserId = existingUser.UserId,
                             CompanyName = request.CompanyName.Trim(),
                             IsActive = true,
                             CreatedAt = DateTime.UtcNow
                         };
                         await _context.Companies.AddAsync(company);
                         companyId = company.CompanyId;
-
-                        var companyRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Company");
-                        if (companyRole != null)
-                        {
-                            await _context.UserRoles.AddAsync(new UserRole
-                            {
-                                UserRoleId = Guid.NewGuid(),
-                                UserId = user.UserId,
-                                RoleId = companyRole.RoleId,
-                                AssignedAt = DateTime.UtcNow
-                            });
-                        }
-                        accountCreated = true;
                     }
+                }
+                else
+                {
+                    var user = new User
+                    {
+                        UserId = Guid.NewGuid(),
+                        FullName = request.CompanyName.Trim(),
+                        Email = companyEmail,
+                        PhoneNumber = request.CompanyMobile?.Trim(),
+                        PasswordHash = BCrypt.Net.BCrypt.HashPassword(companyPassword),
+                        UserType = "Company",
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _context.Users.AddAsync(user);
+
+                    var company = new Company
+                    {
+                        CompanyId = Guid.NewGuid(),
+                        UserId = user.UserId,
+                        CompanyName = request.CompanyName.Trim(),
+                        IsActive = true,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    await _context.Companies.AddAsync(company);
+                    companyId = company.CompanyId;
+
+                    var companyRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Company");
+                    if (companyRole != null)
+                    {
+                        await _context.UserRoles.AddAsync(new UserRole
+                        {
+                            UserRoleId = Guid.NewGuid(),
+                            UserId = user.UserId,
+                            RoleId = companyRole.RoleId,
+                            AssignedAt = DateTime.UtcNow
+                        });
+                    }
+                    accountCreated = true;
                 }
 
                 var order = new CompanyOrderEntity

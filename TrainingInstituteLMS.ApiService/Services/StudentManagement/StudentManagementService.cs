@@ -334,7 +334,39 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                     return false;
                 }
 
-                // Get quiz attempts for this student (must delete before student due to FK)
+                // Delete all entities that reference Student (FK Restrict) before removing the student
+
+                // 1. AdminBypass (references StudentId and QuizAttemptId)
+                var adminBypasses = await _context.AdminBypasses
+                    .Where(ab => ab.StudentId == studentId)
+                    .ToListAsync();
+                _context.AdminBypasses.RemoveRange(adminBypasses);
+
+                // 2. PaymentProof (references StudentId)
+                var paymentProofs = await _context.PaymentProofs
+                    .Where(pp => pp.StudentId == studentId)
+                    .ToListAsync();
+                _context.PaymentProofs.RemoveRange(paymentProofs);
+
+                // 3. ExamResult (references StudentId)
+                var examResults = await _context.ExamResults
+                    .Where(er => er.StudentId == studentId)
+                    .ToListAsync();
+                _context.ExamResults.RemoveRange(examResults);
+
+                // 4. CertificateApproval (references StudentId)
+                var certificateApprovals = await _context.CertificateApprovals
+                    .Where(ca => ca.StudentId == studentId)
+                    .ToListAsync();
+                _context.CertificateApprovals.RemoveRange(certificateApprovals);
+
+                // 5. Certificate (references StudentId)
+                var certificates = await _context.Certificates
+                    .Where(c => c.StudentId == studentId)
+                    .ToListAsync();
+                _context.Certificates.RemoveRange(certificates);
+
+                // 6. Quiz attempts chain: QuizSectionResults -> PreEnrollmentQuizAttempts (reference StudentId)
                 var quizAttemptIds = await _context.PreEnrollmentQuizAttempts
                     .Where(q => q.StudentId == studentId)
                     .Select(q => q.QuizAttemptId)
@@ -342,26 +374,18 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
 
                 if (quizAttemptIds.Count > 0)
                 {
-                    // Delete AdminBypass records (reference QuizAttempt)
-                    var adminBypasses = await _context.AdminBypasses
-                        .Where(ab => quizAttemptIds.Contains(ab.QuizAttemptId))
-                        .ToListAsync();
-                    _context.AdminBypasses.RemoveRange(adminBypasses);
-
-                    // Delete QuizSectionResults (reference QuizAttempt)
                     var sectionResults = await _context.QuizSectionResults
                         .Where(qsr => quizAttemptIds.Contains(qsr.QuizAttemptId))
                         .ToListAsync();
                     _context.QuizSectionResults.RemoveRange(sectionResults);
 
-                    // Delete PreEnrollmentQuizAttempts
                     var quizAttempts = await _context.PreEnrollmentQuizAttempts
                         .Where(q => q.StudentId == studentId)
                         .ToListAsync();
                     _context.PreEnrollmentQuizAttempts.RemoveRange(quizAttempts);
                 }
 
-                // Remove UserRoles (User has Restrict/Cascade - ensure clean delete order)
+                // 7. UserRoles (references UserId)
                 var userRoles = await _context.UserRoles
                     .Where(ur => ur.UserId == student.UserId)
                     .ToListAsync();
