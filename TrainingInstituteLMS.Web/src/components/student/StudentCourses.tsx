@@ -368,10 +368,37 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
         </Alert>
       )}
 
-      {/* Enrollment Form Alert */}
+      {/* LLND Assessment Required - First action (top) */}
+      {!isLoadingQuizStatus && enrolledCourses.length > 0 && hasEnrolledCourseNeedingQuiz && !hasAttemptedQuiz && (
+        <Card className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
+          <CardContent className="py-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-full flex items-center justify-center">
+                  <BookOpen className="w-6 h-6 text-white" />
+                </div>
+                <div>
+                  <Badge className="mb-1.5 bg-red-100 text-red-700 border-red-200 text-xs">Action required</Badge>
+                  <h3 className="font-semibold text-red-900">LLND Assessment Required</h3>
+                  <p className="text-red-800/80 text-sm">Complete the LLND assessment to fully activate your enrollment</p>
+                </div>
+              </div>
+              <Button 
+                onClick={() => setShowQuiz(true)}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                <BookOpen className="w-4 h-4 mr-2" />
+                Take Assessment
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Enrollment Form Required - Second action (below LLND) */}
       {!isLoadingEnrollmentForm && enrolledCourses.length > 0 && (
         <>
-          {needsEnrollmentForm && (
+          {needsEnrollmentForm && !enrollmentFormPending && !enrollmentFormApproved && (
             <Card className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
               <CardContent className="py-6">
                 <div className="flex items-center justify-between">
@@ -491,33 +518,6 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
             </Card>
           ) : (
             <>
-              {/* Show Take Assessment Card if there are enrolled courses needing quiz */}
-              {!isLoadingQuizStatus && hasEnrolledCourseNeedingQuiz && !hasAttemptedQuiz && (
-                <Card className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
-                  <CardContent className="py-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-full flex items-center justify-center">
-                          <BookOpen className="w-6 h-6 text-white" />
-                        </div>
-                        <div>
-                          <Badge className="mb-1.5 bg-red-100 text-red-700 border-red-200 text-xs">Action required</Badge>
-                          <h3 className="font-semibold text-red-900">LLND Assessment Required</h3>
-                          <p className="text-red-800/80 text-sm">Complete the LLND assessment to fully activate your enrollment</p>
-                        </div>
-                      </div>
-                      <Button 
-                        onClick={() => setShowQuiz(true)}
-                        className="bg-red-600 hover:bg-red-700 text-white"
-                      >
-                        <BookOpen className="w-4 h-4 mr-2" />
-                        Take Assessment
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
-
               {enrolledCourses.map((course) => (
                 <Card key={course.enrollmentId} className="border-violet-100 overflow-hidden">
                   <div className="flex flex-col md:flex-row">

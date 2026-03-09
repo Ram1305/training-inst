@@ -1585,32 +1585,9 @@ export function PublicEnrollmentWizard({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left column: form content */}
                 <div className="flex-1 min-w-0 space-y-6">
-              {/* Enrollment type: Individual (default) or Company — label/radios on left, selected course image 200x200 on right */}
-              <div className="flex flex-wrap items-start gap-4">
-                <div className="flex-1 min-w-0">
-                  <Label className="block text-sm font-medium text-gray-700 mb-3">
-                    Enrollment type <span className="text-red-500">*</span>
-                  </Label>
-                  <RadioGroup
-                    value={enrollmentType}
-                    onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
-                    className="flex gap-4"
-                  >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="individual" id="type-individual" />
-                      <Label htmlFor="type-individual" className="cursor-pointer font-normal">
-                        Individual
-                      </Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="company" id="type-company" />
-                      <Label htmlFor="type-company" className="cursor-pointer font-normal">
-                        Company
-                      </Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-                <div className="shrink-0 w-[100px] h-[40px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
+              {/* Course image (left) and Enrollment type (right) — fixed small image size for consistent layout */}
+              <div className="flex flex-wrap items-start gap-4 justify-between">
+                <div className="shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
                   {(() => {
                     const previewCourse =
                       enrollmentType === 'individual'
@@ -1622,7 +1599,7 @@ export function PublicEnrollmentWizard({
                             : selectedCompanyCourses.length > 0
                               ? courses.find((c) => c.courseId === selectedCompanyCourses[0].courseId)
                               : null;
-                    const fallbackImage = 'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=400';
+                    const fallbackImage = 'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=200';
                     return previewCourse ? (
                       <ImageWithFallback
                         src={previewCourse.imageUrl || fallbackImage}
@@ -1630,12 +1607,37 @@ export function PublicEnrollmentWizard({
                         className="w-full h-full object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-violet-600/70 p-4">
-                        <BookOpen className="w-10 h-10" />
-                        <span className="text-xs font-medium text-center">Select a course</span>
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-violet-600/70 p-1">
+                        <BookOpen className="w-6 h-6" />
+                        <span className="text-[10px] font-medium text-center leading-tight">Select a course</span>
                       </div>
                     );
                   })()}
+                </div>
+                <div className="flex-1 min-w-0 flex justify-end">
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700 mb-3">
+                      Enrollment type <span className="text-red-500">*</span>
+                    </Label>
+                    <RadioGroup
+                      value={enrollmentType}
+                      onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
+                      className="flex gap-4"
+                    >
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="individual" id="type-individual" />
+                        <Label htmlFor="type-individual" className="cursor-pointer font-normal">
+                          Individual
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <RadioGroupItem value="company" id="type-company" />
+                        <Label htmlFor="type-company" className="cursor-pointer font-normal">
+                          Company
+                        </Label>
+                      </div>
+                    </RadioGroup>
+                  </div>
                 </div>
               </div>
 
