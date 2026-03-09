@@ -137,7 +137,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
                 var message = new MimeKit.MimeMessage();
                 message.From.Add(new MimeKit.MailboxAddress(_settings.FromName, user));
                 message.To.Add(MimeKit.MailboxAddress.Parse(testEmailAddress));
-                message.Subject = "Test Email - Training Institute LMS";
+                message.Subject = "Test Email - Safety Training Academy";
                 message.Body = new MimeKit.TextPart("html")
                 {
                     Text = @"<!DOCTYPE html>
@@ -148,7 +148,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
 </head>
 <body style='font-family:Arial,Helvetica,sans-serif;padding:20px;'>
 <h2 style='color:#4f46e5;'>Test Email Successful!</h2>
-<p>This is a test email from the Training Institute LMS.</p>
+<p>This is a test email from Safety Training Academy.</p>
 <p><strong>Configuration Status:</strong> ✓ Working</p>
 <p>Your email service is properly configured and ready to send notifications.</p>
 <hr/>

@@ -30,7 +30,7 @@ namespace TrainingInstituteLMS.ApiService.Configuration
         /// <summary>
         /// Display name for the "From" field
         /// </summary>
-        public string FromName { get; set; } = "Training Institute LMS";
+        public string FromName { get; set; } = "Safety Training Academy";
 
         /// <summary>
         /// Academy bookings email - receives a copy of each enrollment notification.
