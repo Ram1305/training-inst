@@ -1585,9 +1585,9 @@ export function PublicEnrollmentWizard({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left column: form content */}
                 <div className="flex-1 min-w-0 space-y-6">
-              {/* Course image (left) and Enrollment type (right) — fixed small image size for consistent layout */}
+              {/* Course image (left) and Enrollment type (right) — fixed small image size, minimal height */}
               <div className="flex flex-wrap items-start gap-4 justify-between">
-                <div className="shrink-0 w-[72px] h-[72px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
+                <div className="shrink-0 w-[64px] h-[40px] rounded-lg overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50 flex items-center justify-center [&_img]:max-h-full [&_img]:min-h-0 [&_img]:w-full [&_img]:object-cover [&_img]:block">
                   {(() => {
                     const previewCourse =
                       enrollmentType === 'individual'
@@ -1604,12 +1604,12 @@ export function PublicEnrollmentWizard({
                       <ImageWithFallback
                         src={previewCourse.imageUrl || fallbackImage}
                         alt={previewCourse.courseName}
-                        className="w-full h-full object-cover"
+                        className="size-full max-h-full object-cover block"
                       />
                     ) : (
-                      <div className="w-full h-full flex flex-col items-center justify-center gap-1 text-violet-600/70 p-1">
-                        <BookOpen className="w-6 h-6" />
-                        <span className="text-[10px] font-medium text-center leading-tight">Select a course</span>
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-0.5 text-violet-600/70 p-0.5 min-h-0">
+                        <BookOpen className="w-4 h-4 shrink-0" />
+                        <span className="text-[9px] font-medium text-center leading-tight">Select course</span>
                       </div>
                     );
                   })()}
