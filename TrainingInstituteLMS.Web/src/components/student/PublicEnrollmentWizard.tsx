@@ -1616,7 +1616,7 @@ export function PublicEnrollmentWizard({
                   })()}
                 </div>
                 */}
-                <div className="flex-1 min-w-0 flex justify-end">
+                <div className="flex-1 min-w-0 flex justify-start">
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-3">
                       Enrollment type <span className="text-red-500">*</span>
@@ -3012,29 +3012,52 @@ export function PublicEnrollmentWizard({
           <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
               <CheckCircle className="w-5 h-5" />
-              Thank you for your payment
+              Thank you for your booking with Safety Training Academy
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
-            <p className="text-gray-700">
-              One-time enrollment links have been sent to <strong>{companyEmail}</strong>. Each link is for one course.
-              Share each link with the respective employee to complete their registration.
-            </p>
-            {companyOrderLinks.length > 0 && (
-              <div className="rounded-lg border bg-gray-50 p-4">
-                <p className="text-sm font-medium text-gray-700 mb-2">Links created:</p>
-                <ul className="text-sm space-y-1">
-                  {companyOrderLinks.map((l, i) => (
-                    <li key={i}>
-                      <a href={l.fullUrl} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline">
-                        {l.courseName}: {l.fullUrl}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
+            <div className="prose prose-gray max-w-none text-gray-700 space-y-4">
+              <p><strong>Instructions:</strong></p>
+              <p>
+                Please share the links with your employees to continue their LLN (Language, Literacy and Numeracy)
+                assessment and complete their Enrolment.
+              </p>
+              <p>Please share the link below:</p>
+              {companyOrderLinks.length > 0 && (
+                <div className="rounded-lg border bg-gray-50 p-4">
+                  <p className="text-sm font-medium text-gray-700 mb-3">Enrolment &amp; LLN Links:</p>
+                  <ul className="text-sm space-y-2 list-disc list-inside">
+                    {companyOrderLinks.map((l, i) => (
+                      <li key={i}>
+                        <strong>{l.courseName}:</strong>{' '}
+                        <a href={l.fullUrl} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline break-all">
+                          {l.fullUrl}
+                        </a>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p>
+                Please ask them to complete the form and assessment before their course date to finalise your
+                registration.
+              </p>
+              <p>
+                We have shared these details in Email for your reference and confirmation.
+              </p>
+              <p>If you need any assistance, please contact us.</p>
+              <div className="border-t pt-4 mt-6 text-gray-600">
+                <p>Kind regards,</p>
+                <p className="font-semibold">Safety Training Academy</p>
+                <p>Training Team</p>
+                <p>1300 976 097</p>
+                <p>
+                  <a href="mailto:info@safetytrainingacademy.edu.au" className="text-violet-600 hover:underline">
+                    info@safetytrainingacademy.edu.au
+                  </a>
+                </p>
               </div>
-            )}
-            <p className="text-gray-600 text-sm">Please log in to your account to manage bookings.</p>
+            </div>
             <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
               Back to Home
             </Button>

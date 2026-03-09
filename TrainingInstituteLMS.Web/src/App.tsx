@@ -65,7 +65,7 @@ const mapAuthUserToUser = (authUser: AuthUser): User => {
 };
 
 // Helper function to parse URL path
-const parseUrlPath = (): { path: string; enrollCode?: string } => {
+const parseUrlPath = (): { path: string; enrollCode?: string; courseId?: string } => {
   const pathname = window.location.pathname;
   
   // Check for /enroll/:code pattern
@@ -74,7 +74,13 @@ const parseUrlPath = (): { path: string; enrollCode?: string } => {
     return { path: 'enroll', enrollCode: enrollMatch[1] };
   }
   
-  return { path: pathname };
+  // Check for /course/:id pattern (shareable course details URL)
+  const courseMatch = pathname.match(/^\/course\/([a-zA-Z0-9\-]+)$/);
+  if (courseMatch) {
+    return { path: 'course', courseId: courseMatch[1] };
+  }
+  
+  return { path: pathname === '/' ? 'landing' : pathname };
 };
 
 export default function App() {
@@ -105,10 +111,10 @@ export default function App() {
 
   const user: User | null = authUser ? mapAuthUserToUser(authUser) : null;
 
-  // Check URL path on mount for enrollment links
+  // Check URL path on mount for enrollment links and shareable course URLs
   useEffect(() => {
     const checkUrlPath = async () => {
-      const { path, enrollCode } = parseUrlPath();
+      const { path, enrollCode, courseId } = parseUrlPath();
       
       if (path === 'enroll' && enrollCode) {
         setIsLoadingEnrollmentLink(true);
@@ -139,6 +145,10 @@ export default function App() {
         } finally {
           setIsLoadingEnrollmentLink(false);
         }
+      } else if (path === 'course' && courseId) {
+        // Direct link to course details - show the course page
+        setSelectedCourseId(courseId);
+        setCurrentPage('courseDetails');
       }
     };
     
@@ -155,6 +165,22 @@ export default function App() {
       }
     }
   }, [isAuthenticated, isLoading, currentPage, isLoadingEnrollmentLink]);
+
+  // Handle browser back/forward - sync state with URL
+  useEffect(() => {
+    const handlePopState = () => {
+      const { path, courseId } = parseUrlPath();
+      if (path === 'course' && courseId) {
+        setSelectedCourseId(courseId);
+        setCurrentPage('courseDetails');
+      } else if (path === 'landing' || path === '/') {
+        setCurrentPage('landing');
+        setSelectedCourseId(null);
+      }
+    };
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
 
   const handleLogin = (userData: User) => {
     const authUser: AuthUser = {
@@ -187,6 +213,10 @@ export default function App() {
     setSelectedCourseId(null);
     setEnrollmentLinkData(null);
     setEnrollCode(null);
+    // Update URL when leaving course details so shared links work correctly
+    if (window.location.pathname.startsWith('/course/')) {
+      window.history.replaceState({}, '', '/');
+    }
   };
 
   const handleViewCourses = () => {
@@ -287,6 +317,8 @@ export default function App() {
   const handleCourseDetails = (courseId: string) => {
     setSelectedCourseId(courseId);
     setCurrentPage('courseDetails');
+    // Update URL so the link can be copied and shared
+    window.history.pushState({}, '', `/course/${courseId}`);
   };
 
   const handleViewHandbook = (url: string, title?: string, courseName?: string) => {
