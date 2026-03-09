@@ -1585,29 +1585,38 @@ export function PublicEnrollmentWizard({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left column: form content */}
                 <div className="flex-1 min-w-0 space-y-6">
-              {/* Enrollment type: Individual (default) or Company */}
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-3">
-                  Enrollment type <span className="text-red-500">*</span>
-                </Label>
-                <RadioGroup
-                  value={enrollmentType}
-                  onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
-                  className="flex gap-4"
-                >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="individual" id="type-individual" />
-                    <Label htmlFor="type-individual" className="cursor-pointer font-normal">
-                      Individual
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="company" id="type-company" />
-                    <Label htmlFor="type-company" className="cursor-pointer font-normal">
-                      Company
-                    </Label>
-                  </div>
-                </RadioGroup>
+              {/* Enrollment type: Individual (default) or Company — label/radios on left, image 200x200 on right */}
+              <div className="flex flex-wrap items-start gap-4">
+                <div className="flex-1 min-w-0">
+                  <Label className="block text-sm font-medium text-gray-700 mb-3">
+                    Enrollment type <span className="text-red-500">*</span>
+                  </Label>
+                  <RadioGroup
+                    value={enrollmentType}
+                    onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
+                    className="flex gap-4"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="individual" id="type-individual" />
+                      <Label htmlFor="type-individual" className="cursor-pointer font-normal">
+                        Individual
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="company" id="type-company" />
+                      <Label htmlFor="type-company" className="cursor-pointer font-normal">
+                        Company
+                      </Label>
+                    </div>
+                  </RadioGroup>
+                </div>
+                <div className="shrink-0 w-[200px] h-[200px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
+                  <img
+                    src="/assets/SafetyTrainingAcademylogo.png"
+                    alt="Enrollment"
+                    className="w-full h-full object-cover"
+                  />
+                </div>
               </div>
 
               {enrollmentType === 'company' ? (
