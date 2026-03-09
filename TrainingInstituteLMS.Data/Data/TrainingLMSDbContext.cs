@@ -302,6 +302,12 @@ namespace TrainingInstituteLMS.Data.Data
                 .HasForeignKey(el => el.CourseDateId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            modelBuilder.Entity<EnrollmentLink>()
+                .HasOne(el => el.CompanyOrder)
+                .WithMany()
+                .HasForeignKey(el => el.CompanyOrderId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // SiteSettings: unique key for key-value store
             modelBuilder.Entity<SiteSetting>()
                 .HasIndex(s => s.Key)
@@ -347,6 +353,13 @@ namespace TrainingInstituteLMS.Data.Data
                     RoleId = Guid.Parse("44444444-4444-4444-4444-444444444444"),
                     RoleName = "Student",
                     Description = "Enrolled Student",
+                    CreatedAt = seedDate
+                },
+                new Role
+                {
+                    RoleId = Guid.Parse("55555555-5555-5555-5555-555555555555"),
+                    RoleName = "Company",
+                    Description = "Company account (bulk orders)",
                     CreatedAt = seedDate
                 }
             );

@@ -20,6 +20,119 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             _logger = logger;
         }
 
+        public async Task SendCompanyOrderConfirmationAsync(
+            string toEmail,
+            string companyName,
+            string orderId,
+            decimal totalAmount,
+            List<(string CourseName, string FullUrl)> links,
+            bool accountCreated,
+            string? loginBaseUrl)
+        {
+            if (!_settings.IsConfigured)
+            {
+                _logger.LogWarning("Email not configured - skipping company order confirmation to {Email}", toEmail);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(toEmail))
+            {
+                _logger.LogWarning("Cannot send company order confirmation - recipient email is empty");
+                return;
+            }
+
+            orderId = FormatBookingIdForEmail(orderId);
+            var priceStr = "$" + totalAmount.ToString("N2", CultureInfo.CreateSpecificCulture("en-US"));
+            var orderDateStr = DateTime.UtcNow.ToString("dddd, d MMMM yyyy");
+
+            var linksPlain = string.Join("\n", links.Select((l, i) => $"{i + 1}. {l.CourseName}\n   {l.FullUrl}"));
+            var linksHtml = string.Join("", links.Select((l, i) => $@"
+<tr><td style='padding:12px 16px;border-bottom:1px solid #e2e8f0;'>
+<p style='margin:0 0 4px;font-size:14px;font-weight:600;color:#334155;'>{l.CourseName}</p>
+<p style='margin:0;font-size:13px;'><a href='{l.FullUrl}' style='color:#3b82f6;word-break:break-all;'>{l.FullUrl}</a></p>
+</td></tr>"));
+
+            var loginNotePlain = accountCreated && !string.IsNullOrWhiteSpace(loginBaseUrl)
+                ? $"\n\nYou can log in at {loginBaseUrl.TrimEnd('/')} with this email and your password to manage your company account.\n"
+                : "";
+            var loginNoteHtml = accountCreated && !string.IsNullOrWhiteSpace(loginBaseUrl)
+                ? $@"<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;background-color:#eff6ff;border-radius:8px;border:1px solid #3b82f6;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:1px;'>Company portal login</p>
+<p style='margin:0;font-size:14px;color:#334155;'>You can log in at <a href='{loginBaseUrl.TrimEnd('/')}' style='color:#3b82f6;'>{loginBaseUrl.TrimEnd('/')}</a> with this email and your password to manage your company account.</p>
+</td></tr></table>"
+                : "";
+
+            var subject = $"Your course purchase – Order #{orderId}";
+            var plainBody = $@"Dear {companyName},
+
+Thank you for your order. Your company order has been received successfully.
+
+Order #: {orderId}
+Order Date: {orderDateStr}
+Total: {priceStr}
+
+------------------------------------------------------------
+PURCHASED COURSES – ONE-TIME ENROLLMENT LINKS
+------------------------------------------------------------
+Each link below is for one enrolment. Share each link with the person who will take that course.
+
+{linksPlain}
+{loginNotePlain}
+Best regards,
+{_settings.FromName}";
+
+            var htmlBody = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Order Confirmation</title></head>
+<body style='margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#333;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color:#f4f4f4;padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
+<tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:22px;font-weight:700;'>Order #{orderId} – Course purchase</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p style='margin:0 0 16px;font-size:15px;color:#555;'>Dear <strong>{companyName}</strong>,</p>
+<p style='margin:0 0 24px;font-size:15px;color:#555;'>Thank you for your order. Your company order has been received successfully.</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Order details</p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order #: <strong>{orderId}</strong></p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order date: <strong>{orderDateStr}</strong></p>
+<p style='margin:0;font-size:14px;color:#334155;'>Total: <strong>{priceStr}</strong></p>
+</td></tr></table>
+<p style='margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;'>Purchased courses – one-time enrollment links</p>
+<p style='margin:0 0 16px;font-size:13px;color:#64748b;'>Each link is for one enrolment. Share each link with the person who will take that course.</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;'>{linksHtml}
+</table>
+{loginNoteHtml}
+</td></tr>
+<tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;'>
+<p style='margin:0;font-size:13px;color:#64748b;'>Best regards,<br/><strong style='color:#334155;'>{_settings.FromName}</strong></p>
+</td></tr></table></td></tr></table></body></html>";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.AuthenticateAsync(user, smtpPassword);
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_settings.FromName, user));
+                message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Company order confirmation sent to {Email} for order {OrderId}", toEmail, orderId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send company order confirmation to {Email} for order {OrderId}", toEmail, orderId);
+            }
+        }
+
         public async Task SendEnrollmentConfirmationAsync(
             string toEmail,
             string studentName,
@@ -71,6 +184,13 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
 
                 var subject = $"Booking Confirmed - {courseName} (Order #{orderId})";
 
+                // Official links for Course Preparation Checklist
+                const string urlCreateUsi = "https://www.usi.gov.au/your-usi/create-usi";
+                const string urlFindUsi = "https://www.usi.gov.au/faqs/find-your-usi";
+                const string urlApplyAen = "https://www.service.nsw.gov.au/transaction/apply-for-a-high-risk-work-licence-assessment-enrolment-number";
+                const string urlProofOfIdentity = "https://www.safework.nsw.gov.au/licences-and-registrations/licences/proof-of-identity";
+                const string urlEvidenceOfIdentity = "https://www.safework.nsw.gov.au/licences-and-registrations/licences/evidence-of-identity";
+
                 var billingAddressPlain = string.IsNullOrWhiteSpace(studentAddress)
                     ? $"{studentName}\n{studentEmail}\n{studentPhone}"
                     : $"{studentName}\n{studentAddress.Trim()}\n{studentEmail}\n{studentPhone}";
@@ -90,10 +210,37 @@ Date: {dateStr}
 Time: {timeStr}
 Location: {locationStr}
 
-What to Bring:
-* Valid Photo ID (Driver Licence / Passport)
-* USI Number (if required)
-* Safety boots & appropriate workwear
+------------------------------------------------------------
+IMPORTANT: COURSE PREPARATION CHECKLIST
+------------------------------------------------------------
+Course Address: {locationStr}
+
+Prior to the commencement of your course, please ensure you bring the following items:
+
+* ID reflecting your name and address.
+* Personal Protective Equipment (PPE), including a high visibility vest and steel cap boots (safety shoes). (Not required for First Aid courses.)
+* Unique Student Identifier (USI):
+  - Create USI: {urlCreateUsi}
+  - Find your USI (if you've forgotten it): {urlFindUsi}
+
+Additional requirements if you booked for High-Risk licence (Forklift and Boom lift over 11 meters):
+* 100 Points ID reflecting your name and address. Refer to the link below:
+  Proof of Identification: {urlProofOfIdentity}
+* Assessment Enrolment Number (AEN):
+  You can create it using the provided link:
+  Apply for AEN: {urlApplyAen}
+
+Additional requirement if you booked for White Card:
+* 100 Points ID reflecting your name and address: {urlEvidenceOfIdentity}
+
+Safety Training Academy also provides the following facilities for your convenience:
+* Beverages (coffee, tea, hot chocolate, water).
+* Adequate facilities include a lunchroom, toilets, and a fridge in the kitchen room.
+* Easy council parking.
+
+Notes:
+Ensure you arrive prepared with the necessary items and documentation for your training session.
+If you have any additional questions or concerns, please don't hesitate to contact Safety Training Academy for clarification.
 
 ------------------------------------------------------------
 ORDER DETAILS (Order #{orderId})
@@ -110,6 +257,13 @@ Login ID:  {loginId}
 Password:  {password}
 
 Use the above credentials to log in to the student portal to access your course materials and complete any required assessments.
+
+------------------------------------------------------------
+CONTACT DETAILS
+------------------------------------------------------------
+Office: info@safetytrainingacademy.edu.au
+Booking: bookings@safetytrainingacademy.edu.au
+Business: 1300 976 097  |  M: 0483 878 887
 
 Best regards,
 {_settings.FromName}";
@@ -144,12 +298,31 @@ Best regards,
 <tr><td style='font-size:13px;color:#64748b;'>Location</td><td style='font-size:14px;font-weight:600;color:#334155;'>{locationStr}</td></tr>
 </table>
 <div style='margin-bottom:24px;padding:16px;background-color:#fef3c7;border-radius:6px;border-left:4px solid #f59e0b;'>
-<p style='margin:0 0 12px;font-size:13px;font-weight:700;color:#92400e;'>What to Bring:</p>
-<ul style='margin:0;padding-left:20px;font-size:14px;color:#334155;'>
-<li>Valid Photo ID (Driver Licence / Passport)</li>
-<li>USI Number (if required)</li>
-<li>Safety boots &amp; appropriate workwear</li>
+<p style='margin:0 0 12px;font-size:13px;font-weight:700;color:#92400e;'>Important: Course Preparation Checklist</p>
+<p style='margin:0 0 8px;font-size:13px;color:#334155;'>Course Address: <strong>{locationStr}</strong></p>
+<p style='margin:0 0 8px;font-size:13px;color:#334155;'>Prior to the commencement of your course, please ensure you bring the following items:</p>
+<ul style='margin:0 0 12px;padding-left:20px;font-size:14px;color:#334155;'>
+<li>ID reflecting your name and address.</li>
+<li>Personal Protective Equipment (PPE), including a high visibility vest and steel cap boots (safety shoes). <em>(Not required for First Aid courses.)</em></li>
+<li><strong>Unique Student Identifier (USI):</strong><br/>
+  <a href='{urlCreateUsi}' style='color:#3b82f6;'>Create USI</a> &nbsp;|&nbsp; <a href='{urlFindUsi}' style='color:#3b82f6;'>Find your USI</a> (if you&apos;ve forgotten it)</li>
 </ul>
+<p style='margin:0 0 6px;font-size:13px;font-weight:600;color:#334155;'>Additional requirements if you booked for High-Risk licence (Forklift and Boom lift over 11 meters):</p>
+<ul style='margin:0 0 12px;padding-left:20px;font-size:14px;color:#334155;'>
+<li>100 Points ID reflecting your name and address. Refer to the link below:<br/><a href='{urlProofOfIdentity}' style='color:#3b82f6;'>Proof of Identification</a></li>
+<li>Assessment Enrolment Number (AEN):<br/>You can create it using the provided link:<br/><a href='{urlApplyAen}' style='color:#3b82f6;'>Apply for AEN</a></li>
+</ul>
+<p style='margin:0 0 6px;font-size:13px;font-weight:600;color:#334155;'>Additional requirement if you booked for White Card:</p>
+<ul style='margin:0 0 12px;padding-left:20px;font-size:14px;color:#334155;'>
+<li>100 Points ID: <a href='{urlEvidenceOfIdentity}' style='color:#3b82f6;'>Evidence of Identity</a></li>
+</ul>
+<p style='margin:0 0 6px;font-size:13px;font-weight:600;color:#334155;'>Safety Training Academy also provides:</p>
+<ul style='margin:0 0 12px;padding-left:20px;font-size:14px;color:#334155;'>
+<li>Beverages (coffee, tea, hot chocolate, water).</li>
+<li>Lunchroom, toilets, and a fridge in the kitchen room.</li>
+<li>Easy council parking.</li>
+</ul>
+<p style='margin:0;font-size:13px;color:#334155;'><strong>Notes:</strong> Ensure you arrive prepared with the necessary items and documentation. If you have any questions, contact Safety Training Academy for clarification.</p>
 </div>
 <!-- Order / Product box -->
 <table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:16px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
@@ -193,7 +366,14 @@ Best regards,
 <p style='margin:0;font-size:14px;color:#334155;'><strong>Password:</strong> {password}</p>
 </td></tr>
 </table>
-<p style='margin:0;font-size:14px;color:#555;'>Use the above credentials to log in to the student portal to access your course materials and complete any required assessments.</p>
+<p style='margin:0 0 20px;font-size:14px;color:#555;'>Use the above credentials to log in to the student portal to access your course materials and complete any required assessments.</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Contact Details</p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Office: <a href='mailto:info@safetytrainingacademy.edu.au' style='color:#3b82f6;'>info@safetytrainingacademy.edu.au</a></p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Booking: <a href='mailto:bookings@safetytrainingacademy.edu.au' style='color:#3b82f6;'>bookings@safetytrainingacademy.edu.au</a></p>
+<p style='margin:0;font-size:14px;color:#334155;'>Business: 1300 976 097 &nbsp;|&nbsp; M: 0483 878 887</p>
+</td></tr></table>
 </td>
 </tr>
 <tr>

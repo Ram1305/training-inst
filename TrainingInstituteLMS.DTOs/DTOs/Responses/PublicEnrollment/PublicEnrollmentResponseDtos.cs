@@ -103,6 +103,48 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string TransactionId { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Admin: list item for company orders (status, course count, etc.).
+    /// </summary>
+    public class AdminCompanyOrderListItemDto
+    {
+        public string OrderId { get; set; } = string.Empty;
+        public string CompanyName { get; set; } = string.Empty;
+        public string CompanyEmail { get; set; } = string.Empty;
+        public string? CompanyMobile { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string PaymentMethod { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public int CourseCount { get; set; }
+    }
+
+    /// <summary>
+    /// Admin: single company order with course/link details.
+    /// </summary>
+    public class AdminCompanyOrderDetailDto : AdminCompanyOrderListItemDto
+    {
+        public List<AdminCompanyOrderLinkItemDto> Links { get; set; } = new();
+    }
+
+    public class AdminCompanyOrderLinkItemDto
+    {
+        public string LinkId { get; set; } = string.Empty;
+        public string CourseName { get; set; } = string.Empty;
+        public string FullUrl { get; set; } = string.Empty;
+        public int UsedCount { get; set; }
+        public int? MaxUses { get; set; }
+        public bool IsActive { get; set; }
+    }
+
+    public class AdminCompanyOrderListResponseDto
+    {
+        public List<AdminCompanyOrderListItemDto> Items { get; set; } = new();
+        public int TotalCount { get; set; }
+        public int Page { get; set; }
+        public int PageSize { get; set; }
+    }
+
     public class OneTimeLinkCompleteResponseDto
     {
         public string UserId { get; set; } = string.Empty;

@@ -53,6 +53,11 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         public Guid? CreatedBy { get; set; }
         
         public DateTime? UpdatedAt { get; set; }
+
+        /// <summary>
+        /// When set, this link was created as part of a company order (one-time link per course).
+        /// </summary>
+        public Guid? CompanyOrderId { get; set; }
         
         // Navigation properties
         [ForeignKey(nameof(CourseId))]
@@ -60,5 +65,8 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         
         [ForeignKey(nameof(CourseDateId))]
         public virtual Courses.CourseDate? CourseDate { get; set; }
+
+        [ForeignKey(nameof(CompanyOrderId))]
+        public virtual CompanyOrder? CompanyOrder { get; set; }
     }
 }

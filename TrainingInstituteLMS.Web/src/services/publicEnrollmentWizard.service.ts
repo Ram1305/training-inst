@@ -87,6 +87,8 @@ export interface CompanyOrderRequest {
   companyEmail: string;
   companyName: string;
   companyMobile?: string;
+  /** When provided, creates a company account (User + Company) so they can log in. */
+  password?: string;
   items: { courseId: string; courseDateId?: string; price: number }[];
   paymentMethod: string; // pay_later | bank_transfer | card
   transactionId?: string;

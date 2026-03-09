@@ -335,6 +335,8 @@ export function PublicEnrollmentWizard({
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [companyMobile, setCompanyMobile] = useState('');
+  const [companyPassword, setCompanyPassword] = useState('');
+  const [companyConfirmPassword, setCompanyConfirmPassword] = useState('');
   const [companyOrderSuccess, setCompanyOrderSuccess] = useState(false);
   const [companyOrderLinks, setCompanyOrderLinks] = useState<{ fullUrl: string; courseName: string }[]>([]);
   const [oneTimeLinkSubmitting, setOneTimeLinkSubmitting] = useState(false);
@@ -676,6 +678,20 @@ export function PublicEnrollmentWizard({
           toast.error('Please enter company email');
           return;
         }
+        if (companyPassword.trim() || companyConfirmPassword.trim()) {
+          if (!companyPassword.trim()) {
+            toast.error('Please enter a password for the company account');
+            return;
+          }
+          if (companyPassword.length < 6) {
+            toast.error('Company account password must be at least 6 characters');
+            return;
+          }
+          if (companyPassword !== companyConfirmPassword) {
+            toast.error('Password and confirm password do not match');
+            return;
+          }
+        }
         if (!paymentMethod) {
           toast.error('Please select a payment method');
           return;
@@ -733,6 +749,7 @@ export function PublicEnrollmentWizard({
               companyEmail: companyEmail.trim(),
               companyName: companyName.trim(),
               companyMobile: companyMobile.trim() || undefined,
+              password: companyPassword.trim() || undefined,
               items,
               paymentMethod: 'card',
               transactionId: txId,
@@ -774,6 +791,7 @@ export function PublicEnrollmentWizard({
             companyEmail: companyEmail.trim(),
             companyName: companyName.trim(),
             companyMobile: companyMobile.trim() || undefined,
+            password: companyPassword.trim() || undefined,
             items,
             paymentMethod,
             transactionId: paymentMethod === 'bank_transfer' ? transactionId.trim() : undefined,
@@ -2048,30 +2066,40 @@ export function PublicEnrollmentWizard({
                         className="mt-1"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
-                      <div className="relative mt-1">
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Default: 123456"
-                          value={registrationData.password}
-                          onChange={(e) => {
-                            setRegistrationData({ ...registrationData, password: e.target.value });
-                            if (registrationErrors.password) setRegistrationErrors({ ...registrationErrors, password: '' });
-                          }}
-                          className={`pr-12 ${registrationErrors.password ? 'border-red-500' : ''}`}
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                        >
-                          {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                        </button>
+                    <div className="space-y-2 pt-2 border-t border-violet-200">
+                      <p className="text-sm font-medium text-violet-900">Create company account (optional)</p>
+                      <p className="text-xs text-gray-500">If you set a password, a company account will be created so you can log in to manage orders.</p>
+                      <div>
+                        <Label htmlFor="companyPassword">Password</Label>
+                        <div className="relative mt-1">
+                          <Input
+                            id="companyPassword"
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="Min 6 characters"
+                            value={companyPassword}
+                            onChange={(e) => setCompanyPassword(e.target.value)}
+                            className="pr-12"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                          >
+                            {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                          </button>
+                        </div>
                       </div>
-                      {registrationErrors.password && <p className="text-red-500 text-sm mt-1">{registrationErrors.password}</p>}
-                      <p className="text-xs text-gray-500 mt-1">Minimum 6 characters (default: 123456)</p>
+                      <div>
+                        <Label htmlFor="companyConfirmPassword">Confirm password</Label>
+                        <Input
+                          id="companyConfirmPassword"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Re-enter password"
+                          value={companyConfirmPassword}
+                          onChange={(e) => setCompanyConfirmPassword(e.target.value)}
+                          className="mt-1"
+                        />
+                      </div>
                     </div>
                   </div>
                 </>

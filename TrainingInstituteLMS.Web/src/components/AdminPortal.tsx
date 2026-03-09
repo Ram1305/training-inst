@@ -38,7 +38,7 @@ import { AdminReports } from './admin/AdminReports';
 import { AdminReviews } from './admin/AdminReviews';
 import { AdminGallery } from './admin/AdminGallery';
 import { AdminBookingDetails } from './admin/AdminBookingDetails';
-import { adminPaymentService } from '../services/adminPayment.service';
+import { adminCompanyOrdersService } from '../services/adminCompanyOrders.service';
 
 interface AdminPortalProps {
   user: UserType;
@@ -109,22 +109,14 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     async function loadStats() {
       setStatsLoading(true);
       try {
-        const statsRes = await adminPaymentService.getPaymentStats();
-        if (!cancelled && statsRes.success && statsRes.data) {
-          const count = statsRes.data.companyPaymentCount ?? 0;
-          setCompanyPaymentCount(count);
+        const countRes = await adminCompanyOrdersService.getCompanyOrderCount();
+        if (!cancelled && countRes.success && countRes.data?.companyOrderCount != null) {
+          setCompanyPaymentCount(countRes.data.companyOrderCount);
+        } else if (!cancelled) {
+          setCompanyPaymentCount(0);
         }
       } catch {
-        try {
-          const payRes = await adminPaymentService.getCompanyPayments({ pageSize: 50 });
-          if (!cancelled && payRes.success && payRes.data) {
-            const list = payRes.data.paymentProofs ?? [];
-            const total = payRes.data.totalCount ?? list.length;
-            setCompanyPaymentCount(Math.max(total, list.length));
-          }
-        } catch {
-          if (!cancelled) setCompanyPaymentCount(0);
-        }
+        if (!cancelled) setCompanyPaymentCount(0);
       } finally {
         if (!cancelled) setStatsLoading(false);
       }

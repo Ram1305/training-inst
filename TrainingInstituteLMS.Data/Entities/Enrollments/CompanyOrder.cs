@@ -11,6 +11,9 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         [Key]
         public Guid OrderId { get; set; } = Guid.NewGuid();
 
+        /// <summary>Optional link to Companies table when company registered with password.</summary>
+        public Guid? CompanyId { get; set; }
+
         [Required]
         [MaxLength(256)]
         public string CompanyEmail { get; set; } = string.Empty;

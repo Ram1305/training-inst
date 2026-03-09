@@ -1,8 +1,10 @@
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
+using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
+using TrainingInstituteLMS.Data.Entities.Companies;
 using TrainingInstituteLMS.Data.Entities.Courses;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment;
@@ -18,15 +20,18 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<PublicEnrollmentService> _logger;
         private readonly ISiteSettingsService _siteSettingsService;
+        private readonly IEmailService _emailService;
 
         public PublicEnrollmentService(
             TrainingLMSDbContext context,
             ILogger<PublicEnrollmentService> logger,
-            ISiteSettingsService siteSettingsService)
+            ISiteSettingsService siteSettingsService,
+            IEmailService emailService)
         {
             _context = context;
             _logger = logger;
             _siteSettingsService = siteSettingsService;
+            _emailService = emailService;
         }
 
         /// <summary>
@@ -335,9 +340,64 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
             try
             {
+                Guid? companyId = null;
+                var accountCreated = false;
+
+                if (!string.IsNullOrWhiteSpace(request.Password))
+                {
+                    var companyEmail = request.CompanyEmail.Trim();
+                    var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == companyEmail);
+                    if (existingUser != null)
+                    {
+                        var existingCompany = await _context.Companies.FirstOrDefaultAsync(c => c.UserId == existingUser.UserId);
+                        if (existingCompany != null)
+                            companyId = existingCompany.CompanyId;
+                    }
+                    else
+                    {
+                        var user = new User
+                        {
+                            UserId = Guid.NewGuid(),
+                            FullName = request.CompanyName.Trim(),
+                            Email = companyEmail,
+                            PhoneNumber = request.CompanyMobile?.Trim(),
+                            PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                            UserType = "Company",
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _context.Users.AddAsync(user);
+
+                        var company = new Company
+                        {
+                            CompanyId = Guid.NewGuid(),
+                            UserId = user.UserId,
+                            CompanyName = request.CompanyName.Trim(),
+                            IsActive = true,
+                            CreatedAt = DateTime.UtcNow
+                        };
+                        await _context.Companies.AddAsync(company);
+                        companyId = company.CompanyId;
+
+                        var companyRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Company");
+                        if (companyRole != null)
+                        {
+                            await _context.UserRoles.AddAsync(new UserRole
+                            {
+                                UserRoleId = Guid.NewGuid(),
+                                UserId = user.UserId,
+                                RoleId = companyRole.RoleId,
+                                AssignedAt = DateTime.UtcNow
+                            });
+                        }
+                        accountCreated = true;
+                    }
+                }
+
                 var order = new CompanyOrderEntity
                 {
                     OrderId = Guid.NewGuid(),
+                    CompanyId = companyId,
                     CompanyEmail = request.CompanyEmail.Trim(),
                     CompanyName = request.CompanyName.Trim(),
                     CompanyMobile = request.CompanyMobile?.Trim(),
@@ -367,6 +427,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                         UniqueCode = uniqueCode,
                         CourseId = item.CourseId,
                         CourseDateId = item.CourseDateId,
+                        CompanyOrderId = order.OrderId,
                         MaxUses = 1,
                         UsedCount = 0,
                         QrCodeData = GenerateQRCode(fullUrl),
@@ -383,6 +444,22 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 }
 
                 await _context.SaveChangesAsync();
+
+                try
+                {
+                    await _emailService.SendCompanyOrderConfirmationAsync(
+                        request.CompanyEmail.Trim(),
+                        request.CompanyName.Trim(),
+                        order.OrderId.ToString(),
+                        order.TotalAmount,
+                        links.Select(l => (l.CourseName, l.FullUrl)).ToList(),
+                        accountCreated,
+                        baseUrl);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogWarning(emailEx, "Failed to send company order confirmation email to {Email}. Order {OrderId} was created successfully.", request.CompanyEmail, order.OrderId);
+                }
 
                 return new CompanyOrderResponseDto
                 {
@@ -417,6 +494,100 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             // Stub: return a transaction reference. Replace with actual gateway call when integrated.
             var transactionId = "card-" + Guid.NewGuid().ToString("N")[..16];
             return Task.FromResult(new CompanyCardPaymentResponseDto { TransactionId = transactionId });
+        }
+
+        public async Task<AdminCompanyOrderListResponseDto> GetAdminCompanyOrdersAsync(int page, int pageSize, string? status, string? search)
+        {
+            var query = _context.CompanyOrders.AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(status))
+                query = query.Where(o => o.Status == status.Trim());
+            if (!string.IsNullOrWhiteSpace(search))
+            {
+                var term = search.Trim().ToLower();
+                query = query.Where(o =>
+                    o.CompanyName.ToLower().Contains(term) ||
+                    (o.CompanyEmail != null && o.CompanyEmail.ToLower().Contains(term)));
+            }
+            var totalCount = await query.CountAsync();
+            var orders = await query
+                .OrderByDescending(o => o.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+            var orderIds = orders.Select(o => o.OrderId).ToList();
+            var linkCounts = await _context.EnrollmentLinks
+                .Where(l => l.CompanyOrderId != null && orderIds.Contains(l.CompanyOrderId.Value))
+                .GroupBy(l => l.CompanyOrderId!.Value)
+                .Select(g => new { OrderId = g.Key, Count = g.Count() })
+                .ToListAsync();
+            var countDict = linkCounts.ToDictionary(x => x.OrderId, x => x.Count);
+            var items = orders.Select(o => new AdminCompanyOrderListItemDto
+            {
+                OrderId = o.OrderId.ToString(),
+                CompanyName = o.CompanyName,
+                CompanyEmail = o.CompanyEmail,
+                CompanyMobile = o.CompanyMobile,
+                TotalAmount = o.TotalAmount,
+                PaymentMethod = o.PaymentMethod,
+                Status = o.Status,
+                CreatedAt = o.CreatedAt,
+                CourseCount = countDict.GetValueOrDefault(o.OrderId, 0)
+            }).ToList();
+            return new AdminCompanyOrderListResponseDto
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = page,
+                PageSize = pageSize
+            };
+        }
+
+        public async Task<AdminCompanyOrderDetailDto?> GetAdminCompanyOrderByIdAsync(Guid orderId)
+        {
+            var order = await _context.CompanyOrders.AsNoTracking().FirstOrDefaultAsync(o => o.OrderId == orderId);
+            if (order == null) return null;
+            var baseUrl = await GetFrontendBaseUrlAsync();
+            var links = await _context.EnrollmentLinks
+                .AsNoTracking()
+                .Include(l => l.Course)
+                .Where(l => l.CompanyOrderId == orderId)
+                .ToListAsync();
+            var linkItems = links.Select(l => new AdminCompanyOrderLinkItemDto
+            {
+                LinkId = l.LinkId.ToString(),
+                CourseName = l.Course?.CourseName ?? "Course",
+                FullUrl = $"{baseUrl}/enroll/{l.UniqueCode}",
+                UsedCount = l.UsedCount,
+                MaxUses = l.MaxUses,
+                IsActive = l.IsActive
+            }).ToList();
+            return new AdminCompanyOrderDetailDto
+            {
+                OrderId = order.OrderId.ToString(),
+                CompanyName = order.CompanyName,
+                CompanyEmail = order.CompanyEmail,
+                CompanyMobile = order.CompanyMobile,
+                TotalAmount = order.TotalAmount,
+                PaymentMethod = order.PaymentMethod,
+                Status = order.Status,
+                CreatedAt = order.CreatedAt,
+                CourseCount = links.Count,
+                Links = linkItems
+            };
+        }
+
+        public async Task<bool> UpdateCompanyOrderStatusAsync(Guid orderId, string status)
+        {
+            var order = await _context.CompanyOrders.FindAsync(orderId);
+            if (order == null) return false;
+            order.Status = status?.Trim() ?? order.Status;
+            await _context.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<int> GetCompanyOrderCountAsync()
+        {
+            return await _context.CompanyOrders.CountAsync();
         }
 
         public async Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request)

@@ -3,6 +3,19 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
     public interface IEmailService
     {
         /// <summary>
+        /// Sends a company order confirmation email with purchased course details and one-time enrollment links.
+        /// Optionally includes login info when a company account was created.
+        /// </summary>
+        Task SendCompanyOrderConfirmationAsync(
+            string toEmail,
+            string companyName,
+            string orderId,
+            decimal totalAmount,
+            List<(string CourseName, string FullUrl)> links,
+            bool accountCreated,
+            string? loginBaseUrl);
+
+        /// <summary>
         /// Sends an enrollment confirmation email to the student after successful payment.
         /// Includes login credentials for the student portal.
         /// </summary>

@@ -34,6 +34,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public required string CompanyEmail { get; set; }
         public required string CompanyName { get; set; }
         public string? CompanyMobile { get; set; }
+        /// <summary>When provided, creates a company account (User + Company) so they can log in.</summary>
+        public string? Password { get; set; }
         public required List<CompanyOrderItemDto> Items { get; set; }
         public string PaymentMethod { get; set; } = "pay_later"; // pay_later, bank_transfer, card
         public string? TransactionId { get; set; }
@@ -74,5 +76,13 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public required string Email { get; set; }
         public required string Phone { get; set; }
         public required string Password { get; set; }
+    }
+
+    /// <summary>
+    /// Admin: request to update company order status (e.g. Pending, Completed, Cancelled).
+    /// </summary>
+    public class UpdateCompanyOrderStatusRequestDto
+    {
+        public string Status { get; set; } = string.Empty;
     }
 }

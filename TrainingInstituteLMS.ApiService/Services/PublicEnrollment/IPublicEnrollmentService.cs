@@ -28,6 +28,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         Task<CompanyOrderResponseDto> CreateCompanyOrderAsync(CompanyOrderRequestDto request);
         Task<CompanyCardPaymentResponseDto> ProcessCompanyCardPaymentAsync(CompanyCardPaymentRequestDto request);
 
+        // Admin: company orders (list, detail, update status, count)
+        Task<AdminCompanyOrderListResponseDto> GetAdminCompanyOrdersAsync(int page, int pageSize, string? status, string? search);
+        Task<AdminCompanyOrderDetailDto?> GetAdminCompanyOrderByIdAsync(Guid orderId);
+        Task<bool> UpdateCompanyOrderStatusAsync(Guid orderId, string status);
+        Task<int> GetCompanyOrderCountAsync();
+
         // One-time link: complete enrollment with name/email/phone/password only
         Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request);
     }

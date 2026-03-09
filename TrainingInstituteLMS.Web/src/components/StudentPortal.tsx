@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   LayoutDashboard, 
   BookOpen, 
@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Home
 } from 'lucide-react';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import type { User } from '../App';
 import { StudentDashboard } from './student/StudentDashboard';
@@ -23,6 +24,8 @@ import { StudentCertificates } from './student/StudentCertificates';
 import { StudentProfile } from './student/StudentProfile';
 import { StudentNotifications } from './student/StudentNotifications';
 import { StudentEnrollmentForm } from './student/StudentEnrollmentForm';
+import { enrollmentService, type StudentEnrolledCourse } from '../services/enrollment.service';
+import { studentEnrollmentFormService, type EnrollmentFormResponse } from '../services/studentEnrollmentForm.service';
 
 export interface StudentPortalProps {
   user: User;
@@ -33,10 +36,53 @@ export interface StudentPortalProps {
 
 type StudentPage = 'dashboard' | 'courses' | 'schedule' | 'results' | 'certificates' | 'profile' | 'notifications' | 'enrollment-form';
 
+const PENDING_BLOCKED_PAGES: StudentPage[] = ['schedule', 'results', 'certificates'];
+
 export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateToEnroll }: StudentPortalProps) {
   const [currentPage, setCurrentPage] = useState<StudentPage>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true); // Start with sidebar open on desktop
   const [navbarHidden, setNavbarHidden] = useState(false);
+
+  const [enrollmentFormData, setEnrollmentFormData] = useState<EnrollmentFormResponse | null>(null);
+  const [enrolledCourses, setEnrolledCourses] = useState<StudentEnrolledCourse[]>([]);
+  const [isLoadingRequirements, setIsLoadingRequirements] = useState(true);
+
+  const fetchRequirements = useCallback(async () => {
+    if (!user?.studentId) {
+      setIsLoadingRequirements(false);
+      return;
+    }
+    try {
+      setIsLoadingRequirements(true);
+      const [formRes, enrollmentsRes] = await Promise.all([
+        studentEnrollmentFormService.getEnrollmentFormByStudentId(user.studentId),
+        enrollmentService.getStudentEnrollments(user.studentId),
+      ]);
+      if (formRes.success && formRes.data) setEnrollmentFormData(formRes.data);
+      if (enrollmentsRes.success && enrollmentsRes.data) setEnrolledCourses(enrollmentsRes.data);
+    } catch {
+      // Non-blocking; sidebar will allow navigation if fetch fails
+    } finally {
+      setIsLoadingRequirements(false);
+    }
+  }, [user?.studentId]);
+
+  useEffect(() => {
+    fetchRequirements();
+  }, [fetchRequirements]);
+
+  useEffect(() => {
+    if (currentPage === 'courses' && user?.studentId) {
+      fetchRequirements();
+    }
+  }, [currentPage, user?.studentId, fetchRequirements]);
+
+  const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
+  const hasEnrolledCourseNeedingQuiz = enrolledCourses.some((c) => !c.quizCompleted);
+  const hasPendingRequirements =
+    !isLoadingRequirements &&
+    enrolledCourses.length > 0 &&
+    (needsEnrollmentForm || hasEnrolledCourseNeedingQuiz);
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
@@ -144,17 +190,26 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
           <div className="p-4 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
+              const isBlocked = hasPendingRequirements && PENDING_BLOCKED_PAGES.includes(item.id as StudentPage);
               return (
                 <button
                   key={item.id}
+                  type="button"
+                  title={isBlocked ? 'Complete your enrollment form and LLND assessment in My Courses first' : undefined}
                   onClick={() => {
+                    if (isBlocked) {
+                      toast.error('Complete your enrollment form and LLND assessment in My Courses first.');
+                      return;
+                    }
                     setCurrentPage(item.id as StudentPage);
                     setSidebarOpen(false);
                   }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                    currentPage === item.id
-                      ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg'
-                      : 'text-gray-600 hover:bg-violet-50'
+                    isBlocked
+                      ? 'opacity-60 cursor-not-allowed text-gray-500 hover:bg-transparent'
+                      : currentPage === item.id
+                        ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg'
+                        : 'text-gray-600 hover:bg-violet-50'
                   }`}
                 >
                   <Icon className="w-5 h-5" />

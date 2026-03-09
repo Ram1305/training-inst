@@ -175,6 +175,11 @@ export const API_CONFIG = {
       ADMIN_LINK_BY_ID: (linkId: string) => `/publicenrollment/admin/links/${linkId}`,
       ADMIN_LINK_TOGGLE: (linkId: string) => `/publicenrollment/admin/links/${linkId}/toggle`,
       ADMIN_LINK_REGENERATE_QR: (linkId: string) => `/publicenrollment/admin/links/${linkId}/regenerate-qr`,
+      // Admin company orders (list, detail, status, count)
+      ADMIN_COMPANY_ORDERS: '/PublicEnrollment/admin/company-orders',
+      ADMIN_COMPANY_ORDER_BY_ID: (orderId: string) => `/PublicEnrollment/admin/company-orders/${orderId}`,
+      ADMIN_COMPANY_ORDER_STATUS: (orderId: string) => `/PublicEnrollment/admin/company-orders/${orderId}/status`,
+      ADMIN_COMPANY_ORDERS_COUNT: '/PublicEnrollment/admin/company-orders/count',
     },
   },
 };

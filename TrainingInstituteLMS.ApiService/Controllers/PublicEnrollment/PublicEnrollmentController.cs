@@ -340,6 +340,80 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             }
         }
 
+        /// <summary>
+        /// Get company orders for admin (status, course count, etc.)
+        /// </summary>
+        [HttpGet("admin/company-orders")]
+        public async Task<IActionResult> GetAdminCompanyOrders([FromQuery] int page = 1, [FromQuery] int pageSize = 50, [FromQuery] string? status = null, [FromQuery] string? search = null)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.GetAdminCompanyOrdersAsync(page, pageSize, status, search);
+                return Ok(ApiResponse<object>.SuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Get a single company order by id (with course/link details).
+        /// </summary>
+        [HttpGet("admin/company-orders/{orderId}")]
+        public async Task<IActionResult> GetAdminCompanyOrderById(Guid orderId)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.GetAdminCompanyOrderByIdAsync(orderId);
+                if (result == null)
+                    return NotFound(ApiResponse<object>.FailureResponse("Company order not found"));
+                return Ok(ApiResponse<object>.SuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Update company order status (e.g. Pending, Completed, Cancelled).
+        /// </summary>
+        [HttpPatch("admin/company-orders/{orderId}/status")]
+        public async Task<IActionResult> UpdateCompanyOrderStatus(Guid orderId, [FromBody] UpdateCompanyOrderStatusRequestDto? request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.Status))
+                    return BadRequest(ApiResponse<object>.FailureResponse("Status is required"));
+                var success = await _publicEnrollmentService.UpdateCompanyOrderStatusAsync(orderId, request.Status.Trim());
+                if (!success)
+                    return NotFound(ApiResponse<object>.FailureResponse("Company order not found"));
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Status updated"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Get total company order count (for admin nav/badge).
+        /// </summary>
+        [HttpGet("admin/company-orders/count")]
+        public async Task<IActionResult> GetCompanyOrderCount()
+        {
+            try
+            {
+                var count = await _publicEnrollmentService.GetCompanyOrderCountAsync();
+                return Ok(ApiResponse<object>.SuccessResponse(new { companyOrderCount = count }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
         #endregion
     }
 }
