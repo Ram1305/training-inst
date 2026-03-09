@@ -7,6 +7,7 @@ using TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment;
 using EnrollmentEntity = TrainingInstituteLMS.Data.Entities.Enrollments.Enrollment;
 using EnrollmentLinkEntity = TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLink;
+using CompanyOrderEntity = TrainingInstituteLMS.Data.Entities.Enrollments.CompanyOrder;
 
 namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 {
@@ -300,7 +301,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateId = link.CourseDateId?.ToString(),
                 CourseDateRange = link.CourseDate != null 
                     ? $"{link.CourseDate.ScheduledDate:dd/MM/yyyy}"
-                    : null
+                    : null,
+                IsOneTimeLink = link.MaxUses == 1
             };
         }
 
@@ -338,6 +340,176 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             await _context.SaveChangesAsync();
 
             return link.QrCodeData;
+        }
+
+        public async Task<CompanyOrderResponseDto> CreateCompanyOrderAsync(CompanyOrderRequestDto request)
+        {
+            if (request.Items == null || request.Items.Count == 0)
+                throw new InvalidOperationException("At least one course is required for a company order");
+
+            var order = new CompanyOrderEntity
+            {
+                OrderId = Guid.NewGuid(),
+                CompanyEmail = request.CompanyEmail.Trim(),
+                CompanyName = request.CompanyName.Trim(),
+                TotalAmount = request.Items.Sum(i => i.Price),
+                PaymentMethod = request.PaymentMethod,
+                Status = "Completed",
+                CreatedAt = DateTime.UtcNow
+            };
+            await _context.CompanyOrders.AddAsync(order);
+
+            var baseUrl = GetFrontendBaseUrl();
+            var links = new List<CompanyOrderLinkDto>();
+
+            foreach (var item in request.Items)
+            {
+                var uniqueCode = GenerateUniqueCode();
+                var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
+
+                var course = await _context.Courses.FindAsync(item.CourseId);
+                var courseName = course?.CourseName ?? "Course";
+
+                var link = new EnrollmentLinkEntity
+                {
+                    LinkId = Guid.NewGuid(),
+                    Name = $"Company order {order.OrderId:N} - {courseName}",
+                    Description = $"One-time link for {request.CompanyName}",
+                    UniqueCode = uniqueCode,
+                    CourseId = item.CourseId,
+                    CourseDateId = item.CourseDateId,
+                    MaxUses = 1,
+                    UsedCount = 0,
+                    QrCodeData = GenerateQRCode(fullUrl),
+                    IsActive = true,
+                    CreatedAt = DateTime.UtcNow
+                };
+                await _context.EnrollmentLinks.AddAsync(link);
+                links.Add(new CompanyOrderLinkDto
+                {
+                    LinkId = link.LinkId.ToString(),
+                    FullUrl = fullUrl,
+                    CourseName = courseName
+                });
+            }
+
+            await _context.SaveChangesAsync();
+
+            return new CompanyOrderResponseDto
+            {
+                OrderId = order.OrderId.ToString(),
+                CompanyEmail = order.CompanyEmail,
+                TotalAmount = order.TotalAmount,
+                Links = links
+            };
+        }
+
+        public async Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request)
+        {
+            var link = await _context.EnrollmentLinks
+                .Include(l => l.Course)
+                .Include(l => l.CourseDate)
+                .FirstOrDefaultAsync(l => l.UniqueCode == code && l.IsActive);
+
+            if (link == null)
+                throw new InvalidOperationException("Enrollment link not found or expired");
+
+            if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
+                throw new InvalidOperationException("Enrollment link has expired");
+
+            if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                throw new InvalidOperationException("This enrollment link has already been used");
+
+            if (!link.CourseId.HasValue)
+                throw new InvalidOperationException("This link is not associated with a course");
+
+            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email.Trim());
+            if (existingUser != null)
+                throw new InvalidOperationException("An account with this email already exists");
+
+            var courseDateId = link.CourseDateId;
+            if (courseDateId == null)
+            {
+                var firstDate = await _context.CourseDates
+                    .Where(cd => cd.CourseId == link.CourseId && cd.IsActive && cd.ScheduledDate >= DateTime.UtcNow.Date)
+                    .OrderBy(cd => cd.ScheduledDate)
+                    .FirstOrDefaultAsync();
+                if (firstDate == null)
+                    throw new InvalidOperationException("No available course date found for this course");
+                courseDateId = firstDate.CourseDateId;
+            }
+
+            var user = new User
+            {
+                UserId = Guid.NewGuid(),
+                FullName = request.FullName.Trim(),
+                Email = request.Email.Trim(),
+                PhoneNumber = request.Phone.Trim(),
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
+                UserType = "Student",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _context.Users.AddAsync(user);
+
+            var student = new Student
+            {
+                StudentId = Guid.NewGuid(),
+                UserId = user.UserId,
+                FullName = request.FullName.Trim(),
+                Email = request.Email.Trim(),
+                PhoneNumber = request.Phone.Trim(),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _context.Students.AddAsync(student);
+
+            var studentRole = await _context.Roles.FirstOrDefaultAsync(r => r.RoleName == "Student");
+            if (studentRole != null)
+            {
+                await _context.UserRoles.AddAsync(new UserRole
+                {
+                    UserRoleId = Guid.NewGuid(),
+                    UserId = user.UserId,
+                    RoleId = studentRole.RoleId,
+                    AssignedAt = DateTime.UtcNow
+                });
+            }
+
+            var courseDate = await _context.CourseDates.FindAsync(courseDateId);
+            if (courseDate == null)
+                throw new InvalidOperationException("Course date not found");
+
+            if (courseDate.CurrentEnrollments >= (courseDate.MaxCapacity ?? 30))
+                throw new InvalidOperationException("This course date is fully booked");
+
+            var enrollment = new EnrollmentEntity
+            {
+                EnrollmentId = Guid.NewGuid(),
+                StudentId = student.StudentId,
+                CourseId = link.CourseId!.Value,
+                CourseDateId = courseDateId.Value,
+                Status = "Pending",
+                PaymentStatus = "Paid",
+                EnrolledAt = DateTime.UtcNow
+            };
+            await _context.Enrollments.AddAsync(enrollment);
+            courseDate.CurrentEnrollments++;
+
+            link.UsedCount++;
+            link.UpdatedAt = DateTime.UtcNow;
+            if (link.MaxUses == 1)
+                link.IsActive = false;
+
+            await _context.SaveChangesAsync();
+
+            return new OneTimeLinkCompleteResponseDto
+            {
+                UserId = user.UserId.ToString(),
+                StudentId = student.StudentId.ToString(),
+                Email = user.Email,
+                FullName = user.FullName
+            };
         }
 
         private Task<EnrollmentLinkResponseDto> MapToResponseDto(EnrollmentLinkEntity link)

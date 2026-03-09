@@ -83,6 +83,38 @@ export interface EnrollmentLinkListResponse {
   pageSize: number;
 }
 
+export interface CompanyOrderRequest {
+  companyEmail: string;
+  companyName: string;
+  items: { courseId: string; courseDateId?: string; price: number }[];
+  paymentMethod: string; // pay_later | bank_transfer | card
+  transactionId?: string;
+  paymentProofDataUrl?: string;
+  paymentProofFileName?: string;
+  paymentProofContentType?: string;
+}
+
+export interface CompanyOrderResponse {
+  orderId: string;
+  companyEmail: string;
+  totalAmount: number;
+  links: { linkId: string; fullUrl: string; courseName: string }[];
+}
+
+export interface OneTimeLinkCompleteRequest {
+  fullName: string;
+  email: string;
+  phone: string;
+  password: string;
+}
+
+export interface OneTimeLinkCompleteResponse {
+  userId: string;
+  studentId: string;
+  email: string;
+  fullName: string;
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -118,6 +150,7 @@ export const publicEnrollmentWizardService = {
     courseName?: string;
     courseDateId?: string;
     courseDateRange?: string;
+    isOneTimeLink?: boolean;
   }>> {
     return apiService.get<ApiResponse<{
       linkId: string;
@@ -125,7 +158,18 @@ export const publicEnrollmentWizardService = {
       courseName?: string;
       courseDateId?: string;
       courseDateRange?: string;
+      isOneTimeLink?: boolean;
     }>>(`/PublicEnrollment/link/${code}`);
+  },
+
+  // Create company order (multi-course, one-time links)
+  async createCompanyOrder(request: CompanyOrderRequest): Promise<ApiResponse<CompanyOrderResponse>> {
+    return apiService.post<ApiResponse<CompanyOrderResponse>>('/PublicEnrollment/company/order', request);
+  },
+
+  // Complete enrollment via one-time link (name, email, phone, password only)
+  async completeEnrollmentViaLink(code: string, request: OneTimeLinkCompleteRequest): Promise<ApiResponse<OneTimeLinkCompleteResponse>> {
+    return apiService.post<ApiResponse<OneTimeLinkCompleteResponse>>(`/PublicEnrollment/link/${code}/complete`, request);
   },
 
   // Admin: Create enrollment link

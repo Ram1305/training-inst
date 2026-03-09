@@ -63,6 +63,9 @@ namespace TrainingInstituteLMS.Data.Data
         // Enrollment Links (for QR code based enrollment)
         public DbSet<EnrollmentLink> EnrollmentLinks { get; set; }
 
+        // Company orders (bulk course purchase, one-time links)
+        public DbSet<CompanyOrder> CompanyOrders { get; set; }
+
         // Google Reviews (for landing page)
         public DbSet<GoogleReview> GoogleReviews { get; set; }
 

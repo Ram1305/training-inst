@@ -7,12 +7,37 @@ import {
   Menu,
   X,
   Home,
+  LayoutDashboard,
+  BookOpen,
+  Calendar,
+  FileQuestion,
+  FileEdit,
+  Link2,
+  FileCheck,
+  Award,
+  CreditCard,
+  BarChart3,
+  Star,
+  Image,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type { User as UserType } from '../App';
+import { AdminDashboard } from './admin/AdminDashboard';
+import { AdminCourses } from './admin/AdminCourses';
 import { AdminStudents } from './admin/AdminStudents';
 import { AdminCompanies } from './admin/AdminCompanies';
+import { AdminScheduling } from './admin/AdminScheduling';
+import { AdminQuizResults } from './admin/AdminQuizResults';
+import { AdminStudentEnrollments } from './admin/AdminStudentEnrollments';
+import { AdminEnrollmentLinks } from './admin/AdminEnrollmentLinks';
+import { AdminExams } from './admin/AdminExams';
+import { AdminCertificates } from './admin/AdminCertificates';
+import { AdminPayments } from './admin/AdminPayments';
 import { AdminCompanyPayments } from './admin/AdminCompanyPayments';
+import { AdminReports } from './admin/AdminReports';
+import { AdminReviews } from './admin/AdminReviews';
+import { AdminGallery } from './admin/AdminGallery';
+import { AdminBookingDetails } from './admin/AdminBookingDetails';
 import { adminPaymentService } from '../services/adminPayment.service';
 
 interface AdminPortalProps {
@@ -21,19 +46,60 @@ interface AdminPortalProps {
   onNavigateToLanding?: () => void;
 }
 
-type AdminPage = 'students' | 'companies' | 'company-payments';
+type AdminPage =
+  | 'dashboard'
+  | 'courses'
+  | 'students'
+  | 'companies'
+  | 'schedule'
+  | 'lln-assessment'
+  | 'enrollment-form'
+  | 'enrollment-links'
+  | 'exam'
+  | 'certificates'
+  | 'payments'
+  | 'company-payments'
+  | 'reports'
+  | 'google-reviews'
+  | 'gallery'
+  | 'booking-details';
 
-const VALID_ADMIN_PAGES: AdminPage[] = ['students', 'companies', 'company-payments'];
+const VALID_ADMIN_PAGES: AdminPage[] = [
+  'dashboard',
+  'courses',
+  'students',
+  'companies',
+  'schedule',
+  'lln-assessment',
+  'enrollment-form',
+  'enrollment-links',
+  'exam',
+  'certificates',
+  'payments',
+  'company-payments',
+  'reports',
+  'google-reviews',
+  'gallery',
+  'booking-details',
+];
 
 function getInitialPageFromUrl(): AdminPage {
-  if (typeof window === 'undefined') return 'students';
+  if (typeof window === 'undefined') return 'dashboard';
   const tab = new URLSearchParams(window.location.search).get('tab');
   if (tab && (VALID_ADMIN_PAGES as string[]).includes(tab)) return tab as AdminPage;
-  return 'students';
+  return 'dashboard';
+}
+
+function getInitialBookingDetailsDate(): string | null {
+  if (typeof window === 'undefined') return null;
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('tab') !== 'booking-details') return null;
+  return params.get('date');
 }
 
 export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortalProps) {
   const [currentPage, setCurrentPage] = useState<AdminPage>(getInitialPageFromUrl);
+  const [bookingDetailsDate, setBookingDetailsDate] = useState<string | null>(getInitialBookingDetailsDate);
   const [navbarHidden, setNavbarHidden] = useState(false);
   const [companyPaymentCount, setCompanyPaymentCount] = useState(0);
   const [statsLoading, setStatsLoading] = useState(true);
@@ -71,41 +137,126 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
 
   useEffect(() => {
     if (!statsLoading && !showCompanyPayment && currentPage === 'company-payments') {
-      setCurrentPage('students');
+      setCurrentPage('dashboard');
     }
   }, [statsLoading, showCompanyPayment, currentPage]);
 
+  const handleDashboardNavigate = (page: string, extra?: string) => {
+    if (page === 'booking-details' && extra) {
+      setBookingDetailsDate(extra);
+      setCurrentPage('booking-details');
+    } else if (page === 'students') {
+      setCurrentPage('students');
+    } else if (page === 'courses') {
+      setCurrentPage('courses');
+    } else if (page === 'reports') {
+      setCurrentPage('reports');
+    } else if ((VALID_ADMIN_PAGES as string[]).includes(page)) {
+      setCurrentPage(page as AdminPage);
+    }
+  };
+
   const baseNavigation: { id: AdminPage; name: string; icon: typeof Users }[] = [
+    { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },
+    { id: 'courses', name: 'Courses', icon: BookOpen },
     { id: 'students', name: 'Students', icon: Users },
     { id: 'companies', name: 'Companies', icon: Building2 },
+    { id: 'schedule', name: 'Schedule', icon: Calendar },
+    { id: 'lln-assessment', name: 'LLN Assessment', icon: FileQuestion },
+    { id: 'enrollment-form', name: 'Enrollment Form', icon: FileEdit },
+    { id: 'enrollment-links', name: 'Enrollment Links', icon: Link2 },
+    { id: 'exam', name: 'Exam', icon: FileCheck },
+    { id: 'certificates', name: 'Certificates', icon: Award },
+    { id: 'payments', name: 'Payments', icon: CreditCard },
+    { id: 'reports', name: 'Reports', icon: BarChart3 },
+    { id: 'google-reviews', name: 'Google Reviews', icon: Star },
+    { id: 'gallery', name: 'Gallery', icon: Image },
   ];
 
   const companyPaymentNav = showCompanyPayment
     ? [{ id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign }]
     : [];
 
-  const navigation = [...baseNavigation, ...companyPaymentNav];
+  const navigation = [
+    ...baseNavigation.slice(0, baseNavigation.findIndex((n) => n.id === 'reports')),
+    ...companyPaymentNav,
+    ...baseNavigation.slice(baseNavigation.findIndex((n) => n.id === 'reports')),
+  ];
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     params.set('tab', currentPage);
+    if (currentPage === 'booking-details' && bookingDetailsDate) {
+      params.set('date', bookingDetailsDate);
+    } else {
+      params.delete('date');
+    }
     const next = `${window.location.pathname}?${params.toString()}`;
     const current = window.location.pathname + (window.location.search || '');
     if (current !== next) {
       window.history.replaceState(null, '', next);
     }
-  }, [currentPage]);
+  }, [currentPage, bookingDetailsDate]);
 
   const renderPage = () => {
     switch (currentPage) {
+      case 'dashboard':
+        return (
+          <AdminDashboard
+            onNavigate={handleDashboardNavigate}
+            onNavigateToLanding={onNavigateToLanding}
+          />
+        );
+      case 'courses':
+        return <AdminCourses />;
       case 'students':
         return <AdminStudents />;
       case 'companies':
         return <AdminCompanies />;
+      case 'schedule':
+        return <AdminScheduling />;
+      case 'lln-assessment':
+        return <AdminQuizResults />;
+      case 'enrollment-form':
+        return <AdminStudentEnrollments />;
+      case 'enrollment-links':
+        return <AdminEnrollmentLinks />;
+      case 'exam':
+        return <AdminExams />;
+      case 'certificates':
+        return <AdminCertificates />;
+      case 'payments':
+        return <AdminPayments />;
       case 'company-payments':
         return <AdminCompanyPayments />;
+      case 'reports':
+        return <AdminReports />;
+      case 'google-reviews':
+        return <AdminReviews />;
+      case 'gallery':
+        return <AdminGallery />;
+      case 'booking-details':
+        return bookingDetailsDate ? (
+          <AdminBookingDetails
+            selectedDate={bookingDetailsDate}
+            onBack={() => {
+              setBookingDetailsDate(null);
+              setCurrentPage('dashboard');
+            }}
+          />
+        ) : (
+          <AdminDashboard
+            onNavigate={handleDashboardNavigate}
+            onNavigateToLanding={onNavigateToLanding}
+          />
+        );
       default:
-        return <AdminStudents />;
+        return (
+          <AdminDashboard
+            onNavigate={handleDashboardNavigate}
+            onNavigateToLanding={onNavigateToLanding}
+          />
+        );
     }
   };
 
@@ -157,12 +308,18 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
           <div className="p-4 space-y-2">
             {navigation.map((item) => {
               const Icon = item.icon;
+              const isActive =
+                currentPage === item.id ||
+                (item.id === 'dashboard' && currentPage === 'booking-details');
               return (
                 <button
                   key={item.id}
-                  onClick={() => setCurrentPage(item.id)}
+                  onClick={() => {
+                    if (currentPage === 'booking-details') setBookingDetailsDate(null);
+                    setCurrentPage(item.id);
+                  }}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
-                    currentPage === item.id
+                    isActive
                       ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white shadow-lg'
                       : 'text-gray-600 hover:bg-violet-50'
                   }`}

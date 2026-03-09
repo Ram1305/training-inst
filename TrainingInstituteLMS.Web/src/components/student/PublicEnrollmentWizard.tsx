@@ -77,6 +77,10 @@ interface PublicEnrollmentWizardProps {
   onCancel: () => void;
   preSelectedCourseId?: string;
   preSelectedCourseDateId?: string;
+  /** When true, show only name/email/phone/password and complete via one-time link (no payment, no LLN). */
+  isOneTimeLink?: boolean;
+  /** Link code for one-time link completion API. */
+  enrollCode?: string;
 }
 
 // Full quiz sections data (same as in PublicQuiz.tsx)
@@ -298,15 +302,37 @@ const WIZARD_STEPS = [
 const MAX_REATTEMPTS = 3;
 const AUTO_PASS_ATTEMPT = 4;
 
+type EnrollmentType = 'individual' | 'company';
+
+interface CompanyCourseItem {
+  courseId: string;
+  courseDateId?: string;
+  price: number;
+  courseName?: string;
+}
+
 export function PublicEnrollmentWizard({ 
   onComplete, 
   onCancel, 
   preSelectedCourseId, 
-  preSelectedCourseDateId 
+  preSelectedCourseDateId,
+  isOneTimeLink = false,
+  enrollCode = ''
 }: PublicEnrollmentWizardProps) {
   // Wizard step state
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Enrollment type: Individual (default) or Company
+  const [enrollmentType, setEnrollmentType] = useState<EnrollmentType>('individual');
+  // Company: multiple courses selected
+  const [selectedCompanyCourses, setSelectedCompanyCourses] = useState<CompanyCourseItem[]>([]);
+  const [companyEmail, setCompanyEmail] = useState('');
+  const [companyName, setCompanyName] = useState('');
+  const [companyOrderSuccess, setCompanyOrderSuccess] = useState(false);
+  const [companyOrderLinks, setCompanyOrderLinks] = useState<{ fullUrl: string; courseName: string }[]>([]);
+  const [oneTimeLinkSubmitting, setOneTimeLinkSubmitting] = useState(false);
+  const [oneTimeLinkSuccess, setOneTimeLinkSuccess] = useState(false);
 
   // Personal details (collected on Payment step)
   const [registrationData, setRegistrationData] = useState({
@@ -605,20 +631,85 @@ export function PublicEnrollmentWizard({
   const handleNext = async () => {
     // Step 1: Course Selection
     if (currentStep === 1) {
-      if (!selectedCourseId) {
-        toast.error('Please select a course');
-        return;
-      }
-      if (!selectedCourseDateId) {
-        toast.error('Please select a course date');
-        return;
+      if (enrollmentType === 'company') {
+        if (selectedCompanyCourses.length === 0) {
+          toast.error('Please add at least one course');
+          return;
+        }
+      } else {
+        if (!selectedCourseId) {
+          toast.error('Please select a course');
+          return;
+        }
+        if (!selectedCourseDateId) {
+          toast.error('Please select a course date');
+          return;
+        }
       }
       setCurrentStep(2);
       return;
     }
 
-    // Step 2: Payment (personal details + payment method)
+    // Step 2: Payment (personal details + payment method) or Company order
     if (currentStep === 2) {
+      if (enrollmentType === 'company') {
+        if (!companyName.trim()) {
+          toast.error('Please enter company name');
+          return;
+        }
+        if (!companyEmail.trim()) {
+          toast.error('Please enter company email');
+          return;
+        }
+        if (!paymentMethod) {
+          toast.error('Please select a payment method');
+          return;
+        }
+        if (paymentMethod === 'bank_transfer') {
+          if (!transactionId.trim()) {
+            toast.error('Please enter the transaction ID');
+            return;
+          }
+          if (!paymentProofFile) {
+            toast.error('Please upload the payment slip');
+            return;
+          }
+        }
+        // Pay Later: no proof required
+        setIsSubmitting(true);
+        setPaymentError(null);
+        try {
+          const items = selectedCompanyCourses.map((item) => ({
+            courseId: item.courseId,
+            courseDateId: item.courseDateId || undefined,
+            price: item.price,
+          }));
+          const request = {
+            companyEmail: companyEmail.trim(),
+            companyName: companyName.trim(),
+            items,
+            paymentMethod,
+            transactionId: paymentMethod === 'bank_transfer' ? transactionId.trim() : undefined,
+            paymentProofDataUrl: paymentMethod === 'bank_transfer' && paymentProofPreview ? paymentProofPreview : undefined,
+            paymentProofFileName: paymentMethod === 'bank_transfer' ? paymentProofFile?.name : undefined,
+            paymentProofContentType: paymentMethod === 'bank_transfer' ? paymentProofFile?.type : undefined,
+          };
+          const response = await publicEnrollmentWizardService.createCompanyOrder(request);
+          if (response.success && response.data) {
+            setCompanyOrderLinks(response.data.links);
+            setCompanyOrderSuccess(true);
+          } else {
+            toast.error(response.message || 'Failed to create order');
+          }
+        } catch (err) {
+          toast.error(err instanceof Error ? err.message : 'Failed to create order');
+        } finally {
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
+      // Individual flow
       if (!validateRegistration()) return;
 
       // Check if email is already registered
@@ -1381,6 +1472,117 @@ export function PublicEnrollmentWizard({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
+              {/* Enrollment type: Individual (default) or Company */}
+              <div>
+                <Label className="block text-sm font-medium text-gray-700 mb-3">
+                  Enrollment type <span className="text-red-500">*</span>
+                </Label>
+                <RadioGroup
+                  value={enrollmentType}
+                  onValueChange={(v) => {
+                    setEnrollmentType(v as EnrollmentType);
+                    if (v === 'company') setPaymentMethod('pay_later');
+                  }}
+                  className="flex gap-4"
+                >
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="individual" id="type-individual" />
+                    <Label htmlFor="type-individual" className="cursor-pointer font-normal">
+                      Individual
+                    </Label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="company" id="type-company" />
+                    <Label htmlFor="type-company" className="cursor-pointer font-normal">
+                      Company
+                    </Label>
+                  </div>
+                </RadioGroup>
+              </div>
+
+              {enrollmentType === 'company' ? (
+                <>
+                  <div>
+                    <Label className="block text-sm font-medium text-gray-700 mb-3">
+                      Add courses <span className="text-red-500">*</span>
+                    </Label>
+                    {loadingCourses ? (
+                      <div className="w-full min-h-[80px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                        <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                        Loading courses...
+                      </div>
+                    ) : courses.length === 0 ? (
+                      <div className="w-full min-h-[80px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                        No courses available.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        <Select
+                          value=""
+                          onValueChange={(courseId) => {
+                            const c = courses.find((x) => x.courseId === courseId);
+                            if (c && !selectedCompanyCourses.some((x) => x.courseId === courseId)) {
+                              setSelectedCompanyCourses((prev) => [
+                                ...prev,
+                                { courseId: c.courseId, price: c.price, courseName: c.courseName },
+                              ]);
+                            }
+                          }}
+                        >
+                          <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white">
+                            <SelectValue placeholder="Choose a course to add..." />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {courses
+                              .filter((c) => !selectedCompanyCourses.some((x) => x.courseId === c.courseId))
+                              .map((course) => (
+                                <SelectItem key={course.courseId} value={course.courseId}>
+                                  {course.courseCode} – {course.courseName} · ${course.price}
+                                </SelectItem>
+                              ))}
+                            {courses.filter((c) => !selectedCompanyCourses.some((x) => x.courseId === c.courseId)).length === 0 && (
+                              <SelectItem value="_none" disabled>
+                                All courses added
+                              </SelectItem>
+                            )}
+                          </SelectContent>
+                        </Select>
+                        {selectedCompanyCourses.length > 0 && (
+                          <ul className="mt-3 space-y-2 rounded-lg border border-violet-200 bg-violet-50/50 p-3">
+                            {selectedCompanyCourses.map((item, idx) => (
+                              <li
+                                key={`${item.courseId}-${idx}`}
+                                className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-violet-100"
+                              >
+                                <span className="text-sm font-medium">
+                                  {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price}
+                                </span>
+                                <Button
+                                  type="button"
+                                  variant="ghost"
+                                  size="sm"
+                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() =>
+                                    setSelectedCompanyCourses((prev) => prev.filter((_, i) => i !== idx))
+                                  }
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                        {selectedCompanyCourses.length > 0 && (
+                          <p className="text-sm font-semibold text-violet-700 mt-2">
+                            Total: ${selectedCompanyCourses.reduce((sum, i) => sum + i.price, 0)}
+                          </p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </>
+              ) : (
+              <>
               <div>
                 <Label className="block text-sm font-medium text-gray-700 mb-3">
                   Select Course <span className="text-red-500">*</span>
@@ -1542,6 +1744,8 @@ export function PublicEnrollmentWizard({
                   )}
                 </div>
               )}
+              </>
+              )}
             </CardContent>
           </Card>
         );
@@ -1601,7 +1805,36 @@ export function PublicEnrollmentWizard({
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
-              {/* Personal Details */}
+              {enrollmentType === 'company' ? (
+                <>
+                  <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                    <h4 className="font-semibold text-violet-900">Company Details</h4>
+                    <div>
+                      <Label htmlFor="companyName">Company Name <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="companyName"
+                        placeholder="Your company name"
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="companyEmail">Company Email <span className="text-red-500">*</span></Label>
+                      <Input
+                        id="companyEmail"
+                        type="email"
+                        placeholder="company@example.com"
+                        value={companyEmail}
+                        onChange={(e) => setCompanyEmail(e.target.value)}
+                        className="mt-1"
+                      />
+                      <p className="text-xs text-gray-500 mt-1">One-time enrollment links will be sent to this email.</p>
+                    </div>
+                  </div>
+                </>
+              ) : (
+              /* Personal Details */
               <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
                 <h4 className="font-semibold text-violet-900">Personal Details</h4>
                 <div>
@@ -1688,25 +1921,47 @@ export function PublicEnrollmentWizard({
                 </div>
                 {registrationErrors.terms && <p className="text-red-500 text-sm">{registrationErrors.terms}</p>}
               </div>
+              )}
 
               {/* Order Summary */}
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                 <h4 className="font-semibold text-blue-900 mb-3">Order Summary</h4>
                 <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Course:</span>
-                    <span className="font-medium">{getSelectedCourse()?.courseName}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Date:</span>
-                    <span className="font-medium">
-                      {getSelectedDate() && `${new Date(getSelectedDate()!.startDate).toLocaleDateString()} - ${new Date(getSelectedDate()!.endDate).toLocaleDateString()}`}
-                    </span>
-                  </div>
-                  <div className="flex justify-between pt-2 border-t border-blue-200">
-                    <span className="font-semibold text-blue-900">Total:</span>
-                    <span className="font-bold text-blue-900 text-lg">${getSelectedCourse()?.price}</span>
-                  </div>
+                  {enrollmentType === 'company' ? (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Courses:</span>
+                        <span className="font-medium">{selectedCompanyCourses.length} selected</span>
+                      </div>
+                      {selectedCompanyCourses.map((item, i) => (
+                        <div key={i} className="flex justify-between">
+                          <span className="text-gray-600">{item.courseName || item.courseId}</span>
+                          <span className="font-medium">${item.price}</span>
+                        </div>
+                      ))}
+                      <div className="flex justify-between pt-2 border-t border-blue-200">
+                        <span className="font-semibold text-blue-900">Total:</span>
+                        <span className="font-bold text-blue-900 text-lg">${selectedCompanyCourses.reduce((s, i) => s + i.price, 0)}</span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Course:</span>
+                        <span className="font-medium">{getSelectedCourse()?.courseName}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Date:</span>
+                        <span className="font-medium">
+                          {getSelectedDate() && `${new Date(getSelectedDate()!.startDate).toLocaleDateString()} - ${new Date(getSelectedDate()!.endDate).toLocaleDateString()}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between pt-2 border-t border-blue-200">
+                        <span className="font-semibold text-blue-900">Total:</span>
+                        <span className="font-bold text-blue-900 text-lg">${getSelectedCourse()?.price}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
 
@@ -1718,6 +1973,20 @@ export function PublicEnrollmentWizard({
                   setPaymentError(null); // Clear any previous errors
                 }}>
                   <div className="space-y-3">
+                    {enrollmentType === 'company' && (
+                      <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
+                        paymentMethod === 'pay_later' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
+                      }`}>
+                        <RadioGroupItem value="pay_later" id="pay_later" />
+                        <Label htmlFor="pay_later" className="flex-1 cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <DollarSign className="w-4 h-4" />
+                            <span className="font-medium">Pay Later</span>
+                          </div>
+                          <div className="text-sm text-gray-500">Invoice later – one-time links will be sent to your company email</div>
+                        </Label>
+                      </div>
+                    )}
                     <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
                       paymentMethod === 'bank_transfer' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
                     }`}>
@@ -1731,6 +2000,7 @@ export function PublicEnrollmentWizard({
                       </Label>
                     </div>
 
+                    {enrollmentType === 'individual' && (
                     <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
                       paymentMethod === 'card' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
                     }`}>
@@ -1743,6 +2013,7 @@ export function PublicEnrollmentWizard({
                         <div className="text-sm text-gray-500">Pay securely with your card online</div>
                       </Label>
                     </div>
+                    )}
 
                   </div>
                 </RadioGroup>
@@ -2279,6 +2550,209 @@ export function PublicEnrollmentWizard({
     }
   };
 
+  // One-time link mode: only name, email, phone, password → complete via link (no payment, no LLN)
+  if (isOneTimeLink && enrollCode) {
+    const handleOneTimeLinkSubmit = async () => {
+      const fullName = registrationData.fullName.trim();
+      const email = registrationData.email.trim();
+      const phone = registrationData.phone.trim();
+      const password = registrationData.password;
+      if (!fullName || !email || !phone || !password) {
+        toast.error('Please fill in all fields');
+        return;
+      }
+      if (password.length < 6) {
+        toast.error('Password must be at least 6 characters');
+        return;
+      }
+      setOneTimeLinkSubmitting(true);
+      try {
+        const response = await publicEnrollmentWizardService.completeEnrollmentViaLink(enrollCode, {
+          fullName,
+          email,
+          phone,
+          password,
+        });
+        if (response.success && response.data) {
+          setOneTimeLinkSuccess(true);
+          onComplete({
+            userId: response.data.userId,
+            studentId: response.data.studentId,
+            email: response.data.email,
+            fullName: response.data.fullName,
+          });
+        } else {
+          toast.error(response.message || 'Registration failed');
+        }
+      } catch (err) {
+        toast.error(err instanceof Error ? err.message : 'Registration failed');
+      } finally {
+        setOneTimeLinkSubmitting(false);
+      }
+    };
+
+    if (oneTimeLinkSuccess) {
+      return (
+        <div className="max-w-4xl mx-auto space-y-6 p-6">
+          <Card className="border-violet-100">
+            <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
+              <CardTitle className="flex items-center gap-2">
+                <CheckCircle className="w-5 h-5" />
+                Registration Complete
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="pt-6">
+              <p className="text-gray-700 mb-4">
+                Thank you for completing your registration. Please log in to continue.
+              </p>
+              <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
+                Back to Home
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      );
+    }
+
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </div>
+        <div>
+          <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
+            Complete Your Registration
+          </h1>
+          <p className="text-gray-600">Enter your details to complete enrollment (no payment or assessment required).</p>
+        </div>
+        <Card className="border-violet-100">
+          <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-2">
+              <User className="w-5 h-5" />
+              Your Details
+            </CardTitle>
+            <CardDescription className="text-violet-100">
+              Full name, email, phone and password
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 pt-6">
+            <div>
+              <Label htmlFor="otl-fullName">Full Name <span className="text-red-500">*</span></Label>
+              <Input
+                id="otl-fullName"
+                placeholder="Enter your full name"
+                value={registrationData.fullName}
+                onChange={(e) => setRegistrationData((prev) => ({ ...prev, fullName: e.target.value }))}
+                className="mt-1"
+                disabled={oneTimeLinkSubmitting}
+              />
+            </div>
+            <div>
+              <Label htmlFor="otl-email">Email <span className="text-red-500">*</span></Label>
+              <Input
+                id="otl-email"
+                type="email"
+                placeholder="Enter your email"
+                value={registrationData.email}
+                onChange={(e) => setRegistrationData((prev) => ({ ...prev, email: e.target.value }))}
+                className="mt-1"
+                disabled={oneTimeLinkSubmitting}
+              />
+            </div>
+            <div>
+              <Label htmlFor="otl-phone">Phone <span className="text-red-500">*</span></Label>
+              <Input
+                id="otl-phone"
+                placeholder="Enter your phone"
+                value={registrationData.phone}
+                onChange={(e) => setRegistrationData((prev) => ({ ...prev, phone: e.target.value }))}
+                className="mt-1"
+                disabled={oneTimeLinkSubmitting}
+              />
+            </div>
+            <div>
+              <Label htmlFor="otl-password">Password <span className="text-red-500">*</span></Label>
+              <Input
+                id="otl-password"
+                type={showPassword ? 'text' : 'password'}
+                placeholder="At least 6 characters"
+                value={registrationData.password}
+                onChange={(e) => setRegistrationData((prev) => ({ ...prev, password: e.target.value }))}
+                className="mt-1"
+                disabled={oneTimeLinkSubmitting}
+              />
+            </div>
+            <Button
+              onClick={handleOneTimeLinkSubmit}
+              disabled={oneTimeLinkSubmitting}
+              className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600"
+            >
+              {oneTimeLinkSubmitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Completing...
+                </>
+              ) : (
+                'Complete Registration'
+              )}
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Company order thank-you screen (after payment step)
+  if (enrollmentType === 'company' && companyOrderSuccess) {
+    return (
+      <div className="max-w-4xl mx-auto space-y-6 p-6">
+        <div className="flex items-center gap-4 mb-6">
+          <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" />
+            Back to Home
+          </Button>
+        </div>
+        <Card className="border-violet-100">
+          <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
+            <CardTitle className="flex items-center gap-2">
+              <CheckCircle className="w-5 h-5" />
+              Thank you for your payment
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            <p className="text-gray-700">
+              One-time enrollment links have been sent to <strong>{companyEmail}</strong>. Each link is for one course.
+              Share each link with the respective employee to complete their registration (no payment or LLN required).
+            </p>
+            {companyOrderLinks.length > 0 && (
+              <div className="rounded-lg border bg-gray-50 p-4">
+                <p className="text-sm font-medium text-gray-700 mb-2">Links created:</p>
+                <ul className="text-sm space-y-1">
+                  {companyOrderLinks.map((l, i) => (
+                    <li key={i}>
+                      <a href={l.fullUrl} target="_blank" rel="noopener noreferrer" className="text-violet-600 hover:underline">
+                        {l.courseName}: {l.fullUrl}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-gray-600 text-sm">Please log in to your account to manage bookings.</p>
+            <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
+              Back to Home
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  const visibleSteps = enrollmentType === 'company' ? WIZARD_STEPS.slice(0, 2) : WIZARD_STEPS;
+
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-6">
       {/* Header */}
@@ -2300,7 +2774,7 @@ export function PublicEnrollmentWizard({
       <Card className="border-violet-100">
         <CardContent className="pt-6">
           <div className="flex justify-between">
-            {WIZARD_STEPS.map((step) => {
+            {visibleSteps.map((step) => {
               const Icon = step.icon;
               return (
                 <div
@@ -2321,7 +2795,7 @@ export function PublicEnrollmentWizard({
               );
             })}
           </div>
-          <Progress value={(currentStep / WIZARD_STEPS.length) * 100} className="mt-4 h-2" />
+          <Progress value={(currentStep / visibleSteps.length) * 100} className="mt-4 h-2" />
         </CardContent>
       </Card>
 
@@ -2335,7 +2809,7 @@ export function PublicEnrollmentWizard({
             <div className="flex justify-end">
               <div className="flex gap-3">
                 {currentStep > 1 && (
-                  <Button variant="outline" onClick={handlePrevious} disabled={paymentProcessing}>
+                  <Button variant="outline" onClick={handlePrevious} disabled={paymentProcessing || isSubmitting}>
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
                   </Button>
@@ -2343,13 +2817,20 @@ export function PublicEnrollmentWizard({
                 <Button
                   onClick={handleNext}
                   className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
-                  disabled={paymentProcessing}
+                  disabled={paymentProcessing || isSubmitting}
                 >
-                  {paymentProcessing ? (
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Creating order...
+                    </>
+                  ) : paymentProcessing ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Processing Payment...
                     </>
+                  ) : currentStep === 2 && enrollmentType === 'company' ? (
+                    'Create order & get links'
                   ) : currentStep === 2 && paymentMethod === 'card' ? (
                     <>
                       <Lock className="w-4 h-4 mr-2" />

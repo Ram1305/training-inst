@@ -23,5 +23,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         Task<bool> ToggleLinkStatusAsync(Guid linkId);
         Task<bool> DeleteEnrollmentLinkAsync(Guid linkId);
         Task<string?> RegenerateQRCodeAsync(Guid linkId);
+
+        // Company order (multi-course, one-time links)
+        Task<CompanyOrderResponseDto> CreateCompanyOrderAsync(CompanyOrderRequestDto request);
+
+        // One-time link: complete enrollment with name/email/phone/password only
+        Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request);
     }
 }

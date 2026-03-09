@@ -72,5 +72,32 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string? CourseName { get; set; }
         public string? CourseDateId { get; set; }
         public string? CourseDateRange { get; set; }
+        /// <summary>
+        /// When true, the user should see only name/email/phone/password and complete via link (no payment, no LLN).
+        /// </summary>
+        public bool IsOneTimeLink { get; set; }
+    }
+
+    public class CompanyOrderResponseDto
+    {
+        public string OrderId { get; set; } = string.Empty;
+        public string CompanyEmail { get; set; } = string.Empty;
+        public decimal TotalAmount { get; set; }
+        public List<CompanyOrderLinkDto> Links { get; set; } = new();
+    }
+
+    public class CompanyOrderLinkDto
+    {
+        public string LinkId { get; set; } = string.Empty;
+        public string FullUrl { get; set; } = string.Empty;
+        public string CourseName { get; set; } = string.Empty;
+    }
+
+    public class OneTimeLinkCompleteResponseDto
+    {
+        public string UserId { get; set; } = string.Empty;
+        public string StudentId { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
     }
 }

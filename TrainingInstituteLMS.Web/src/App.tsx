@@ -94,7 +94,9 @@ export default function App() {
     courseId?: string;
     courseDateId?: string;
     linkId?: string;
+    isOneTimeLink?: boolean;
   } | null>(null);
+  const [enrollCode, setEnrollCode] = useState<string | null>(null);
   const [isLoadingEnrollmentLink, setIsLoadingEnrollmentLink] = useState(false);
 
   // When true, authenticated user explicitly chose "Go to Landing Page" — don't redirect back to portal
@@ -113,10 +115,12 @@ export default function App() {
           // Fetch enrollment link data from API
           const response = await publicEnrollmentWizardService.getWizardDataByCode(enrollCode);
           if (response.success && response.data) {
+            setEnrollCode(enrollCode);
             setEnrollmentLinkData({
               courseId: response.data.courseId,
               courseDateId: response.data.courseDateId,
               linkId: response.data.linkId,
+              isOneTimeLink: response.data.isOneTimeLink,
             });
             setCurrentPage('publicEnrollmentWizard');
             // Update URL to clean state (optional)
@@ -181,6 +185,7 @@ export default function App() {
     setCurrentPage('landing');
     setSelectedCourseId(null);
     setEnrollmentLinkData(null);
+    setEnrollCode(null);
   };
 
   const handleViewCourses = () => {
@@ -205,6 +210,7 @@ export default function App() {
   const handleGoToBookNow = () => {
     setSelectedCourseId(null);
     setEnrollmentLinkData(null);
+    setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
   };
 
@@ -217,7 +223,8 @@ export default function App() {
   };
 
   const handleGoToPublicEnrollmentWizard = () => {
-    setEnrollmentLinkData(null); // Clear any pre-selected data
+    setEnrollmentLinkData(null);
+    setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
   };
 
@@ -308,6 +315,7 @@ export default function App() {
       experienceType
     });
     setEnrollmentLinkData(null);
+    setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
   };
 
@@ -449,6 +457,8 @@ export default function App() {
         onCancel={handleBackToLanding}
         preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
         preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? undefined}
+        isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
+        enrollCode={enrollCode ?? ''}
       />
     );
   }

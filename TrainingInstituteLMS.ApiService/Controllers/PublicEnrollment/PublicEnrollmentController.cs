@@ -122,6 +122,48 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             }
         }
 
+        /// <summary>
+        /// Create a company order: multiple courses, one-time links returned (and optionally sent by email).
+        /// </summary>
+        [HttpPost("company/order")]
+        public async Task<IActionResult> CreateCompanyOrder([FromBody] CompanyOrderRequestDto request)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.CreateCompanyOrderAsync(request);
+                return Ok(ApiResponse<object>.SuccessResponse(result, "Company order created. One-time links are ready."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Complete enrollment via a one-time link (name, email, phone, password only; no payment, no LLN).
+        /// </summary>
+        [HttpPost("link/{code}/complete")]
+        public async Task<IActionResult> CompleteEnrollmentViaLink(string code, [FromBody] OneTimeLinkCompleteRequestDto request)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.CompleteEnrollmentViaLinkAsync(code, request);
+                return Ok(ApiResponse<object>.SuccessResponse(result, "Registration complete. Please log in to continue."));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
         #endregion
 
         #region Admin Endpoints
