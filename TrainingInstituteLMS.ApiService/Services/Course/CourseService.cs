@@ -642,23 +642,37 @@ namespace TrainingInstituteLMS.ApiService.Services.Course
 
             if (course == null) return false;
 
-            if (course.Enrollments.Any())
+            // Hard delete: remove all child and related entities first (DB uses Restrict, no cascade)
+            var enrollmentIds = course.Enrollments.Select(e => e.EnrollmentId).ToList();
+
+            if (enrollmentIds.Count > 0)
             {
-                // Soft delete when course has enrollments
-                course.IsActive = false;
-                course.UpdatedAt = DateTime.UtcNow;
-                await _context.SaveChangesAsync();
-                return true;
+                // Remove enrollment-dependent entities (order matters for FK constraints)
+                var certificates = await _context.Certificates.Where(c => enrollmentIds.Contains(c.EnrollmentId)).ToListAsync();
+                _context.Certificates.RemoveRange(certificates);
+
+                var certificateApprovals = await _context.CertificateApprovals.Where(ca => enrollmentIds.Contains(ca.EnrollmentId)).ToListAsync();
+                _context.CertificateApprovals.RemoveRange(certificateApprovals);
+
+                var examResults = await _context.ExamResults.Where(er => enrollmentIds.Contains(er.EnrollmentId)).ToListAsync();
+                _context.ExamResults.RemoveRange(examResults);
+
+                var externalExamLinks = await _context.ExternalExamLinks.Where(eel => enrollmentIds.Contains(eel.EnrollmentId)).ToListAsync();
+                _context.ExternalExamLinks.RemoveRange(externalExamLinks);
+
+                var paymentProofs = await _context.PaymentProofs.Where(pp => enrollmentIds.Contains(pp.EnrollmentId)).ToListAsync();
+                _context.PaymentProofs.RemoveRange(paymentProofs);
+
+                _context.Enrollments.RemoveRange(course.Enrollments);
             }
 
-            // Hard delete: remove all child entities first (DB uses Restrict, no cascade)
             // 1. EnrollmentLinks for this course
             var enrollmentLinks = await _context.EnrollmentLinks
                 .Where(el => el.CourseId == courseId)
                 .ToListAsync();
             _context.EnrollmentLinks.RemoveRange(enrollmentLinks);
 
-            // 2. CourseDates for this course (no enrollments at this point)
+            // 2. CourseDates for this course
             var courseDates = await _context.CourseDates
                 .Where(cd => cd.CourseId == courseId)
                 .ToListAsync();
