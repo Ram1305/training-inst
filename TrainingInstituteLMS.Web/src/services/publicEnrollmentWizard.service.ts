@@ -8,6 +8,7 @@ export interface CourseDropdownItem {
   price: number;
   duration?: string;
   categoryName?: string;
+  imageUrl?: string;
 }
 
 export interface CourseDateDropdownItem {

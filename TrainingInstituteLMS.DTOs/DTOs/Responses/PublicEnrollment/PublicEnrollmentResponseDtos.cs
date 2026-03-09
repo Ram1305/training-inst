@@ -13,6 +13,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public decimal Price { get; set; }
         public string? Duration { get; set; }
         public string? CategoryName { get; set; }
+        public string? ImageUrl { get; set; }
     }
     
     public class CourseDateDropdownItemDto

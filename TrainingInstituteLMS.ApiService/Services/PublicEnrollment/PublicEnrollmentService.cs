@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using TrainingInstituteLMS.ApiService.Services.Email;
+using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
@@ -21,17 +22,20 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         private readonly ILogger<PublicEnrollmentService> _logger;
         private readonly ISiteSettingsService _siteSettingsService;
         private readonly IEmailService _emailService;
+        private readonly IFileStorageService _fileStorageService;
 
         public PublicEnrollmentService(
             TrainingLMSDbContext context,
             ILogger<PublicEnrollmentService> logger,
             ISiteSettingsService siteSettingsService,
-            IEmailService emailService)
+            IEmailService emailService,
+            IFileStorageService fileStorageService)
         {
             _context = context;
             _logger = logger;
             _siteSettingsService = siteSettingsService;
             _emailService = emailService;
+            _fileStorageService = fileStorageService;
         }
 
         /// <summary>
@@ -41,20 +45,43 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<List<CourseDropdownItemDto>> GetCoursesForDropdownAsync()
         {
-            return await _context.Courses
+            var items = await _context.Courses
                 .Where(c => c.IsActive)
                 .Include(c => c.Category)
-                .Select(c => new CourseDropdownItemDto
+                .Select(c => new
                 {
-                    CourseId = c.CourseId,
-                    CourseCode = c.CourseCode,
-                    CourseName = c.CourseName,
-                    Price = c.Price,
-                    Duration = c.Duration,
+                    c.CourseId,
+                    c.CourseCode,
+                    c.CourseName,
+                    c.Price,
+                    c.Duration,
+                    c.ImageUrl,
                     CategoryName = c.Category != null ? c.Category.CategoryName : null
                 })
                 .OrderBy(c => c.CourseName)
                 .ToListAsync();
+
+            return items.Select(c => new CourseDropdownItemDto
+            {
+                CourseId = c.CourseId,
+                CourseCode = c.CourseCode,
+                CourseName = c.CourseName,
+                Price = c.Price,
+                Duration = c.Duration,
+                CategoryName = c.CategoryName,
+                ImageUrl = GetImageFullUrl(c.ImageUrl)
+            }).ToList();
+        }
+
+        private string? GetImageFullUrl(string? imageUrl)
+        {
+            if (string.IsNullOrWhiteSpace(imageUrl))
+                return null;
+
+            if (imageUrl.StartsWith("http://") || imageUrl.StartsWith("https://"))
+                return imageUrl;
+
+            return _fileStorageService.GetFileUrl(imageUrl);
         }
 
         public async Task<List<CourseDateDropdownItemDto>> GetCourseDatesAsync(Guid courseId)
