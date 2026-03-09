@@ -149,8 +149,13 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         /// Create a company order: multiple courses, one-time links returned (and optionally sent by email).
         /// </summary>
         [HttpPost("company/order")]
-        public async Task<IActionResult> CreateCompanyOrder([FromBody] CompanyOrderRequestDto request)
+        public async Task<IActionResult> CreateCompanyOrder([FromBody] CompanyOrderRequestDto? request)
         {
+            if (request == null)
+            {
+                _logger.LogWarning("Company order request body was null or invalid JSON.");
+                return BadRequest(ApiResponse<object>.FailureResponse("Request body is required. Send JSON with companyName, companyEmail, items (array of { courseId, price }), and paymentMethod."));
+            }
             try
             {
                 var result = await _publicEnrollmentService.CreateCompanyOrderAsync(request);

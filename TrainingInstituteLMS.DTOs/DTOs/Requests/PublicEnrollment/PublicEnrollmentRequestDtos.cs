@@ -35,7 +35,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public required string CompanyName { get; set; }
         public string? CompanyMobile { get; set; }
         public required List<CompanyOrderItemDto> Items { get; set; }
-        public required string PaymentMethod { get; set; } // pay_later, bank_transfer, card
+        public string PaymentMethod { get; set; } = "pay_later"; // pay_later, bank_transfer, card
         public string? TransactionId { get; set; }
         public string? PaymentProofDataUrl { get; set; }
         public string? PaymentProofFileName { get; set; }

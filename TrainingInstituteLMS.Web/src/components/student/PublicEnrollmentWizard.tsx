@@ -769,7 +769,9 @@ export function PublicEnrollmentWizard({
             toast.error(response.message || 'Failed to create order');
           }
         } catch (err) {
-          toast.error(err instanceof Error ? err.message : 'Failed to create order');
+          const msg = err instanceof Error ? err.message : 'Failed to create order';
+          setPaymentError(msg);
+          toast.error(msg);
         } finally {
           setIsSubmitting(false);
         }
