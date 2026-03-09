@@ -93,6 +93,11 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string CourseName { get; set; } = string.Empty;
     }
 
+    public class CompanyCardPaymentResponseDto
+    {
+        public string TransactionId { get; set; } = string.Empty;
+    }
+
     public class OneTimeLinkCompleteResponseDto
     {
         public string UserId { get; set; } = string.Empty;

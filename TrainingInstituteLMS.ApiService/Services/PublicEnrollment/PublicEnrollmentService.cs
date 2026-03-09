@@ -352,6 +352,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 OrderId = Guid.NewGuid(),
                 CompanyEmail = request.CompanyEmail.Trim(),
                 CompanyName = request.CompanyName.Trim(),
+                CompanyMobile = request.CompanyMobile?.Trim(),
                 TotalAmount = request.Items.Sum(i => i.Price),
                 PaymentMethod = request.PaymentMethod,
                 Status = "Completed",
@@ -402,6 +403,19 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 TotalAmount = order.TotalAmount,
                 Links = links
             };
+        }
+
+        /// <summary>
+        /// Process company order card payment. Returns a transaction ID for the order.
+        /// Integrate with your payment gateway here; this stub returns a reference for the flow.
+        /// </summary>
+        public Task<CompanyCardPaymentResponseDto> ProcessCompanyCardPaymentAsync(CompanyCardPaymentRequestDto request)
+        {
+            if (request == null)
+                throw new InvalidOperationException("Payment request is required");
+            // Stub: return a transaction reference. Replace with actual gateway call when integrated.
+            var transactionId = "card-" + Guid.NewGuid().ToString("N")[..16];
+            return Task.FromResult(new CompanyCardPaymentResponseDto { TransactionId = transactionId });
         }
 
         public async Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request)

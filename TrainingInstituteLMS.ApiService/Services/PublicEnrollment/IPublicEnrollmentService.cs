@@ -26,6 +26,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         // Company order (multi-course, one-time links)
         Task<CompanyOrderResponseDto> CreateCompanyOrderAsync(CompanyOrderRequestDto request);
+        Task<CompanyCardPaymentResponseDto> ProcessCompanyCardPaymentAsync(CompanyCardPaymentRequestDto request);
 
         // One-time link: complete enrollment with name/email/phone/password only
         Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request);

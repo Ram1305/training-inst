@@ -86,6 +86,7 @@ export interface EnrollmentLinkListResponse {
 export interface CompanyOrderRequest {
   companyEmail: string;
   companyName: string;
+  companyMobile?: string;
   items: { courseId: string; courseDateId?: string; price: number }[];
   paymentMethod: string; // pay_later | bank_transfer | card
   transactionId?: string;
@@ -160,6 +161,21 @@ export const publicEnrollmentWizardService = {
       courseDateRange?: string;
       isOneTimeLink?: boolean;
     }>>(`/PublicEnrollment/link/${code}`);
+  },
+
+  // Process company card payment (returns transactionId to use with createCompanyOrder)
+  async processCompanyCardPayment(request: {
+    companyName: string;
+    companyEmail: string;
+    companyMobile?: string;
+    totalAmountCents: number;
+    cardName: string;
+    cardNumber: string;
+    expiryMonth: string;
+    expiryYear: string;
+    cvv: string;
+  }): Promise<ApiResponse<{ transactionId: string }>> {
+    return apiService.post<ApiResponse<{ transactionId: string }>>('/PublicEnrollment/company/process-card', request);
   },
 
   // Create company order (multi-course, one-time links)

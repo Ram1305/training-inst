@@ -33,6 +33,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
     {
         public required string CompanyEmail { get; set; }
         public required string CompanyName { get; set; }
+        public string? CompanyMobile { get; set; }
         public required List<CompanyOrderItemDto> Items { get; set; }
         public required string PaymentMethod { get; set; } // pay_later, bank_transfer, card
         public string? TransactionId { get; set; }
@@ -46,6 +47,22 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public required Guid CourseId { get; set; }
         public Guid? CourseDateId { get; set; }
         public decimal Price { get; set; }
+    }
+
+    /// <summary>
+    /// Request to process company order payment by card (charge only; order is created separately with transactionId).
+    /// </summary>
+    public class CompanyCardPaymentRequestDto
+    {
+        public required string CompanyName { get; set; }
+        public required string CompanyEmail { get; set; }
+        public string? CompanyMobile { get; set; }
+        public long TotalAmountCents { get; set; }
+        public required string CardName { get; set; }
+        public required string CardNumber { get; set; }
+        public required string ExpiryMonth { get; set; }
+        public required string ExpiryYear { get; set; }
+        public required string Cvv { get; set; }
     }
 
     /// <summary>

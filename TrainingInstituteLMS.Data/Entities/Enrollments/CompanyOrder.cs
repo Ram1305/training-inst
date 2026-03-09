@@ -19,6 +19,9 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         [MaxLength(200)]
         public string CompanyName { get; set; } = string.Empty;
 
+        [MaxLength(50)]
+        public string? CompanyMobile { get; set; }
+
         [Column(TypeName = "decimal(10,2)")]
         public decimal TotalAmount { get; set; }
 

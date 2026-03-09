@@ -123,6 +123,27 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         }
 
         /// <summary>
+        /// Process company order card payment. Returns transaction ID to use when creating the company order.
+        /// </summary>
+        [HttpPost("company/process-card")]
+        public async Task<IActionResult> ProcessCompanyCardPayment([FromBody] CompanyCardPaymentRequestDto request)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.ProcessCompanyCardPaymentAsync(request);
+                return Ok(ApiResponse<object>.SuccessResponse(result, "Payment processed"));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<object>.FailureResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
         /// Create a company order: multiple courses, one-time links returned (and optionally sent by email).
         /// </summary>
         [HttpPost("company/order")]

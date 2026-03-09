@@ -329,6 +329,7 @@ export function PublicEnrollmentWizard({
   const [selectedCompanyCourses, setSelectedCompanyCourses] = useState<CompanyCourseItem[]>([]);
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
+  const [companyMobile, setCompanyMobile] = useState('');
   const [companyOrderSuccess, setCompanyOrderSuccess] = useState(false);
   const [companyOrderLinks, setCompanyOrderLinks] = useState<{ fullUrl: string; courseName: string }[]>([]);
   const [oneTimeLinkSubmitting, setOneTimeLinkSubmitting] = useState(false);
@@ -675,7 +676,60 @@ export function PublicEnrollmentWizard({
             return;
           }
         }
-        // Pay Later: no proof required
+        if (paymentMethod === 'card') {
+          if (!validateCardPayment()) return;
+          setPaymentError(null);
+          setPaymentProcessing(true);
+          try {
+            const totalCents = Math.round(selectedCompanyCourses.reduce((s, i) => s + i.price, 0) * 100);
+            const cardResult = await publicEnrollmentWizardService.processCompanyCardPayment({
+              companyName: companyName.trim(),
+              companyEmail: companyEmail.trim(),
+              companyMobile: companyMobile.trim() || undefined,
+              totalAmountCents: totalCents,
+              cardName: cardData.cardName.trim(),
+              cardNumber: cardData.cardNumber.replace(/\s/g, ''),
+              expiryMonth: cardData.expiryMonth,
+              expiryYear: cardData.expiryYear,
+              cvv: cardData.cvv,
+            });
+            if (!cardResult.success || !cardResult.data?.transactionId) {
+              setPaymentError(cardResult.message || 'Card payment failed');
+              setPaymentProcessing(false);
+              return;
+            }
+            const txId = cardResult.data.transactionId;
+            setIsSubmitting(true);
+            const items = selectedCompanyCourses.map((item) => ({
+              courseId: item.courseId,
+              courseDateId: item.courseDateId || undefined,
+              price: item.price,
+            }));
+            const request = {
+              companyEmail: companyEmail.trim(),
+              companyName: companyName.trim(),
+              companyMobile: companyMobile.trim() || undefined,
+              items,
+              paymentMethod: 'card',
+              transactionId: txId,
+            };
+            const response = await publicEnrollmentWizardService.createCompanyOrder(request);
+            setPaymentProcessing(false);
+            if (response.success && response.data) {
+              setCompanyOrderLinks(response.data.links);
+              setCompanyOrderSuccess(true);
+            } else {
+              toast.error(response.message || 'Failed to create order');
+            }
+          } catch (err) {
+            setPaymentError(err instanceof Error ? err.message : 'Payment failed');
+            setPaymentProcessing(false);
+          } finally {
+            setIsSubmitting(false);
+          }
+          return;
+        }
+        // Pay Later or Bank Transfer
         setIsSubmitting(true);
         setPaymentError(null);
         try {
@@ -687,6 +741,7 @@ export function PublicEnrollmentWizard({
           const request = {
             companyEmail: companyEmail.trim(),
             companyName: companyName.trim(),
+            companyMobile: companyMobile.trim() || undefined,
             items,
             paymentMethod,
             transactionId: paymentMethod === 'bank_transfer' ? transactionId.trim() : undefined,
@@ -1479,10 +1534,7 @@ export function PublicEnrollmentWizard({
                 </Label>
                 <RadioGroup
                   value={enrollmentType}
-                  onValueChange={(v) => {
-                    setEnrollmentType(v as EnrollmentType);
-                    if (v === 'company') setPaymentMethod('pay_later');
-                  }}
+                  onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
                   className="flex gap-4"
                 >
                   <div className="flex items-center space-x-2">
@@ -1831,6 +1883,17 @@ export function PublicEnrollmentWizard({
                       />
                       <p className="text-xs text-gray-500 mt-1">One-time enrollment links will be sent to this email.</p>
                     </div>
+                    <div>
+                      <Label htmlFor="companyMobile">Company Mobile Number</Label>
+                      <Input
+                        id="companyMobile"
+                        type="tel"
+                        placeholder="+61 xxx xxx xxx"
+                        value={companyMobile}
+                        onChange={(e) => setCompanyMobile(e.target.value)}
+                        className="mt-1"
+                      />
+                    </div>
                   </div>
                 </>
               ) : (
@@ -2000,7 +2063,6 @@ export function PublicEnrollmentWizard({
                       </Label>
                     </div>
 
-                    {enrollmentType === 'individual' && (
                     <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
                       paymentMethod === 'card' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
                     }`}>
@@ -2013,7 +2075,6 @@ export function PublicEnrollmentWizard({
                         <div className="text-sm text-gray-500">Pay securely with your card online</div>
                       </Label>
                     </div>
-                    )}
 
                   </div>
                 </RadioGroup>
@@ -2281,11 +2342,7 @@ export function PublicEnrollmentWizard({
 
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                 <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> {paymentMethod === 'card' 
-                    ? 'Your card will be charged immediately. Upon successful payment, you will proceed to the LLND Assessment.'
-                    : paymentMethod === 'bank_transfer'
-                    ? 'You will proceed to the LLND Assessment and then the Enrollment Form. Payment can be completed later.'
-                    : 'After completing the payment step, you will proceed to the LLND Assessment and then the Enrollment Form.'}
+                  <strong>Note:</strong> After completing the payment step, you will proceed to the LLND Assessment and then the Enrollment Form.
                 </p>
               </div>
             </CardContent>
@@ -2550,19 +2607,14 @@ export function PublicEnrollmentWizard({
     }
   };
 
-  // One-time link mode: only name, email, phone, password → complete via link (no payment, no LLN)
+  // One-time link mode: only name, email, phone → password 123456 sent automatically (no payment, no LLN)
   if (isOneTimeLink && enrollCode) {
     const handleOneTimeLinkSubmit = async () => {
       const fullName = registrationData.fullName.trim();
       const email = registrationData.email.trim();
       const phone = registrationData.phone.trim();
-      const password = registrationData.password;
-      if (!fullName || !email || !phone || !password) {
+      if (!fullName || !email || !phone) {
         toast.error('Please fill in all fields');
-        return;
-      }
-      if (password.length < 6) {
-        toast.error('Password must be at least 6 characters');
         return;
       }
       setOneTimeLinkSubmitting(true);
@@ -2571,7 +2623,7 @@ export function PublicEnrollmentWizard({
           fullName,
           email,
           phone,
-          password,
+          password: '123456',
         });
         if (response.success && response.data) {
           setOneTimeLinkSuccess(true);
@@ -2635,7 +2687,7 @@ export function PublicEnrollmentWizard({
               Your Details
             </CardTitle>
             <CardDescription className="text-violet-100">
-              Full name, email, phone and password
+              Full name, email and phone
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4 pt-6">
@@ -2669,18 +2721,6 @@ export function PublicEnrollmentWizard({
                 placeholder="Enter your phone"
                 value={registrationData.phone}
                 onChange={(e) => setRegistrationData((prev) => ({ ...prev, phone: e.target.value }))}
-                className="mt-1"
-                disabled={oneTimeLinkSubmitting}
-              />
-            </div>
-            <div>
-              <Label htmlFor="otl-password">Password <span className="text-red-500">*</span></Label>
-              <Input
-                id="otl-password"
-                type={showPassword ? 'text' : 'password'}
-                placeholder="At least 6 characters"
-                value={registrationData.password}
-                onChange={(e) => setRegistrationData((prev) => ({ ...prev, password: e.target.value }))}
                 className="mt-1"
                 disabled={oneTimeLinkSubmitting}
               />
