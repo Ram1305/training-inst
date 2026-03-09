@@ -1585,8 +1585,9 @@ export function PublicEnrollmentWizard({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left column: form content */}
                 <div className="flex-1 min-w-0 space-y-6">
-              {/* Course image (left) and Enrollment type (right) — fixed small image size, minimal height */}
+              {/* Course image (left) and Enrollment type (right) — image commented out */}
               <div className="flex flex-wrap items-start gap-4 justify-between">
+                {/* Course preview image — commented out
                 <div className="shrink-0 w-[64px] h-[40px] rounded-lg overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50 flex items-center justify-center [&_img]:max-h-full [&_img]:min-h-0 [&_img]:w-full [&_img]:object-cover [&_img]:block">
                   {(() => {
                     const previewCourse =
@@ -1614,6 +1615,7 @@ export function PublicEnrollmentWizard({
                     );
                   })()}
                 </div>
+                */}
                 <div className="flex-1 min-w-0 flex justify-end">
                   <div>
                     <Label className="block text-sm font-medium text-gray-700 mb-3">

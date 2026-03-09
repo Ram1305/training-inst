@@ -598,7 +598,7 @@ export default function App() {
       case 'company':
         return <CompanyPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
       case 'student':
-        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} onNavigateToEnroll={handleNavigateToEnrollFromPortal} />;
+        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
       case 'teacher':
         return <TeacherPortal user={user} onLogout={handleLogout} />;
       case 'admin':
@@ -606,7 +606,7 @@ export default function App() {
       case 'superadmin':
         return <SuperAdminPortal user={user} onLogout={handleLogout} />;
       default:
-        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} onNavigateToEnroll={handleNavigateToEnrollFromPortal} />;
+        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
     }
   }
 
