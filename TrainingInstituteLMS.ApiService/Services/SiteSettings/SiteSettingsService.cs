@@ -33,7 +33,16 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
             if (_cache.TryGetValue(CacheKey, out string? cached))
                 return cached!;
 
-            var value = await GetEnrollmentBaseUrlFromDbAsync();
+            string? value = null;
+            try
+            {
+                value = await GetEnrollmentBaseUrlFromDbAsync();
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load EnrollmentBaseUrl from database. Falling back to configuration.");
+            }
+
             if (!string.IsNullOrWhiteSpace(value))
             {
                 value = value.TrimEnd('/');
@@ -59,8 +68,9 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
                 return value;
             }
 
-            _logger.LogInformation("Using default enrollment base URL: {Url}", DefaultEnrollmentBaseUrl);
-            return DefaultEnrollmentBaseUrl;
+            value = DefaultEnrollmentBaseUrl;
+            _logger.LogInformation("Using default enrollment base URL: {Url}", value);
+            return value;
         }
 
         private async Task<string?> GetEnrollmentBaseUrlFromDbAsync()

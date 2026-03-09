@@ -256,8 +256,18 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CreatedBy = createdBy
             };
 
-            await _context.EnrollmentLinks.AddAsync(link);
-            await _context.SaveChangesAsync();
+            try
+            {
+                await _context.EnrollmentLinks.AddAsync(link);
+                await _context.SaveChangesAsync();
+            }
+            catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
+            {
+                _logger.LogError(dbEx, "CreateEnrollmentLink database error. Name: {Name}, CourseId: {CourseId}", request.Name, request.CourseId);
+                var inner = dbEx.InnerException?.Message ?? dbEx.Message;
+                throw new InvalidOperationException(
+                    "Database update failed. Ensure all migrations have been applied. Details: " + inner, dbEx);
+            }
 
             return await MapToResponseDto(link);
         }
