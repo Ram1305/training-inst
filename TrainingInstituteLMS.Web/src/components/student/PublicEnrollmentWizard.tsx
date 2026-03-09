@@ -289,11 +289,10 @@ const extractSectionName = (sectionTitle: string): string => {
 };
 
 const WIZARD_STEPS = [
-  { id: 1, title: 'Registration', shortTitle: 'Register', icon: User },
-  { id: 2, title: 'Course Selection', shortTitle: 'Course', icon: BookOpen },
-  { id: 3, title: 'Payment', shortTitle: 'Payment', icon: CreditCard },
-  { id: 4, title: 'LLND Assessment', shortTitle: 'LLND', icon: ClipboardCheck },
-  { id: 5, title: 'Enrollment Form', shortTitle: 'Form', icon: FileEdit },
+  { id: 1, title: 'Course Selection', shortTitle: 'Course', icon: BookOpen },
+  { id: 2, title: 'Payment', shortTitle: 'Payment', icon: CreditCard },
+  { id: 3, title: 'LLND Assessment', shortTitle: 'LLND', icon: ClipboardCheck },
+  { id: 4, title: 'Enrollment Form', shortTitle: 'Form', icon: FileEdit },
 ];
 
 const MAX_REATTEMPTS = 3;
@@ -309,12 +308,12 @@ export function PublicEnrollmentWizard({
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Step 1: Registration
+  // Personal details (collected on Payment step)
   const [registrationData, setRegistrationData] = useState({
     fullName: '',
     email: '',
     phone: '',
-    password: ''
+    password: '123456'
   });
   const [showPassword, setShowPassword] = useState(false);
   const [agreedToTerms, setAgreedToTerms] = useState(false);
@@ -586,11 +585,42 @@ export function PublicEnrollmentWizard({
     return Object.keys(errors).length === 0;
   };
 
+  // Pre-fill form data and declaration name from registration (called when leaving Payment step)
+  const prefillFormFromRegistration = () => {
+    const nameParts = registrationData.fullName.trim().split(' ');
+    setFormData(prev => ({
+      ...prev,
+      applicant: {
+        ...prev.applicant,
+        givenName: nameParts[0] || '',
+        surname: nameParts.slice(1).join(' ') || '',
+        email: registrationData.email,
+        mobile: registrationData.phone,
+      }
+    }));
+    setDeclarationName(registrationData.fullName);
+  };
+
   // Handle step navigation
   const handleNext = async () => {
+    // Step 1: Course Selection
     if (currentStep === 1) {
+      if (!selectedCourseId) {
+        toast.error('Please select a course');
+        return;
+      }
+      if (!selectedCourseDateId) {
+        toast.error('Please select a course date');
+        return;
+      }
+      setCurrentStep(2);
+      return;
+    }
+
+    // Step 2: Payment (personal details + payment method)
+    if (currentStep === 2) {
       if (!validateRegistration()) return;
-      
+
       // Check if email is already registered
       try {
         const emailCheckResponse = await authService.checkEmail(registrationData.email);
@@ -604,33 +634,7 @@ export function PublicEnrollmentWizard({
         toast.error('Failed to verify email. Please try again.');
         return;
       }
-      
-      // Pre-fill form data
-      const nameParts = registrationData.fullName.trim().split(' ');
-      setFormData(prev => ({
-        ...prev,
-        applicant: {
-          ...prev.applicant,
-          givenName: nameParts[0] || '',
-          surname: nameParts.slice(1).join(' ') || '',
-          email: registrationData.email,
-          mobile: registrationData.phone,
-        }
-      }));
-      setDeclarationName(registrationData.fullName);
-      setCurrentStep(2);
-    } else if (currentStep === 2) {
-      if (!selectedCourseId) {
-        toast.error('Please select a course');
-        return;
-      }
-      if (!selectedCourseDateId) {
-        toast.error('Please select a course date');
-        return;
-      }
-      setCurrentStep(3);
-    } else if (currentStep === 3) {
-      // Validate payment method
+
       if (!paymentMethod) {
         toast.error('Please select a payment method');
         return;
@@ -648,19 +652,20 @@ export function PublicEnrollmentWizard({
           return;
         }
       }
-      
-      // Only process card payment for "Pay Now" - other methods (bank_transfer) proceed directly
+
       if (paymentMethod === 'card') {
         const paymentSuccess = await processCardPayment();
-        if (!paymentSuccess) {
-          return;
-        }
-        // Do not advance yet; show success card and let user click "Continue to LLND Assessment"
+        if (!paymentSuccess) return;
         return;
       }
 
-      setCurrentStep(4);
-    } else if (currentStep === 4) {
+      prefillFormFromRegistration();
+      setCurrentStep(3);
+      return;
+    }
+
+    // Step 3: LLND Assessment
+    if (currentStep === 3) {
       if (!quizCompleted) {
         toast.error('Please complete the LLND assessment');
         return;
@@ -669,9 +674,12 @@ export function PublicEnrollmentWizard({
         toast.error('LLND assessment failed. Please reattempt.');
         return;
       }
-      setCurrentStep(5);
-    } else if (currentStep === 5) {
-      // Validate all form sections before completing enrollment
+      setCurrentStep(4);
+      return;
+    }
+
+    // Step 4: Enrollment Form
+    if (currentStep === 4) {
       const result = validateAllSections();
       if (!result.valid) {
         setCurrentFormSection(result.firstInvalidSection);
@@ -1365,113 +1373,8 @@ export function PublicEnrollmentWizard({
           <Card className="border-violet-100">
             <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2">
-                <User className="w-5 h-5" />
-                Step 1: Registration
-              </CardTitle>
-              <CardDescription className="text-violet-100">
-                Create your account to begin the enrollment process
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              <div>
-                <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
-                <Input
-                  id="fullName"
-                  placeholder="Enter your full name"
-                  value={registrationData.fullName}
-                  onChange={(e) => {
-                    setRegistrationData({ ...registrationData, fullName: e.target.value });
-                    if (registrationErrors.fullName) setRegistrationErrors({ ...registrationErrors, fullName: '' });
-                  }}
-                  className={registrationErrors.fullName ? 'border-red-500' : ''}
-                />
-                {registrationErrors.fullName && <p className="text-red-500 text-sm mt-1">{registrationErrors.fullName}</p>}
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={registrationData.email}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, email: e.target.value });
-                      if (registrationErrors.email) setRegistrationErrors({ ...registrationErrors, email: '' });
-                    }}
-                    className={registrationErrors.email ? 'border-red-500' : ''}
-                  />
-                  {registrationErrors.email && <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="phone">Phone <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+61 xxx xxx xxx"
-                    value={registrationData.phone}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, phone: e.target.value });
-                      if (registrationErrors.phone) setRegistrationErrors({ ...registrationErrors, phone: '' });
-                    }}
-                    className={registrationErrors.phone ? 'border-red-500' : ''}
-                  />
-                  {registrationErrors.phone && <p className="text-red-500 text-sm mt-1">{registrationErrors.phone}</p>}
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    placeholder="Create a secure password"
-                    value={registrationData.password}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, password: e.target.value });
-                      if (registrationErrors.password) setRegistrationErrors({ ...registrationErrors, password: '' });
-                    }}
-                    className={`pr-12 ${registrationErrors.password ? 'border-red-500' : ''}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                  >
-                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                  </button>
-                </div>
-                {registrationErrors.password && <p className="text-red-500 text-sm mt-1">{registrationErrors.password}</p>}
-                <p className="text-xs text-gray-500 mt-1">Minimum 6 characters</p>
-              </div>
-
-              <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <Checkbox
-                  id="terms"
-                  checked={agreedToTerms}
-                  onCheckedChange={(checked: boolean) => {
-                    setAgreedToTerms(checked);
-                    if (registrationErrors.terms) setRegistrationErrors({ ...registrationErrors, terms: '' });
-                  }}
-                />
-                <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
-                  I agree to the terms and conditions and understand my information will be used for enrollment purposes
-                </label>
-              </div>
-              {registrationErrors.terms && <p className="text-red-500 text-sm">{registrationErrors.terms}</p>}
-            </CardContent>
-          </Card>
-        );
-
-      case 2:
-        return (
-          <Card className="border-violet-100">
-            <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
-              <CardTitle className="flex items-center gap-2">
                 <BookOpen className="w-5 h-5" />
-                Step 2: Course Selection
+                Step 1: Course Selection
               </CardTitle>
               <CardDescription className="text-violet-100">
                 Select your course and preferred date
@@ -1643,7 +1546,7 @@ export function PublicEnrollmentWizard({
           </Card>
         );
 
-      case 3:
+      case 2:
         // Generate year options for expiry (current year + 10 years)
         const currentYear = new Date().getFullYear() % 100;
         const yearOptions = Array.from({ length: 11 }, (_, i) => {
@@ -1658,7 +1561,7 @@ export function PublicEnrollmentWizard({
               <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <CreditCard className="w-5 h-5" />
-                  Step 3: Payment
+                  Step 2: Payment
                 </CardTitle>
                 <CardDescription className="text-violet-100">
                   Choose your payment method and provide payment details
@@ -1672,7 +1575,10 @@ export function PublicEnrollmentWizard({
                   isRedirecting={false}
                 >
                   <Button
-                    onClick={() => setCurrentStep(4)}
+                    onClick={() => {
+                      prefillFormFromRegistration();
+                      setCurrentStep(3);
+                    }}
                     className="bg-violet-600 hover:bg-violet-700 text-white"
                   >
                     Continue to LLND Assessment
@@ -1688,13 +1594,101 @@ export function PublicEnrollmentWizard({
             <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
               <CardTitle className="flex items-center gap-2">
                 <CreditCard className="w-5 h-5" />
-                Step 3: Payment
+                Step 2: Payment
               </CardTitle>
               <CardDescription className="text-violet-100">
-                Choose your payment method and provide payment details
+                Enter your details and choose your payment method
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6 pt-6">
+              {/* Personal Details */}
+              <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                <h4 className="font-semibold text-violet-900">Personal Details</h4>
+                <div>
+                  <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="fullName"
+                    placeholder="Enter your full name"
+                    value={registrationData.fullName}
+                    onChange={(e) => {
+                      setRegistrationData({ ...registrationData, fullName: e.target.value });
+                      if (registrationErrors.fullName) setRegistrationErrors({ ...registrationErrors, fullName: '' });
+                    }}
+                    className={`mt-1 ${registrationErrors.fullName ? 'border-red-500' : ''}`}
+                  />
+                  {registrationErrors.fullName && <p className="text-red-500 text-sm mt-1">{registrationErrors.fullName}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="phone">Mobile Number <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="phone"
+                    type="tel"
+                    placeholder="+61 xxx xxx xxx"
+                    value={registrationData.phone}
+                    onChange={(e) => {
+                      setRegistrationData({ ...registrationData, phone: e.target.value });
+                      if (registrationErrors.phone) setRegistrationErrors({ ...registrationErrors, phone: '' });
+                    }}
+                    className={`mt-1 ${registrationErrors.phone ? 'border-red-500' : ''}`}
+                  />
+                  {registrationErrors.phone && <p className="text-red-500 text-sm mt-1">{registrationErrors.phone}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="your.email@example.com"
+                    value={registrationData.email}
+                    onChange={(e) => {
+                      setRegistrationData({ ...registrationData, email: e.target.value });
+                      if (registrationErrors.email) setRegistrationErrors({ ...registrationErrors, email: '' });
+                    }}
+                    className={`mt-1 ${registrationErrors.email ? 'border-red-500' : ''}`}
+                  />
+                  {registrationErrors.email && <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>}
+                </div>
+                <div>
+                  <Label htmlFor="password">Password <span className="text-red-500">*</span></Label>
+                  <div className="relative mt-1">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      placeholder="Default: 123456"
+                      value={registrationData.password}
+                      onChange={(e) => {
+                        setRegistrationData({ ...registrationData, password: e.target.value });
+                        if (registrationErrors.password) setRegistrationErrors({ ...registrationErrors, password: '' });
+                      }}
+                      className={`pr-12 ${registrationErrors.password ? 'border-red-500' : ''}`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                    >
+                      {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                    </button>
+                  </div>
+                  {registrationErrors.password && <p className="text-red-500 text-sm mt-1">{registrationErrors.password}</p>}
+                  <p className="text-xs text-gray-500 mt-1">Minimum 6 characters (default: 123456)</p>
+                </div>
+                <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <Checkbox
+                    id="terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(checked: boolean) => {
+                      setAgreedToTerms(checked);
+                      if (registrationErrors.terms) setRegistrationErrors({ ...registrationErrors, terms: '' });
+                    }}
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
+                    I agree to the terms and conditions and understand my information will be used for enrollment purposes
+                  </label>
+                </div>
+                {registrationErrors.terms && <p className="text-red-500 text-sm">{registrationErrors.terms}</p>}
+              </div>
+
               {/* Order Summary */}
               <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
                 <h4 className="font-semibold text-blue-900 mb-3">Order Summary</h4>
@@ -2027,7 +2021,7 @@ export function PublicEnrollmentWizard({
           </Card>
         );
 
-      case 4:
+      case 3:
         if (quizCompleted) {
           const { totalQuestions, totalCorrect } = calculateQuizTotals();
           const isAutoPassAttempt = quizAttemptNumber >= AUTO_PASS_ATTEMPT;
@@ -2043,7 +2037,7 @@ export function PublicEnrollmentWizard({
               <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardCheck className="w-5 h-5" />
-                  Step 4: LLND Assessment - Complete
+                  Step 3: LLND Assessment - Complete
                 </CardTitle>
               </CardHeader>
               <CardContent className="pt-6">
@@ -2095,7 +2089,7 @@ export function PublicEnrollmentWizard({
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ClipboardCheck className="w-5 h-5" />
-                  Step 4: LLND Assessment
+                  Step 3: LLND Assessment
                 </CardTitle>
                 <CardDescription>
                   Section {quizSectionIndex + 1} of {quizSections.length}: {quizSections[quizSectionIndex].title}
@@ -2125,7 +2119,7 @@ export function PublicEnrollmentWizard({
           </div>
         );
 
-      case 5:
+      case 4:
         return (
           <div className="space-y-6">
             <Card className="border-violet-100">
@@ -2134,7 +2128,7 @@ export function PublicEnrollmentWizard({
                   <div>
                     <CardTitle className="flex items-center gap-2">
                       <FileEdit className="w-5 h-5" />
-                      Step 5: Enrollment Form
+                      Step 4: Enrollment Form
                     </CardTitle>
                     <CardDescription>
                       Section {currentFormSection} of 5
@@ -2334,8 +2328,8 @@ export function PublicEnrollmentWizard({
       {/* Step Content */}
       {renderStepContent()}
 
-      {/* Navigation (for steps 1-3) */}
-      {currentStep <= 3 && (
+      {/* Navigation (for steps 1-2: Course Selection, Payment) */}
+      {currentStep <= 2 && (
         <Card className="border-violet-100">
           <CardContent className="py-4">
             <div className="flex justify-end">
@@ -2356,12 +2350,12 @@ export function PublicEnrollmentWizard({
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                       Processing Payment...
                     </>
-                  ) : currentStep === 3 && paymentMethod === 'card' ? (
+                  ) : currentStep === 2 && paymentMethod === 'card' ? (
                     <>
                       <Lock className="w-4 h-4 mr-2" />
                       Pay ${getSelectedCourse()?.price || 0} & Continue
                     </>
-                  ) : currentStep === 3 ? (
+                  ) : currentStep === 2 ? (
                     'Continue to LLND Assessment'
                   ) : (
                     <>
@@ -2376,8 +2370,8 @@ export function PublicEnrollmentWizard({
         </Card>
       )}
       
-      {/* Navigation for step 4 (quiz completed) */}
-      {currentStep === 4 && quizCompleted && quizPassed && (
+      {/* Navigation for step 3 (LLND quiz completed) */}
+      {currentStep === 3 && quizCompleted && quizPassed && (
         <Card className="border-violet-100">
           <CardContent className="py-4">
             <div className="flex justify-end">

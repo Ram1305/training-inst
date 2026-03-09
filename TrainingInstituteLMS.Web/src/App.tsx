@@ -203,7 +203,9 @@ export default function App() {
   };
 
   const handleGoToBookNow = () => {
-    setCurrentPage('bookNow');
+    setSelectedCourseId(null);
+    setEnrollmentLinkData(null);
+    setCurrentPage('publicEnrollmentWizard');
   };
 
   const handleGoToPublicQuiz = () => {
@@ -293,7 +295,8 @@ export default function App() {
     if (courseData) {
       setSelectedCourseData(courseData);
     }
-    setCurrentPage('courseBooking');
+    setEnrollmentLinkData(null);
+    setCurrentPage('publicEnrollmentWizard');
   };
 
   const handleBookCourse = (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => {
@@ -304,7 +307,8 @@ export default function App() {
       coursePrice: price,
       experienceType
     });
-    setCurrentPage('courseBooking');
+    setEnrollmentLinkData(null);
+    setCurrentPage('publicEnrollmentWizard');
   };
 
   const handleBackFromBooking = () => {
@@ -443,8 +447,8 @@ export default function App() {
       <PublicEnrollmentWizard
         onComplete={handlePublicEnrollmentWizardComplete}
         onCancel={handleBackToLanding}
-        preSelectedCourseId={enrollmentLinkData?.courseId}
-        preSelectedCourseDateId={enrollmentLinkData?.courseDateId}
+        preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
+        preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? undefined}
       />
     );
   }
