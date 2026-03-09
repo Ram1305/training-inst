@@ -100,14 +100,25 @@ export function AdminEnrollmentLinks() {
 
   // Create new link
   const handleCreateLink = async () => {
-    if (!newLink.name.trim()) {
+    const trimmedName = newLink.name?.trim() ?? '';
+    if (!trimmedName) {
       toast.error('Please enter a name for the link');
       return;
     }
 
+    // Build clean payload - omit undefined, avoid sending courseDateId (UI does not expose it)
+    const payload: EnrollmentLinkRequest = {
+      name: trimmedName,
+      allowPayLater: newLink.allowPayLater ?? false,
+    };
+    if (newLink.description?.trim()) payload.description = newLink.description.trim();
+    if (newLink.courseId && newLink.courseId !== 'none') payload.courseId = newLink.courseId;
+    if (newLink.maxUses != null && newLink.maxUses > 0) payload.maxUses = newLink.maxUses;
+    if (newLink.expiresAt) payload.expiresAt = newLink.expiresAt;
+
     setIsCreating(true);
     try {
-      const response = await publicEnrollmentWizardService.createEnrollmentLink(newLink);
+      const response = await publicEnrollmentWizardService.createEnrollmentLink(payload);
       if (response.success) {
         toast.success('Enrollment link created successfully');
         setCreateDialogOpen(false);
@@ -117,7 +128,11 @@ export function AdminEnrollmentLinks() {
         toast.error(response.message || 'Failed to create link');
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to create enrollment link';
+      const err = error as Error & { responseBody?: { message?: string; Message?: string } };
+      const message =
+        err?.responseBody?.message ??
+        err?.responseBody?.Message ??
+        (error instanceof Error ? error.message : 'Failed to create enrollment link');
       toast.error(message);
     } finally {
       setIsCreating(false);
@@ -506,7 +521,7 @@ export function AdminEnrollmentLinks() {
             <Button variant="outline" onClick={() => setCreateDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={handleCreateLink}
-              disabled={isCreating}
+              disabled={isCreating || !newLink.name?.trim()}
               className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
             >
               {isCreating ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
