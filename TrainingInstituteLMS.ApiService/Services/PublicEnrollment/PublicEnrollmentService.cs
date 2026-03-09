@@ -13,6 +13,9 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 {
     public class PublicEnrollmentService : IPublicEnrollmentService
     {
+        /// <summary>Default base URL for enrollment links when FrontendUrl is not set in config.</summary>
+        private const string DefaultEnrollmentBaseUrl = "https://safetytrainingacademy.edu.au";
+
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<PublicEnrollmentService> _logger;
         private readonly IConfiguration _configuration;
@@ -50,9 +53,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             }
 
             // Production fallback when FrontendUrl is not set (e.g. main domain for enrollment links)
-            const string ProductionFallbackUrl = "https://safetytrainingacademy.edu.au";
-            _logger.LogInformation("Using production fallback URL: {Url}", ProductionFallbackUrl);
-            return ProductionFallbackUrl;
+            _logger.LogInformation("Using production fallback URL: {Url}", DefaultEnrollmentBaseUrl);
+            return DefaultEnrollmentBaseUrl;
         }
 
         public async Task<List<CourseDropdownItemDto>> GetCoursesForDropdownAsync()

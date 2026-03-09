@@ -12,8 +12,14 @@ function getBaseUrl(): string {
   return 'https://localhost:7419/api';
 }
 
+// Public site URL used for enrollment links and references (VITE_PUBLIC_SITE_URL or default)
+export const PUBLIC_SITE_URL =
+  (import.meta.env.VITE_PUBLIC_SITE_URL as string)?.trim() || 'https://safetytrainingacademy.edu.au';
+
 export const API_CONFIG = {
-  BASE_URL: getBaseUrl(),  
+  BASE_URL: getBaseUrl(),
+  /** Base URL for public site; enrollment links are ${PUBLIC_SITE_URL}/enroll/{code} */
+  PUBLIC_SITE_URL,  
   ENDPOINTS: {
     AUTH: {
       LOGIN: '/auth/login',

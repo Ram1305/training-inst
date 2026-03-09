@@ -71,6 +71,7 @@ import {
 import { paymentService } from '../../services/payment.service';
 import { PaymentSuccessCard } from '../PaymentSuccessCard';
 import { PaymentFailureCard } from '../PaymentFailureCard';
+import { API_CONFIG } from '../../config/api.config';
 
 interface PublicEnrollmentWizardProps {
   onComplete: (result: { userId: string; studentId: string; email: string; fullName: string }) => void;
@@ -276,7 +277,7 @@ const quizSections: QuizSectionData[] = [
         question: '"Your trainer asks you to find information about Safety training academy on the website.\n\nSteps:\n1. Open Search Engine (e.g Google) and search for: "Safety training academy".\n2. Go to the official website with this information.\n3. Write down the URL (web address) of the page:"',
         type: 'text',
         options: [],
-        correctAnswer: 'https://safetytrainingacademy.edu.au/',
+        correctAnswer: `${API_CONFIG.PUBLIC_SITE_URL}/`,
         image: 'url-search'
       }
     ]
@@ -2782,7 +2783,7 @@ export function PublicEnrollmentWizard({
           <CardContent className="pt-6 space-y-4">
             <p className="text-gray-700">
               One-time enrollment links have been sent to <strong>{companyEmail}</strong>. Each link is for one course.
-              Share each link with the respective employee to complete their registration (no payment or LLN required).
+              Share each link with the respective employee to complete their registration.
             </p>
             {companyOrderLinks.length > 0 && (
               <div className="rounded-lg border bg-gray-50 p-4">
