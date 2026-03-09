@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import {
   Users,
+  Building2,
   DollarSign,
   LogOut,
   Menu,
@@ -10,6 +11,7 @@ import {
 import { Button } from './ui/button';
 import type { User as UserType } from '../App';
 import { AdminStudents } from './admin/AdminStudents';
+import { AdminCompanies } from './admin/AdminCompanies';
 import { AdminCompanyPayments } from './admin/AdminCompanyPayments';
 import { adminPaymentService } from '../services/adminPayment.service';
 
@@ -19,9 +21,9 @@ interface AdminPortalProps {
   onNavigateToLanding?: () => void;
 }
 
-type AdminPage = 'students' | 'company-payments';
+type AdminPage = 'students' | 'companies' | 'company-payments';
 
-const VALID_ADMIN_PAGES: AdminPage[] = ['students', 'company-payments'];
+const VALID_ADMIN_PAGES: AdminPage[] = ['students', 'companies', 'company-payments'];
 
 function getInitialPageFromUrl(): AdminPage {
   if (typeof window === 'undefined') return 'students';
@@ -74,7 +76,8 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
   }, [statsLoading, showCompanyPayment, currentPage]);
 
   const baseNavigation: { id: AdminPage; name: string; icon: typeof Users }[] = [
-    { id: 'students', name: 'Students & Companies', icon: Users },
+    { id: 'students', name: 'Students', icon: Users },
+    { id: 'companies', name: 'Companies', icon: Building2 },
   ];
 
   const companyPaymentNav = showCompanyPayment
@@ -97,6 +100,8 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     switch (currentPage) {
       case 'students':
         return <AdminStudents />;
+      case 'companies':
+        return <AdminCompanies />;
       case 'company-payments':
         return <AdminCompanyPayments />;
       default:

@@ -43,7 +43,7 @@ export function AdminPayments() {
       const response = await adminPaymentService.getPaymentProofs({
         status: statusFilter !== 'all' ? statusFilter : undefined,
         searchQuery: searchQuery || undefined,
-        page: currentPage,
+        pageNumber: currentPage,
         pageSize,
         sortBy: 'uploadedat',
         sortDescending: true,
@@ -240,7 +240,7 @@ export function AdminPayments() {
           <CardHeader className="pb-3">
             <CardDescription>Total Verified Amount</CardDescription>
             <CardTitle className="text-3xl bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-              {isStatsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : `$${stats?.totalVerifiedAmount?.toLocaleString() ?? 0}`}
+              {isStatsLoading ? <Loader2 className="w-6 h-6 animate-spin" /> : `$${(stats?.totalVerifiedAmount ?? 0).toLocaleString()}`}
             </CardTitle>
           </CardHeader>
         </Card>
@@ -345,7 +345,7 @@ export function AdminPayments() {
                         <TableCell>
                           <div>
                             <div>{receipt.courseName}</div>
-                            <div className="text-sm text-gray-500">{receipt.courseCode}</div>
+                            <div className="text-sm text-gray-500">{receipt.courseCode ?? receipt.courseId}</div>
                           </div>
                         </TableCell>
                         <TableCell className="font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
@@ -354,7 +354,7 @@ export function AdminPayments() {
                         <TableCell>
                           <code className="text-sm bg-gray-100 px-2 py-1 rounded">{receipt.transactionId}</code>
                         </TableCell>
-                        <TableCell>{formatDate(receipt.uploadedAt)}</TableCell>
+                        <TableCell>{formatDate(receipt.uploadedAt ?? receipt.paymentDate)}</TableCell>
                         <TableCell>
                           <Badge className={
                             receipt.status === 'Verified'
@@ -374,7 +374,7 @@ export function AdminPayments() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={() => handleDownloadReceipt(receipt.paymentProofId, receipt.receiptFileName)}
+                              onClick={() => handleDownloadReceipt(receipt.paymentProofId, receipt.receiptFileName ?? 'payment_receipt')}
                               disabled={isDownloading}
                             >
                               <Download className="w-4 h-4" />
@@ -448,8 +448,8 @@ export function AdminPayments() {
                 <div className="bg-fuchsia-50 rounded-lg p-4 space-y-2">
                   <h4 className="text-sm font-medium text-gray-600">Course Information</h4>
                   <div><strong>Course:</strong> {selectedReceipt.courseName}</div>
-                  <div><strong>Code:</strong> {selectedReceipt.courseCode}</div>
-                  <div><strong>Course Price:</strong> ${selectedReceipt.coursePrice.toLocaleString()}</div>
+                  <div><strong>Code:</strong> {selectedReceipt.courseCode ?? selectedReceipt.courseId}</div>
+                  <div><strong>Course Price:</strong> ${(selectedReceipt.coursePrice ?? selectedReceipt.amountPaid).toLocaleString()}</div>
                 </div>
               </div>
 
@@ -459,7 +459,7 @@ export function AdminPayments() {
                   <div><strong>Transaction ID:</strong> <code className="bg-white px-2 py-1 rounded">{selectedReceipt.transactionId}</code></div>
                   <div><strong>Amount Paid:</strong> <span className="font-semibold text-green-600">${selectedReceipt.amountPaid.toLocaleString()}</span></div>
                   <div><strong>Payment Date:</strong> {formatDate(selectedReceipt.paymentDate)}</div>
-                  <div><strong>Upload Date:</strong> {formatDateTime(selectedReceipt.uploadedAt)}</div>
+                  <div><strong>Upload Date:</strong> {formatDateTime(selectedReceipt.uploadedAt ?? selectedReceipt.paymentDate)}</div>
                   {selectedReceipt.paymentMethod && <div><strong>Payment Method:</strong> {selectedReceipt.paymentMethod}</div>}
                   {selectedReceipt.bankName && <div><strong>Bank:</strong> {selectedReceipt.bankName}</div>}
                   {selectedReceipt.referenceNumber && <div><strong>Reference:</strong> {selectedReceipt.referenceNumber}</div>}
@@ -473,28 +473,28 @@ export function AdminPayments() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleDownloadReceipt(selectedReceipt.paymentProofId, selectedReceipt.receiptFileName)}
+                    onClick={() => handleDownloadReceipt(selectedReceipt.paymentProofId, selectedReceipt.receiptFileName ?? 'payment_receipt')}
                     disabled={isDownloading}
                   >
                     {isDownloading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Download className="w-4 h-4 mr-2" />}
                     Download Receipt
                   </Button>
                 </div>
-                <div className="text-sm text-gray-500 mb-3">File: {selectedReceipt.receiptFileName}</div>
+                <div className="text-sm text-gray-500 mb-3">File: {selectedReceipt.receiptFileName ?? '—'}</div>
                 <div className="bg-gray-100 rounded-lg p-4 flex items-center justify-center min-h-[300px]">
                   {selectedReceipt.receiptFileName?.toLowerCase().endsWith('.pdf') ? (
                     <div className="text-center">
                       <div className="text-gray-500 mb-4">PDF Document</div>
                       <Button
                         variant="outline"
-                        onClick={() => window.open(selectedReceipt.receiptFileUrl, '_blank')}
+                        onClick={() => window.open(adminPaymentService.getReceiptDownloadUrl(selectedReceipt.paymentProofId), '_blank')}
                       >
                         Open PDF in New Tab
                       </Button>
                     </div>
                   ) : (
                     <img
-                      src={selectedReceipt.receiptFileUrl}
+                      src={selectedReceipt.receiptFileUrl ?? adminPaymentService.getReceiptDownloadUrl(selectedReceipt.paymentProofId)}
                       alt="Payment Receipt"
                       className="max-w-full max-h-[400px] rounded shadow-lg"
                       onError={(e) => {
@@ -529,12 +529,12 @@ export function AdminPayments() {
                     {selectedReceipt.status === 'Verified' ? (
                       <>
                         <CheckCircle className="w-4 h-4 inline mr-2 text-green-600" />
-                        <strong>Verified</strong> on {selectedReceipt.verifiedAt ? formatDateTime(selectedReceipt.verifiedAt) : 'N/A'}
+                        <strong>Verified</strong> on {selectedReceipt.verifiedAt != null ? formatDateTime(selectedReceipt.verifiedAt) : 'N/A'}
                       </>
                     ) : (
                       <>
                         <X className="w-4 h-4 inline mr-2 text-red-600" />
-                        <strong>Rejected:</strong> {selectedReceipt.rejectionReason}
+                        <strong>Rejected:</strong> {selectedReceipt.rejectionReason ?? 'No reason provided'}
                       </>
                     )}
                   </AlertDescription>

@@ -9,6 +9,7 @@ export interface AdminPaymentProof {
   studentEmail?: string;
   courseId: string;
   courseName: string;
+  courseCode?: string;
   amountPaid: number;
   paymentDate: string;
   status: string;
@@ -16,6 +17,16 @@ export interface AdminPaymentProof {
   accountType?: 'Individual' | 'Company';
   companyId?: string;
   companyName?: string;
+  /** Optional fields from API when available */
+  uploadedAt?: string;
+  receiptFileName?: string;
+  receiptFileUrl?: string;
+  coursePrice?: number;
+  paymentMethod?: string;
+  bankName?: string;
+  referenceNumber?: string;
+  verifiedAt?: string;
+  rejectionReason?: string;
 }
 
 export interface AdminPaymentListResponse {
@@ -31,7 +42,12 @@ export interface AdminPaymentStatsResponse {
   verifiedCount: number;
   pendingCount: number;
   companyPaymentCount?: number;
+  rejectedCount?: number;
+  totalVerifiedAmount?: number;
 }
+
+/** Alias for AdminPaymentStatsResponse for component usage */
+export type AdminPaymentStats = AdminPaymentStatsResponse;
 
 export interface AdminPaymentFilterRequest {
   studentId?: string;
@@ -39,7 +55,10 @@ export interface AdminPaymentFilterRequest {
   status?: string;
   pageNumber?: number;
   pageSize?: number;
+  page?: number; // alias: mapped to pageNumber when building params
   searchQuery?: string;
+  sortBy?: string;
+  sortDescending?: boolean;
 }
 
 export interface ApiResponse<T> {
@@ -55,9 +74,12 @@ class AdminPaymentService {
     if (filter.studentId) params.append('studentId', filter.studentId);
     if (filter.accountType) params.append('accountType', filter.accountType);
     if (filter.status) params.append('status', filter.status);
-    if (filter.pageNumber) params.append('pageNumber', filter.pageNumber.toString());
+    const pageNum = filter.pageNumber ?? filter.page;
+    if (pageNum != null) params.append('pageNumber', pageNum.toString());
     if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
     if (filter.searchQuery) params.append('searchQuery', filter.searchQuery);
+    if (filter.sortBy) params.append('sortBy', filter.sortBy);
+    if (filter.sortDescending != null) params.append('sortDescending', String(filter.sortDescending));
 
     const queryString = params.toString();
     const endpoint = queryString
@@ -73,11 +95,25 @@ class AdminPaymentService {
     );
   }
 
-  async verifyPayment(paymentProofId: string): Promise<ApiResponse<boolean>> {
+  async verifyPayment(
+    paymentProofId: string,
+    _userId?: string,
+    options?: { approve?: boolean; rejectionReason?: string }
+  ): Promise<ApiResponse<boolean>> {
+    const body = options
+      ? { approve: options.approve ?? true, rejectionReason: options.rejectionReason }
+      : {};
     return apiService.post<ApiResponse<boolean>>(
       API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.VERIFY(paymentProofId),
-      {}
+      body
     );
+  }
+
+  async downloadReceipt(paymentProofId: string): Promise<Blob> {
+    const url = this.getReceiptDownloadUrl(paymentProofId);
+    const response = await fetch(url, { credentials: 'include' });
+    if (!response.ok) throw new Error('Failed to download receipt');
+    return response.blob();
   }
 
   getReceiptDownloadUrl(paymentProofId: string): string {

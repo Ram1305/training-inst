@@ -746,26 +746,31 @@ export function AdminCourses() {
     }
   };
 
-  const handleDeleteCourse = async (courseId: string) => {
+  const handleDeleteCourse = async (courseId: string): Promise<boolean> => {
     try {
       const response = await courseService.deleteCourse(courseId);
       if (response.success) {
         fetchCourses();
-      } else {
-        setError(response.message || 'Failed to delete course');
+        return true;
       }
+      setError(response.message || 'Failed to delete course');
+      return false;
     } catch (err) {
       console.error('Error deleting course:', err);
-      setError('Failed to delete course');
+      setError(err instanceof Error ? err.message : 'Failed to delete course');
+      return false;
     }
   };
 
   const confirmDeleteCourse = async () => {
     if (!courseToDelete) return;
     setIsCourseDeleteSubmitting(true);
+    setError(null);
     try {
-      await handleDeleteCourse(courseToDelete);
-      setCourseToDelete(null);
+      const success = await handleDeleteCourse(courseToDelete);
+      if (success) {
+        setCourseToDelete(null);
+      }
     } finally {
       setIsCourseDeleteSubmitting(false);
     }
@@ -3298,7 +3303,12 @@ export function AdminCourses() {
       </AlertDialog>
 
       {/* Delete Course Confirmation Dialog */}
-      <AlertDialog open={courseToDelete !== null} onOpenChange={(open) => !open && setCourseToDelete(null)}>
+      <AlertDialog open={courseToDelete !== null} onOpenChange={(open) => {
+        if (!open) {
+          setCourseToDelete(null);
+          setError(null);
+        }
+      }}>
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Course</AlertDialogTitle>
@@ -3306,17 +3316,23 @@ export function AdminCourses() {
               Are you sure you want to delete this course? This will also delete all associated dates.
             </AlertDialogDescription>
           </AlertDialogHeader>
+          {error && (
+            <div className="rounded-lg bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+              {error}
+            </div>
+          )}
           <AlertDialogFooter>
             <AlertDialogCancel onClick={() => setCourseToDelete(null)} disabled={isCourseDeleteSubmitting}>
               Cancel
             </AlertDialogCancel>
-            <AlertDialogAction
+            <Button
+              variant="destructive"
               onClick={confirmDeleteCourse}
-              className="bg-red-600 hover:bg-red-700"
               disabled={isCourseDeleteSubmitting}
+              className="bg-red-600 hover:bg-red-700"
             >
               {isCourseDeleteSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Delete'}
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>

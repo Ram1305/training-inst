@@ -124,7 +124,7 @@ export function EnrollmentPaymentModal({
         studentId,
         courseId: course.courseId,
         selectedCourseDateId: selectedDateId,
-        amountCents: Math.round(course.price * 100),
+        amountCents: Math.round((course.price ?? 0) * 100),
         currency: 'AUD',
         cardName: cardData.cardName.trim(),
         cardNumber: paymentService.getCleanCardNumber(cardData.cardNumber),
@@ -174,7 +174,7 @@ export function EnrollmentPaymentModal({
         </div>
         <PaymentUpload
           courseName={course.courseName}
-          coursePrice={course.price}
+          coursePrice={course.price ?? 0}
           onUpload={onBankTransferSubmit}
           onCancel={onCancel}
         />

@@ -8,7 +8,65 @@ export interface StudentBrowseCourse {
   courseCode?: string;
   price?: number;
   nextBatchDate?: string;
-  availableDates?: { courseDateId: string; scheduledDate: string }[];
+  availableDates?: {
+    courseDateId: string;
+    scheduledDate: string;
+    isAvailable?: boolean;
+    sessionCount?: number;
+    availableSpots?: number;
+  }[];
+  imageUrl?: string;
+  categoryName?: string;
+  duration?: string;
+  enrolledStudentsCount?: number;
+  hasTheory?: boolean;
+  hasPractical?: boolean;
+  validityPeriod?: string;
+}
+
+// Booking (public book course) - response
+export interface BookCourseResponse {
+  userId: string;
+  studentId: string;
+  email: string;
+}
+
+// Admin booking details
+export interface BookingDetailsCourseDto {
+  courseId: string;
+  courseCode: string;
+  courseName: string;
+  enrollmentCount: number;
+}
+
+export interface BookingDetailsEnrollmentDto {
+  enrollmentId: string;
+  studentName: string;
+  studentEmail: string;
+  courseCode: string;
+  courseName: string;
+  sessionTime?: string;
+  sessionType?: string;
+  location?: string;
+  paymentStatus: string;
+  status: string;
+}
+
+export interface BookingDetailsResponseDto {
+  courses: BookingDetailsCourseDto[];
+  enrollments: BookingDetailsEnrollmentDto[];
+}
+
+// Weekly booking stats for admin dashboard
+export interface DailyBookingStat {
+  date: string;
+  count: number;
+}
+
+export interface WeeklyBookingStatsDto {
+  weekStart: string;
+  dailyStats: DailyBookingStat[];
+  totalBookings: number;
 }
 
 // Enrolled course - student's current enrollments
@@ -102,6 +160,75 @@ class EnrollmentService {
     return apiService.delete<ApiResponse<unknown>>(
       API_CONFIG.ENDPOINTS.ENROLLMENT.CANCEL(enrollmentId, studentId)
     );
+  }
+
+  async bookCourse(data: {
+    fullName: string;
+    email: string;
+    phone: string;
+    password: string;
+    courseId: string;
+    selectedCourseDateId: string;
+    transactionId: string;
+    amountPaid: number;
+    receiptFile: File;
+    paymentMethod: string;
+    bankName: string;
+  }): Promise<ApiResponse<BookCourseResponse>> {
+    const formData = new FormData();
+    formData.append('fullName', data.fullName);
+    formData.append('email', data.email);
+    formData.append('phone', data.phone);
+    formData.append('password', data.password);
+    formData.append('courseId', data.courseId);
+    formData.append('selectedCourseDateId', data.selectedCourseDateId);
+    formData.append('transactionId', data.transactionId);
+    formData.append('amountPaid', String(data.amountPaid));
+    formData.append('receiptFile', data.receiptFile);
+    formData.append('paymentMethod', data.paymentMethod);
+    formData.append('bankName', data.bankName);
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.ENROLLMENT.BOOK}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+    const text = await response.text();
+    if (!response.ok) {
+      let body: { message?: string } = {};
+      try {
+        body = text ? JSON.parse(text) : {};
+      } catch {
+        //
+      }
+      throw new Error(body.message || text || 'Failed to book course');
+    }
+    const result = text ? JSON.parse(text) : {};
+    return {
+      success: result.success ?? true,
+      data: result.data ?? result,
+      message: result.message,
+    } as ApiResponse<BookCourseResponse>;
+  }
+
+  async getBookingDetailsByDate(
+    date: string,
+    courseId?: string,
+    plan?: string
+  ): Promise<ApiResponse<BookingDetailsResponseDto>> {
+    const params = new URLSearchParams();
+    params.append('date', date);
+    if (courseId) params.append('courseId', courseId);
+    if (plan) params.append('plan', plan);
+    const qs = params.toString();
+    const endpoint = `${API_CONFIG.ENDPOINTS.ENROLLMENT.BOOKING_DETAILS}?${qs}`;
+    return apiService.get<ApiResponse<BookingDetailsResponseDto>>(endpoint);
+  }
+
+  async getWeeklyBookingStats(weekStart: string): Promise<ApiResponse<WeeklyBookingStatsDto>> {
+    const endpoint = `${API_CONFIG.ENDPOINTS.ENROLLMENT.BOOKING_STATS_WEEKLY}?weekStart=${encodeURIComponent(weekStart)}`;
+    return apiService.get<ApiResponse<WeeklyBookingStatsDto>>(endpoint);
   }
 }
 

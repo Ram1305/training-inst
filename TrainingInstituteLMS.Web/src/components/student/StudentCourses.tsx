@@ -199,7 +199,7 @@ export function StudentCourses() {
         user.studentId,
         {
           transactionId,
-          amountPaid: selectedCourseForPayment.price,
+          amountPaid: selectedCourseForPayment.price ?? 0,
           receiptFile: file,
         }
       );
@@ -644,7 +644,7 @@ export function StudentCourses() {
                         )}
                         <div className="flex items-center gap-1">
                           <Users className="w-4 h-4" />
-                          <span>{course.enrolledStudentsCount}</span>
+                          <span>{course.enrolledStudentsCount ?? 0}</span>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -676,11 +676,11 @@ export function StudentCourses() {
                               <SelectValue placeholder="Choose a date" />
                             </SelectTrigger>
                             <SelectContent>
-                              {course.availableDates.filter(d => d.isAvailable).map((date) => (
+                              {(course.availableDates ?? []).filter(d => d.isAvailable !== false).map((date) => (
                                 <SelectItem key={date.courseDateId} value={date.courseDateId}>
                                   {formatDate(date.scheduledDate)}
-                                  {date.sessionCount > 1 && ` (${date.sessionCount} sessions)`}
-                                  {date.availableSpots < 100 && date.availableSpots !== 2147483647 && ` - ${date.availableSpots} spots left`}
+                                  {(date.sessionCount ?? 0) > 1 && ` (${date.sessionCount} sessions)`}
+                                  {(date.availableSpots ?? 0) < 100 && (date.availableSpots ?? 0) !== 2147483647 && ` - ${date.availableSpots} spots left`}
                                 </SelectItem>
                               ))}
                             </SelectContent>
@@ -692,7 +692,7 @@ export function StudentCourses() {
                       <div>
                         <div className="text-gray-500">Price</div>
                         <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-                          ${course.price}
+                          ${course.price ?? 0}
                         </div>
                       </div>
                       <Button 

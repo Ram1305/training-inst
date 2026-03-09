@@ -7,14 +7,12 @@ import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { toast } from 'sonner';
 import { studentManagementService, type StudentResponse } from '../../services/studentManagement.service';
 import { quizService } from '../../services/quiz.service';
 import { studentEnrollmentFormService } from '../../services/studentEnrollmentForm.service';
 import { adminPaymentService, type AdminPaymentProof } from '../../services/adminPayment.service';
-import { AdminCompanies } from './AdminCompanies';
 
 interface AdminStudentsProps {
   onNavigate?: (page: string, studentEmail?: string) => void;
@@ -283,16 +281,10 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl text-gray-900 mb-2">Student Management</h1>
-        <p className="text-gray-600">Manage students and companies</p>
+        <p className="text-gray-600">Manage all registered students</p>
       </div>
 
-      <Tabs defaultValue="students" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="students">Students</TabsTrigger>
-          <TabsTrigger value="companies">Companies</TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="students" className="space-y-6 mt-0">
+      <div className="space-y-6">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <h2 className="text-xl font-semibold text-gray-900 mb-1">Students</h2>
@@ -891,7 +883,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             <div className="flex items-start justify-between gap-2">
                               <div>
                                 <CardTitle className="text-base">{payment.courseName}</CardTitle>
-                                <CardDescription>{payment.courseCode}</CardDescription>
+                                <CardDescription>{payment.courseCode ?? payment.courseId}</CardDescription>
                               </div>
                               <Badge
                                 className={
@@ -1013,12 +1005,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
           </div>
         </DialogContent>
       </Dialog>
-        </TabsContent>
-
-        <TabsContent value="companies" className="mt-0">
-          <AdminCompanies />
-        </TabsContent>
-      </Tabs>
+      </div>
     </div>
   );
 }

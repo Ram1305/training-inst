@@ -71,7 +71,7 @@ export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboa
       const apiDate = typeof s.date === 'string' ? s.date.slice(0, 10) : formatDateForApi(new Date(s.date));
       return apiDate === dateStr;
     });
-    return found?.totalCount ?? 0;
+    return found?.count ?? 0;
   };
 
   return (
