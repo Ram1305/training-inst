@@ -218,18 +218,18 @@ export function CourseDetailsPage({
   return (
     <div className="min-h-screen bg-white">
       {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
+      <div className="bg-cyan-400 text-white py-2 md:py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
           <a href="tel:1300976097" className="flex items-center gap-2 font-semibold phone-number-link hover:text-slate-900 transition-colors">
-            <Phone className="w-4 h-4" />
+            <Phone className="w-4 h-4 flex-shrink-0" />
             1300 976 097
           </a>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4 flex-shrink-0" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium">
-            <MapPin className="w-4 h-4" />
+          <span className="flex items-center gap-2 font-medium text-center md:text-left">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -237,7 +237,7 @@ export function CourseDetailsPage({
 
       {/* Logo and Info Section - White Background */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
           {/* Logo */}
           <motion.div
             className="flex items-center cursor-pointer"
@@ -254,9 +254,9 @@ export function CourseDetailsPage({
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -271,7 +271,7 @@ export function CourseDetailsPage({
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -286,7 +286,7 @@ export function CourseDetailsPage({
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -453,21 +453,21 @@ export function CourseDetailsPage({
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <motion.div 
-              className="md:hidden py-6 border-t border-slate-700"
+              className="md:hidden py-6 pb-8 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col gap-4">
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">HOME</button>
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">COURSES</button>
-                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">ABOUT</button>
-                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">CONTACT</button>
-                <button onClick={onBack} className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center">COMBO COURSES</button>
-                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">Book now</Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
+              <div className="flex flex-col gap-1">
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">HOME</button>
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">COURSES</button>
+                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">ABOUT</button>
+                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">CONTACT</button>
+                <button onClick={onBack} className="text-white font-bold px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center text-base min-h-[44px] mt-2">COMBO COURSES</button>
+                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white min-h-[44px] mt-2">Book now</Button>
+                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400 min-h-[44px]">VOC</Button>
                 <Button
                   onClick={onRegister}
-                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
+                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 min-h-[44px]"
                 >
                   Login / Register
                 </Button>
@@ -506,10 +506,10 @@ export function CourseDetailsPage({
                 </Badge>
               )}
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white">
+            <h1 className="text-2xl sm:text-4xl md:text-5xl font-bold mb-3 text-white leading-tight">
               {course.code ? `${course.code} - ${course.title}` : course.title}
             </h1>
-            <p className="text-blue-100 text-lg max-w-3xl">
+            <p className="text-blue-100 text-base sm:text-lg max-w-3xl">
               {course.description || 'Professional certification program with industry-recognized credentials'}
             </p>
           </div>
@@ -538,7 +538,7 @@ export function CourseDetailsPage({
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="relative h-96 rounded-3xl overflow-hidden shadow-2xl group"
+              className="relative h-64 sm:h-80 md:h-96 rounded-2xl sm:rounded-3xl overflow-hidden shadow-2xl group"
             >
               <ImageWithFallback
                 src={course.image}
@@ -930,12 +930,12 @@ export function CourseDetailsPage({
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.5 }}
-              className="sticky top-6 space-y-6"
+              className="lg:sticky lg:top-6 space-y-6"
             >
               {/* Main Booking Card */}
               <Card className="border-2 border-cyan-200 shadow-2xl rounded-3xl overflow-hidden">
                 {/* Price Header */}
-                <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-8 text-center relative overflow-hidden">
+                <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-4 sm:p-8 text-center relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
                   <div className="relative">
@@ -944,7 +944,7 @@ export function CourseDetailsPage({
                         ${course.originalPrice}
                       </div>
                     )}
-                    <div className="text-5xl font-bold mb-2">
+                    <div className="text-4xl sm:text-5xl font-bold mb-2">
                       ${course.price}
                     </div>
                     <p className="text-blue-100 text-lg">Course Fee</p>
@@ -965,10 +965,10 @@ export function CourseDetailsPage({
                   </div>
                 </div>
 
-                <CardContent className="p-6 space-y-6">
+                <CardContent className="p-4 sm:p-6 space-y-6">
                   {/* Course Details */}
                   <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-slate-900 mb-4">Course Details</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-4">Course Details</h3>
 
                     <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
                       <span className="text-gray-700 flex items-center gap-2 font-semibold">

@@ -116,18 +116,18 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
   return (
     <div className="min-h-screen bg-white">
       {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
+      <div className="bg-cyan-400 text-white py-2 md:py-2.5 px-4">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row items-center md:justify-between text-xs sm:text-sm gap-2 md:gap-6">
           <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4" />
+            <Phone className="w-4 h-4 flex-shrink-0" />
             1300 976 097
           </span>
           <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4" />
+            <Mail className="w-4 h-4 flex-shrink-0" />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium">
-            <MapPin className="w-4 h-4" />
+          <span className="flex items-center gap-2 font-medium text-center md:text-left">
+            <MapPin className="w-4 h-4 flex-shrink-0" />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -135,7 +135,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
 
       {/* Logo and Info Section - White Background */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
           {/* Logo */}
           <motion.div
             className="flex items-center cursor-pointer"
@@ -152,9 +152,9 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+          <div className="flex flex-col sm:flex-row flex-wrap items-center justify-center gap-2 sm:gap-3 md:gap-4">
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
@@ -169,7 +169,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
@@ -184,7 +184,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
             </motion.div>
 
             <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-4 bg-white px-4 py-2 sm:px-6 sm:py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
@@ -349,21 +349,21 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
             <motion.div 
-              className="md:hidden py-6 border-t border-slate-700"
+              className="md:hidden py-6 pb-8 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
             >
-              <div className="flex flex-col gap-4">
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">HOME</button>
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">COURSES</button>
-                <a href="#about" className="text-cyan-400 font-bold px-4 py-2">ABOUT</a>
-                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">CONTACT</button>
-                <button onClick={onBack} className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center">COMBO COURSES</button>
-                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">Book now</Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
+              <div className="flex flex-col gap-1">
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">HOME</button>
+                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">COURSES</button>
+                <a href="#about" className="text-cyan-400 font-bold px-4 py-3 text-base min-h-[44px] flex items-center">ABOUT</a>
+                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-3 text-left text-base min-h-[44px]">CONTACT</button>
+                <button onClick={onBack} className="text-white font-bold px-4 py-3 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center text-base min-h-[44px] mt-2">COMBO COURSES</button>
+                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white min-h-[44px] mt-2">Book now</Button>
+                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400 min-h-[44px]">VOC</Button>
                 <Button
                   onClick={onRegister}
-                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
+                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 min-h-[44px]"
                 >
                   Login / Register
                 </Button>
@@ -408,7 +408,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
-              <h2 className="text-4xl md:text-5xl font-bold mb-6">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">
                 <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600">
                   Safety Training Academy
                 </span>
@@ -417,7 +417,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               </h2>
               
               <Card className="bg-white border-2 border-blue-100 shadow-xl rounded-3xl mb-6">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <p className="text-gray-700 text-lg leading-relaxed mb-4">
                     <span className="font-bold text-slate-900">Safety Training Academy</span> (STA) is a specialty branch of Australian International Education Training which was formed in 2017, who is a{' '}
                     <span className="font-bold text-cyan-600">Registered Training Organisation (RTO</span> Provider No <span className="font-bold">45234</span>) that specialises in the delivery of{' '}
@@ -489,7 +489,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
             transition={{ duration: 0.6 }}
             className="text-center mb-16"
           >
-            <h2 className="text-4xl md:text-5xl font-bold mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold mb-4 sm:mb-6">
               Why Choose <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600">Safety Training Academy</span>
               <br />
               <span className="text-slate-900">for short courses in Sydney</span>
@@ -504,7 +504,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               transition={{ duration: 0.7 }}
             >
               <Card className="border-2 border-cyan-100 shadow-xl rounded-3xl overflow-hidden">
-                <CardContent className="p-8 space-y-6">
+                <CardContent className="p-4 sm:p-8 space-y-6">
                   <div className="flex items-start gap-4">
                     <div className="w-12 h-12 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
                       <Sparkles className="w-6 h-6 text-white" />
@@ -667,12 +667,12 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
             <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white px-6 py-2 text-lg mb-4">
               OUR VALUES
             </Badge>
-            <h2 className="text-4xl md:text-5xl font-bold text-slate-900 mb-4">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4">
               What we <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-600 to-blue-600">value</span> are:
             </h2>
           </motion.div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
             {values.map((value, index) => (
               <motion.div
                 key={index}
@@ -682,7 +682,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                 transition={{ duration: 0.5, delay: index * 0.1 }}
               >
                 <Card className={`border-2 ${value.highlighted ? 'border-blue-400 shadow-2xl shadow-blue-500/50' : 'border-blue-100'} rounded-3xl overflow-hidden h-full transition-all hover:shadow-2xl hover:-translate-y-2 ${value.highlighted ? 'bg-gradient-to-br from-blue-600 to-indigo-600' : 'bg-white'}`}>
-                  <CardContent className="p-8">
+                  <CardContent className="p-4 sm:p-8">
                     <div className={`w-16 h-16 ${value.highlighted ? 'bg-white/20' : `bg-gradient-to-br ${value.gradient}`} rounded-2xl flex items-center justify-center mb-6`}>
                       <value.icon className={`w-8 h-8 ${value.highlighted ? 'text-white' : 'text-white'}`} />
                     </div>
@@ -709,10 +709,10 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-white mb-4 sm:mb-6">
               Ready to Start Your Journey?
             </h2>
-            <p className="text-xl text-blue-100 mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-xl text-blue-100 mb-6 sm:mb-8 max-w-2xl mx-auto px-2">
               Join thousands of students who have transformed their careers with our nationally recognized training programs
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -734,9 +734,9 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
       </section>
 
       {/* Footer */}
-      <footer className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-600 text-white py-12">
+      <footer className="bg-gradient-to-r from-cyan-400 via-blue-500 to-cyan-600 text-white py-10 sm:py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 md:gap-8 mb-6 md:mb-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
                 <img src={logoImage} alt="Safety Training Academy" className="h-12" />

@@ -1585,7 +1585,7 @@ export function PublicEnrollmentWizard({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left column: form content */}
                 <div className="flex-1 min-w-0 space-y-6">
-              {/* Enrollment type: Individual (default) or Company — label/radios on left, image 200x200 on right */}
+              {/* Enrollment type: Individual (default) or Company — label/radios on left, selected course image 200x200 on right */}
               <div className="flex flex-wrap items-start gap-4">
                 <div className="flex-1 min-w-0">
                   <Label className="block text-sm font-medium text-gray-700 mb-3">
@@ -1611,11 +1611,31 @@ export function PublicEnrollmentWizard({
                   </RadioGroup>
                 </div>
                 <div className="shrink-0 w-[200px] h-[200px] rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50">
-                  <img
-                    src="/assets/SafetyTrainingAcademylogo.png"
-                    alt="Enrollment"
-                    className="w-full h-full object-cover"
-                  />
+                  {(() => {
+                    const previewCourse =
+                      enrollmentType === 'individual'
+                        ? getSelectedCourse()
+                        : pendingCompanyCourse
+                          ? courses.find((c) => c.courseId === pendingCompanyCourse.courseId)
+                          : selectedCourseId
+                            ? getSelectedCourse()
+                            : selectedCompanyCourses.length > 0
+                              ? courses.find((c) => c.courseId === selectedCompanyCourses[0].courseId)
+                              : null;
+                    const fallbackImage = 'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=400';
+                    return previewCourse ? (
+                      <ImageWithFallback
+                        src={previewCourse.imageUrl || fallbackImage}
+                        alt={previewCourse.courseName}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex flex-col items-center justify-center gap-2 text-violet-600/70 p-4">
+                        <BookOpen className="w-10 h-10" />
+                        <span className="text-xs font-medium text-center">Select a course</span>
+                      </div>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -1984,39 +2004,6 @@ export function PublicEnrollmentWizard({
               </>
               )}
                 </div>
-
-                {/* Right column: course image preview */}
-                {(() => {
-                  const previewCourse =
-                    enrollmentType === 'individual'
-                      ? getSelectedCourse()
-                      : pendingCompanyCourse
-                        ? courses.find((c) => c.courseId === pendingCompanyCourse.courseId)
-                        : selectedCourseId
-                          ? getSelectedCourse()
-                          : selectedCompanyCourses.length > 0
-                            ? courses.find((c) => c.courseId === selectedCompanyCourses[0].courseId)
-                            : null;
-                  const fallbackImage = 'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=400';
-                  return (
-                    <div className="shrink-0 lg:sticky lg:top-6 self-start order-first lg:order-last">
-                      <div className="w-40 mx-auto lg:mx-0 rounded-xl overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50 transition-all duration-300">
-                        {previewCourse ? (
-                          <ImageWithFallback
-                            src={previewCourse.imageUrl || fallbackImage}
-                            alt={previewCourse.courseName}
-                            className="w-full aspect-[4/3] object-cover"
-                          />
-                        ) : (
-                          <div className="w-full aspect-[4/3] flex flex-col items-center justify-center gap-2 text-violet-600/70 p-4">
-                            <BookOpen className="w-10 h-10" />
-                            <span className="text-xs font-medium text-center">Select a course to preview</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })()}
               </div>
             </CardContent>
           </Card>

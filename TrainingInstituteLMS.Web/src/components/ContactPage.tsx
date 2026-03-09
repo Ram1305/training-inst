@@ -461,12 +461,12 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               transition={{ duration: 0.7 }}
             >
               <Card className="bg-gradient-to-br from-slate-900 to-slate-800 border-2 border-cyan-500/30 shadow-2xl rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border-b border-cyan-500/30 pb-6">
-                  <CardTitle className="text-3xl font-bold text-white">
+                <CardHeader className="bg-gradient-to-r from-cyan-500/20 to-blue-600/20 border-b border-cyan-500/30 pb-6 px-4 sm:px-8">
+                  <CardTitle className="text-2xl sm:text-3xl font-bold text-white">
                     Our Training
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8">
+                <CardContent className="p-4 sm:p-8">
                   <div className="space-y-3">
                     {trainingCourses.map((course, index) => (
                       <motion.div
@@ -520,8 +520,8 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               transition={{ duration: 0.7 }}
             >
               <Card className="bg-white border-2 border-blue-100 shadow-2xl rounded-3xl overflow-hidden">
-                <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 pb-6">
-                  <CardTitle className="text-2xl text-slate-900">
+                <CardHeader className="bg-gradient-to-r from-cyan-50 to-blue-50 pb-6 px-4 sm:px-6">
+                  <CardTitle className="text-xl sm:text-2xl text-slate-900">
                     Fill in the form below with your enquiry and submit. We do our best to reply at our earliest.
                     <br />
                     <span className="text-sm text-gray-600 mt-2 block">
@@ -529,7 +529,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                     </span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-8">
+                <CardContent className="p-4 sm:p-8">
                   <form onSubmit={handleSubmit} className="space-y-6">
                     <div>
                       <label className="block text-sm font-bold text-slate-900 mb-2">
@@ -541,7 +541,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.name}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12 min-h-[44px] px-4"
                         placeholder="Your full name"
                       />
                     </div>
@@ -556,7 +556,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.email}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12 min-h-[44px] px-4"
                         placeholder="your.email@example.com"
                       />
                     </div>
@@ -571,7 +571,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.phone}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl h-12 min-h-[44px] px-4"
                         placeholder="Your phone number"
                       />
                     </div>
@@ -585,14 +585,14 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         value={formData.message}
                         onChange={handleInputChange}
                         required
-                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl min-h-32 resize-none"
+                        className="border-2 border-gray-300 focus:border-cyan-500 rounded-xl min-h-32 resize-none px-4 py-3"
                         placeholder="Your message or enquiry..."
                       />
                     </div>
 
                     <Button 
                       type="submit"
-                      className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-14 text-lg font-semibold shadow-lg"
+                      className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-14 min-h-[44px] text-lg font-semibold shadow-lg"
                     >
                       Submit
                       <Send className="w-5 h-5 ml-2" />
