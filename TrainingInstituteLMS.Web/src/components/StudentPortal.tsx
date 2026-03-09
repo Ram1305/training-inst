@@ -24,15 +24,16 @@ import { StudentProfile } from './student/StudentProfile';
 import { StudentNotifications } from './student/StudentNotifications';
 import { StudentEnrollmentForm } from './student/StudentEnrollmentForm';
 
-interface StudentPortalProps {
+export interface StudentPortalProps {
   user: User;
   onLogout: () => void;
   onNavigateToLanding?: () => void;
+  onNavigateToEnroll?: (courseData: { courseId: string; courseDateId?: string; courseName?: string; courseCode?: string; coursePrice?: number }) => void;
 }
 
 type StudentPage = 'dashboard' | 'courses' | 'schedule' | 'results' | 'certificates' | 'profile' | 'notifications' | 'enrollment-form';
 
-export function StudentPortal({ user, onLogout, onNavigateToLanding }: StudentPortalProps) {
+export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateToEnroll }: StudentPortalProps) {
   const [currentPage, setCurrentPage] = useState<StudentPage>('dashboard');
   const [sidebarOpen, setSidebarOpen] = useState(true); // Start with sidebar open on desktop
   const [navbarHidden, setNavbarHidden] = useState(false);
@@ -55,7 +56,7 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding }: StudentPo
       case 'dashboard':
         return <StudentDashboard onNavigate={handleNavigate} />;
       case 'courses':
-        return <StudentCourses />;
+        return <StudentCourses onNavigateToEnroll={onNavigateToEnroll} />;
       case 'enrollment-form':
         return <StudentEnrollmentForm onComplete={() => setCurrentPage('courses')} />;
       case 'schedule':

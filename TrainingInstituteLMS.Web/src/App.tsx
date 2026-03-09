@@ -98,6 +98,7 @@ export default function App() {
   } | null>(null);
   const [enrollCode, setEnrollCode] = useState<string | null>(null);
   const [isLoadingEnrollmentLink, setIsLoadingEnrollmentLink] = useState(false);
+  const [selectedCourseDateId, setSelectedCourseDateId] = useState<string | null>(null);
 
   // When true, authenticated user explicitly chose "Go to Landing Page" — don't redirect back to portal
   const allowLandingViewRef = useRef(false);
@@ -319,6 +320,28 @@ export default function App() {
     setCurrentPage('publicEnrollmentWizard');
   };
 
+  const handleNavigateToEnrollFromPortal = (courseData?: {
+    courseId: string;
+    courseDateId?: string;
+    courseName?: string;
+    courseCode?: string;
+    coursePrice?: number;
+    experienceType?: 'with' | 'without';
+  }) => {
+    if (!courseData) return;
+    setSelectedCourseId(courseData.courseId);
+    setSelectedCourseData({
+      courseName: courseData.courseName,
+      courseCode: courseData.courseCode,
+      coursePrice: courseData.coursePrice,
+      experienceType: courseData.experienceType
+    });
+    setSelectedCourseDateId(courseData.courseDateId ?? null);
+    setEnrollmentLinkData(null);
+    setEnrollCode(null);
+    setCurrentPage('publicEnrollmentWizard');
+  };
+
   const handleBackFromBooking = () => {
     if (selectedCourseId) {
       setCurrentPage('courseDetails');
@@ -456,7 +479,7 @@ export default function App() {
         onComplete={handlePublicEnrollmentWizardComplete}
         onCancel={handleBackToLanding}
         preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
-        preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? undefined}
+        preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? selectedCourseDateId ?? undefined}
         isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
         enrollCode={enrollCode ?? ''}
       />
@@ -576,7 +599,7 @@ export default function App() {
       case 'company':
         return <CompanyPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
       case 'student':
-        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
+        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} onNavigateToEnroll={handleNavigateToEnrollFromPortal} />;
       case 'teacher':
         return <TeacherPortal user={user} onLogout={handleLogout} />;
       case 'admin':
@@ -584,7 +607,7 @@ export default function App() {
       case 'superadmin':
         return <SuperAdminPortal user={user} onLogout={handleLogout} />;
       default:
-        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
+        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} onNavigateToEnroll={handleNavigateToEnrollFromPortal} />;
     }
   }
 

@@ -28,7 +28,11 @@ import { studentEnrollmentFormService, type EnrollmentFormResponse } from '../..
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 
-export function StudentCourses() {
+interface StudentCoursesProps {
+  onNavigateToEnroll?: (courseData: { courseId: string; courseDateId?: string; courseName?: string; courseCode?: string; coursePrice?: number }) => void;
+}
+
+export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {}) {
   const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const debouncedSearchQuery = useDebounce(searchQuery, 300);
@@ -139,8 +143,18 @@ export function StudentCourses() {
     fetchEnrollmentFormStatus();
   }, [fetchEnrollmentFormStatus]);
 
-  // NEW FLOW: Show payment screen first, create enrollment only on payment submit
+  // When onNavigateToEnroll is provided (e.g. from portal), go to same enroll page as public flow instead of modal
   const handleEnrollClick = async (course: StudentBrowseCourse) => {
+    if (onNavigateToEnroll) {
+      onNavigateToEnroll({
+        courseId: course.courseId,
+        courseDateId: selectedDates[course.courseId] || undefined,
+        courseName: course.courseName,
+        courseCode: course.courseCode,
+        coursePrice: course.price
+      });
+      return;
+    }
     // Don't create enrollment yet - just show payment upload screen
     // Enrollment will be created when payment is submitted
     setSelectedCourseForPayment(course);
