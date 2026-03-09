@@ -191,12 +191,10 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
         "https://localhost:5173",
         "http://localhost:5174",
         "https://localhost:5174",
-        "https://delightful-beach-0f6f2f100.4.azurestaticapps.net",
         "https://booking.safetytrainingacademy.edu.au",
         "https://safetytrainingacademy.edu.au",
         "https://safety-training-academy-api-dnfagvdpcee2e6gm.australiaeast-01.azurewebsites.net/",
-            "https://safety-training-academy-api-dnfagvdpcee2e6gm.australiaeast-01.azurewebsites.net/api"
-            // "
+        "https://safety-training-academy-api-dnfagvdpcee2e6gm.australiaeast-01.azurewebsites.net/api"
     ];
 
 builder.Services.AddCors(options =>
