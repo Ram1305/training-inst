@@ -89,7 +89,7 @@ export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboa
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5" />
-              Bookings This Week
+              Bookings This Week (by Course Selected Date)
             </CardTitle>
             <div className="flex items-center gap-2">
               <Button variant="outline" size="sm" onClick={handlePrevWeek} disabled={loading}>

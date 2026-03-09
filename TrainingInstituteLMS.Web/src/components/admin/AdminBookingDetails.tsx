@@ -115,7 +115,7 @@ export function AdminBookingDetails({ selectedDate, onBack }: AdminBookingDetail
           <h1 className="text-xl font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
             Bookings for {formattedDate}
           </h1>
-          <p className="text-gray-500 text-sm">Select a course first, then view enrolled students for this week</p>
+          <p className="text-gray-500 text-sm">Students whose selected course date is this day. Cancelled excluded. Select a course to view details.</p>
         </div>
       </div>
 

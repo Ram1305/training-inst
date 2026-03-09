@@ -715,7 +715,13 @@ export default function App() {
   }
 
   if (currentPage === 'login') {
-    return <LoginPage onLogin={handleLogin} onBack={handleBackToLanding} />;
+    return (
+      <LoginPage
+        onLogin={handleLogin}
+        onBack={handleBackToLanding}
+        onNavigateToEnroll={handleGoToPublicEnrollmentWizard}
+      />
+    );
   }
 
   if (isAuthenticated && user) {

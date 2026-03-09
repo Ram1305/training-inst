@@ -11,13 +11,14 @@ import type { User } from '../App';
 interface LoginPageProps {
   onLogin: (user: User) => void;
   onBack: () => void;
+  onNavigateToEnroll?: () => void;
 }
 
 const REMEMBER_KEY_EMAIL = 'login_remembered_email';
 const REMEMBER_KEY_PASSWORD = 'login_remembered_password';
 const REMEMBER_KEY_CHECKED = 'login_remember_me';
 
-export function LoginPage({ onLogin, onBack }: LoginPageProps) {
+export function LoginPage({ onLogin, onBack, onNavigateToEnroll }: LoginPageProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -199,7 +200,17 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
               <Tabs defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger value="register">Register</TabsTrigger>
+                  <TabsTrigger
+                    value="register"
+                    onClick={(e) => {
+                      if (onNavigateToEnroll) {
+                        e.preventDefault();
+                        onNavigateToEnroll();
+                      }
+                    }}
+                  >
+                    Register
+                  </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="login">
@@ -271,152 +282,155 @@ export function LoginPage({ onLogin, onBack }: LoginPageProps) {
                   </form>
                 </TabsContent>
 
-                <TabsContent value="register">
-                  <form className="space-y-4" onSubmit={handleRegister}>
-                    <div className="space-y-3">
-                      <Label>Register as</Label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="regAccountType"
-                            value="Individual"
-                            checked={regAccountType === 'Individual'}
-                            onChange={() => setRegAccountType('Individual')}
-                            disabled={isLoading}
-                            className="rounded-full border-gray-300"
-                          />
-                          <span className="text-sm font-medium">Individual</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="regAccountType"
-                            value="Company"
-                            checked={regAccountType === 'Company'}
-                            onChange={() => setRegAccountType('Company')}
-                            disabled={isLoading}
-                            className="rounded-full border-gray-300"
-                          />
-                          <span className="text-sm font-medium">Company</span>
-                        </label>
+                {/* Register tab navigates to enroll page when onNavigateToEnroll is provided */}
+                <TabsContent value="register" className="mt-0">
+                  {!onNavigateToEnroll && (
+                    <form className="space-y-4" onSubmit={handleRegister}>
+                      <div className="space-y-3">
+                        <Label>Register as</Label>
+                        <div className="flex gap-4">
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="regAccountType"
+                              value="Individual"
+                              checked={regAccountType === 'Individual'}
+                              onChange={() => setRegAccountType('Individual')}
+                              disabled={isLoading}
+                              className="rounded-full border-gray-300"
+                            />
+                            <span className="text-sm font-medium">Individual</span>
+                          </label>
+                          <label className="flex items-center gap-2 cursor-pointer">
+                            <input
+                              type="radio"
+                              name="regAccountType"
+                              value="Company"
+                              checked={regAccountType === 'Company'}
+                              onChange={() => setRegAccountType('Company')}
+                              disabled={isLoading}
+                              className="rounded-full border-gray-300"
+                            />
+                            <span className="text-sm font-medium">Company</span>
+                          </label>
+                        </div>
                       </div>
-                    </div>
 
-                    {regAccountType === 'Individual' ? (
+                      {regAccountType === 'Individual' ? (
+                        <div className="space-y-2">
+                          <Label htmlFor="reg-name">Full Name</Label>
+                          <div className="relative">
+                            <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                              id="reg-name"
+                              type="text"
+                              placeholder="John Doe"
+                              value={regName}
+                              onChange={(e) => setRegName(e.target.value)}
+                              className="pl-10"
+                              required
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          <Label htmlFor="reg-company-name">Company Name</Label>
+                          <div className="relative">
+                            <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                            <Input
+                              id="reg-company-name"
+                              type="text"
+                              placeholder="Acme Corp"
+                              value={regCompanyName}
+                              onChange={(e) => setRegCompanyName(e.target.value)}
+                              className="pl-10"
+                              required
+                              disabled={isLoading}
+                            />
+                          </div>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
-                        <Label htmlFor="reg-name">Full Name</Label>
+                        <Label htmlFor="reg-email">Email</Label>
                         <div className="relative">
-                          <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                           <Input
-                            id="reg-name"
-                            type="text"
-                            placeholder="John Doe"
-                            value={regName}
-                            onChange={(e) => setRegName(e.target.value)}
+                            id="reg-email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={regEmail}
+                            onChange={(e) => setRegEmail(e.target.value)}
                             className="pl-10"
                             required
                             disabled={isLoading}
                           />
                         </div>
                       </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Label htmlFor="reg-company-name">Company Name</Label>
-                        <div className="relative">
-                          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+
+                      {regAccountType === 'Individual' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="reg-phone">Phone Number (optional)</Label>
                           <Input
-                            id="reg-company-name"
-                            type="text"
-                            placeholder="Acme Corp"
-                            value={regCompanyName}
-                            onChange={(e) => setRegCompanyName(e.target.value)}
-                            className="pl-10"
-                            required
+                            id="reg-phone"
+                            type="tel"
+                            placeholder="+1 (555) 123-4567"
+                            value={regPhone}
+                            onChange={(e) => setRegPhone(e.target.value)}
                             disabled={isLoading}
                           />
                         </div>
-                      </div>
-                    )}
+                      )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="reg-email">Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          id="reg-email"
-                          type="email"
-                          placeholder="you@example.com"
-                          value={regEmail}
-                          onChange={(e) => setRegEmail(e.target.value)}
-                          className="pl-10"
-                          required
-                          disabled={isLoading}
-                        />
-                      </div>
-                    </div>
-
-                    {regAccountType === 'Individual' && (
                       <div className="space-y-2">
-                        <Label htmlFor="reg-phone">Phone Number (optional)</Label>
-                        <Input
-                          id="reg-phone"
-                          type="tel"
-                          placeholder="+1 (555) 123-4567"
-                          value={regPhone}
-                          onChange={(e) => setRegPhone(e.target.value)}
-                          disabled={isLoading}
-                        />
+                        <Label htmlFor="reg-password">Password</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                          <Input
+                            id="reg-password"
+                            type={showPassword ? 'text' : 'password'}
+                            placeholder="••••••••"
+                            value={regPassword}
+                            onChange={(e) => setRegPassword(e.target.value)}
+                            className="pl-10 pr-10"
+                            required
+                            minLength={6}
+                            disabled={isLoading}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                          >
+                            {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                          </button>
+                        </div>
                       </div>
-                    )}
 
-                    <div className="space-y-2">
-                      <Label htmlFor="reg-password">Password</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                        <Input
-                          id="reg-password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="••••••••"
-                          value={regPassword}
-                          onChange={(e) => setRegPassword(e.target.value)}
-                          className="pl-10 pr-10"
+                      <div className="flex items-start gap-2">
+                        <input 
+                          type="checkbox" 
+                          className="mt-1 rounded border-gray-300" 
                           required
-                          minLength={6}
+                          checked={acceptTerms}
+                          onChange={(e) => setAcceptTerms(e.target.checked)}
                           disabled={isLoading}
                         />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-                        >
-                          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                        </button>
+                        <span className="text-sm text-gray-600">
+                          I agree to the Terms of Service and Privacy Policy
+                        </span>
                       </div>
-                    </div>
 
-                    <div className="flex items-start gap-2">
-                      <input 
-                        type="checkbox" 
-                        className="mt-1 rounded border-gray-300" 
-                        required
-                        checked={acceptTerms}
-                        onChange={(e) => setAcceptTerms(e.target.checked)}
+                      <Button 
+                        type="submit"
+                        className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                         disabled={isLoading}
-                      />
-                      <span className="text-sm text-gray-600">
-                        I agree to the Terms of Service and Privacy Policy
-                      </span>
-                    </div>
-
-                    <Button 
-                      type="submit"
-                      className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
-                      disabled={isLoading}
-                    >
-                      {isLoading ? 'Creating Account...' : 'Create Account'}
-                    </Button>
-                  </form>
+                      >
+                        {isLoading ? 'Creating Account...' : 'Create Account'}
+                      </Button>
+                    </form>
+                  )}
                 </TabsContent>
               </Tabs>
             </CardContent>
