@@ -80,5 +80,59 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
                 .FirstOrDefaultAsync(s => s.Key == "EnrollmentBaseUrl");
             return setting?.Value;
         }
+
+        private const string AllowPayLaterPrefix = "EnrollmentLink_AllowPayLater_";
+        private static string AllowPayLaterKey(Guid linkId) => $"{AllowPayLaterPrefix}{linkId:N}";
+
+        public async Task<bool> GetEnrollmentLinkAllowPayLaterAsync(Guid linkId)
+        {
+            var key = AllowPayLaterKey(linkId);
+            var setting = await _context.SiteSettings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Key == key);
+            return string.Equals(setting?.Value, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public async Task<Dictionary<Guid, bool>> GetEnrollmentLinkAllowPayLaterBatchAsync(IEnumerable<Guid> linkIds)
+        {
+            var ids = linkIds.ToList();
+            if (ids.Count == 0) return new Dictionary<Guid, bool>();
+            var keys = ids.Select(id => AllowPayLaterKey(id)).ToList();
+            var settings = await _context.SiteSettings
+                .AsNoTracking()
+                .Where(s => keys.Contains(s.Key))
+                .ToListAsync();
+            var dict = ids.ToDictionary(id => id, _ => false);
+            foreach (var s in settings)
+            {
+                if (s.Key.StartsWith(AllowPayLaterPrefix, StringComparison.Ordinal) &&
+                    Guid.TryParse(s.Key.AsSpan(AllowPayLaterPrefix.Length), out var linkId) &&
+                    dict.ContainsKey(linkId))
+                    dict[linkId] = string.Equals(s.Value, "true", StringComparison.OrdinalIgnoreCase);
+            }
+            return dict;
+        }
+
+        public async Task SetEnrollmentLinkAllowPayLaterAsync(Guid linkId, bool allowPayLater)
+        {
+            var key = AllowPayLaterKey(linkId);
+            var setting = await _context.SiteSettings.FirstOrDefaultAsync(s => s.Key == key);
+            var value = allowPayLater ? "true" : "false";
+            if (setting != null)
+            {
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                await _context.SiteSettings.AddAsync(new SiteSetting
+                {
+                    Id = Guid.NewGuid(),
+                    Key = key,
+                    Value = value
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
     }
 }

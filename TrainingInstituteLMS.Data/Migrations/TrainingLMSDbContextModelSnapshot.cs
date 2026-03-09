@@ -42,7 +42,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasKey("RoleId");
 
-                    b.ToTable("Roles");
+                    b.ToTable("Roles", (string)null);
 
                     b.HasData(
                         new
@@ -132,7 +132,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CreatedBy");
 
-                    b.ToTable("Users");
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Auth.UserRole", b =>
@@ -156,7 +156,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("UserRoles");
+                    b.ToTable("UserRoles", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Certifications.Certificate", b =>
@@ -210,7 +210,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Certificates");
+                    b.ToTable("Certificates", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Certifications.CertificateApproval", b =>
@@ -258,7 +258,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("CertificateApprovals");
+                    b.ToTable("CertificateApprovals", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Companies.Company", b =>
@@ -286,7 +286,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Companies");
+                    b.ToTable("Companies", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.Course", b =>
@@ -401,7 +401,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("CourseCode")
                         .IsUnique();
 
-                    b.ToTable("Courses");
+                    b.ToTable("Courses", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseCategory", b =>
@@ -443,7 +443,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("CategoryName")
                         .IsUnique();
 
-                    b.ToTable("CourseCategories");
+                    b.ToTable("CourseCategories", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseComboOffer", b =>
@@ -478,7 +478,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("CourseId")
                         .IsUnique();
 
-                    b.ToTable("CourseComboOffers");
+                    b.ToTable("CourseComboOffers", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseDate", b =>
@@ -536,7 +536,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("TeacherId");
 
-                    b.ToTable("CourseDates");
+                    b.ToTable("CourseDates", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseEntryRequirement", b =>
@@ -563,7 +563,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseEntryRequirements");
+                    b.ToTable("CourseEntryRequirements", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseFeeCharge", b =>
@@ -590,7 +590,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseFeeCharges");
+                    b.ToTable("CourseFeeCharges", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseOptionalCharge", b =>
@@ -617,7 +617,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseOptionalCharges");
+                    b.ToTable("CourseOptionalCharges", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CoursePathway", b =>
@@ -647,7 +647,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CoursePathways");
+                    b.ToTable("CoursePathways", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseRule", b =>
@@ -714,7 +714,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("CourseId")
                         .IsUnique();
 
-                    b.ToTable("CourseRules");
+                    b.ToTable("CourseRules", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseTrainingOverview", b =>
@@ -741,7 +741,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseTrainingOverviews");
+                    b.ToTable("CourseTrainingOverviews", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Courses.CourseVocationalOutcome", b =>
@@ -768,7 +768,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("CourseVocationalOutcomes");
+                    b.ToTable("CourseVocationalOutcomes", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.CompanyOrder", b =>
@@ -812,7 +812,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasKey("OrderId");
 
-                    b.ToTable("CompanyOrders");
+                    b.ToTable("CompanyOrders", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.Enrollment", b =>
@@ -880,7 +880,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Enrollments");
+                    b.ToTable("Enrollments", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLink", b =>
@@ -947,20 +947,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("UniqueCode")
                         .IsUnique();
 
-                    b.ToTable("EnrollmentLinks");
-                });
-
-            modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLinkOption", b =>
-                {
-                    b.Property<Guid>("LinkId")
-                        .HasColumnType("uniqueidentifier");
-
-                    b.Property<bool>("AllowPayLater")
-                        .HasColumnType("bit");
-
-                    b.HasKey("LinkId");
-
-                    b.ToTable("EnrollmentLinkOptions");
+                    b.ToTable("EnrollmentLinks", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.PaymentProof", b =>
@@ -1028,7 +1015,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("PaymentProofs");
+                    b.ToTable("PaymentProofs", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Exams.ExamResult", b =>
@@ -1074,7 +1061,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("ExamResults");
+                    b.ToTable("ExamResults", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Exams.ExternalExamLink", b =>
@@ -1115,7 +1102,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("EnrollmentId")
                         .IsUnique();
 
-                    b.ToTable("ExternalExamLinks");
+                    b.ToTable("ExternalExamLinks", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Gallery.GalleryImage", b =>
@@ -1151,7 +1138,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasKey("GalleryImageId");
 
-                    b.ToTable("GalleryImages");
+                    b.ToTable("GalleryImages", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Quiz.AdminBypass", b =>
@@ -1189,7 +1176,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("AdminBypasses");
+                    b.ToTable("AdminBypasses", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Quiz.PreEnrollmentQuizAttempt", b =>
@@ -1228,7 +1215,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("PreEnrollmentQuizAttempts");
+                    b.ToTable("PreEnrollmentQuizAttempts", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Quiz.QuizSectionResult", b =>
@@ -1261,7 +1248,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("QuizAttemptId");
 
-                    b.ToTable("QuizSectionResults");
+                    b.ToTable("QuizSectionResults", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Reviews.GoogleReview", b =>
@@ -1307,7 +1294,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasKey("GoogleReviewId");
 
-                    b.ToTable("GoogleReviews");
+                    b.ToTable("GoogleReviews", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Schedules.Schedule", b =>
@@ -1364,7 +1351,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("ScheduleTypeId");
 
-                    b.ToTable("Schedules");
+                    b.ToTable("Schedules", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Schedules.ScheduleType", b =>
@@ -1391,7 +1378,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasKey("ScheduleTypeId");
 
-                    b.ToTable("ScheduleTypes");
+                    b.ToTable("ScheduleTypes", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Students.Student", b =>
@@ -1823,7 +1810,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.System.AuditLog", b =>
@@ -1878,7 +1865,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("AuditLogs");
+                    b.ToTable("AuditLogs", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.System.Notification", b =>
@@ -1918,7 +1905,7 @@ namespace TrainingInstituteLMS.Data.Migrations
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Notifications");
+                    b.ToTable("Notifications", (string)null);
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.System.SiteSetting", b =>
@@ -1945,7 +1932,7 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.HasIndex("Key")
                         .IsUnique();
 
-                    b.ToTable("SiteSettings");
+                    b.ToTable("SiteSettings", (string)null);
 
                     b.HasData(
                         new
@@ -2222,17 +2209,6 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.Navigation("CourseDate");
                 });
 
-            modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLinkOption", b =>
-                {
-                    b.HasOne("TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLink", "EnrollmentLink")
-                        .WithOne("Option")
-                        .HasForeignKey("TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLinkOption", "LinkId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("EnrollmentLink");
-                });
-
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.PaymentProof", b =>
                 {
                     b.HasOne("TrainingInstituteLMS.Data.Entities.Enrollments.Enrollment", "Enrollment")
@@ -2446,11 +2422,6 @@ namespace TrainingInstituteLMS.Data.Migrations
                     b.Navigation("ExternalExamLink");
 
                     b.Navigation("PaymentProof");
-                });
-
-            modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Enrollments.EnrollmentLink", b =>
-                {
-                    b.Navigation("Option");
                 });
 
             modelBuilder.Entity("TrainingInstituteLMS.Data.Entities.Quiz.PreEnrollmentQuizAttempt", b =>

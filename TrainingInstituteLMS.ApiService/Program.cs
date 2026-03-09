@@ -257,8 +257,8 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        logger.LogError(ex, "Failed to apply migrations. The app will continue but database schema may be outdated.");
-        throw;
+        logger.LogError(ex, "Failed to apply migrations. The app will continue but database schema may be outdated. Check connection string and Azure SQL firewall.");
+        // Do not rethrow - allow app to start so logs are accessible. Fix DB manually and restart.
     }
 
     // Alternative path: ensure CompanyMobile column exists via raw SQL (works even if migration was not in the bundle)

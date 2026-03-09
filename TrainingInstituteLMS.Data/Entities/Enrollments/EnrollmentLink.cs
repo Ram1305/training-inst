@@ -59,11 +59,6 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         /// </summary>
         public Guid? CompanyOrderId { get; set; }
 
-        /// <summary>
-        /// Optional settings stored in separate table (e.g. AllowPayLater). Use Option?.AllowPayLater ?? false.
-        /// </summary>
-        public virtual EnrollmentLinkOption? Option { get; set; }
-
         // Navigation properties
         [ForeignKey(nameof(CourseId))]
         public virtual Courses.Course? Course { get; set; }

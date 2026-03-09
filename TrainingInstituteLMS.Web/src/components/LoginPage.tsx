@@ -200,17 +200,18 @@ export function LoginPage({ onLogin, onBack, onNavigateToEnroll }: LoginPageProp
               <Tabs defaultValue="login" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
                   <TabsTrigger value="login">Sign In</TabsTrigger>
-                  <TabsTrigger
-                    value="register"
-                    onClick={(e) => {
-                      if (onNavigateToEnroll) {
-                        e.preventDefault();
-                        onNavigateToEnroll();
-                      }
-                    }}
-                  >
-                    Register
-                  </TabsTrigger>
+                  {onNavigateToEnroll ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="h-[calc(100%-1px)] flex-1 rounded-xl border border-transparent px-2 py-1 text-sm font-medium text-foreground hover:bg-muted/50"
+                      onClick={onNavigateToEnroll}
+                    >
+                      Register
+                    </Button>
+                  ) : (
+                    <TabsTrigger value="register">Register</TabsTrigger>
+                  )}
                 </TabsList>
 
                 <TabsContent value="login">

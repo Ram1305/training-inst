@@ -64,9 +64,6 @@ namespace TrainingInstituteLMS.Data.Data
         // Enrollment Links (for QR code based enrollment)
         public DbSet<EnrollmentLink> EnrollmentLinks { get; set; }
 
-        // Enrollment link options (e.g. AllowPayLater - separate table for schema flexibility)
-        public DbSet<EnrollmentLinkOption> EnrollmentLinkOptions { get; set; }
-
         // Company orders (bulk course purchase, one-time links)
         public DbSet<CompanyOrder> CompanyOrders { get; set; }
 
@@ -310,12 +307,6 @@ namespace TrainingInstituteLMS.Data.Data
                 .WithMany()
                 .HasForeignKey(el => el.CompanyOrderId)
                 .OnDelete(DeleteBehavior.SetNull);
-
-            modelBuilder.Entity<EnrollmentLink>()
-                .HasOne(el => el.Option)
-                .WithOne(o => o.EnrollmentLink)
-                .HasForeignKey<EnrollmentLinkOption>(o => o.LinkId)
-                .OnDelete(DeleteBehavior.Cascade);
 
             // SiteSettings: unique key for key-value store
             modelBuilder.Entity<SiteSetting>()
