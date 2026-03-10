@@ -64,6 +64,63 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
                 : "";
 
             var subject = $"Thank you for your booking – Order #{orderId}";
+
+            // Academy notification content (New Company Booking - internal notification)
+            var plainBodyAcademy = $@"NEW COMPANY BOOKING RECEIVED #{orderId}
+
+You have received a new company booking from {companyName} ({toEmail}).
+
+Order #: {orderId}
+Order Date: {orderDateStr}
+Total: {priceStr}
+
+------------------------------------------------------------
+Courses / Employee Links:
+------------------------------------------------------------
+{string.Join("\n", links.Select((l, i) => $"{i + 1}. {l.CourseName}\n   Date: {l.CourseDateDisplay}\n   {l.FullUrl}"))}
+
+------------------------------------------------------------
+
+Please follow up with the company for payment confirmation if required.
+
+Best regards,
+{_settings.FromName}";
+
+            var linksHtmlAcademy = string.Join("", links.Select((l, i) => $@"
+<tr><td style='padding:12px 16px;border-bottom:1px solid #e2e8f0;'>
+<p style='margin:0 0 4px;font-size:14px;font-weight:600;color:#334155;'>{l.CourseName}</p>
+<p style='margin:0 0 4px;font-size:13px;color:#64748b;'>Selected date: {l.CourseDateDisplay}</p>
+<p style='margin:0;font-size:13px;'><a href='{l.FullUrl}' style='color:#3b82f6;word-break:break-all;'>{l.FullUrl}</a></p>
+</td></tr>"));
+
+            var htmlBodyAcademy = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>New Company Booking</title></head>
+<body style='margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#333;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color:#f4f4f4;padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
+<tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:22px;font-weight:700;'>NEW COMPANY BOOKING #{orderId}</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p style='margin:0 0 20px;font-size:15px;color:#555;'>You have received a new company booking from <strong style='color:#333;'>{companyName}</strong> (<a href='mailto:{toEmail}' style='color:#3b82f6;'>{toEmail}</a>)</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:20px;background-color:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Order details</p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order #: <strong>{orderId}</strong></p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order date: <strong>{orderDateStr}</strong></p>
+<p style='margin:0;font-size:14px;color:#334155;'>Total: <strong>{priceStr}</strong></p>
+</td></tr></table>
+<p style='margin:0 0 12px;font-size:14px;font-weight:600;color:#334155;'>Courses / Employee links:</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;'>{linksHtmlAcademy}
+</table>
+<p style='margin:16px 0 0;font-size:14px;color:#334155;'>Please follow up with the company for payment confirmation if required.</p>
+</td></tr>
+<tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;'>
+<p style='margin:0;font-size:13px;color:#64748b;'>Best regards,<br/><strong style='color:#334155;'>{_settings.FromName}</strong></p>
+</td></tr></table></td></tr></table></body></html>";
+
             var plainBody = $@"Dear {companyName},
 
 Thank you for your booking with Safety Training Academy.
@@ -132,14 +189,48 @@ info@safetytrainingacademy.edu.au";
                 using var client = new SmtpClient();
                 await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
                 await client.AuthenticateAsync(user, smtpPassword);
+
+                try
+                {
+                // 1. Send to academy bookings email (best-effort; failure does not block company email)
+                if (!string.IsNullOrWhiteSpace(_settings.BookingsEmail))
+                {
+                    try
+                    {
+                        var msgAcademy = new MimeMessage();
+                        msgAcademy.From.Add(new MailboxAddress(_settings.FromName, user));
+                        msgAcademy.To.Add(MailboxAddress.Parse(_settings.BookingsEmail.Trim()));
+                        msgAcademy.Subject = $"New Company Booking #{orderId} - {companyName}";
+                        msgAcademy.Body = new BodyBuilder { TextBody = plainBodyAcademy, HtmlBody = htmlBodyAcademy }.ToMessageBody();
+                        await client.SendAsync(msgAcademy);
+                        _logger.LogInformation("Email: Company order notification sent to academy {Email} for order {OrderId}", _settings.BookingsEmail, orderId);
+                    }
+                    catch (Exception academyEx)
+                    {
+                        _logger.LogWarning(academyEx, "Email: Failed to send academy company order notification to {Email} for order {OrderId}. Error: {Message}. Continuing to send company confirmation.", _settings.BookingsEmail, orderId, academyEx.Message);
+                    }
+                }
+
+                // 2. Send to company (confirmation with links)
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_settings.FromName, user));
                 message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
                 message.Subject = subject;
                 message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
                 await client.SendAsync(message);
-                await client.DisconnectAsync(true);
                 _logger.LogInformation("Company order confirmation sent to {Email} for order {OrderId}", toEmail, orderId);
+                }
+                finally
+                {
+                    try
+                    {
+                        await client.DisconnectAsync(true);
+                    }
+                    catch (Exception disconnectEx)
+                    {
+                        _logger.LogWarning(disconnectEx, "Email: SMTP disconnect warning: {Message}", disconnectEx.Message);
+                    }
+                }
             }
             catch (Exception ex)
             {

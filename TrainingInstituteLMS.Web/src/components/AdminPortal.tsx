@@ -102,36 +102,24 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
   const [bookingDetailsDate, setBookingDetailsDate] = useState<string | null>(getInitialBookingDetailsDate);
   const [navbarHidden, setNavbarHidden] = useState(false);
   const [companyPaymentCount, setCompanyPaymentCount] = useState(0);
-  const [statsLoading, setStatsLoading] = useState(true);
 
   useEffect(() => {
     let cancelled = false;
     async function loadStats() {
-      setStatsLoading(true);
       try {
         const countRes = await adminCompanyOrdersService.getCompanyOrderCount();
         if (!cancelled && countRes.success && countRes.data?.companyOrderCount != null) {
           setCompanyPaymentCount(countRes.data.companyOrderCount);
-        } else if (!cancelled) {
-          setCompanyPaymentCount(0);
         }
       } catch {
-        if (!cancelled) setCompanyPaymentCount(0);
-      } finally {
-        if (!cancelled) setStatsLoading(false);
+        // Ignore - Company Payment nav is always shown
       }
     }
     loadStats();
     return () => { cancelled = true; };
   }, []);
 
-  const showCompanyPayment = !statsLoading && companyPaymentCount > 0;
-
-  useEffect(() => {
-    if (!statsLoading && !showCompanyPayment && currentPage === 'company-payments') {
-      setCurrentPage('dashboard');
-    }
-  }, [statsLoading, showCompanyPayment, currentPage]);
+  // Company Payment nav is always visible so admins can access it (including when companies register via enrollment)
 
   const handleDashboardNavigate = (page: string, extra?: string) => {
     if (page === 'booking-details' && extra) {
@@ -165,9 +153,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'gallery', name: 'Gallery', icon: Image },
   ];
 
-  const companyPaymentNav = showCompanyPayment
-    ? [{ id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign }]
-    : [];
+  const companyPaymentNav = [{ id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign }];
 
   const navigation = [
     ...baseNavigation.slice(0, baseNavigation.findIndex((n) => n.id === 'reports')),

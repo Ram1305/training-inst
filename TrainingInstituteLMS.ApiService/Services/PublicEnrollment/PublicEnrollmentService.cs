@@ -815,6 +815,17 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             if (courseDate.CurrentEnrollments >= (courseDate.MaxCapacity ?? 30))
                 throw new InvalidOperationException("This course date is fully booked");
 
+            // Respect CompanyOrder.PaymentMethod: pay_later => Pending, otherwise => Paid
+            var paymentStatus = "Paid";
+            if (link.CompanyOrderId.HasValue)
+            {
+                var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
+                if (order != null && string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase))
+                {
+                    paymentStatus = "Pending";
+                }
+            }
+
             var enrollment = new EnrollmentEntity
             {
                 EnrollmentId = Guid.NewGuid(),
@@ -822,7 +833,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseId = link.CourseId!.Value,
                 CourseDateId = courseDateId.Value,
                 Status = "Pending",
-                PaymentStatus = "Paid",
+                PaymentStatus = paymentStatus,
                 EnrolledAt = DateTime.UtcNow
             };
             await _context.Enrollments.AddAsync(enrollment);

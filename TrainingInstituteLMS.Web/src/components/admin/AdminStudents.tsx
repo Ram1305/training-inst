@@ -13,6 +13,7 @@ import { studentManagementService, type StudentResponse } from '../../services/s
 import { quizService } from '../../services/quiz.service';
 import { studentEnrollmentFormService } from '../../services/studentEnrollmentForm.service';
 import { adminPaymentService, type AdminPaymentProof } from '../../services/adminPayment.service';
+import { enrollmentService, type StudentEnrolledCourse } from '../../services/enrollment.service';
 
 interface AdminStudentsProps {
   onNavigate?: (page: string, studentEmail?: string) => void;
@@ -42,6 +43,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   const [detailsModalOpen, setDetailsModalOpen] = useState(false);
   const [detailsStudent, setDetailsStudent] = useState<StudentResponse | null>(null);
   const [detailsPayments, setDetailsPayments] = useState<AdminPaymentProof[]>([]);
+  const [detailsEnrollments, setDetailsEnrollments] = useState<StudentEnrolledCourse[]>([]);
   const [detailsStatus, setDetailsStatus] = useState<StudentStatus | null>(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [detailsError, setDetailsError] = useState<string | null>(null);
@@ -220,14 +222,16 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     setDetailsModalOpen(true);
     setDetailsStudent(null);
     setDetailsPayments([]);
+    setDetailsEnrollments([]);
     setDetailsStatus(null);
     setDetailsError(null);
     setDetailsLoading(true);
 
     try {
-      const [studentRes, paymentsRes, quizStatusRes, enrollmentRes] = await Promise.all([
+      const [studentRes, paymentsRes, enrollmentsRes, quizStatusRes, enrollmentFormRes] = await Promise.all([
         studentManagementService.getStudentById(student.studentId),
         adminPaymentService.getPaymentProofs({ studentId: student.studentId, pageSize: 100 }),
+        enrollmentService.getStudentEnrollments(student.studentId).catch(() => ({ success: false, data: [] as StudentEnrolledCourse[] })),
         quizService.getStudentQuizStatus(student.studentId).catch(() => null),
         studentEnrollmentFormService.getEnrollmentFormByStudentId(student.studentId).catch(() => null),
       ]);
@@ -238,9 +242,12 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
       if (paymentsRes.success && paymentsRes.data?.paymentProofs) {
         setDetailsPayments(paymentsRes.data.paymentProofs);
       }
+      if (enrollmentsRes.success && enrollmentsRes.data) {
+        setDetailsEnrollments(enrollmentsRes.data);
+      }
       setDetailsStatus({
         hasPassedQuiz: !!quizStatusRes?.hasPassedQuiz || !!quizStatusRes?.hasAdminBypass,
-        hasCompletedEnrollment: !!(enrollmentRes?.success && enrollmentRes.data?.enrollmentFormCompleted),
+        hasCompletedEnrollment: !!(enrollmentFormRes?.success && enrollmentFormRes.data?.enrollmentFormCompleted),
       });
     } catch (error) {
       setDetailsError(error instanceof Error ? error.message : 'Failed to load details');
@@ -877,7 +884,61 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                   </div>
                 </div>
 
-                {/* Purchased Courses */}
+                {/* Enrolled Courses - includes pay_later and all enrollments */}
+                <div>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
+                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <GraduationCap className="w-5 h-5 text-violet-600" />
+                      Enrolled Courses: {detailsEnrollments.length}
+                    </h3>
+                  </div>
+                  {detailsEnrollments.length === 0 ? (
+                    <Card className="border-dashed border-violet-200 bg-violet-50/50">
+                      <CardContent className="py-8 text-center">
+                        <BookOpen className="w-10 h-10 text-violet-300 mx-auto mb-2" />
+                        <p className="text-gray-600 text-sm">No course enrollments</p>
+                      </CardContent>
+                    </Card>
+                  ) : (
+                    <div className="grid gap-3 sm:grid-cols-2 mb-6">
+                      {detailsEnrollments.map((enr) => (
+                        <Card key={enr.enrollmentId} className="border-violet-100 overflow-hidden">
+                          <CardHeader className="pb-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div>
+                                <CardTitle className="text-base">{enr.courseName}</CardTitle>
+                                <CardDescription>{enr.courseCode ?? enr.courseId}</CardDescription>
+                              </div>
+                              <Badge
+                                className={
+                                  enr.paymentStatus === 'Verified' || enr.paymentStatus === 'Paid'
+                                    ? 'bg-green-100 text-green-700'
+                                    : enr.paymentStatus === 'Pending' || enr.paymentStatus === 'Pending Verification'
+                                    ? 'bg-amber-100 text-amber-700'
+                                    : 'bg-gray-100 text-gray-700'
+                                }
+                              >
+                                {enr.paymentStatus}
+                              </Badge>
+                            </div>
+                          </CardHeader>
+                          <CardContent className="space-y-1 text-sm">
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Enrolled</span>
+                              <span className="font-medium">{formatDateLong(enr.enrolledAt)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-500">Status</span>
+                              <span className="font-medium">{enr.status}</span>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Purchased Courses - payment proofs with receipts */}
                 <div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">

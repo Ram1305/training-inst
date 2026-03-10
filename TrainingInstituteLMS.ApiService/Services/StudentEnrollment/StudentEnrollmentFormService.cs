@@ -190,11 +190,12 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 var paymentMethod = MapPaymentMethodForDisplay(request.PaymentMethod);
                 var isDirectPay = string.Equals(request.PaymentMethod, "direct_pay", StringComparison.OrdinalIgnoreCase);
                 var isBankTransfer = string.Equals(request.PaymentMethod, "bank_transfer", StringComparison.OrdinalIgnoreCase);
+                var isPayLater = string.Equals(request.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase);
 
-                // PaymentStatus: "Pending Verification" when transaction ID provided, "Pending" for direct_pay/bank_transfer (shows on payment side), "Unpaid" otherwise
+                // PaymentStatus: "Pending Verification" when transaction ID provided, "Pending" for direct_pay/bank_transfer/pay_later, "Unpaid" otherwise
                 var paymentStatus = hasTransactionId
                     ? "Pending Verification"
-                    : (isDirectPay || isBankTransfer)
+                    : (isDirectPay || isBankTransfer || isPayLater)
                         ? "Pending"
                         : "Unpaid";
 
