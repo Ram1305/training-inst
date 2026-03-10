@@ -1064,6 +1064,9 @@ export function PublicEnrollmentWizard({
       if (e.trainingReason === 'Other' && !e.trainingReasonOther?.trim()) {
         newErrors.trainingReasonOther = 'Please specify the reason';
       }
+      if (e.schoolLevel && e.schoolLevel !== '02 Never attended school' && !e.schoolCompleteYear?.trim()) {
+        newErrors.schoolCompleteYear = 'Year completed is required';
+      }
     }
 
     if (section === 4) {
@@ -1182,6 +1185,9 @@ export function PublicEnrollmentWizard({
         if (!e.hasPostQual) newErrors.hasPostQual = 'Please select an option';
         if (!e.trainingReason) newErrors.trainingReason = 'Reason for undertaking is required';
         if (e.trainingReason === 'Other' && !e.trainingReasonOther?.trim()) newErrors.trainingReasonOther = 'Please specify the reason';
+        if (e.schoolLevel && e.schoolLevel !== '02 Never attended school' && !e.schoolCompleteYear?.trim()) {
+          newErrors.schoolCompleteYear = 'Year completed is required';
+        }
       } else if (i === 4) {
         const ai = formData.additionalInfo;
         if (!ai.countryOfBirth) newErrors.countryOfBirth = 'Country of birth is required';

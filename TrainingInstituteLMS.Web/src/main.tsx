@@ -10,7 +10,7 @@ createRoot(document.getElementById("root")!).render(
   <AuthProvider>
     <PublicSiteUrlProvider>
       <App />
-      <Toaster position="top-center" richColors closeButton />
+      <Toaster position="top-right" richColors closeButton />
     </PublicSiteUrlProvider>
   </AuthProvider>
 );

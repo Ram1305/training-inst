@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, ChevronLeft, ChevronRight, Plus, X, GripVertical, MapPin, Link as LinkIcon, Loader2, Trash2, ExternalLink, Info, Calendar, Search, GraduationCap, BookOpen } from 'lucide-react';
+import { Clock, ChevronLeft, ChevronRight, Plus, X, GripVertical, MapPin, Link as LinkIcon, Loader2, Trash2, ExternalLink, Info, Calendar, Search, GraduationCap, BookOpen, Check } from 'lucide-react';
 import { Card, CardContent } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -98,6 +98,33 @@ const getEventTypeLabel = (type: string): string => {
   }
 };
 
+// Stable course-based colors: same course always gets same color across views
+const COURSE_COLOR_PALETTE: { color: string; bgColor: string }[] = [
+  { color: 'text-blue-700', bgColor: 'bg-blue-200' },
+  { color: 'text-emerald-700', bgColor: 'bg-emerald-200' },
+  { color: 'text-violet-700', bgColor: 'bg-violet-200' },
+  { color: 'text-amber-700', bgColor: 'bg-amber-200' },
+  { color: 'text-rose-700', bgColor: 'bg-rose-200' },
+  { color: 'text-cyan-700', bgColor: 'bg-cyan-200' },
+  { color: 'text-indigo-700', bgColor: 'bg-indigo-200' },
+  { color: 'text-teal-700', bgColor: 'bg-teal-200' },
+  { color: 'text-orange-700', bgColor: 'bg-orange-200' },
+  { color: 'text-pink-700', bgColor: 'bg-pink-200' },
+  { color: 'text-sky-700', bgColor: 'bg-sky-200' },
+  { color: 'text-lime-700', bgColor: 'bg-lime-200' },
+];
+
+function getCourseColor(courseCode: string): { color: string; bgColor: string } {
+  if (!courseCode) return { color: 'text-gray-700', bgColor: 'bg-gray-200' };
+  let hash = 0;
+  for (let i = 0; i < courseCode.length; i++) {
+    hash = ((hash << 5) - hash) + courseCode.charCodeAt(i);
+    hash |= 0;
+  }
+  const index = Math.abs(hash) % COURSE_COLOR_PALETTE.length;
+  return COURSE_COLOR_PALETTE[index];
+}
+
 function DraggableEvent({ template }: { template: DraggableEventTemplate }) {
   const { attributes, listeners, setNodeRef, transform, isDragging } = useDraggable({
     id: template.id
@@ -127,11 +154,13 @@ function DraggableEvent({ template }: { template: DraggableEventTemplate }) {
 function DroppableCalendarCell({ 
   date, 
   events, 
-  onEventClick 
+  onEventClick,
+  selectedEventId,
 }: {
   date: Date; 
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
+  selectedEventId: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: formatDateToLocalString(date)
@@ -145,19 +174,22 @@ function DroppableCalendarCell({
       }`}
     >
       <div className="space-y-1">
-        {events.slice(0, 3).map((event) => (
-          <motion.div
-            key={event.id}
-            className={`${event.bgColor} ${event.color} rounded px-2 py-1 text-xs cursor-pointer hover:shadow-md transition-all border-l-2 border-current`}
-            whileHover={{ scale: 1.02 }}
-            onClick={() => onEventClick(event)}
-          >
-            <div className="flex items-center gap-1">
-              <Clock className="w-3 h-3 flex-shrink-0" />
-              <span className="truncate">{event.title}</span>
-            </div>
-          </motion.div>
-        ))}
+        {events.slice(0, 3).map((event) => {
+          const isSelected = event.id === selectedEventId;
+          return (
+            <motion.div
+              key={event.id}
+              className={`${event.bgColor} ${event.color} rounded px-2 py-1 text-xs cursor-pointer hover:shadow-md transition-all border-l-2 border-current ${isSelected ? 'ring-2 ring-blue-600 ring-offset-1' : ''}`}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => onEventClick(event)}
+            >
+              <div className="flex items-center gap-1">
+                {isSelected ? <Check className="w-3 h-3 flex-shrink-0" /> : <Clock className="w-3 h-3 flex-shrink-0" />}
+                <span className="truncate">{event.startTime}</span>
+              </div>
+            </motion.div>
+          );
+        })}
         {events.length > 3 && (
           <div className="text-xs text-gray-500 px-2">
             +{events.length - 3} more
@@ -172,11 +204,13 @@ function DroppableCalendarCell({
 function DroppableWeekCell({ 
   date, 
   events, 
-  onEventClick 
+  onEventClick,
+  selectedEventId,
 }: {
   date: Date; 
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
+  selectedEventId: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `week-${formatDateToLocalString(date)}`
@@ -190,21 +224,26 @@ function DroppableWeekCell({
       }`}
     >
       <div className="space-y-2">
-        {events.map((event) => (
-          <motion.div
-            key={event.id}
-            className={`${event.bgColor} ${event.color} rounded-lg p-3 cursor-pointer hover:shadow-md transition-all border-l-4 border-current`}
-            whileHover={{ scale: 1.02 }}
-            onClick={() => onEventClick(event)}
-          >
-            <div className="font-medium text-sm truncate">{event.title}</div>
-            <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
-              <Clock className="w-3 h-3" />
-              <span>{event.startTime} - {event.endTime}</span>
-            </div>
-            <div className="text-xs mt-1 truncate opacity-75">{event.courseCode}</div>
-          </motion.div>
-        ))}
+        {events.map((event) => {
+          const isSelected = event.id === selectedEventId;
+          return (
+            <motion.div
+              key={event.id}
+              className={`${event.bgColor} ${event.color} rounded-lg p-3 cursor-pointer hover:shadow-md transition-all border-l-4 border-current ${isSelected ? 'ring-2 ring-blue-600 ring-offset-1' : ''}`}
+              whileHover={{ scale: 1.02 }}
+              onClick={() => onEventClick(event)}
+            >
+              <div className="flex items-center gap-1 text-sm">
+                {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
+                <span className="font-medium truncate">{event.courseCode}</span>
+              </div>
+              <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
+                <Clock className="w-3 h-3" />
+                <span>{event.startTime} - {event.endTime}</span>
+              </div>
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );
@@ -214,11 +253,13 @@ function DroppableWeekCell({
 function DroppableDayCell({ 
   date: initialDate, 
   events, 
-  onEventClick 
+  onEventClick,
+  selectedEventId,
 }: {
   date: Date; 
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
+  selectedEventId: string | null;
 }) {
   // Parse the initial date to avoid timezone issues
   const date = new Date(initialDate);
@@ -243,34 +284,39 @@ function DroppableDayCell({
             <p className="text-sm">Drag an event template here to create one</p>
           </div>
         ) : (
-          events.map((event) => (
-            <motion.div
-              key={event.id}
-              className={`${event.bgColor} ${event.color} rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all border-l-4 border-current`}
-              whileHover={{ scale: 1.01 }}
-              onClick={() => onEventClick(event)}
-            >
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="font-semibold text-lg">{event.title}</div>
-                  <div className="text-sm mt-1 opacity-90">{event.courseName}</div>
-                  <div className="flex items-center gap-4 mt-3 text-sm">
-                    <div className="flex items-center gap-1">
-                      <Clock className="w-4 h-4" />
-                      <span>{event.startTime} - {event.endTime}</span>
+          events.map((event) => {
+            const isSelected = event.id === selectedEventId;
+            return (
+              <motion.div
+                key={event.id}
+                className={`${event.bgColor} ${event.color} rounded-lg p-4 cursor-pointer hover:shadow-lg transition-all border-l-4 border-current ${isSelected ? 'ring-2 ring-blue-600 ring-offset-2' : ''}`}
+                whileHover={{ scale: 1.01 }}
+                onClick={() => onEventClick(event)}
+              >
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      {isSelected && <Check className="w-5 h-5 flex-shrink-0" />}
+                      <span className="font-semibold text-lg">{event.courseCode}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <MapPin className="w-4 h-4" />
-                      <span>{event.location}</span>
+                    <div className="flex items-center gap-4 mt-3 text-sm">
+                      <div className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        <span>{event.startTime} - {event.endTime}</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <MapPin className="w-4 h-4" />
+                        <span>{event.location}</span>
+                      </div>
                     </div>
                   </div>
+                  <Badge className={`${event.bgColor} ${event.color} border-0`}>
+                    {event.courseCode}
+                  </Badge>
                 </div>
-                <Badge className={`${event.bgColor} ${event.color} border-0`}>
-                  {event.courseCode}
-                </Badge>
-              </div>
-            </motion.div>
-          ))
+              </motion.div>
+            );
+          })
         )}
       </div>
     </div>
@@ -281,11 +327,13 @@ function DroppableDayCell({
 function DroppableListRow({ 
   date, 
   events, 
-  onEventClick 
+  onEventClick,
+  selectedEventId,
 }: {
   date: Date; 
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
+  selectedEventId: string | null;
 }) {
   const { setNodeRef, isOver } = useDroppable({
     id: `list-${formatDateToLocalString(date)}`
@@ -329,30 +377,32 @@ function DroppableListRow({
           {events.length === 0 ? (
             <div className="text-gray-400 text-sm py-2">No events</div>
           ) : (
-            events.map((event) => (
-              <motion.div
-                key={event.id}
-                className={`${event.bgColor} ${event.color} rounded-lg p-3 cursor-pointer hover:shadow-md transition-all border-l-4 border-current flex items-center gap-4`}
-                whileHover={{ scale: 1.01 }}
-                onClick={() => onEventClick(event)}
-              >
-                <div className="flex items-center gap-2 w-24 flex-shrink-0">
-                  <Clock className="w-4 h-4" />
-                  <span className="text-sm font-medium">{event.startTime}</span>
-                </div>
-                <div className="flex-1">
-                  <div className="font-medium">{event.title}</div>
-                  <div className="text-sm opacity-75">{event.courseCode} - {event.courseName}</div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <MapPin className="w-4 h-4" />
-                  <span>{event.location}</span>
-                </div>
-                <Badge className={`${event.bgColor} ${event.color} border border-current/20`}>
-                  {getEventTypeLabel(event.type)}
-                </Badge>
-              </motion.div>
-            ))
+            events.map((event) => {
+              const isSelected = event.id === selectedEventId;
+              return (
+                <motion.div
+                  key={event.id}
+                  className={`${event.bgColor} ${event.color} rounded-lg p-3 cursor-pointer hover:shadow-md transition-all border-l-4 border-current flex items-center gap-4 ${isSelected ? 'ring-2 ring-blue-600 ring-offset-1' : ''}`}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => onEventClick(event)}
+                >
+                  <div className="flex items-center gap-2 w-24 flex-shrink-0">
+                    {isSelected ? <Check className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
+                    <span className="text-sm font-medium">{event.startTime}</span>
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium">{event.courseCode}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <MapPin className="w-4 h-4" />
+                    <span>{event.location}</span>
+                  </div>
+                  <Badge className={`${event.bgColor} ${event.color} border border-current/20`}>
+                    {getEventTypeLabel(event.type)}
+                  </Badge>
+                </motion.div>
+              );
+            })
           )}
         </div>
       </div>
@@ -505,7 +555,15 @@ export function AdminScheduling() {
       );
       
       if (response.success && response.data) {
-        const mappedEvents: ScheduleEvent[] = response.data.map((item: ScheduleCalendarItem) => ({
+        // If backend does not return color/bgColor, use course-based palette automatically
+        const courseColors = response.data.map((item: ScheduleCalendarItem) => {
+          const fromBackend = item.color && item.bgColor;
+          if (fromBackend) {
+            return { color: item.color, bgColor: item.bgColor };
+          }
+          return getCourseColor(item.courseCode);
+        });
+        const mappedEvents: ScheduleEvent[] = response.data.map((item: ScheduleCalendarItem, index: number) => ({
           id: item.scheduleId,
           title: item.eventTitle,
           type: item.eventType.toLowerCase() as 'theory' | 'practical' | 'exam' | 'meeting',
@@ -518,8 +576,8 @@ export function AdminScheduling() {
           location: item.location || 'TBD',
           meetingLink: item.meetingLink,
           status: item.status,
-          color: item.color || 'text-gray-700',
-          bgColor: item.bgColor || 'bg-gray-200',
+          color: courseColors[index].color,
+          bgColor: courseColors[index].bgColor,
           teacherId: item.teacherId,
           teacherName: item.teacherName
         }));
@@ -720,8 +778,8 @@ const getEventsForDate = (date: Date) => {
       const response = await scheduleService.createSchedule(request);
 
       if (response.success && response.data) {
-        // Add the new event to the local state
-        const template = eventTemplates.find(t => t.type === newEvent.type);
+        // Add the new event to the local state (use course-based color)
+        const courseColor = getCourseColor(selectedCourse?.courseCode || '');
         const newScheduleEvent: ScheduleEvent = {
           id: response.data.scheduleId,
           title: request.eventTitle,
@@ -735,8 +793,8 @@ const getEventsForDate = (date: Date) => {
           location: newEvent.location,
           meetingLink: newEvent.location === 'Online' ? newEvent.meetingLink : undefined,
           status: 'Scheduled',
-          color: template?.color || 'text-gray-700',
-          bgColor: template?.bgColor || 'bg-gray-200',
+          color: courseColor.color,
+          bgColor: courseColor.bgColor,
           teacherId: newEvent.teacherId || undefined,
           teacherName: newEvent.teacherName || undefined
         };
@@ -1073,6 +1131,7 @@ const getEventsForDate = (date: Date) => {
                               date={date}
                               events={dayEvents}
                               onEventClick={handleEventClick}
+                              selectedEventId={selectedEvent?.id ?? null}
                             />
                           </div>
                         );
@@ -1123,6 +1182,7 @@ const getEventsForDate = (date: Date) => {
                               date={date}
                               events={dayEvents}
                               onEventClick={handleEventClick}
+                              selectedEventId={selectedEvent?.id ?? null}
                             />
                           );
                         })}
@@ -1166,6 +1226,7 @@ const getEventsForDate = (date: Date) => {
                         date={currentDate}
                         events={getEventsForDate(currentDate)}
                         onEventClick={handleEventClick}
+                        selectedEventId={selectedEvent?.id ?? null}
                       />
                     </div>
                   )}
@@ -1207,6 +1268,7 @@ const getEventsForDate = (date: Date) => {
                               date={date}
                               events={dayEvents}
                               onEventClick={handleEventClick}
+                              selectedEventId={selectedEvent?.id ?? null}
                             />
                           );
                         })}

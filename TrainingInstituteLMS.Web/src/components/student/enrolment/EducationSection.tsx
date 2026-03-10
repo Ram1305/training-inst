@@ -154,7 +154,7 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="schoolState">
-                    State
+                    State (optional)
                   </Label>
                   <Input
                     id="schoolState"
@@ -166,7 +166,7 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="schoolPostcode" className="flex items-center gap-1">
-                    Postcode
+                    Postcode (optional)
                   </Label>
                   <Input
                     id="schoolPostcode"
