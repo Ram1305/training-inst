@@ -1020,7 +1020,7 @@ export function PublicEnrollmentWizard({
   };
 
   // Validate form section
-  const validateFormSection = (section: number): boolean => {
+  const validateFormSection = (section: number): { valid: boolean; errors?: Record<string, string> } => {
     const newErrors: Record<string, string> = {};
 
     if (section === 1) {
@@ -1088,7 +1088,19 @@ export function PublicEnrollmentWizard({
     }
 
     setFormErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (Object.keys(newErrors).length === 0) {
+      return { valid: true };
+    }
+    return { valid: false, errors: newErrors };
+  };
+
+  // Section names for toast messages when validation fails
+  const SECTION_NAMES: Record<number, string> = {
+    1: 'Section 1 (Personal details)',
+    2: 'Section 2 (USI)',
+    3: 'Section 3 (Education & employment)',
+    4: 'Section 4 (Additional information)',
+    5: 'Section 5 (Declaration & documents)',
   };
 
   // Human-readable labels for validation errors
@@ -1206,10 +1218,18 @@ export function PublicEnrollmentWizard({
   };
 
   const handleFormNext = () => {
-    if (validateFormSection(currentFormSection)) {
+    const result = validateFormSection(currentFormSection);
+    if (result.valid) {
       setCurrentFormSection(prev => Math.min(prev + 1, 5));
-    } else {
-      toast.error('Please fill in all required fields');
+      return;
+    }
+    if (result.errors && Object.keys(result.errors).length > 0) {
+      const labels = Object.keys(result.errors).map((key) => ERROR_LABELS[key] || key);
+      const sectionLabel = SECTION_NAMES[currentFormSection] ?? `Section ${currentFormSection}`;
+      const message = labels.length === 1
+        ? `${sectionLabel} — Please fill in: ${labels[0]}`
+        : `${sectionLabel} — Please fill in: ${labels.join(', ')}`;
+      toast.error(message);
     }
   };
 

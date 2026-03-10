@@ -131,10 +131,12 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     },
   ];
 
-  const fetchCourses = useCallback(async () => {
+  const fetchCourses = useCallback(async (immediateSearch?: string) => {
     try {
       setIsLoading(true);
       setError(null);
+
+      const searchTerm = immediateSearch !== undefined ? immediateSearch.trim() : debouncedSearch.trim();
 
       const filter: { searchQuery?: string; pageSize: number; sortBy?: string; sortDescending?: boolean } = {
         pageSize: 1000,  // Fetch all courses so categories dropdown and section show every category
@@ -142,14 +144,25 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         sortDescending: false
       };
 
-      if (debouncedSearch) {
-        filter.searchQuery = debouncedSearch;
+      if (searchTerm) {
+        filter.searchQuery = searchTerm;
       }
 
       const response = await courseService.getActiveCourses(filter);
 
       if (response.success && response.data) {
-        setCourses(response.data.courses);
+        let list = response.data.courses;
+        // Client-side filter so search works even if API doesn't support searchQuery (match name, code, category)
+        if (searchTerm) {
+          const term = searchTerm.toLowerCase();
+          list = list.filter(
+            (c) =>
+              c.courseName?.toLowerCase().includes(term) ||
+              c.courseCode?.toLowerCase().includes(term) ||
+              (c.categoryName && c.categoryName.toLowerCase().includes(term))
+          );
+        }
+        setCourses(list);
       } else {
         setError(response.message || 'Failed to load courses');
       }
@@ -589,12 +602,22 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                     placeholder="Search Courses..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        fetchCourses(searchQuery);
+                        document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
+                      }
+                    }}
                     className="pl-12 h-14 rounded-full border-2 border-blue-200 focus:border-cyan-400 bg-white"
                   />
                 </div>
                 <Button
                   className="bg-cyan-500 hover:bg-cyan-600 text-white h-14 px-8 rounded-full text-lg font-semibold shadow-lg shadow-cyan-500/50"
-                  onClick={() => document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" })}
+                  onClick={() => {
+                    fetchCourses(searchQuery);
+                    document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
+                  }}
                 >
                   Search Courses
                 </Button>
@@ -944,7 +967,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           ) : error ? (
             <div className="text-center py-20">
               <p className="text-red-500 mb-4">{error}</p>
-              <Button onClick={fetchCourses} variant="outline">
+              <Button onClick={() => fetchCourses()} variant="outline">
                 Try Again
               </Button>
             </div>
