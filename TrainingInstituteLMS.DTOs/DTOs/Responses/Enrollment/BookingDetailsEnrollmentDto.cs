@@ -17,5 +17,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Enrollment
         public string PaymentStatus { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty;
         public DateTime EnrolledAt { get; set; }
+        /// <summary>Individual or Company - how the student enrolled.</summary>
+        public string? EnrollmentType { get; set; }
     }
 }

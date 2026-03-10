@@ -571,7 +571,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                         <TableCell>{student.phoneNumber || 'N/A'}</TableCell>
                         <TableCell>{courseLabel}</TableCell>
                         <TableCell>{courseDateLabel}</TableCell>
-                        <TableCell>{paymentForFirst?.accountType ?? '—'}</TableCell>
+                        <TableCell>{firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {status ? (

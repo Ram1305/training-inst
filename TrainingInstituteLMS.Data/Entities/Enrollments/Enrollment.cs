@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
@@ -64,6 +64,12 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         public DateTime EnrolledAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? CompletedAt { get; set; }
+
+        /// <summary>
+        /// Individual = self-enrolled; Company = enrolled via company-order one-time link.
+        /// </summary>
+        [MaxLength(50)]
+        public string EnrollmentType { get; set; } = "Individual";
 
         // Navigation Properties
         [ForeignKey(nameof(StudentId))]

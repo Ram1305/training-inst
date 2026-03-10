@@ -207,7 +207,8 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                     CourseDateId = request.CourseDateId.Value,
                     EnrolledAt = DateTime.UtcNow,
                     Status = "Pending",
-                    PaymentStatus = paymentStatus
+                    PaymentStatus = paymentStatus,
+                    EnrollmentType = "Individual"
                 };
 
                 _context.Enrollments.Add(enrollment);

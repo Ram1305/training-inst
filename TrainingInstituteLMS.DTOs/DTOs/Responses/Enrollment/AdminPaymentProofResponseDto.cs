@@ -39,6 +39,9 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Enrollment
         public string? BankName { get; set; }
         public string? ReferenceNumber { get; set; }
         
+        /// <summary>Individual or Company - how the student enrolled.</summary>
+        public string? AccountType { get; set; }
+
         // Status Information
         public DateTime UploadedAt { get; set; }
         public string Status { get; set; } = string.Empty;

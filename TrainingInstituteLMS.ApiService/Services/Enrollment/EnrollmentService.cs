@@ -172,7 +172,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     QuizCompleted = e.QuizCompleted,
                     SelectedCourseDate = selectedCourseDate,
                     SelectedExamDate = selectedExam,
-                    SelectedTheoryDate = selectedTheory
+                    SelectedTheoryDate = selectedTheory,
+                    EnrollmentType = e.EnrollmentType ?? "Individual"
                 };
             }).ToList();
         }
@@ -247,7 +248,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                 IsAdminBypassed = isAdminBypassed,
                 QuizCompleted = isQuizCompleted,
                 Status = "Active",
-                EnrolledAt = DateTime.UtcNow
+                EnrolledAt = DateTime.UtcNow,
+                EnrollmentType = "Individual"
             };
 
             _context.Enrollments.Add(enrollment);
@@ -691,6 +693,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                 PaymentMethod = paymentProof.PaymentMethod,
                 BankName = paymentProof.BankName,
                 ReferenceNumber = paymentProof.ReferenceNumber,
+                AccountType = paymentProof.Enrollment.EnrollmentType ?? "Individual",
                 UploadedAt = paymentProof.UploadedAt,
                 Status = paymentProof.Status,
                 VerifiedBy = paymentProof.VerifiedBy,
@@ -816,7 +819,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     SessionType = cd?.DateType,
                     PaymentStatus = e.PaymentStatus,
                     Status = e.Status,
-                    EnrolledAt = e.EnrolledAt
+                    EnrolledAt = e.EnrolledAt,
+                    EnrollmentType = e.EnrollmentType ?? "Individual"
                 };
             }).ToList();
 
@@ -1009,7 +1013,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                         IsAdminBypassed = false,
                         QuizCompleted = false,
                         Status = "Active",
-                        EnrolledAt = DateTime.UtcNow
+                        EnrolledAt = DateTime.UtcNow,
+                        EnrollmentType = "Individual"
                     };
                     _context.Enrollments.Add(enrollment);
 

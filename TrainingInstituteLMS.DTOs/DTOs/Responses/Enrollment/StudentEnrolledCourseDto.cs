@@ -32,5 +32,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Enrollment
         /// Indicates if the LLND quiz has been completed for this enrollment
         /// </summary>
         public bool QuizCompleted { get; set; }
+
+        /// <summary>Individual or Company - how the student enrolled.</summary>
+        public string? EnrollmentType { get; set; }
     }
 }

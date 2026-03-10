@@ -50,6 +50,8 @@ export interface BookingDetailsEnrollmentDto {
   location?: string;
   paymentStatus: string;
   status: string;
+  /** Individual or Company - how the student enrolled */
+  enrollmentType?: string;
 }
 
 export interface BookingDetailsResponseDto {
@@ -88,6 +90,8 @@ export interface StudentEnrolledCourse {
   paymentStatus: string;
   quizCompleted: boolean;
   progress: number;
+  /** Individual or Company - how the student enrolled */
+  enrollmentType?: string;
 }
 
 export interface ApiResponse<T> {

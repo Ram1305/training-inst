@@ -200,6 +200,7 @@ export function AdminBookingDetails({ selectedDate, onBack }: AdminBookingDetail
                         <TableHead>Student</TableHead>
                         <TableHead>Course</TableHead>
                         <TableHead>Session</TableHead>
+                        <TableHead>Individual/Company</TableHead>
                         <TableHead>Payment</TableHead>
                         <TableHead>Status</TableHead>
                       </TableRow>
@@ -234,6 +235,7 @@ export function AdminBookingDetails({ selectedDate, onBack }: AdminBookingDetail
                               )}
                             </div>
                           </TableCell>
+                          <TableCell>{e.enrollmentType ?? '—'}</TableCell>
                           <TableCell>
                             <Badge
                               variant={

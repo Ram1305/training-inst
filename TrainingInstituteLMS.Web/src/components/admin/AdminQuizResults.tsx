@@ -412,7 +412,7 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
                               const payments = studentPayments.get(result.studentId) ?? [];
                               const first = enrollments[0];
                               const payment = first ? payments.find(p => p.enrollmentId === first.enrollmentId) : undefined;
-                              return payment?.accountType ?? '—';
+                              return first?.enrollmentType ?? payment?.accountType ?? '—';
                             })()}
                           </TableCell>
                           <TableCell>

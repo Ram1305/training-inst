@@ -208,7 +208,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateId = request.CourseDateId,
                 Status = "Pending",
                 PaymentStatus = request.PaymentMethod == "cash" ? "Pending" : "Awaiting",
-                EnrolledAt = DateTime.UtcNow
+                EnrolledAt = DateTime.UtcNow,
+                EnrollmentType = "Individual"
             };
 
             await _context.Enrollments.AddAsync(enrollment);
@@ -834,7 +835,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateId = courseDateId.Value,
                 Status = "Pending",
                 PaymentStatus = paymentStatus,
-                EnrolledAt = DateTime.UtcNow
+                EnrolledAt = DateTime.UtcNow,
+                EnrollmentType = link.CompanyOrderId.HasValue ? "Company" : "Individual"
             };
             await _context.Enrollments.AddAsync(enrollment);
             courseDate.CurrentEnrollments++;
