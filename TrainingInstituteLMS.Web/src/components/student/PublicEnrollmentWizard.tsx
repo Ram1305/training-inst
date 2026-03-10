@@ -1035,7 +1035,7 @@ export function PublicEnrollmentWizard({
       if (!a.resAddress) newErrors.resAddress = 'Residential address is required';
       if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
       if (!a.resState) newErrors.resState = 'State is required';
-      if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
+      // Postcode is optional
       if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select Yes or No';
       // Emergency contact name/relationship/number are optional when permission is No
     }
@@ -1165,7 +1165,7 @@ export function PublicEnrollmentWizard({
         if (!a.resAddress) newErrors.resAddress = 'Residential address is required';
         if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
         if (!a.resState) newErrors.resState = 'State is required';
-        if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
+        // Postcode is optional
         if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select Yes or No';
       } else if (i === 2) {
         const u = formData.usi;

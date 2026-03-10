@@ -114,6 +114,10 @@ const COURSE_COLOR_PALETTE: { color: string; bgColor: string }[] = [
   { color: 'text-lime-700', bgColor: 'bg-lime-200' },
 ];
 
+const COURSE_COLOR_LABELS = ['Blue', 'Emerald', 'Violet', 'Amber', 'Rose', 'Cyan', 'Indigo', 'Teal', 'Orange', 'Pink', 'Sky', 'Lime'];
+
+const MANUAL_COLORS_STORAGE_KEY = 'schedule-course-colors';
+
 function getCourseColor(courseCode: string): { color: string; bgColor: string } {
   if (!courseCode) return { color: 'text-gray-700', bgColor: 'bg-gray-200' };
   let hash = 0;
@@ -123,6 +127,14 @@ function getCourseColor(courseCode: string): { color: string; bgColor: string } 
   }
   const index = Math.abs(hash) % COURSE_COLOR_PALETTE.length;
   return COURSE_COLOR_PALETTE[index];
+}
+
+function getResolvedColor(courseCode: string, manualCourseColors: Record<string, number>): { color: string; bgColor: string } {
+  const idx = manualCourseColors[courseCode];
+  if (idx !== undefined && idx >= 0 && idx < COURSE_COLOR_PALETTE.length) {
+    return COURSE_COLOR_PALETTE[idx];
+  }
+  return getCourseColor(courseCode);
 }
 
 function DraggableEvent({ template }: { template: DraggableEventTemplate }) {
@@ -304,10 +316,6 @@ function DroppableDayCell({
                         <Clock className="w-4 h-4" />
                         <span>{event.startTime} - {event.endTime}</span>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        <span>{event.location}</span>
-                      </div>
                     </div>
                   </div>
                   <Badge className={`${event.bgColor} ${event.color} border-0`}>
@@ -393,13 +401,6 @@ function DroppableListRow({
                   <div className="flex-1">
                     <span className="font-medium">{event.courseCode}</span>
                   </div>
-                  <div className="flex items-center gap-2 text-sm">
-                    <MapPin className="w-4 h-4" />
-                    <span>{event.location}</span>
-                  </div>
-                  <Badge className={`${event.bgColor} ${event.color} border border-current/20`}>
-                    {getEventTypeLabel(event.type)}
-                  </Badge>
                 </motion.div>
               );
             })
@@ -445,6 +446,26 @@ export function AdminScheduling() {
     teacherId: '',
     teacherName: ''
   });
+
+  // Manual course colors: courseCode -> palette index (persisted in localStorage)
+  const [manualCourseColors, setManualCourseColors] = useState<Record<string, number>>(() => {
+    try {
+      const s = localStorage.getItem(MANUAL_COLORS_STORAGE_KEY);
+      if (!s) return {};
+      const parsed = JSON.parse(s) as Record<string, number>;
+      return typeof parsed === 'object' && parsed !== null ? parsed : {};
+    } catch {
+      return {};
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(MANUAL_COLORS_STORAGE_KEY, JSON.stringify(manualCourseColors));
+    } catch {
+      // ignore
+    }
+  }, [manualCourseColors]);
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -555,13 +576,13 @@ export function AdminScheduling() {
       );
       
       if (response.success && response.data) {
-        // If backend does not return color/bgColor, use course-based palette automatically
+        // If backend does not return color/bgColor, use manual color or course-based palette
         const courseColors = response.data.map((item: ScheduleCalendarItem) => {
           const fromBackend = item.color && item.bgColor;
           if (fromBackend) {
             return { color: item.color, bgColor: item.bgColor };
           }
-          return getCourseColor(item.courseCode);
+          return getResolvedColor(item.courseCode, manualCourseColors);
         });
         const mappedEvents: ScheduleEvent[] = response.data.map((item: ScheduleCalendarItem, index: number) => ({
           id: item.scheduleId,
@@ -746,6 +767,36 @@ const getEventsForDate = (date: Date) => {
     setShowEventDetailDialog(true);
   };
 
+  const handleSetCourseColor = (courseCode: string, value: number | 'auto') => {
+    if (value === 'auto') {
+      setManualCourseColors((prev) => {
+        const next = { ...prev };
+        delete next[courseCode];
+        return next;
+      });
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.courseCode === courseCode ? { ...e, ...getCourseColor(e.courseCode) } : e
+        )
+      );
+      setSelectedEvent((prev) =>
+        prev?.courseCode === courseCode ? { ...prev, ...getCourseColor(courseCode) } : prev
+      );
+    } else {
+      const colorSet = COURSE_COLOR_PALETTE[value];
+      if (!colorSet) return;
+      setManualCourseColors((prev) => ({ ...prev, [courseCode]: value }));
+      setEvents((prev) =>
+        prev.map((e) =>
+          e.courseCode === courseCode ? { ...e, color: colorSet.color, bgColor: colorSet.bgColor } : e
+        )
+      );
+      setSelectedEvent((prev) =>
+        prev?.courseCode === courseCode ? { ...prev, color: colorSet.color, bgColor: colorSet.bgColor } : prev
+      );
+    }
+  };
+
   const handleAddEvent = async () => {
     if (!newEvent.courseId) {
       setError('Please select a course');
@@ -778,8 +829,8 @@ const getEventsForDate = (date: Date) => {
       const response = await scheduleService.createSchedule(request);
 
       if (response.success && response.data) {
-        // Add the new event to the local state (use course-based color)
-        const courseColor = getCourseColor(selectedCourse?.courseCode || '');
+        // Add the new event to the local state (use manual or course-based color)
+        const courseColor = getResolvedColor(selectedCourse?.courseCode || '', manualCourseColors);
         const newScheduleEvent: ScheduleEvent = {
           id: response.data.scheduleId,
           title: request.eventTitle,
@@ -1614,6 +1665,42 @@ const getEventsForDate = (date: Date) => {
                   <span className="font-medium">{selectedEvent.courseCode}</span>
                 </div>
                 <div className="text-gray-700">{selectedEvent.courseName}</div>
+              </div>
+
+              {/* Manual color for this course */}
+              <div className="space-y-2">
+                <Label className="text-sm text-gray-500">Color for this course</Label>
+                <Select
+                  value={
+                    manualCourseColors[selectedEvent.courseCode] !== undefined
+                      ? String(manualCourseColors[selectedEvent.courseCode])
+                      : 'auto'
+                  }
+                  onValueChange={(v) =>
+                    handleSetCourseColor(selectedEvent.courseCode, v === 'auto' ? 'auto' : Number(v))
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Auto" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">Auto (by course code)</SelectItem>
+                    {COURSE_COLOR_PALETTE.map((_, i) => (
+                      <SelectItem key={i} value={String(i)}>
+                        <span className="flex items-center gap-2">
+                          <span
+                            className={`inline-block w-4 h-4 rounded border border-gray-300 ${COURSE_COLOR_PALETTE[i].bgColor}`}
+                            aria-hidden
+                          />
+                          {COURSE_COLOR_LABELS[i]}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Choose a separate color for this course. All events for this course will use it (saved in this browser).
+                </p>
               </div>
 
               {/* Teacher Info */}
