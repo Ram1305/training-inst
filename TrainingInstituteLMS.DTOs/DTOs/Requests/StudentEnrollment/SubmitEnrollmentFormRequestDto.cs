@@ -9,7 +9,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
     public class SubmitEnrollmentFormRequestDto
     {
         // =====================================================
-        // SECTION 1 ù APPLICANT INFORMATION
+        // SECTION 1 ? APPLICANT INFORMATION
         // =====================================================
 
         [Required]
@@ -81,6 +81,15 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
         [MaxLength(20)]
         public string? PostalState { get; set; }
 
+        /// <summary>
+        /// Postal address postcode (optional when postal differs from residential). Stored as PostalPostcode in database.
+        /// </summary>
+        [MaxLength(10)]
+        public string? PostalCodeOptional { get; set; }
+
+        /// <summary>
+        /// Legacy property; use PostalCodeOptional. Kept for backward compatibility.
+        /// </summary>
         [MaxLength(10)]
         public string? PostalPostcode { get; set; }
 
@@ -99,7 +108,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
         public string EmergencyPermission { get; set; } = string.Empty; // Yes, No
 
         // =====================================================
-        // SECTION 2 ù UNIQUE STUDENT IDENTIFIER (USI)
+        // SECTION 2 ? UNIQUE STUDENT IDENTIFIER (USI)
         // =====================================================
 
         [MaxLength(10)]
@@ -173,7 +182,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
         public DateTime? DescentAcquisitionDate { get; set; }
 
         // =====================================================
-        // SECTION 3 ù EDUCATION AND EMPLOYMENT INFORMATION
+        // SECTION 3 ? EDUCATION AND EMPLOYMENT INFORMATION
         // =====================================================
 
         [Required]
@@ -234,7 +243,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
         public string? TrainingReasonOther { get; set; }
 
         // =====================================================
-        // SECTION 4 ù ADDITIONAL INFORMATION
+        // SECTION 4 ? ADDITIONAL INFORMATION
         // =====================================================
 
         [Required]
@@ -262,7 +271,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
         public string? DisabilityNotes { get; set; }
 
         // =====================================================
-        // SECTION 5 ù PRIVACY NOTICE, TERMS & SIGNATURE
+        // SECTION 5 ? PRIVACY NOTICE, TERMS & SIGNATURE
         // =====================================================
 
         [Required]

@@ -132,7 +132,8 @@ export interface SubmitEnrollmentFormRequest {
   postalAddress?: string;
   postalSuburb?: string;
   postalState?: string;
-  postalPostcode?: string;
+  /** Postal postcode (optional). Sent as postalCodeOptional to backend. */
+  postalCodeOptional?: string;
 
   emergencyContactName?: string;
   emergencyContactRelationship?: string;

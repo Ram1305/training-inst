@@ -801,12 +801,12 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             student.ResidentialState = request.ResidentialState;
             student.ResidentialPostcode = request.ResidentialPostcode;
 
-            // Postal Address (postcode is optional when postal differs from residential)
+            // Postal Address (postcode is optional when postal differs from residential; stored under PostalPostcode in DB)
             student.PostalAddressDifferent = request.PostalAddressDifferent;
             student.PostalAddress = request.PostalAddress;
             student.PostalSuburb = request.PostalSuburb;
             student.PostalState = request.PostalState;
-            student.PostalPostcode = request.PostalPostcode;
+            student.PostalPostcode = request.PostalCodeOptional ?? request.PostalPostcode;
 
             // Emergency Contact
             student.EmergencyContactName = request.EmergencyContactName;
