@@ -25,7 +25,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             string companyName,
             string orderId,
             decimal totalAmount,
-            List<(string CourseName, string FullUrl)> links,
+            List<(string CourseName, string FullUrl, string CourseDateDisplay)> links,
             bool accountCreated,
             string? loginBaseUrl)
         {
@@ -44,10 +44,11 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             var priceStr = "$" + totalAmount.ToString("N2", CultureInfo.CreateSpecificCulture("en-US"));
             var orderDateStr = DateTime.UtcNow.ToString("dddd, d MMMM yyyy");
 
-            var linksPlain = string.Join("\n", links.Select((l, i) => $"{i + 1}. {l.CourseName}\n   {l.FullUrl}"));
+            var linksPlain = string.Join("\n", links.Select((l, i) => $"{i + 1}. {l.CourseName}\n   Date: {l.CourseDateDisplay}\n   {l.FullUrl}"));
             var linksHtml = string.Join("", links.Select((l, i) => $@"
 <tr><td style='padding:12px 16px;border-bottom:1px solid #e2e8f0;'>
 <p style='margin:0 0 4px;font-size:14px;font-weight:600;color:#334155;'>{l.CourseName}</p>
+<p style='margin:0 0 4px;font-size:13px;color:#64748b;'>Selected date: {l.CourseDateDisplay}</p>
 <p style='margin:0;font-size:13px;'><a href='{l.FullUrl}' style='color:#3b82f6;word-break:break-all;'>{l.FullUrl}</a></p>
 </td></tr>"));
 

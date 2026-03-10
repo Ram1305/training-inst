@@ -155,7 +155,17 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 });
             }
 
-            await _context.SaveChangesAsync();
+            _logger.LogInformation("RegisterUser: Persisting UserId={UserId}, StudentId={StudentId}, Email={Email}", user.UserId, student.StudentId, user.Email);
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("RegisterUser: Persisted successfully. StudentId={StudentId}", student.StudentId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "RegisterUser: SaveChangesAsync failed. UserId={UserId}, StudentId={StudentId}", user.UserId, student.StudentId);
+                throw;
+            }
 
             return new PublicRegistrationResponseDto
             {
@@ -492,6 +502,25 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     var course = await _context.Courses.FindAsync(item.CourseId);
                     var courseName = course?.CourseName ?? "Course";
 
+                    string? courseDateDisplay = null;
+                    if (item.CourseDateId.HasValue)
+                    {
+                        var courseDate = await _context.CourseDates.FindAsync(item.CourseDateId.Value);
+                        if (courseDate != null)
+                        {
+                            var dateStr = courseDate.ScheduledDate.ToString("dddd, d MMMM yyyy");
+                            var timeStr = (courseDate.StartTime.HasValue && courseDate.EndTime.HasValue)
+                                ? $"{DateTime.Today.Add(courseDate.StartTime.Value):h:mm tt} - {DateTime.Today.Add(courseDate.EndTime.Value):h:mm tt}"
+                                : null;
+                            var locStr = string.IsNullOrWhiteSpace(courseDate.Location) ? "3/14-16 Marjorie Street, Sefton NSW 2162" : courseDate.Location.Trim();
+                            courseDateDisplay = timeStr != null
+                                ? $"{dateStr}, {timeStr} | {locStr}"
+                                : $"{dateStr} | {locStr}";
+                        }
+                    }
+                    if (string.IsNullOrEmpty(courseDateDisplay))
+                        courseDateDisplay = "Date to be confirmed";
+
                     var link = new EnrollmentLinkEntity
                     {
                         LinkId = Guid.NewGuid(),
@@ -512,11 +541,22 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     {
                         LinkId = link.LinkId.ToString(),
                         FullUrl = fullUrl,
-                        CourseName = courseName
+                        CourseName = courseName,
+                        CourseDateDisplay = courseDateDisplay
                     });
                 }
 
-                await _context.SaveChangesAsync();
+                _logger.LogInformation("CreateCompanyOrder: Persisting CompanyId={CompanyId}, OrderId={OrderId}, Email={Email}", companyId, order.OrderId, request.CompanyEmail);
+                try
+                {
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("CreateCompanyOrder: Persisted successfully. CompanyId={CompanyId}, OrderId={OrderId}", companyId, order.OrderId);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "CreateCompanyOrder: SaveChangesAsync failed. CompanyId={CompanyId}, OrderId={OrderId}, Email={Email}", companyId, order.OrderId, request.CompanyEmail);
+                    throw;
+                }
 
                 foreach (var link in await _context.EnrollmentLinks.Where(l => l.CompanyOrderId == order.OrderId).ToListAsync())
                     await _siteSettingsService.SetEnrollmentLinkAllowPayLaterAsync(link.LinkId, false);
@@ -528,7 +568,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                         request.CompanyName.Trim(),
                         order.OrderId.ToString(),
                         order.TotalAmount,
-                        links.Select(l => (l.CourseName, l.FullUrl)).ToList(),
+                        links.Select(l => (l.CourseName, l.FullUrl, l.CourseDateDisplay ?? "Date to be confirmed")).ToList(),
                         accountCreated,
                         baseUrl);
                 }
@@ -793,7 +833,17 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             if (link.MaxUses == 1)
                 link.IsActive = false;
 
-            await _context.SaveChangesAsync();
+            _logger.LogInformation("CompleteEnrollmentViaLink: Persisting UserId={UserId}, StudentId={StudentId}, Email={Email}, Code={Code}", user.UserId, student.StudentId, user.Email, code);
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("CompleteEnrollmentViaLink: Persisted successfully. StudentId={StudentId}, Code={Code}", student.StudentId, code);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "CompleteEnrollmentViaLink: SaveChangesAsync failed. UserId={UserId}, StudentId={StudentId}, Code={Code}", user.UserId, student.StudentId, code);
+                throw;
+            }
 
             var loginBaseUrl = await GetFrontendBaseUrlAsync();
             try

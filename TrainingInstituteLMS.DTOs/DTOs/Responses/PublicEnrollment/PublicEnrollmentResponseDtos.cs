@@ -102,6 +102,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string LinkId { get; set; } = string.Empty;
         public string FullUrl { get; set; } = string.Empty;
         public string CourseName { get; set; } = string.Empty;
+        /// <summary>Formatted selected course date for display in email (e.g. "15 March 2025, 9:00 AM - 5:00 PM | Sefton").</summary>
+        public string? CourseDateDisplay { get; set; }
     }
 
     public class CompanyCardPaymentResponseDto

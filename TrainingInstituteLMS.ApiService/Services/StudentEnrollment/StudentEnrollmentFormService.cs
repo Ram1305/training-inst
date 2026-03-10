@@ -50,7 +50,32 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 ? request.FullName 
                 : $"{request.GivenName} {request.Surname}".Trim();
 
-            // Create User
+            // Validate and upload required documents BEFORE adding entities to context.
+            // This ensures we fail fast without leaving orphan User/Student in context if upload fails.
+            if (string.IsNullOrWhiteSpace(request.PrimaryIdDataUrl))
+                throw new InvalidOperationException("Primary Photo ID is required.");
+            if (string.IsNullOrWhiteSpace(request.SecondaryIdDataUrl))
+                throw new InvalidOperationException("Photo is required.");
+
+            var primaryIdPath = await UploadFileFromDataUrlAsync(
+                request.PrimaryIdDataUrl,
+                "student-documents/primary-id",
+                "primary-id",
+                request.PrimaryIdContentType,
+                request.PrimaryIdFileName);
+            var secondaryIdPath = await UploadFileFromDataUrlAsync(
+                request.SecondaryIdDataUrl,
+                "student-documents/secondary-id",
+                "secondary-id",
+                request.SecondaryIdContentType,
+                request.SecondaryIdFileName);
+
+            if (string.IsNullOrWhiteSpace(primaryIdPath))
+                throw new InvalidOperationException("Failed to upload Primary Photo ID.");
+            if (string.IsNullOrWhiteSpace(secondaryIdPath))
+                throw new InvalidOperationException("Failed to upload Photo.");
+
+            // Create User (only after uploads succeeded)
             var user = new User
             {
                 UserId = Guid.NewGuid(),
@@ -106,29 +131,9 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             // Map the enrollment form data to the student
             MapRequestToStudent(student, request);
 
-            // Validate and upload Primary Photo ID and Photo (required documents)
-            if (string.IsNullOrWhiteSpace(request.PrimaryIdDataUrl))
-                throw new InvalidOperationException("Primary Photo ID is required.");
-            if (string.IsNullOrWhiteSpace(request.SecondaryIdDataUrl))
-                throw new InvalidOperationException("Photo is required.");
-
-            var primaryIdPath = await UploadFileFromDataUrlAsync(
-                request.PrimaryIdDataUrl,
-                "student-documents/primary-id",
-                "primary-id",
-                request.PrimaryIdContentType,
-                request.PrimaryIdFileName);
-            if (primaryIdPath != null)
-                student.PrimaryIdDocumentUrl = primaryIdPath;
-
-            var secondaryIdPath = await UploadFileFromDataUrlAsync(
-                request.SecondaryIdDataUrl,
-                "student-documents/secondary-id",
-                "secondary-id",
-                request.SecondaryIdContentType,
-                request.SecondaryIdFileName);
-            if (secondaryIdPath != null)
-                student.SecondaryIdDocumentUrl = secondaryIdPath;
+            // Assign document URLs (already uploaded above before adding to context)
+            student.PrimaryIdDocumentUrl = primaryIdPath;
+            student.SecondaryIdDocumentUrl = secondaryIdPath;
 
             // Mark form as completed and pending review
             student.EnrollmentFormCompleted = true;
@@ -246,7 +251,17 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 }
             }
 
-            await _context.SaveChangesAsync();
+            _logger.LogInformation("SubmitPublicEnrollmentForm: Persisting UserId={UserId}, StudentId={StudentId}, Email={Email}", user.UserId, student.StudentId, user.Email);
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("SubmitPublicEnrollmentForm: Persisted successfully. StudentId={StudentId}", student.StudentId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SubmitPublicEnrollmentForm: SaveChangesAsync failed. UserId={UserId}, StudentId={StudentId}", user.UserId, student.StudentId);
+                throw;
+            }
 
             // Send enrollment confirmation email to both student and academy (when course is selected)
             if (enrollment != null)

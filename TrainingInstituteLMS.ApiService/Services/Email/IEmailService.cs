@@ -11,7 +11,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             string companyName,
             string orderId,
             decimal totalAmount,
-            List<(string CourseName, string FullUrl)> links,
+            List<(string CourseName, string FullUrl, string CourseDateDisplay)> links,
             bool accountCreated,
             string? loginBaseUrl);
 

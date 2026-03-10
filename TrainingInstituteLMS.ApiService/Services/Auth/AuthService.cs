@@ -11,10 +11,12 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
     public class AuthService : IAuthService
     {
         private readonly TrainingLMSDbContext _context;
+        private readonly ILogger<AuthService> _logger;
 
-        public AuthService(TrainingLMSDbContext context)
+        public AuthService(TrainingLMSDbContext context, ILogger<AuthService> logger)
         {
             _context = context;
+            _logger = logger;
         }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
@@ -98,7 +100,19 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
                 _context.Students.Add(student);
             }
 
-            await _context.SaveChangesAsync();
+            var entityType = isCompany ? "Company" : "Student";
+            var entityId = isCompany ? company!.CompanyId : student!.StudentId;
+            _logger.LogInformation("AuthRegister: Persisting UserId={UserId}, {EntityType}Id={EntityId}, Email={Email}", user.UserId, entityType, entityId, user.Email);
+            try
+            {
+                await _context.SaveChangesAsync();
+                _logger.LogInformation("AuthRegister: Persisted successfully. {EntityType}Id={EntityId}", entityType, entityId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "AuthRegister: SaveChangesAsync failed. UserId={UserId}, {EntityType}Id={EntityId}", user.UserId, entityType, entityId);
+                throw;
+            }
 
             user.Student = student;
             user.Company = company;

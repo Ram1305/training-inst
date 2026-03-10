@@ -3009,7 +3009,8 @@ export function PublicEnrollmentWizard({
           <CardContent className="px-8 py-8 sm:px-10 sm:py-10 space-y-6">
             <div className="prose prose-gray max-w-none text-gray-700 space-y-4 text-[15px] leading-relaxed">
               <p className="text-gray-600">
-                Please follow the instructions sent in your confirmation email.
+                A confirmation email has been sent to{' '}
+                <span className="font-semibold text-gray-800">{individualEnrollmentResult.email}</span>. Please check your inbox and follow the instructions.
               </p>
               <p className="text-gray-600">
                 If you need any assistance, please contact us.

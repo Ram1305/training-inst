@@ -1029,8 +1029,10 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     // 12. Update course enrollment count
                     course.EnrolledStudentsCount++;
 
+                    _logger.LogInformation("BookCourse: Persisting UserId={UserId}, StudentId={StudentId}, Email={Email}", user.UserId, student.StudentId, user.Email);
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
+                    _logger.LogInformation("BookCourse: Persisted successfully. StudentId={StudentId}", student.StudentId);
 
                     // Send enrollment confirmation email to student (and academy)
                     var orderId = enrollment.EnrollmentId.ToString("N")[..8].ToUpperInvariant();
@@ -1078,8 +1080,9 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                         BookedAt = enrollment.EnrolledAt
                     };
                 }
-                catch
+                catch (Exception ex)
                 {
+                    _logger.LogError(ex, "BookCourse: Transaction failed, rolling back. Email={Email}", request.Email);
                     await transaction.RollbackAsync();
                     throw;
                 }
