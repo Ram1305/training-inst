@@ -884,155 +884,108 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                   </div>
                 </div>
 
-                {/* Enrolled Courses - includes pay_later and all enrollments */}
+                {/* Courses purchased - enrollments as primary (includes pay-later) */}
                 <div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <GraduationCap className="w-5 h-5 text-violet-600" />
-                      Enrolled Courses: {detailsEnrollments.length}
-                    </h3>
-                  </div>
-                  {detailsEnrollments.length === 0 ? (
-                    <Card className="border-dashed border-violet-200 bg-violet-50/50">
-                      <CardContent className="py-8 text-center">
-                        <BookOpen className="w-10 h-10 text-violet-300 mx-auto mb-2" />
-                        <p className="text-gray-600 text-sm">No course enrollments</p>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="grid gap-3 sm:grid-cols-2 mb-6">
-                      {detailsEnrollments.map((enr) => (
-                        <Card key={enr.enrollmentId} className="border-violet-100 overflow-hidden">
-                          <CardHeader className="pb-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <CardTitle className="text-base">{enr.courseName}</CardTitle>
-                                <CardDescription>{enr.courseCode ?? enr.courseId}</CardDescription>
-                              </div>
-                              <Badge
-                                className={
-                                  enr.paymentStatus === 'Verified' || enr.paymentStatus === 'Paid'
-                                    ? 'bg-green-100 text-green-700'
-                                    : enr.paymentStatus === 'Pending' || enr.paymentStatus === 'Pending Verification'
-                                    ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-gray-100 text-gray-700'
-                                }
-                              >
-                                {enr.paymentStatus}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-1 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Enrolled</span>
-                              <span className="font-medium">{formatDateLong(enr.enrolledAt)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Status</span>
-                              <span className="font-medium">{enr.status}</span>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
+                  {(() => {
+                    const paymentByEnrollmentId = new Map(detailsPayments.map((p) => [p.enrollmentId, p]));
+                    const totalPaid = detailsPayments.reduce((sum, p) => sum + p.amountPaid, 0);
+                    return (
+                      <>
+                        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
+                          <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                            <BookOpen className="w-5 h-5 text-violet-600" />
+                            Courses purchased: {detailsEnrollments.length}
+                          </h3>
+                          {totalPaid > 0 && (
+                            <span className="text-sm text-gray-500">
+                              Total paid: {formatCurrency(totalPaid)}
+                            </span>
+                          )}
+                        </div>
+                        {detailsEnrollments.length === 0 ? (
+                          <Card className="border-dashed border-violet-200 bg-violet-50/50">
+                            <CardContent className="py-12 text-center">
+                              <BookOpen className="w-12 h-12 text-violet-300 mx-auto mb-3" />
+                              <p className="text-gray-600 font-medium">No courses purchased yet</p>
+                              <p className="text-gray-500 text-sm mt-1">This student has not enrolled in any courses</p>
+                            </CardContent>
+                          </Card>
+                        ) : (
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {detailsEnrollments.map((enr) => {
+                              const payment = paymentByEnrollmentId.get(enr.enrollmentId);
+                              const hasReceipt = payment && (payment.status === 'Verified' || payment.status === 'Pending');
+                              const paymentStatus = payment?.status ?? enr.paymentStatus;
+                              return (
+                                <Card key={enr.enrollmentId} className="overflow-hidden border-violet-100 hover:shadow-md transition-shadow">
+                                  <CardHeader className="pb-2">
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div>
+                                        <CardTitle className="text-base">{enr.courseName}</CardTitle>
+                                        <CardDescription>{enr.courseCode ?? enr.courseId}</CardDescription>
+                                      </div>
+                                      <Badge
+                                        className={
+                                          paymentStatus === 'Verified' || paymentStatus === 'Paid'
+                                            ? 'bg-green-100 text-green-700'
+                                            : paymentStatus === 'Pending' || paymentStatus === 'Pending Verification'
+                                            ? 'bg-amber-100 text-amber-700'
+                                            : 'bg-gray-100 text-gray-700'
+                                        }
+                                      >
+                                        {paymentStatus}
+                                      </Badge>
+                                    </div>
+                                  </CardHeader>
+                                  <CardContent className="space-y-2 text-sm">
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">Date selected (enrollment)</span>
+                                      <span className="font-medium">
+                                        {formatDateLong((payment?.selectedCourseDate ?? payment?.enrolledAt) ?? enr.enrolledAt)}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">Amount</span>
+                                      <span className="font-semibold text-gray-900">
+                                        {payment ? formatCurrency(payment.amountPaid) : 'Pay Later'}
+                                      </span>
+                                    </div>
+                                    {payment?.paymentDate && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-500">When purchased</span>
+                                        <span className="font-medium">{formatDateLong(payment.paymentDate)}</span>
+                                      </div>
+                                    )}
+                                    {payment?.transactionId && (
+                                      <div className="flex justify-between">
+                                        <span className="text-gray-500">Transaction ID</span>
+                                        <span className="font-mono text-xs">{payment.transactionId}</span>
+                                      </div>
+                                    )}
+                                    {hasReceipt && payment && (
+                                      <a
+                                        href={adminPaymentService.getReceiptDownloadUrl(payment.paymentProofId)}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 text-sm mt-2"
+                                      >
+                                        <Download className="w-4 h-4" />
+                                        Download receipt
+                                      </a>
+                                    )}
+                                  </CardContent>
+                                </Card>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
 
-                {/* Purchased Courses - payment proofs with receipts */}
-                <div>
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mb-3">
-                    <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-                      <BookOpen className="w-5 h-5 text-violet-600" />
-                      Courses purchased: {detailsPayments.length}
-                    </h3>
-                    {detailsPayments.length > 0 && (
-                      <span className="text-sm text-gray-500">
-                        Total paid: {formatCurrency(detailsPayments.reduce((sum, p) => sum + p.amountPaid, 0))}
-                        {detailsPayments.length > 0 && (() => {
-                          const dates = detailsPayments.map((p) => new Date(p.paymentDate).getTime()).filter(Boolean);
-                          if (dates.length === 0) return null;
-                          const first = new Date(Math.min(...dates));
-                          const latest = new Date(Math.max(...dates));
-                          const same = first.getTime() === latest.getTime();
-                          return (
-                            <> · {same ? `Purchased: ${formatDateLong(first.toISOString())}` : `First: ${formatDateLong(first.toISOString())} · Latest: ${formatDateLong(latest.toISOString())}`}</>
-                          );
-                        })()}
-                      </span>
-                    )}
-                  </div>
-                  {detailsPayments.length === 0 ? (
-                    <Card className="border-dashed border-violet-200 bg-violet-50/50">
-                      <CardContent className="py-12 text-center">
-                        <BookOpen className="w-12 h-12 text-violet-300 mx-auto mb-3" />
-                        <p className="text-gray-600 font-medium">No courses purchased yet</p>
-                        <p className="text-gray-500 text-sm mt-1">This student has not enrolled in any courses</p>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="grid gap-4 sm:grid-cols-2">
-                      {detailsPayments.map((payment) => (
-                        <Card key={payment.paymentProofId} className="overflow-hidden border-violet-100 hover:shadow-md transition-shadow">
-                          <CardHeader className="pb-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <CardTitle className="text-base">{payment.courseName}</CardTitle>
-                                <CardDescription>{payment.courseCode ?? payment.courseId}</CardDescription>
-                              </div>
-                              <Badge
-                                className={
-                                  payment.status === 'Verified'
-                                    ? 'bg-green-100 text-green-700'
-                                    : payment.status === 'Pending'
-                                    ? 'bg-amber-100 text-amber-700'
-                                    : 'bg-red-100 text-red-700'
-                                }
-                              >
-                                {payment.status}
-                              </Badge>
-                            </div>
-                          </CardHeader>
-                          <CardContent className="space-y-2 text-sm">
-                            {(payment.selectedCourseDate ?? payment.enrolledAt) && (
-                              <div className="flex justify-between">
-                                <span className="text-gray-500">Date selected (enrollment)</span>
-                                <span className="font-medium">
-                                  {formatDateLong(payment.selectedCourseDate ?? payment.enrolledAt)}
-                                </span>
-                              </div>
-                            )}
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Amount paid</span>
-                              <span className="font-semibold text-gray-900">{formatCurrency(payment.amountPaid)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">When purchased</span>
-                              <span className="font-medium">{formatDateLong(payment.paymentDate)}</span>
-                            </div>
-                            {payment.transactionId && (
-                              <div className="flex justify-between">
-                                <span className="text-gray-500">Transaction ID</span>
-                                <span className="font-mono text-xs">{payment.transactionId}</span>
-                              </div>
-                            )}
-                            <a
-                              href={adminPaymentService.getReceiptDownloadUrl(payment.paymentProofId)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="inline-flex items-center gap-1.5 text-violet-600 hover:text-violet-700 text-sm mt-2"
-                            >
-                              <Download className="w-4 h-4" />
-                              Download receipt
-                            </a>
-                          </CardContent>
-                        </Card>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                {/* Payment Details Summary */}
-                {detailsPayments.length > 0 && (
+                {/* Payment Details Summary - merged enrollments */}
+                {detailsEnrollments.length > 0 && (
                   <div>
                     <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
                       <DollarSign className="w-5 h-5 text-violet-600" />
@@ -1053,48 +1006,55 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                               </TableRow>
                             </TableHeader>
                             <TableBody>
-                              {detailsPayments.map((payment) => (
-                                <TableRow key={payment.paymentProofId}>
-                                  <TableCell>
-                                    <div>
-                                      <div className="font-medium">{payment.courseName}</div>
-                                      <div className="text-xs text-gray-500">{payment.transactionId}</div>
-                                    </div>
-                                  </TableCell>
-                                  <TableCell>
-                                    {(payment.selectedCourseDate ?? payment.enrolledAt)
-                                      ? formatDateLong(payment.selectedCourseDate ?? payment.enrolledAt)
-                                      : '—'}
-                                  </TableCell>
-                                  <TableCell className="font-medium">{formatCurrency(payment.amountPaid)}</TableCell>
-                                  <TableCell>{formatDateLong(payment.paymentDate)}</TableCell>
-                                  <TableCell>
-                                    <Badge
-                                      variant="outline"
-                                      className={
-                                        payment.status === 'Verified'
-                                          ? 'border-green-200 bg-green-50 text-green-700'
-                                          : payment.status === 'Pending'
-                                          ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                          : 'border-red-200 bg-red-50 text-red-700'
-                                      }
-                                    >
-                                      {payment.status}
-                                    </Badge>
-                                  </TableCell>
-                                  <TableCell className="text-right">
-                                    <Button
-                                      size="sm"
-                                      variant="ghost"
-                                      asChild
-                                    >
-                                      <a href={adminPaymentService.getReceiptDownloadUrl(payment.paymentProofId)} target="_blank" rel="noopener noreferrer">
-                                        <Download className="w-4 h-4" />
-                                      </a>
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
+                              {detailsEnrollments.map((enr) => {
+                                const payment = detailsPayments.find((p) => p.enrollmentId === enr.enrollmentId);
+                                const paymentStatus = payment?.status ?? enr.paymentStatus;
+                                const hasReceipt = payment && (payment.status === 'Verified' || payment.status === 'Pending');
+                                return (
+                                  <TableRow key={enr.enrollmentId}>
+                                    <TableCell>
+                                      <div>
+                                        <div className="font-medium">{enr.courseName}</div>
+                                        <div className="text-xs text-gray-500">{payment?.transactionId ?? (paymentStatus === 'Unpaid' ? 'Pay later' : '')}</div>
+                                      </div>
+                                    </TableCell>
+                                    <TableCell>
+                                      {formatDateLong((payment?.selectedCourseDate ?? payment?.enrolledAt) ?? enr.enrolledAt)}
+                                    </TableCell>
+                                    <TableCell className="font-medium">
+                                      {payment ? formatCurrency(payment.amountPaid) : 'Pay Later'}
+                                    </TableCell>
+                                    <TableCell>
+                                      {payment?.paymentDate ? formatDateLong(payment.paymentDate) : '—'}
+                                    </TableCell>
+                                    <TableCell>
+                                      <Badge
+                                        variant="outline"
+                                        className={
+                                          paymentStatus === 'Verified' || paymentStatus === 'Paid'
+                                            ? 'border-green-200 bg-green-50 text-green-700'
+                                            : paymentStatus === 'Pending' || paymentStatus === 'Pending Verification'
+                                            ? 'border-amber-200 bg-amber-50 text-amber-700'
+                                            : 'border-gray-200 bg-gray-50 text-gray-700'
+                                        }
+                                      >
+                                        {paymentStatus}
+                                      </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                      {hasReceipt && payment ? (
+                                        <Button size="sm" variant="ghost" asChild>
+                                          <a href={adminPaymentService.getReceiptDownloadUrl(payment.paymentProofId)} target="_blank" rel="noopener noreferrer">
+                                            <Download className="w-4 h-4" />
+                                          </a>
+                                        </Button>
+                                      ) : (
+                                        <span className="text-gray-400">—</span>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
                             </TableBody>
                           </Table>
                         </div>
