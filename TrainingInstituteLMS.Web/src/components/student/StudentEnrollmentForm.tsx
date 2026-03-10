@@ -279,9 +279,8 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
     if (section === 3) {
       const e = formData.education;
       if (e.schoolLevel && e.schoolLevel !== '02 Never attended school') {
-        if (e.schoolInAus) {
-          if (!e.schoolPostcode?.trim()) newErrors.schoolPostcode = 'Postcode is required';
-        } else {
+        if (!e.schoolInAus) {
+          // State and postcode are optional when school was in Australia
           if (!e.schoolCountry?.trim()) newErrors.schoolCountry = 'Country is required';
         }
       }
