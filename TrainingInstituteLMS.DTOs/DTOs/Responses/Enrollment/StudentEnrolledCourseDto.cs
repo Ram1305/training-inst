@@ -21,6 +21,10 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Enrollment
         public string Status { get; set; } = string.Empty;
         public string PaymentStatus { get; set; } = string.Empty;
         public DateTime EnrolledAt { get; set; }
+        /// <summary>
+        /// The course session date the student selected when enrolling (from CourseDate or Theory/Exam date).
+        /// </summary>
+        public DateTime? SelectedCourseDate { get; set; }
         public DateTime? SelectedExamDate { get; set; }
         public DateTime? SelectedTheoryDate { get; set; }
         

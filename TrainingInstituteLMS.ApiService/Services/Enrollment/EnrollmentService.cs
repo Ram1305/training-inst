@@ -137,35 +137,43 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     .ThenInclude(c => c.Category)
                 .Include(e => e.Course)
                     .ThenInclude(c => c.CourseRule)
+                .Include(e => e.CourseDate)
                 .Where(e => e.StudentId == studentId && e.Status != "Cancelled")
                 .OrderByDescending(e => e.EnrolledAt)
                 .ToListAsync();
 
-            return enrollments.Select(e => new StudentEnrolledCourseDto
+            return enrollments.Select(e =>
             {
-                EnrollmentId = e.EnrollmentId,
-                CourseId = e.CourseId,
-                CourseCode = e.Course.CourseCode,
-                CourseName = e.Course.CourseName,
-                CategoryName = e.Course.Category?.CategoryName,
-                ImageUrl = GetImageFullUrl(e.Course.ImageUrl),
-                Instructor = null,
-                BatchCode = null,
-                Progress = CalculateProgress(e),
-                TheoryCompleted = 0,
-                TheoryTotal = e.Course.CourseRule?.HasTheory == true ? 10 : 0,
-                PracticalCompleted = 0,
-                PracticalTotal = e.Course.CourseRule?.HasPractical == true ? 5 : 0,
-                Status = e.Status,
-                PaymentStatus = e.PaymentStatus,
-                EnrolledAt = e.EnrolledAt,
-                QuizCompleted = e.QuizCompleted,
-                SelectedExamDate = e.SelectedExamDateId.HasValue
-                    ? _context.CourseDates.Where(d => d.CourseDateId == e.SelectedExamDateId).Select(d => (DateTime?)d.ScheduledDate).FirstOrDefault()
-                    : null,
-                SelectedTheoryDate = e.SelectedTheoryDateId.HasValue
+                var selectedTheory = e.SelectedTheoryDateId.HasValue
                     ? _context.CourseDates.Where(d => d.CourseDateId == e.SelectedTheoryDateId).Select(d => (DateTime?)d.ScheduledDate).FirstOrDefault()
-                    : null
+                    : null;
+                var selectedExam = e.SelectedExamDateId.HasValue
+                    ? _context.CourseDates.Where(d => d.CourseDateId == e.SelectedExamDateId).Select(d => (DateTime?)d.ScheduledDate).FirstOrDefault()
+                    : null;
+                var selectedCourseDate = e.CourseDate?.ScheduledDate ?? selectedTheory ?? selectedExam;
+                return new StudentEnrolledCourseDto
+                {
+                    EnrollmentId = e.EnrollmentId,
+                    CourseId = e.CourseId,
+                    CourseCode = e.Course.CourseCode,
+                    CourseName = e.Course.CourseName,
+                    CategoryName = e.Course.Category?.CategoryName,
+                    ImageUrl = GetImageFullUrl(e.Course.ImageUrl),
+                    Instructor = null,
+                    BatchCode = null,
+                    Progress = CalculateProgress(e),
+                    TheoryCompleted = 0,
+                    TheoryTotal = e.Course.CourseRule?.HasTheory == true ? 10 : 0,
+                    PracticalCompleted = 0,
+                    PracticalTotal = e.Course.CourseRule?.HasPractical == true ? 5 : 0,
+                    Status = e.Status,
+                    PaymentStatus = e.PaymentStatus,
+                    EnrolledAt = e.EnrolledAt,
+                    QuizCompleted = e.QuizCompleted,
+                    SelectedCourseDate = selectedCourseDate,
+                    SelectedExamDate = selectedExam,
+                    SelectedTheoryDate = selectedTheory
+                };
             }).ToList();
         }
 

@@ -80,6 +80,10 @@ export interface StudentEnrolledCourse {
   batchCode?: string;
   instructor?: string;
   enrolledAt: string;
+  /** Course session date the student selected when enrolling (ISO string). */
+  selectedCourseDate?: string;
+  selectedTheoryDate?: string;
+  selectedExamDate?: string;
   status: string;
   paymentStatus: string;
   quizCompleted: boolean;

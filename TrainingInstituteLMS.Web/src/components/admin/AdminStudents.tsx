@@ -50,6 +50,9 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
 
   // Student status tracking (quiz and enrollment)
   const [studentStatuses, setStudentStatuses] = useState<Map<string, StudentStatus>>(new Map());
+  // Enrollments and payments per student (for list columns: course, course date, payment status)
+  const [studentEnrollments, setStudentEnrollments] = useState<Map<string, StudentEnrolledCourse[]>>(new Map());
+  const [studentPayments, setStudentPayments] = useState<Map<string, AdminPaymentProof[]>>(new Map());
 
   // Form states
   const [formData, setFormData] = useState({
@@ -74,8 +77,9 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
       if (response.success) {
         setStudents(response.data.students);
         setTotalCount(response.data.totalCount);
-        // Fetch statuses for the loaded students
+        // Fetch statuses and enrollments/payments for the loaded students
         fetchStudentStatuses(response.data.students);
+        fetchStudentEnrollmentsAndPayments(response.data.students);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to fetch students');
@@ -112,6 +116,31 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     );
 
     setStudentStatuses(statusMap);
+  };
+
+  // Fetch enrollments and payments for list columns (course, course date, payment status)
+  const fetchStudentEnrollmentsAndPayments = async (studentList: StudentResponse[]) => {
+    const enrollmentsMap = new Map<string, StudentEnrolledCourse[]>();
+    const paymentsMap = new Map<string, AdminPaymentProof[]>();
+    await Promise.all(
+      studentList.map(async (student) => {
+        try {
+          const [enrRes, payRes] = await Promise.all([
+            enrollmentService.getStudentEnrollments(student.studentId).catch(() => ({ success: false, data: [] as StudentEnrolledCourse[] })),
+            adminPaymentService.getPaymentProofs({ studentId: student.studentId, pageSize: 100 }).catch(() => ({ success: false, data: { paymentProofs: [] as AdminPaymentProof[] } })),
+          ]);
+          if (enrRes.success && enrRes.data) enrollmentsMap.set(student.studentId, enrRes.data);
+          else enrollmentsMap.set(student.studentId, []);
+          if (payRes.success && payRes.data?.paymentProofs) paymentsMap.set(student.studentId, payRes.data.paymentProofs);
+          else paymentsMap.set(student.studentId, []);
+        } catch {
+          enrollmentsMap.set(student.studentId, []);
+          paymentsMap.set(student.studentId, []);
+        }
+      })
+    );
+    setStudentEnrollments(enrollmentsMap);
+    setStudentPayments(paymentsMap);
   };
 
   useEffect(() => {
@@ -496,9 +525,11 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                       <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Course selected date</TableHead>
                       <TableHead>LLND Status</TableHead>
                       <TableHead>Enrollment Form</TableHead>
-                      <TableHead>Enrollments</TableHead>
+                      <TableHead>Payment status</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Last Login</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -507,6 +538,19 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                   <TableBody>
                     {students.map((student) => {
                       const status = studentStatuses.get(student.studentId);
+                      const enrollments = studentEnrollments.get(student.studentId) ?? [];
+                      const payments = studentPayments.get(student.studentId) ?? [];
+                      const firstEnr = enrollments[0];
+                      const courseLabel = enrollments.length === 0 ? '—' : enrollments.length === 1 ? firstEnr.courseName : `${enrollments.length} courses`;
+                      const paymentForFirst = firstEnr ? payments.find(p => p.enrollmentId === firstEnr.enrollmentId) : undefined;
+                      const dateSource = firstEnr?.selectedCourseDate ?? paymentForFirst?.selectedCourseDate ?? firstEnr?.enrolledAt;
+                      const courseDateLabel = dateSource ? formatDate(dateSource) : '—';
+                      const allPaid = enrollments.length > 0 && enrollments.every((e) => {
+                        const pay = payments.find(p => p.enrollmentId === e.enrollmentId);
+                        const st = pay?.status ?? e.paymentStatus;
+                        return st === 'Verified' || st === 'Paid';
+                      });
+                      const paymentStatusLabel = enrollments.length === 0 ? '—' : allPaid ? 'Paid' : 'Unpaid';
                       return (
                       <TableRow key={student.studentId}>
                         <TableCell>
@@ -524,6 +568,8 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                         </TableCell>
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phoneNumber || 'N/A'}</TableCell>
+                        <TableCell>{courseLabel}</TableCell>
+                        <TableCell>{courseDateLabel}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {status ? (
@@ -589,8 +635,11 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="border-blue-200 text-blue-700">
-                            {student.enrollmentCount} course{student.enrollmentCount !== 1 ? 's' : ''}
+                          <Badge
+                            variant="outline"
+                            className={paymentStatusLabel === 'Paid' ? 'border-green-200 bg-green-50 text-green-700' : paymentStatusLabel === 'Unpaid' ? 'border-amber-200 bg-amber-50 text-amber-700' : 'border-gray-200 text-gray-500'}
+                          >
+                            {paymentStatusLabel}
                           </Badge>
                         </TableCell>
                         <TableCell>
@@ -884,6 +933,43 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                   </div>
                 </div>
 
+                {/* LLN section: Individual/Company, Course, Course selected date per enrollment */}
+                {detailsEnrollments.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <ClipboardList className="w-5 h-5 text-violet-600" />
+                      LLN
+                    </h3>
+                    <Card className="border-violet-100">
+                      <CardContent className="pt-6">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Individual / Company</TableHead>
+                              <TableHead>Course</TableHead>
+                              <TableHead>Course selected date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {detailsEnrollments.map((enr) => {
+                              const payment = detailsPayments.find((p) => p.enrollmentId === enr.enrollmentId);
+                              const accountType = payment?.accountType ?? '—';
+                              const courseDate = enr.selectedCourseDate ?? payment?.selectedCourseDate ?? enr.enrolledAt;
+                              return (
+                                <TableRow key={enr.enrollmentId}>
+                                  <TableCell>{accountType}</TableCell>
+                                  <TableCell className="font-medium">{enr.courseName}</TableCell>
+                                  <TableCell>{courseDate ? formatDateLong(courseDate) : '—'}</TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
                 {/* Courses purchased - enrollments as primary (includes pay-later) */}
                 <div>
                   {(() => {
@@ -939,9 +1025,15 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                                   </CardHeader>
                                   <CardContent className="space-y-2 text-sm">
                                     <div className="flex justify-between">
-                                      <span className="text-gray-500">Date selected (enrollment)</span>
+                                      <span className="text-gray-500">Course date</span>
                                       <span className="font-medium">
-                                        {formatDateLong((payment?.selectedCourseDate ?? payment?.enrolledAt) ?? enr.enrolledAt)}
+                                        {formatDateLong(enr.selectedCourseDate ?? payment?.selectedCourseDate ?? payment?.enrolledAt ?? enr.enrolledAt)}
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-gray-500">Verified</span>
+                                      <span className="font-medium">
+                                        {paymentStatus === 'Verified' || paymentStatus === 'Paid' ? 'Yes' : 'No'}
                                       </span>
                                     </div>
                                     <div className="flex justify-between">
@@ -998,10 +1090,10 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             <TableHeader>
                               <TableRow>
                                 <TableHead>Course</TableHead>
-                                <TableHead>Date selected</TableHead>
+                                <TableHead>Course date</TableHead>
                                 <TableHead>Amount</TableHead>
                                 <TableHead>When purchased</TableHead>
-                                <TableHead>Status</TableHead>
+                                <TableHead>Verified</TableHead>
                                 <TableHead className="text-right">Receipt</TableHead>
                               </TableRow>
                             </TableHeader>
@@ -1019,7 +1111,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                                       </div>
                                     </TableCell>
                                     <TableCell>
-                                      {formatDateLong((payment?.selectedCourseDate ?? payment?.enrolledAt) ?? enr.enrolledAt)}
+                                      {formatDateLong(enr.selectedCourseDate ?? payment?.selectedCourseDate ?? payment?.enrolledAt ?? enr.enrolledAt)}
                                     </TableCell>
                                     <TableCell className="font-medium">
                                       {payment ? formatCurrency(payment.amountPaid) : 'Pay Later'}
@@ -1028,18 +1120,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                                       {payment?.paymentDate ? formatDateLong(payment.paymentDate) : '—'}
                                     </TableCell>
                                     <TableCell>
-                                      <Badge
-                                        variant="outline"
-                                        className={
-                                          paymentStatus === 'Verified' || paymentStatus === 'Paid'
-                                            ? 'border-green-200 bg-green-50 text-green-700'
-                                            : paymentStatus === 'Pending' || paymentStatus === 'Pending Verification'
-                                            ? 'border-amber-200 bg-amber-50 text-amber-700'
-                                            : 'border-gray-200 bg-gray-50 text-gray-700'
-                                        }
-                                      >
-                                        {paymentStatus}
-                                      </Badge>
+                                      {paymentStatus === 'Verified' || paymentStatus === 'Paid' ? 'Yes' : 'No'}
                                     </TableCell>
                                     <TableCell className="text-right">
                                       {hasReceipt && payment ? (
@@ -1064,6 +1145,43 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             {formatCurrency(detailsPayments.reduce((sum, p) => sum + p.amountPaid, 0))}
                           </span>
                         </div>
+                      </CardContent>
+                    </Card>
+                  </div>
+                )}
+
+                {/* Enrollment section: Individual/Company, Course, Course selected date per enrollment */}
+                {detailsEnrollments.length > 0 && (
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                      <FileText className="w-5 h-5 text-violet-600" />
+                      Enrollment
+                    </h3>
+                    <Card className="border-violet-100">
+                      <CardContent className="pt-6">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
+                              <TableHead>Individual / Company</TableHead>
+                              <TableHead>Course</TableHead>
+                              <TableHead>Course selected date</TableHead>
+                            </TableRow>
+                          </TableHeader>
+                          <TableBody>
+                            {detailsEnrollments.map((enr) => {
+                              const payment = detailsPayments.find((p) => p.enrollmentId === enr.enrollmentId);
+                              const accountType = payment?.accountType ?? '—';
+                              const courseDate = enr.selectedCourseDate ?? payment?.selectedCourseDate ?? enr.enrolledAt;
+                              return (
+                                <TableRow key={enr.enrollmentId}>
+                                  <TableCell>{accountType}</TableCell>
+                                  <TableCell className="font-medium">{enr.courseName}</TableCell>
+                                  <TableCell>{courseDate ? formatDateLong(courseDate) : '—'}</TableCell>
+                                </TableRow>
+                              );
+                            })}
+                          </TableBody>
+                        </Table>
                       </CardContent>
                     </Card>
                   </div>
