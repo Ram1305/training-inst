@@ -173,7 +173,6 @@ export function EducationSection({ data, onChange, errors }: EducationSectionPro
                     value={data.schoolPostcode || ''}
                     onChange={(e) => onChange({ schoolPostcode: e.target.value })}
                     maxLength={4}
-                    pattern="\d{4}"
                   />
                 </div>
               </div>

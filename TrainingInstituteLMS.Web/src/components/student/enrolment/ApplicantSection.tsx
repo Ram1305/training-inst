@@ -264,7 +264,6 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                   value={data.resPostcode}
                   onChange={(e) => onChange({ resPostcode: e.target.value })}
                   maxLength={4}
-                  pattern="\d{4}"
                   className={errors.resPostcode ? 'border-red-500' : ''}
                 />
                 {errors.resPostcode && <p className="text-sm text-red-500">{errors.resPostcode}</p>}
@@ -352,7 +351,6 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                           value={data.postPostcode || ''}
                           onChange={(e) => onChange({ postPostcode: e.target.value })}
                           maxLength={4}
-                          pattern="\d{4}"
                           className={errors.postPostcode ? 'border-red-500' : ''}
                         />
                         {errors.postPostcode && <p className="text-sm text-red-500">{errors.postPostcode}</p>}
