@@ -11,7 +11,6 @@ import {
   User,
   Mail,
   Phone,
-  Calendar,
   AlertTriangle,
   X,
   Download,
@@ -36,6 +35,8 @@ import {
   type EnrollmentFormResponse,
   type EnrollmentFormStats 
 } from '../../services/studentEnrollmentForm.service';
+import { enrollmentService, type StudentEnrolledCourse } from '../../services/enrollment.service';
+import { adminPaymentService, type AdminPaymentProof } from '../../services/adminPayment.service';
 
 interface AdminStudentEnrollmentsProps {
   initialSearchQuery?: string;
@@ -65,6 +66,34 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
   // PDF handling
   const [isPdfLoading, setIsPdfLoading] = useState(false);
 
+  // Enrollments and payments per student (for Course, Course selected date, Individual/Company)
+  const [studentEnrollments, setStudentEnrollments] = useState<Map<string, StudentEnrolledCourse[]>>(new Map());
+  const [studentPayments, setStudentPayments] = useState<Map<string, AdminPaymentProof[]>>(new Map());
+
+  const fetchEnrollmentsForForms = useCallback(async (forms: EnrollmentFormListItem[]): Promise<void> => {
+    const enrollmentsMap = new Map<string, StudentEnrolledCourse[]>();
+    const paymentsMap = new Map<string, AdminPaymentProof[]>();
+    await Promise.all(
+      forms.map(async (form) => {
+        try {
+          const [enrRes, payRes] = await Promise.all([
+            enrollmentService.getStudentEnrollments(form.studentId).catch(() => ({ success: false, data: [] as StudentEnrolledCourse[] })),
+            adminPaymentService.getPaymentProofs({ studentId: form.studentId, pageSize: 100 }).catch(() => ({ success: false, data: { paymentProofs: [] as AdminPaymentProof[] } })),
+          ]);
+          if (enrRes.success && enrRes.data) enrollmentsMap.set(form.studentId, enrRes.data);
+          else enrollmentsMap.set(form.studentId, []);
+          if (payRes.success && payRes.data?.paymentProofs) paymentsMap.set(form.studentId, payRes.data.paymentProofs);
+          else paymentsMap.set(form.studentId, []);
+        } catch {
+          enrollmentsMap.set(form.studentId, []);
+          paymentsMap.set(form.studentId, []);
+        }
+      })
+    );
+    setStudentEnrollments(enrollmentsMap);
+    setStudentPayments(paymentsMap);
+  }, []);
+
   // Fetch enrollment forms
   const fetchEnrollmentForms = useCallback(async () => {
     setLoading(true);
@@ -80,13 +109,14 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
       if (response.success) {
         setEnrollmentForms(response.data.enrollmentForms);
         setTotalCount(response.data.totalCount);
+        fetchEnrollmentsForForms(response.data.enrollmentForms);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : 'Failed to fetch enrollment forms');
     } finally {
       setLoading(false);
     }
-  }, [searchQuery, statusFilter, currentPage, pageSize]);
+  }, [searchQuery, statusFilter, currentPage, pageSize, fetchEnrollmentsForForms]);
 
   // Fetch stats
   const fetchStats = useCallback(async () => {
@@ -340,6 +370,9 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
                       <TableHead>Submitted</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Enrollments</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Course selected date</TableHead>
+                      <TableHead>Individual/Company</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -362,6 +395,30 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
                           <Badge variant="outline" className="border-blue-200 text-blue-700">
                             {form.enrollmentCount} course{form.enrollmentCount !== 1 ? 's' : ''}
                           </Badge>
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const enrollments = studentEnrollments.get(form.studentId) ?? [];
+                            const first = enrollments[0];
+                            return enrollments.length === 0 ? '—' : enrollments.length === 1 ? first.courseName : `${enrollments.length} courses`;
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const enrollments = studentEnrollments.get(form.studentId) ?? [];
+                            const first = enrollments[0];
+                            const dateSource = first?.selectedCourseDate ?? first?.enrolledAt;
+                            return dateSource ? formatDate(dateSource) : '—';
+                          })()}
+                        </TableCell>
+                        <TableCell>
+                          {(() => {
+                            const enrollments = studentEnrollments.get(form.studentId) ?? [];
+                            const payments = studentPayments.get(form.studentId) ?? [];
+                            const first = enrollments[0];
+                            const payment = first ? payments.find(p => p.enrollmentId === first.enrollmentId) : undefined;
+                            return payment?.accountType ?? '—';
+                          })()}
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">

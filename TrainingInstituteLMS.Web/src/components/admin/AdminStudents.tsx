@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Search, Edit, Trash2, Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, FileText, ClipboardList, CheckCircle, XCircle, X, BookOpen, DollarSign, Download, Loader2 } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, FileText, CheckCircle, XCircle, X, BookOpen, DollarSign, Download, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -527,6 +527,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                       <TableHead>Phone</TableHead>
                       <TableHead>Course</TableHead>
                       <TableHead>Course selected date</TableHead>
+                      <TableHead>Individual/Company</TableHead>
                       <TableHead>LLND Status</TableHead>
                       <TableHead>Enrollment Form</TableHead>
                       <TableHead>Payment status</TableHead>
@@ -570,6 +571,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                         <TableCell>{student.phoneNumber || 'N/A'}</TableCell>
                         <TableCell>{courseLabel}</TableCell>
                         <TableCell>{courseDateLabel}</TableCell>
+                        <TableCell>{paymentForFirst?.accountType ?? '—'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {status ? (
@@ -933,43 +935,6 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                   </div>
                 </div>
 
-                {/* LLN section: Individual/Company, Course, Course selected date per enrollment */}
-                {detailsEnrollments.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <ClipboardList className="w-5 h-5 text-violet-600" />
-                      LLN
-                    </h3>
-                    <Card className="border-violet-100">
-                      <CardContent className="pt-6">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Individual / Company</TableHead>
-                              <TableHead>Course</TableHead>
-                              <TableHead>Course selected date</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {detailsEnrollments.map((enr) => {
-                              const payment = detailsPayments.find((p) => p.enrollmentId === enr.enrollmentId);
-                              const accountType = payment?.accountType ?? '—';
-                              const courseDate = enr.selectedCourseDate ?? payment?.selectedCourseDate ?? enr.enrolledAt;
-                              return (
-                                <TableRow key={enr.enrollmentId}>
-                                  <TableCell>{accountType}</TableCell>
-                                  <TableCell className="font-medium">{enr.courseName}</TableCell>
-                                  <TableCell>{courseDate ? formatDateLong(courseDate) : '—'}</TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-
                 {/* Courses purchased - enrollments as primary (includes pay-later) */}
                 <div>
                   {(() => {
@@ -1145,43 +1110,6 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             {formatCurrency(detailsPayments.reduce((sum, p) => sum + p.amountPaid, 0))}
                           </span>
                         </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-
-                {/* Enrollment section: Individual/Company, Course, Course selected date per enrollment */}
-                {detailsEnrollments.length > 0 && (
-                  <div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                      <FileText className="w-5 h-5 text-violet-600" />
-                      Enrollment
-                    </h3>
-                    <Card className="border-violet-100">
-                      <CardContent className="pt-6">
-                        <Table>
-                          <TableHeader>
-                            <TableRow>
-                              <TableHead>Individual / Company</TableHead>
-                              <TableHead>Course</TableHead>
-                              <TableHead>Course selected date</TableHead>
-                            </TableRow>
-                          </TableHeader>
-                          <TableBody>
-                            {detailsEnrollments.map((enr) => {
-                              const payment = detailsPayments.find((p) => p.enrollmentId === enr.enrollmentId);
-                              const accountType = payment?.accountType ?? '—';
-                              const courseDate = enr.selectedCourseDate ?? payment?.selectedCourseDate ?? enr.enrolledAt;
-                              return (
-                                <TableRow key={enr.enrollmentId}>
-                                  <TableCell>{accountType}</TableCell>
-                                  <TableCell className="font-medium">{enr.courseName}</TableCell>
-                                  <TableCell>{courseDate ? formatDateLong(courseDate) : '—'}</TableCell>
-                                </TableRow>
-                              );
-                            })}
-                          </TableBody>
-                        </Table>
                       </CardContent>
                     </Card>
                   </div>

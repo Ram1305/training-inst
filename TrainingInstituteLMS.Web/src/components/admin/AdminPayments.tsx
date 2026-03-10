@@ -326,6 +326,8 @@ export function AdminPayments() {
                     <TableRow>
                       <TableHead>Student</TableHead>
                       <TableHead>Course</TableHead>
+                      <TableHead>Course selected date</TableHead>
+                      <TableHead>Individual/Company</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Transaction ID</TableHead>
                       <TableHead>Uploaded</TableHead>
@@ -348,6 +350,10 @@ export function AdminPayments() {
                             <div className="text-sm text-gray-500">{receipt.courseCode ?? receipt.courseId}</div>
                           </div>
                         </TableCell>
+                        <TableCell>
+                          {formatDate(receipt.selectedCourseDate ?? receipt.enrolledAt ?? receipt.paymentDate)}
+                        </TableCell>
+                        <TableCell>{receipt.accountType ?? '—'}</TableCell>
                         <TableCell className="font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
                           ${receipt.amountPaid.toLocaleString()}
                         </TableCell>

@@ -16,6 +16,8 @@ import type {
   AdminQuizResultListResponse,
   QuizStatisticsResponse 
 } from '../../services/adminQuiz.service';
+import { enrollmentService, type StudentEnrolledCourse } from '../../services/enrollment.service';
+import { adminPaymentService, type AdminPaymentProof } from '../../services/adminPayment.service';
 
 interface AdminQuizResultsProps {
   initialSearchQuery?: string;
@@ -36,6 +38,10 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
   // Data
   const [resultsData, setResultsData] = useState<AdminQuizResultListResponse | null>(null);
   const [statistics, setStatistics] = useState<QuizStatisticsResponse | null>(null);
+
+  // Enrollments and payments per student (for Course, Course selected date, Individual/Company in list)
+  const [studentEnrollments, setStudentEnrollments] = useState<Map<string, StudentEnrolledCourse[]>>(new Map());
+  const [studentPayments, setStudentPayments] = useState<Map<string, AdminPaymentProof[]>>(new Map());
   
   // Pagination
   const [pageNumber, setPageNumber] = useState(1);
@@ -60,6 +66,12 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
       
       if (response.success) {
         setResultsData(response.data);
+        if (response.data?.results?.length) {
+          fetchEnrollmentsAndPaymentsForStudents(response.data.results.map((r) => r.studentId));
+        } else {
+          setStudentEnrollments(new Map());
+          setStudentPayments(new Map());
+        }
       } else {
         setError(response.message || 'Failed to fetch quiz results');
       }
@@ -85,6 +97,31 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
   const handleSearch = () => {
     setPageNumber(1);
     fetchQuizResults();
+  };
+
+  const fetchEnrollmentsAndPaymentsForStudents = async (studentIds: string[]) => {
+    const seen = new Set<string>();
+    const enrollmentsMap = new Map<string, StudentEnrolledCourse[]>();
+    const paymentsMap = new Map<string, AdminPaymentProof[]>();
+    await Promise.all(
+      studentIds.map(async (id) => {
+        if (seen.has(id)) return;
+        seen.add(id);
+        try {
+          const [enrRes, payRes] = await Promise.all([
+            enrollmentService.getStudentEnrollments(id).catch(() => ({ success: false, data: [] as StudentEnrolledCourse[] })),
+            adminPaymentService.getPaymentProofs({ studentId: id, pageSize: 100 }).catch(() => ({ success: false, data: { paymentProofs: [] as AdminPaymentProof[] } })),
+          ]);
+          enrollmentsMap.set(id, enrRes.success && enrRes.data ? enrRes.data : []);
+          paymentsMap.set(id, payRes.success && payRes.data?.paymentProofs ? payRes.data.paymentProofs : []);
+        } catch {
+          enrollmentsMap.set(id, []);
+          paymentsMap.set(id, []);
+        }
+      })
+    );
+    setStudentEnrollments(enrollmentsMap);
+    setStudentPayments(paymentsMap);
   };
 
   const handleViewDetails = (result: AdminQuizResultResponse) => {
@@ -332,6 +369,9 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
                     <TableRow>
                       <TableHead>Student</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Course selected date</TableHead>
+                      <TableHead>Individual/Company</TableHead>
                       <TableHead>Overall Score</TableHead>
                       <TableHead>Result</TableHead>
                       <TableHead>Status</TableHead>
@@ -350,6 +390,30 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
                           </TableCell>
                           <TableCell>
                             {new Date(result.attemptDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const enrollments = studentEnrollments.get(result.studentId) ?? [];
+                              const first = enrollments[0];
+                              return enrollments.length === 0 ? '—' : enrollments.length === 1 ? first.courseName : `${enrollments.length} courses`;
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const enrollments = studentEnrollments.get(result.studentId) ?? [];
+                              const first = enrollments[0];
+                              const dateSource = first?.selectedCourseDate ?? first?.enrolledAt;
+                              return dateSource ? new Date(dateSource).toLocaleDateString() : '—';
+                            })()}
+                          </TableCell>
+                          <TableCell>
+                            {(() => {
+                              const enrollments = studentEnrollments.get(result.studentId) ?? [];
+                              const payments = studentPayments.get(result.studentId) ?? [];
+                              const first = enrollments[0];
+                              const payment = first ? payments.find(p => p.enrollmentId === first.enrollmentId) : undefined;
+                              return payment?.accountType ?? '—';
+                            })()}
                           </TableCell>
                           <TableCell>
                             <div className="flex items-center gap-2">
@@ -388,7 +452,7 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
                       ))
                       : (
                         <TableRow>
-                          <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                          <TableCell colSpan={9} className="text-center py-8 text-gray-500">
                             No quiz results found
                           </TableCell>
                         </TableRow>
