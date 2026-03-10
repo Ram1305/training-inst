@@ -424,7 +424,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       postalAddress: applicant.postAddress || undefined,
       postalSuburb: applicant.postSuburb || undefined,
       postalState: applicant.postState || undefined,
-      postalPostcode: applicant.postPostcode || undefined,
+      postalCodeOptional: applicant.postPostcode || undefined,
       emergencyContactName: applicant.emergencyName || '',
       emergencyContactRelationship: applicant.emergencyRelationship || '',
       emergencyContactNumber: applicant.emergencyContactNumber || '',
