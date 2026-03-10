@@ -102,6 +102,8 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
   const [bookingDetailsDate, setBookingDetailsDate] = useState<string | null>(getInitialBookingDetailsDate);
   const [navbarHidden, setNavbarHidden] = useState(false);
   const [companyPaymentCount, setCompanyPaymentCount] = useState(0);
+  const [pendingEnrollmentFormEmail, setPendingEnrollmentFormEmail] = useState<string | null>(null);
+  const [pendingLlnEmail, setPendingLlnEmail] = useState<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -125,6 +127,12 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     if (page === 'booking-details' && extra) {
       setBookingDetailsDate(extra);
       setCurrentPage('booking-details');
+    } else if (page === 'enrollment-form' && extra) {
+      setPendingEnrollmentFormEmail(extra);
+      setCurrentPage('enrollment-form');
+    } else if (page === 'lln-assessment' && extra) {
+      setPendingLlnEmail(extra);
+      setCurrentPage('lln-assessment');
     } else if (page === 'students') {
       setCurrentPage('students');
     } else if (page === 'courses') {
@@ -188,15 +196,25 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
       case 'courses':
         return <AdminCourses />;
       case 'students':
-        return <AdminStudents />;
+        return <AdminStudents onNavigate={handleDashboardNavigate} />;
       case 'companies':
         return <AdminCompanies />;
       case 'schedule':
         return <AdminScheduling />;
       case 'lln-assessment':
-        return <AdminQuizResults />;
+        return (
+          <AdminQuizResults
+            initialEmailToView={pendingLlnEmail ?? undefined}
+            onClearInitialView={() => setPendingLlnEmail(null)}
+          />
+        );
       case 'enrollment-form':
-        return <AdminStudentEnrollments />;
+        return (
+          <AdminStudentEnrollments
+            initialEmailToView={pendingEnrollmentFormEmail ?? undefined}
+            onClearInitialView={() => setPendingEnrollmentFormEmail(null)}
+          />
+        );
       case 'enrollment-links':
         return <AdminEnrollmentLinks />;
       case 'exam':

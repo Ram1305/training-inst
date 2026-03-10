@@ -21,10 +21,12 @@ import { adminPaymentService, type AdminPaymentProof } from '../../services/admi
 
 interface AdminQuizResultsProps {
   initialSearchQuery?: string;
+  initialEmailToView?: string;
+  onClearInitialView?: () => void;
 }
 
-export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps = {}) {
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
+export function AdminQuizResults({ initialSearchQuery, initialEmailToView, onClearInitialView }: AdminQuizResultsProps = {}) {
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || initialEmailToView || '');
   const [statusFilter, setStatusFilter] = useState<string>('');
   const [selectedResult, setSelectedResult] = useState<AdminQuizResultResponse | null>(null);
   const [showDetailDialog, setShowDetailDialog] = useState(false);
@@ -52,6 +54,18 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
     fetchQuizResults();
     fetchStatistics();
   }, [pageNumber, statusFilter]);
+
+  // Auto-open detail dialog when navigated from Students tab with initialEmailToView
+  useEffect(() => {
+    if (!initialEmailToView || !resultsData?.results?.length) return;
+    const result = resultsData.results.find(
+      (r) => r.studentEmail?.toLowerCase() === initialEmailToView.toLowerCase()
+    );
+    if (result) {
+      handleViewDetails(result);
+    }
+    onClearInitialView?.();
+  }, [resultsData?.results, initialEmailToView]);
 
   const fetchQuizResults = async () => {
     setIsLoading(true);
@@ -367,10 +381,10 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student</TableHead>
                       <TableHead>Date</TableHead>
+                      <TableHead>Student</TableHead>
                       <TableHead>Course</TableHead>
-                      <TableHead>Course selected date</TableHead>
+                      <TableHead>Course booking date</TableHead>
                       <TableHead>Individual/Company</TableHead>
                       <TableHead>Overall Score</TableHead>
                       <TableHead>Result</TableHead>
@@ -383,13 +397,13 @@ export function AdminQuizResults({ initialSearchQuery }: AdminQuizResultsProps =
                       ? resultsData.results.map((result) => (
                         <TableRow key={result.quizAttemptId}>
                           <TableCell>
+                            {new Date(result.attemptDate).toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
                             <div>
                               <div className="font-medium">{result.studentName}</div>
                               <div className="text-sm text-gray-500">{result.studentEmail}</div>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {new Date(result.attemptDate).toLocaleDateString()}
                           </TableCell>
                           <TableCell>
                             {(() => {

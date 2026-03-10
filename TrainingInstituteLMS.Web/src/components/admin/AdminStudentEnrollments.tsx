@@ -40,16 +40,18 @@ import { adminPaymentService, type AdminPaymentProof } from '../../services/admi
 
 interface AdminStudentEnrollmentsProps {
   initialSearchQuery?: string;
+  initialEmailToView?: string;
+  onClearInitialView?: () => void;
 }
 
-export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnrollmentsProps = {}) {
+export function AdminStudentEnrollments({ initialSearchQuery, initialEmailToView, onClearInitialView }: AdminStudentEnrollmentsProps = {}) {
   const [enrollmentForms, setEnrollmentForms] = useState<EnrollmentFormListItem[]>([]);
   const [stats, setStats] = useState<EnrollmentFormStats | null>(null);
   const [loading, setLoading] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(10);
-  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || '');
+  const [searchQuery, setSearchQuery] = useState(initialSearchQuery || initialEmailToView || '');
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   // View/Edit Dialog
@@ -134,6 +136,16 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
     fetchEnrollmentForms();
     fetchStats();
   }, [fetchEnrollmentForms, fetchStats]);
+
+  // Auto-open view dialog when navigated from Students tab with initialEmailToView
+  useEffect(() => {
+    if (!initialEmailToView || enrollmentForms.length === 0) return;
+    const form = enrollmentForms.find((f) => f.email?.toLowerCase() === initialEmailToView.toLowerCase());
+    if (form) {
+      handleViewForm(form.studentId);
+    }
+    onClearInitialView?.();
+  }, [enrollmentForms, initialEmailToView]);
 
   const handleViewForm = async (studentId: string) => {
     setLoadingForm(true);
@@ -364,21 +376,22 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
                 <Table>
                   <TableHeader>
                     <TableRow>
-                      <TableHead>Student</TableHead>
+                      <TableHead>Date</TableHead>
+                      <TableHead>Name</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
-                      <TableHead>Submitted</TableHead>
+                      <TableHead>Course</TableHead>
+                      <TableHead>Course booking date</TableHead>
+                      <TableHead>Individual/Company</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Enrollments</TableHead>
-                      <TableHead>Course</TableHead>
-                      <TableHead>Course selected date</TableHead>
-                      <TableHead>Individual/Company</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {enrollmentForms.map((form) => (
                       <TableRow key={form.studentId}>
+                        <TableCell>{formatDate(form.submittedAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -389,13 +402,6 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
                         </TableCell>
                         <TableCell>{form.email}</TableCell>
                         <TableCell>{form.phoneNumber || 'N/A'}</TableCell>
-                        <TableCell>{formatDate(form.submittedAt)}</TableCell>
-                        <TableCell>{getStatusBadge(form.status)}</TableCell>
-                        <TableCell>
-                          <Badge variant="outline" className="border-blue-200 text-blue-700">
-                            {form.enrollmentCount} course{form.enrollmentCount !== 1 ? 's' : ''}
-                          </Badge>
-                        </TableCell>
                         <TableCell>
                           {(() => {
                             const enrollments = studentEnrollments.get(form.studentId) ?? [];
@@ -419,6 +425,12 @@ export function AdminStudentEnrollments({ initialSearchQuery }: AdminStudentEnro
                             const payment = first ? payments.find(p => p.enrollmentId === first.enrollmentId) : undefined;
                             return first?.enrollmentType ?? payment?.accountType ?? '—';
                           })()}
+                        </TableCell>
+                        <TableCell>{getStatusBadge(form.status)}</TableCell>
+                        <TableCell>
+                          <Badge variant="outline" className="border-blue-200 text-blue-700">
+                            {form.enrollmentCount} course{form.enrollmentCount !== 1 ? 's' : ''}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">

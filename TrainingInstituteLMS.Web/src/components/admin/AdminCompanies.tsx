@@ -341,8 +341,10 @@ export function AdminCompanies() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Date</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead>Email</TableHead>
+                      <TableHead>Company mobile number</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Last Login</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -351,6 +353,7 @@ export function AdminCompanies() {
                   <TableBody>
                     {companies.map((company) => (
                       <TableRow key={company.companyId}>
+                        <TableCell>{formatDate(company.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -360,6 +363,7 @@ export function AdminCompanies() {
                           </div>
                         </TableCell>
                         <TableCell>{company.email}</TableCell>
+                        <TableCell>—</TableCell>
                         <TableCell>
                           <Badge
                             className={

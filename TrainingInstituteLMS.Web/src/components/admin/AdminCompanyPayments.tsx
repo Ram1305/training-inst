@@ -197,12 +197,13 @@ export function AdminCompanyPayments() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Date</TableHead>
                       <TableHead>Company</TableHead>
-                      <TableHead>Contact</TableHead>
+                      <TableHead>Email</TableHead>
+                      <TableHead>Company mobile number</TableHead>
                       <TableHead>Courses</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Payment</TableHead>
-                      <TableHead>Date</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -210,6 +211,7 @@ export function AdminCompanyPayments() {
                   <TableBody>
                     {orders.map((order) => (
                       <TableRow key={order.orderId}>
+                        <TableCell>{formatDate(order.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -220,14 +222,8 @@ export function AdminCompanyPayments() {
                             </span>
                           </div>
                         </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium text-gray-900">{order.companyEmail}</div>
-                            {order.companyMobile && (
-                              <div className="text-xs text-gray-500">{order.companyMobile}</div>
-                            )}
-                          </div>
-                        </TableCell>
+                        <TableCell>{order.companyEmail}</TableCell>
+                        <TableCell>{order.companyMobile || '—'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-1">
                             <BookOpen className="w-4 h-4 text-gray-500" />
@@ -242,7 +238,6 @@ export function AdminCompanyPayments() {
                             {(order.paymentMethod || '').replace('_', ' ')}
                           </span>
                         </TableCell>
-                        <TableCell>{formatDate(order.createdAt)}</TableCell>
                         <TableCell>
                           <Badge
                             variant="outline"

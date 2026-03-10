@@ -324,13 +324,13 @@ export function AdminPayments() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Payment date</TableHead>
                       <TableHead>Student</TableHead>
                       <TableHead>Course</TableHead>
-                      <TableHead>Course selected date</TableHead>
+                      <TableHead>Course booking date</TableHead>
                       <TableHead>Individual/Company</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Transaction ID</TableHead>
-                      <TableHead>Uploaded</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
                     </TableRow>
@@ -338,6 +338,7 @@ export function AdminPayments() {
                   <TableBody>
                     {receipts.map((receipt) => (
                       <TableRow key={receipt.paymentProofId}>
+                        <TableCell>{formatDate(receipt.uploadedAt ?? receipt.paymentDate)}</TableCell>
                         <TableCell>
                           <div>
                             <div className="font-medium">{receipt.studentName}</div>
@@ -360,7 +361,6 @@ export function AdminPayments() {
                         <TableCell>
                           <code className="text-sm bg-gray-100 px-2 py-1 rounded">{receipt.transactionId}</code>
                         </TableCell>
-                        <TableCell>{formatDate(receipt.uploadedAt ?? receipt.paymentDate)}</TableCell>
                         <TableCell>
                           <Badge className={
                             receipt.status === 'Verified'

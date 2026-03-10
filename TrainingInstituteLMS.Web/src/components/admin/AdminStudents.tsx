@@ -522,12 +522,13 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Register date</TableHead>
                       <TableHead>Name</TableHead>
+                      <TableHead>Individual/Company</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Phone</TableHead>
                       <TableHead>Course</TableHead>
-                      <TableHead>Course selected date</TableHead>
-                      <TableHead>Individual/Company</TableHead>
+                      <TableHead>Course booking date</TableHead>
                       <TableHead>LLND Status</TableHead>
                       <TableHead>Enrollment Form</TableHead>
                       <TableHead>Payment status</TableHead>
@@ -554,6 +555,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                       const paymentStatusLabel = enrollments.length === 0 ? '—' : allPaid ? 'Paid' : 'Unpaid';
                       return (
                       <TableRow key={student.studentId}>
+                        <TableCell>{formatDate(student.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -567,11 +569,11 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             </div>
                           </div>
                         </TableCell>
+                        <TableCell>{firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—'}</TableCell>
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phoneNumber || 'N/A'}</TableCell>
                         <TableCell>{courseLabel}</TableCell>
                         <TableCell>{courseDateLabel}</TableCell>
-                        <TableCell>{firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—'}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-2">
                             {status ? (
@@ -596,7 +598,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => onNavigate?.('quiz-results', student.email)}
+                              onClick={() => onNavigate?.('lln-assessment', student.email)}
                               disabled={loading || !onNavigate}
                               title="View Quiz Results"
                             >
@@ -628,7 +630,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => onNavigate?.('enrollment-forms', student.email)}
+                              onClick={() => onNavigate?.('enrollment-form', student.email)}
                               disabled={loading || !onNavigate}
                               title="View Enrollment Form"
                             >
