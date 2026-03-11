@@ -79,32 +79,77 @@ const getEventTypeLabel = (type: string): string => {
 // Stable course-based colors: same course always gets same color across views
 // Stable course-based colors: same course always gets same color across views
 const COURSE_COLOR_PALETTE: { color: string; bgColor: string }[] = [
+  // Blues & Cyans
   { color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  { color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
-  { color: 'text-violet-700', bgColor: 'bg-violet-100' },
-  { color: 'text-amber-700', bgColor: 'bg-amber-100' },
-  { color: 'text-rose-700', bgColor: 'bg-rose-100' },
   { color: 'text-cyan-700', bgColor: 'bg-cyan-100' },
-  { color: 'text-indigo-700', bgColor: 'bg-indigo-100' },
-  { color: 'text-teal-700', bgColor: 'bg-teal-100' },
-  { color: 'text-orange-700', bgColor: 'bg-orange-100' },
-  { color: 'text-pink-700', bgColor: 'bg-pink-100' },
   { color: 'text-sky-700', bgColor: 'bg-sky-100' },
+  { color: 'text-indigo-700', bgColor: 'bg-indigo-100' },
+  { color: 'text-blue-800', bgColor: 'bg-blue-50' },
+  { color: 'text-cyan-800', bgColor: 'bg-cyan-50' },
+  
+  // Greens & Teals
+  { color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+  { color: 'text-teal-700', bgColor: 'bg-teal-100' },
   { color: 'text-lime-700', bgColor: 'bg-lime-100' },
+  { color: 'text-green-700', bgColor: 'bg-green-100' },
+  { color: 'text-emerald-800', bgColor: 'bg-emerald-50' },
+  { color: 'text-teal-800', bgColor: 'bg-teal-50' },
+  
+  // Violets & Pinks
+  { color: 'text-violet-700', bgColor: 'bg-violet-100' },
+  { color: 'text-purple-700', bgColor: 'bg-purple-100' },
+  { color: 'text-fuchsia-700', bgColor: 'bg-fuchsia-100' },
+  { color: 'text-pink-700', bgColor: 'bg-pink-100' },
+  { color: 'text-rose-700', bgColor: 'bg-rose-100' },
+  { color: 'text-violet-800', bgColor: 'bg-violet-50' },
+  
+  // Warm Colors
+  { color: 'text-amber-700', bgColor: 'bg-amber-100' },
+  { color: 'text-orange-700', bgColor: 'bg-orange-100' },
+  { color: 'text-rose-800', bgColor: 'bg-rose-50' },
+  { color: 'text-amber-800', bgColor: 'bg-amber-50' },
+  { color: 'text-orange-800', bgColor: 'bg-orange-50' },
+  { color: 'text-red-700', bgColor: 'bg-red-100' },
+  
+  // More variants
+  { color: 'text-indigo-800', bgColor: 'bg-indigo-50' },
+  { color: 'text-purple-800', bgColor: 'bg-purple-50' },
+  { color: 'text-fuchsia-800', bgColor: 'bg-fuchsia-50' },
+  { color: 'text-pink-800', bgColor: 'bg-pink-50' },
+  { color: 'text-sky-800', bgColor: 'bg-sky-50' },
+  { color: 'text-lime-800', bgColor: 'bg-lime-50' },
+  { color: 'text-green-800', bgColor: 'bg-green-50' },
+  { color: 'text-slate-700', bgColor: 'bg-slate-100' },
+  { color: 'text-zinc-700', bgColor: 'bg-zinc-100' },
+  { color: 'text-stone-700', bgColor: 'bg-stone-100' },
+  { color: 'text-gray-700', bgColor: 'bg-gray-100' },
+  { color: 'text-blue-900', bgColor: 'bg-blue-200' },
 ];
 
-const COURSE_COLOR_LABELS = ['Blue', 'Emerald', 'Violet', 'Amber', 'Rose', 'Cyan', 'Indigo', 'Teal', 'Orange', 'Pink', 'Sky', 'Lime'];
+const COURSE_COLOR_LABELS = [
+  'Blue', 'Cyan', 'Sky', 'Indigo', 'Soft Blue', 'Soft Cyan',
+  'Emerald', 'Teal', 'Lime', 'Green', 'Soft Emerald', 'Soft Teal',
+  'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Soft Violet',
+  'Amber', 'Orange', 'Soft Rose', 'Soft Amber', 'Soft Orange', 'Red',
+  'Deep Indigo', 'Deep Purple', 'Deep Fuchsia', 'Deep Pink', 'Deep Sky', 'Deep Lime',
+  'Deep Green', 'Slate', 'Zinc', 'Stone', 'Gray', 'Royal Blue'
+];
 
 const MANUAL_COLORS_STORAGE_KEY = 'schedule-course-colors';
 
 function getUniqueColor(seed: string): { color: string; bgColor: string } {
   if (!seed) return { color: 'text-indigo-700', bgColor: 'bg-indigo-50' };
-  let hash = 0;
+  
+  // Use a more complex hash to spread colors better
+  let hash = 5381;
   for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
-    hash |= 0;
+    hash = ((hash << 5) + hash) + seed.charCodeAt(i);
   }
-  const index = Math.abs(hash) % COURSE_COLOR_PALETTE.length;
+  
+  // Use bitwise XOR to further distribute
+  hash = (hash ^ (hash >>> 16)) & 0x7FFFFFFF;
+  
+  const index = hash % COURSE_COLOR_PALETTE.length;
   return COURSE_COLOR_PALETTE[index];
 }
 
