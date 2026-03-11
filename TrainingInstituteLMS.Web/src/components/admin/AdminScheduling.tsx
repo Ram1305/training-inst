@@ -58,34 +58,33 @@ interface DraggableEventTemplate {
 }
 
 const eventTemplates: DraggableEventTemplate[] = [
-  // Theory, Practical, Exam - commented out, General only
-  // {
-  //   id: 'template-theory',
-  //   title: 'Theory Class',
-  //   type: 'theory',
-  //   color: 'text-blue-700',
-  //   bgColor: 'bg-blue-200'
-  // },
-  // {
-  //   id: 'template-practical',
-  //   title: 'Practical Session',
-  //   type: 'practical',
-  //   color: 'text-purple-700',
-  //   bgColor: 'bg-purple-200'
-  // },
-  // {
-  //   id: 'template-exam',
-  //   title: 'Exam',
-  //   type: 'exam',
-  //   color: 'text-green-700',
-  //   bgColor: 'bg-green-200'
-  // },
+  {
+    id: 'template-theory',
+    title: 'Theory Class',
+    type: 'theory',
+    color: 'text-blue-700',
+    bgColor: 'bg-blue-100'
+  },
+  {
+    id: 'template-practical',
+    title: 'Practical Session',
+    type: 'practical',
+    color: 'text-purple-700',
+    bgColor: 'bg-purple-100'
+  },
+  {
+    id: 'template-exam',
+    title: 'Exam',
+    type: 'exam',
+    color: 'text-rose-700',
+    bgColor: 'bg-rose-100'
+  },
   {
     id: 'template-meeting',
     title: 'General',
     type: 'meeting',
-    color: 'text-gray-700',
-    bgColor: 'bg-gray-200'
+    color: 'text-indigo-700',
+    bgColor: 'bg-indigo-100'
   }
 ];
 
@@ -99,19 +98,20 @@ const getEventTypeLabel = (type: string): string => {
 };
 
 // Stable course-based colors: same course always gets same color across views
+// Stable course-based colors: same course always gets same color across views
 const COURSE_COLOR_PALETTE: { color: string; bgColor: string }[] = [
-  { color: 'text-blue-700', bgColor: 'bg-blue-200' },
-  { color: 'text-emerald-700', bgColor: 'bg-emerald-200' },
-  { color: 'text-violet-700', bgColor: 'bg-violet-200' },
-  { color: 'text-amber-700', bgColor: 'bg-amber-200' },
-  { color: 'text-rose-700', bgColor: 'bg-rose-200' },
-  { color: 'text-cyan-700', bgColor: 'bg-cyan-200' },
-  { color: 'text-indigo-700', bgColor: 'bg-indigo-200' },
-  { color: 'text-teal-700', bgColor: 'bg-teal-200' },
-  { color: 'text-orange-700', bgColor: 'bg-orange-200' },
-  { color: 'text-pink-700', bgColor: 'bg-pink-200' },
-  { color: 'text-sky-700', bgColor: 'bg-sky-200' },
-  { color: 'text-lime-700', bgColor: 'bg-lime-200' },
+  { color: 'text-blue-700', bgColor: 'bg-blue-100' },
+  { color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+  { color: 'text-violet-700', bgColor: 'bg-violet-100' },
+  { color: 'text-amber-700', bgColor: 'bg-amber-100' },
+  { color: 'text-rose-700', bgColor: 'bg-rose-100' },
+  { color: 'text-cyan-700', bgColor: 'bg-cyan-100' },
+  { color: 'text-indigo-700', bgColor: 'bg-indigo-100' },
+  { color: 'text-teal-700', bgColor: 'bg-teal-100' },
+  { color: 'text-orange-700', bgColor: 'bg-orange-100' },
+  { color: 'text-pink-700', bgColor: 'bg-pink-100' },
+  { color: 'text-sky-700', bgColor: 'bg-sky-100' },
+  { color: 'text-lime-700', bgColor: 'bg-lime-100' },
 ];
 
 const COURSE_COLOR_LABELS = ['Blue', 'Emerald', 'Violet', 'Amber', 'Rose', 'Cyan', 'Indigo', 'Teal', 'Orange', 'Pink', 'Sky', 'Lime'];
@@ -119,7 +119,7 @@ const COURSE_COLOR_LABELS = ['Blue', 'Emerald', 'Violet', 'Amber', 'Rose', 'Cyan
 const MANUAL_COLORS_STORAGE_KEY = 'schedule-course-colors';
 
 function getCourseColor(courseCode: string): { color: string; bgColor: string } {
-  if (!courseCode) return { color: 'text-gray-700', bgColor: 'bg-gray-200' };
+  if (!courseCode) return { color: 'text-indigo-700', bgColor: 'bg-indigo-50' };
   let hash = 0;
   for (let i = 0; i < courseCode.length; i++) {
     hash = ((hash << 5) - hash) + courseCode.charCodeAt(i);
@@ -163,13 +163,13 @@ function DraggableEvent({ template }: { template: DraggableEventTemplate }) {
   );
 }
 
-function DroppableCalendarCell({ 
-  date, 
-  events, 
+function DroppableCalendarCell({
+  date,
+  events,
   onEventClick,
   selectedEventId,
 }: {
-  date: Date; 
+  date: Date;
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
   selectedEventId: string | null;
@@ -181,9 +181,8 @@ function DroppableCalendarCell({
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[120px] p-2 transition-colors ${
-        isOver ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white hover:bg-blue-50/30'
-      }`}
+      className={`min-h-[120px] p-2 transition-colors ${isOver ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white hover:bg-blue-50/30'
+        }`}
     >
       <div className="space-y-1">
         {events.slice(0, 3).map((event) => {
@@ -213,13 +212,13 @@ function DroppableCalendarCell({
 }
 
 // Droppable cell for Week View with time slots
-function DroppableWeekCell({ 
-  date, 
-  events, 
+function DroppableWeekCell({
+  date,
+  events,
   onEventClick,
   selectedEventId,
 }: {
-  date: Date; 
+  date: Date;
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
   selectedEventId: string | null;
@@ -231,9 +230,8 @@ function DroppableWeekCell({
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[400px] p-2 border-r border-gray-200 last:border-r-0 transition-colors ${
-        isOver ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white hover:bg-blue-50/30'
-      }`}
+      className={`min-h-[400px] p-2 border-r border-gray-200 last:border-r-0 transition-colors ${isOver ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white hover:bg-blue-50/30'
+        }`}
     >
       <div className="space-y-2">
         {events.map((event) => {
@@ -262,13 +260,13 @@ function DroppableWeekCell({
 }
 
 // Droppable cell for Day View
-function DroppableDayCell({ 
-  date: initialDate, 
-  events, 
+function DroppableDayCell({
+  date: initialDate,
+  events,
   onEventClick,
   selectedEventId,
 }: {
-  date: Date; 
+  date: Date;
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
   selectedEventId: string | null;
@@ -284,9 +282,8 @@ function DroppableDayCell({
   return (
     <div
       ref={setNodeRef}
-      className={`min-h-[500px] p-4 transition-colors ${
-        isOver ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white'
-      }`}
+      className={`min-h-[500px] p-4 transition-colors ${isOver ? 'bg-blue-100 ring-2 ring-blue-500' : 'bg-white'
+        }`}
     >
       <div className="space-y-3">
         {events.length === 0 ? (
@@ -332,13 +329,13 @@ function DroppableDayCell({
 }
 
 // Droppable row for List View
-function DroppableListRow({ 
-  date, 
-  events, 
+function DroppableListRow({
+  date,
+  events,
   onEventClick,
   selectedEventId,
 }: {
-  date: Date; 
+  date: Date;
   events: ScheduleEvent[];
   onEventClick: (event: ScheduleEvent) => void;
   selectedEventId: string | null;
@@ -348,7 +345,7 @@ function DroppableListRow({
   });
 
   const formatDate = (d: Date) => {
-    return d.toLocaleDateString('en-AU', { 
+    return d.toLocaleDateString('en-AU', {
       weekday: 'short',
       day: 'numeric',
       month: 'short'
@@ -358,16 +355,15 @@ function DroppableListRow({
   const isToday = (d: Date) => {
     const today = new Date();
     return d.getDate() === today.getDate() &&
-           d.getMonth() === today.getMonth() &&
-           d.getFullYear() === today.getFullYear();
+      d.getMonth() === today.getMonth() &&
+      d.getFullYear() === today.getFullYear();
   };
 
   return (
     <div
       ref={setNodeRef}
-      className={`border-b border-gray-200 last:border-b-0 transition-colors ${
-        isOver ? 'bg-blue-100 ring-2 ring-blue-500' : ''
-      }`}
+      className={`border-b border-gray-200 last:border-b-0 transition-colors ${isOver ? 'bg-blue-100 ring-2 ring-blue-500' : ''
+        }`}
     >
       <div className="flex">
         {/* Date Column */}
@@ -379,7 +375,7 @@ function DroppableListRow({
             <Badge className="mt-1 bg-blue-600 text-white text-xs">Today</Badge>
           )}
         </div>
-        
+
         {/* Events Column */}
         <div className="flex-1 p-4 space-y-2">
           {events.length === 0 ? (
@@ -433,7 +429,7 @@ export function AdminScheduling() {
   const [selectedTeacherName, setSelectedTeacherName] = useState<string>('');
   const [isLoadingTeachers, setIsLoadingTeachers] = useState(false);
   const [showTeacherDropdown, setShowTeacherDropdown] = useState(false);
-  
+
   const [newEvent, setNewEvent] = useState({
     title: '',
     courseId: '',
@@ -557,24 +553,24 @@ export function AdminScheduling() {
   const fetchSchedules = async () => {
     try {
       setIsLoading(true);
-      
+
       // Get the first and last day of the current month view (including overflow days)
       const year = currentDate.getFullYear();
       const month = currentDate.getMonth();
       const firstDay = new Date(year, month, 1);
       const startDate = new Date(firstDay);
       startDate.setDate(startDate.getDate() - startDate.getDay());
-      
+
       const lastDay = new Date(year, month + 1, 0);
       const endDate = new Date(lastDay);
       endDate.setDate(endDate.getDate() + (6 - endDate.getDay()));
-      
+
       const response = await scheduleService.getSchedulesForCalendar(
         startDate.toISOString().split('T')[0],
         endDate.toISOString().split('T')[0],
         selectedCourseFilter !== 'all' ? selectedCourseFilter : undefined
       );
-      
+
       if (response.success && response.data) {
         // If backend does not return color/bgColor, use manual color or course-based palette
         const courseColors = response.data.map((item: ScheduleCalendarItem) => {
@@ -651,7 +647,7 @@ export function AdminScheduling() {
     const month = currentDate.getMonth();
     const firstDay = new Date(year, month, 1);
     const lastDay = new Date(year, month + 1, 0);
-    
+
     const days = [];
     const current = new Date(firstDay);
     while (current <= lastDay) {
@@ -693,21 +689,21 @@ export function AdminScheduling() {
     setCurrentDate(new Date());
   };
 
-const getEventsForDate = (date: Date) => {
-  return events.filter(event => {
-    const eventDate = new Date(event.startDate);
-    eventDate.setHours(0, 0, 0, 0);
+  const getEventsForDate = (date: Date) => {
+    return events.filter(event => {
+      const eventDate = new Date(event.startDate);
+      eventDate.setHours(0, 0, 0, 0);
 
-    const compareDate = new Date(date);
-    compareDate.setHours(0, 0, 0, 0);
+      const compareDate = new Date(date);
+      compareDate.setHours(0, 0, 0, 0);
 
-    return (
-      eventDate.getDate() === compareDate.getDate() &&
-      eventDate.getMonth() === compareDate.getMonth() &&
-      eventDate.getFullYear() === compareDate.getFullYear()
-    );
-  });
-};
+      return (
+        eventDate.getDate() === compareDate.getDate() &&
+        eventDate.getMonth() === compareDate.getMonth() &&
+        eventDate.getFullYear() === compareDate.getFullYear()
+      );
+    });
+  };
 
   const isCurrentMonth = (date: Date) => {
     return date.getMonth() === currentDate.getMonth();
@@ -716,8 +712,8 @@ const getEventsForDate = (date: Date) => {
   const isToday = (date: Date) => {
     const today = new Date();
     return date.getDate() === today.getDate() &&
-           date.getMonth() === today.getMonth() &&
-           date.getFullYear() === today.getFullYear();
+      date.getMonth() === today.getMonth() &&
+      date.getFullYear() === today.getFullYear();
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -729,11 +725,11 @@ const getEventsForDate = (date: Date) => {
 
   const handleDragEnd = (event: DragEndEvent) => {
     setDraggedTemplate(null);
-    
+
     if (event.over && event.active) {
       // Parse the dropped date from the droppable ID
       let droppedDateStr = event.over.id as string;
-      
+
       // Handle different view prefixes
       if (droppedDateStr.startsWith('week-')) {
         droppedDateStr = droppedDateStr.replace('week-', '');
@@ -742,11 +738,11 @@ const getEventsForDate = (date: Date) => {
       } else if (droppedDateStr.startsWith('list-')) {
         droppedDateStr = droppedDateStr.replace('list-', '');
       }
-      
+
       // Use parseLocalDateString to avoid timezone issues
       const droppedDate = parseLocalDateString(droppedDateStr);
       const template = eventTemplates.find(t => t.id === event.active.id);
-      
+
       if (template) {
         setNewEvent({
           ...newEvent,
@@ -813,7 +809,7 @@ const getEventsForDate = (date: Date) => {
       setError(null);
 
       const selectedCourse = courses.find(c => c.courseId === newEvent.courseId);
-      
+
       const request: CreateScheduleRequest = {
         courseId: newEvent.courseId,
         eventTitle: newEvent.title || getEventTypeLabel(newEvent.type),
@@ -865,37 +861,37 @@ const getEventsForDate = (date: Date) => {
   };
 
   const handleDeleteEvent = async (scheduleId: string) => {
-  if (!window.confirm('Are you sure you want to delete this schedule?')) return;
+    if (!window.confirm('Are you sure you want to delete this schedule?')) return;
 
-  try {
-    setIsSubmitting(true);
-    setError(null);
+    try {
+      setIsSubmitting(true);
+      setError(null);
 
-    const response = await scheduleService.deleteSchedule(scheduleId);
+      const response = await scheduleService.deleteSchedule(scheduleId);
 
-    if (response.success) {
-      const wasDeactivated = response.data?.wasDeactivated;
-      if (wasDeactivated) {
-        // Deactivated (had enrollments) - update status in list
-        setEvents(prev => prev.map(e =>
-          e.id === scheduleId ? { ...e, status: 'Cancelled' } : e
-        ));
+      if (response.success) {
+        const wasDeactivated = response.data?.wasDeactivated;
+        if (wasDeactivated) {
+          // Deactivated (had enrollments) - update status in list
+          setEvents(prev => prev.map(e =>
+            e.id === scheduleId ? { ...e, status: 'Cancelled' } : e
+          ));
+        } else {
+          // Actually deleted
+          setEvents(prev => prev.filter(e => e.id !== scheduleId));
+        }
+        setShowEventDetailDialog(false);
+        setSelectedEvent(null);
       } else {
-        // Actually deleted
-        setEvents(prev => prev.filter(e => e.id !== scheduleId));
+        setError(response.message || 'Failed to delete schedule');
       }
-      setShowEventDetailDialog(false);
-      setSelectedEvent(null);
-    } else {
-      setError(response.message || 'Failed to delete schedule');
+    } catch (err) {
+      console.error('Error deleting schedule:', err);
+      setError('Failed to delete schedule');
+    } finally {
+      setIsSubmitting(false);
     }
-  } catch (err) {
-    console.error('Error deleting schedule:', err);
-    setError('Failed to delete schedule');
-  } finally {
-    setIsSubmitting(false);
-  }
-};
+  };
 
   const handleDeleteOldSchedules = async () => {
     if (!window.confirm('Delete all past schedules with no enrollments? This cannot be undone.')) return;
@@ -947,11 +943,11 @@ const getEventsForDate = (date: Date) => {
   };
 
   const formatDateForDisplay = (date: Date): string => {
-    return date.toLocaleDateString('en-AU', { 
+    return date.toLocaleDateString('en-AU', {
       weekday: 'long',
-      year: 'numeric', 
-      month: 'long', 
-      day: 'numeric' 
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
     });
   };
 
@@ -1030,21 +1026,20 @@ const getEventsForDate = (date: Date) => {
               <div className="mt-6 pt-6 border-t border-gray-200">
                 <h4 className="text-sm font-medium mb-3">Event Types:</h4>
                 <div className="space-y-2 text-sm">
-                  {/* Theory, Practical, Exam - commented out, General only */}
-                  {/* <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-200 rounded border-l-2 border-blue-700" />
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 bg-blue-100 rounded border-l-2 border-blue-700" />
                     <span>Theory Class</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-purple-200 rounded border-l-2 border-purple-700" />
+                    <div className="w-4 h-4 bg-purple-100 rounded border-l-2 border-purple-700" />
                     <span>Practical Session</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-green-200 rounded border-l-2 border-green-700" />
+                    <div className="w-4 h-4 bg-rose-100 rounded border-l-2 border-rose-700" />
                     <span>Exam</span>
-                  </div> */}
+                  </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-gray-200 rounded border-l-2 border-gray-700" />
+                    <div className="w-4 h-4 bg-indigo-100 rounded border-l-2 border-indigo-700" />
                     <span>General</span>
                   </div>
                 </div>
@@ -1123,11 +1118,10 @@ const getEventsForDate = (date: Date) => {
                         <button
                           key={v}
                           onClick={() => setView(v)}
-                          className={`px-3 py-1 rounded-md text-sm transition-colors ${
-                            view === v
+                          className={`px-3 py-1 rounded-md text-sm transition-colors ${view === v
                               ? 'bg-white text-gray-900 shadow-sm font-medium'
                               : 'text-gray-600 hover:text-gray-900'
-                          }`}
+                            }`}
                         >
                           {v}
                         </button>
@@ -1169,11 +1163,10 @@ const getEventsForDate = (date: Date) => {
                           >
                             <div className="bg-white p-2">
                               <div
-                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full mb-2 ${
-                                  today
+                                className={`inline-flex items-center justify-center w-7 h-7 rounded-full mb-2 ${today
                                     ? 'bg-gradient-to-br from-blue-600 to-purple-600 text-white font-semibold'
                                     : 'text-gray-700'
-                                }`}
+                                  }`}
                               >
                                 {date.getDate()}
                               </div>
@@ -1211,11 +1204,10 @@ const getEventsForDate = (date: Date) => {
                           return (
                             <div key={index} className="p-4 text-center border-r border-gray-200 last:border-r-0">
                               <div className="text-sm font-medium text-gray-500">{weekDays[index]}</div>
-                              <div className={`mt-1 text-2xl font-semibold ${
-                                today 
-                                  ? 'w-10 h-10 mx-auto rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center' 
+                              <div className={`mt-1 text-2xl font-semibold ${today
+                                  ? 'w-10 h-10 mx-auto rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center'
                                   : 'text-gray-700'
-                              }`}>
+                                }`}>
                                 {date.getDate()}
                               </div>
                             </div>
@@ -1259,11 +1251,10 @@ const getEventsForDate = (date: Date) => {
                       <div className="bg-gray-50 border-b border-gray-200 p-4">
                         <div className="text-center">
                           <div className="text-sm font-medium text-gray-500">{weekDaysFull[currentDate.getDay()]}</div>
-                          <div className={`mt-1 text-4xl font-bold ${
-                            isToday(currentDate) 
-                              ? 'w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center' 
+                          <div className={`mt-1 text-4xl font-bold ${isToday(currentDate)
+                              ? 'w-16 h-16 mx-auto rounded-full bg-gradient-to-br from-blue-600 to-purple-600 text-white flex items-center justify-center'
                               : 'text-gray-700'
-                          }`}>
+                            }`}>
                             {currentDate.getDate()}
                           </div>
                           <div className="text-sm text-gray-500 mt-1">
@@ -1310,9 +1301,9 @@ const getEventsForDate = (date: Date) => {
                           const today = new Date();
                           today.setHours(0, 0, 0, 0);
                           const showDay = dayEvents.length > 0 || date >= today;
-                          
+
                           if (!showDay) return null;
-                          
+
                           return (
                             <DroppableListRow
                               key={index}
@@ -1403,10 +1394,9 @@ const getEventsForDate = (date: Date) => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {/* Theory, Practical, Exam - commented out, General only */}
-                        {/* <SelectItem value="theory">Theory Class</SelectItem>
+                        <SelectItem value="theory">Theory Class</SelectItem>
                         <SelectItem value="practical">Practical Session</SelectItem>
-                        <SelectItem value="exam">Exam</SelectItem> */}
+                        <SelectItem value="exam">Exam</SelectItem>
                         <SelectItem value="meeting">General</SelectItem>
                       </SelectContent>
                     </Select>
@@ -1646,8 +1636,8 @@ const getEventsForDate = (date: Date) => {
                 </Badge>
                 <Badge variant="outline" className={
                   selectedEvent.status === 'Scheduled' ? 'text-blue-600 border-blue-200' :
-                  selectedEvent.status === 'Completed' ? 'text-green-600 border-green-200' :
-                  'text-gray-600 border-gray-200'
+                    selectedEvent.status === 'Completed' ? 'text-green-600 border-green-200' :
+                      'text-gray-600 border-gray-200'
                 }>
                   {selectedEvent.status}
                 </Badge>
@@ -1746,9 +1736,9 @@ const getEventsForDate = (date: Date) => {
               {selectedEvent.meetingLink && (
                 <div className="space-y-1">
                   <div className="text-sm text-gray-500">Meeting Link</div>
-                  <a 
-                    href={selectedEvent.meetingLink} 
-                    target="_blank" 
+                  <a
+                    href={selectedEvent.meetingLink}
+                    target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-blue-600 hover:text-blue-700 hover:underline font-medium"
                   >
