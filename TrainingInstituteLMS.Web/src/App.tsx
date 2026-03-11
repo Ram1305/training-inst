@@ -600,6 +600,7 @@ export default function App() {
         onCancel={handleBackToLanding}
         preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
         preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? selectedCourseDateId ?? undefined}
+        preSelectedCoursePrice={selectedCourseData.coursePrice}
         isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
         allowPayLater={enrollmentLinkData?.allowPayLater}
         enrollCode={enrollCode ?? ''}

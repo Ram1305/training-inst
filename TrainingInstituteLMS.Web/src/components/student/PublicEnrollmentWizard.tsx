@@ -80,12 +80,26 @@ interface PublicEnrollmentWizardProps {
   onCancel: () => void;
   preSelectedCourseId?: string;
   preSelectedCourseDateId?: string;
+  /** Optional override for the selected course price (e.g., promo/offer price from Course Details). */
+  preSelectedCoursePrice?: number;
   /** When true, show only name/email/phone/password and complete via one-time link (no payment, no LLN). */
   isOneTimeLink?: boolean;
   /** When true, users complete full flow without payment (name, email, mobile, LLN, enrollment form only). */
   allowPayLater?: boolean;
   /** Link code for one-time link completion API. */
   enrollCode?: string;
+}
+
+function toLocalDateKey(d: Date) {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+function getIsoDateKey(isoLike: string | null | undefined) {
+  const key = (isoLike || '').split('T')[0];
+  return /^\d{4}-\d{2}-\d{2}$/.test(key) ? key : '';
 }
 
 // Full quiz sections data (same as in PublicQuiz.tsx)
@@ -322,6 +336,7 @@ export function PublicEnrollmentWizard({
   onCancel, 
   preSelectedCourseId, 
   preSelectedCourseDateId,
+  preSelectedCoursePrice,
   isOneTimeLink = false,
   allowPayLater = false,
   enrollCode = ''
@@ -369,6 +384,9 @@ export function PublicEnrollmentWizard({
   const [courseDates, setCourseDates] = useState<CourseDateDropdownItem[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState(preSelectedCourseId || '');
   const [selectedCourseDateId, setSelectedCourseDateId] = useState(preSelectedCourseDateId || '');
+  const [selectedCoursePriceOverride, setSelectedCoursePriceOverride] = useState<number | null>(
+    typeof preSelectedCoursePrice === 'number' ? preSelectedCoursePrice : null
+  );
   const [showAllCourseDates, setShowAllCourseDates] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
@@ -468,6 +486,21 @@ export function PublicEnrollmentWizard({
     }
   }, [selectedCourseId]);
 
+  // If the user changes the course manually, drop any override price (promo applies only to the preselected course).
+  useEffect(() => {
+    if (!selectedCourseId) return;
+    if (preSelectedCourseId && selectedCourseId === preSelectedCourseId) return;
+    if (selectedCoursePriceOverride != null) setSelectedCoursePriceOverride(null);
+  }, [selectedCourseId, preSelectedCourseId, selectedCoursePriceOverride]);
+
+  // If selected date gets filtered out (e.g., now in the past), clear selection
+  useEffect(() => {
+    if (!selectedCourseDateId) return;
+    if (!courseDates.some((d) => d.courseDateId === selectedCourseDateId)) {
+      setSelectedCourseDateId('');
+    }
+  }, [courseDates, selectedCourseDateId]);
+
   // Detect card type when card number changes
   useEffect(() => {
     if (cardData.cardNumber) {
@@ -501,7 +534,14 @@ export function PublicEnrollmentWizard({
     try {
       const response = await publicEnrollmentWizardService.getCourseDates(courseId);
       if (response.success && response.data) {
-        setCourseDates(Array.isArray(response.data) ? response.data : []);
+        const todayKey = toLocalDateKey(new Date());
+        const all = Array.isArray(response.data) ? response.data : [];
+        const filtered = all.filter((d) => {
+          const startKey = getIsoDateKey(d.startDate);
+          if (!startKey) return true; // if malformed, don't unexpectedly hide it
+          return startKey >= todayKey;
+        });
+        setCourseDates(filtered);
       } else {
         setCourseDates([]);
         toast.error(response.message || 'Failed to load course dates');
@@ -571,7 +611,7 @@ export function PublicEnrollmentWizard({
       return false;
     }
 
-    const coursePrice = getSelectedCourse()?.price || 0;
+    const coursePrice = getSelectedCoursePrice();
 
     setPaymentProcessing(true);
     setPaymentError(null);
@@ -1415,7 +1455,7 @@ export function PublicEnrollmentWizard({
       });
 
       // Get course price for payment amount
-      const coursePrice = getSelectedCourse()?.price || 0;
+      const coursePrice = getSelectedCoursePrice();
 
       // Build the full request with quiz data and payment info
       const fullRequest: SubmitGuestQuizRequest & SubmitEnrollmentFormRequest & {
@@ -1498,6 +1538,12 @@ export function PublicEnrollmentWizard({
   };
 
   const getSelectedCourse = () => courses.find(c => c.courseId === selectedCourseId);
+  const getSelectedCoursePrice = () => {
+    if (selectedCoursePriceOverride != null && selectedCoursePriceOverride >= 0) {
+      return selectedCoursePriceOverride;
+    }
+    return getSelectedCourse()?.price || 0;
+  };
   const getSelectedDate = () => courseDates.find(d => d.courseDateId === selectedCourseDateId);
 
   // Quiz Declaration Modal
@@ -3226,7 +3272,7 @@ export function PublicEnrollmentWizard({
                   ) : currentStep === 2 && paymentMethod === 'card' ? (
                     <>
                       <Lock className="w-4 h-4 mr-2" />
-                      Pay ${getSelectedCourse()?.price || 0} & Continue
+                      Pay ${getSelectedCoursePrice()} & Continue
                     </>
                   ) : currentStep === 2 ? (
                     'Continue to LLND Assessment'
