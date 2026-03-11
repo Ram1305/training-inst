@@ -1,11 +1,11 @@
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { 
-  ArrowLeft, 
-  ArrowRight, 
-  Save, 
-  CheckCircle, 
-  Loader2, 
-  Eye, 
+import {
+  ArrowLeft,
+  ArrowRight,
+  Save,
+  CheckCircle,
+  Loader2,
+  Eye,
   EyeOff,
   User,
   BookOpen,
@@ -35,10 +35,10 @@ import { Progress } from '../ui/progress';
 import { Checkbox } from '../ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
-import { 
-  publicEnrollmentWizardService, 
-  type CourseDropdownItem, 
-  type CourseDateDropdownItem 
+import {
+  publicEnrollmentWizardService,
+  type CourseDropdownItem,
+  type CourseDateDropdownItem
 } from '../../services/publicEnrollmentWizard.service';
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest } from '../../services/studentEnrollmentForm.service';
 import { quizService, type SubmitGuestQuizRequest, type SubmitQuizSectionResult } from '../../services/quiz.service';
@@ -331,10 +331,10 @@ interface CompanyCourseItem {
   courseName?: string;
 }
 
-export function PublicEnrollmentWizard({ 
-  onComplete, 
-  onCancel, 
-  preSelectedCourseId, 
+export function PublicEnrollmentWizard({
+  onComplete,
+  onCancel,
+  preSelectedCourseId,
   preSelectedCourseDateId,
   preSelectedCoursePrice,
   isOneTimeLink = false,
@@ -637,11 +637,11 @@ export function PublicEnrollmentWizard({
         // Payment successful
         setPaymentCompleted(true);
         setPaymentTransactionId(result.data.transactionId);
-        
+
         // Store user/student IDs for later
         if (result.data.userId) setUserId(result.data.userId);
         if (result.data.studentId) setStudentId(result.data.studentId);
-        
+
         toast.success('Payment successful!');
         return true;
       } else {
@@ -957,7 +957,7 @@ export function PublicEnrollmentWizard({
       // Use canonical enrollment URL from API (context) for the "website URL" question (d3)
       const effectiveCorrect = (q.id === 'd3') ? `${publicSiteUrl}/` : (typeof q.correctAnswer === 'string' ? q.correctAnswer : '');
       const correctAnswerRaw = effectiveCorrect;
-      
+
       if (q.type === 'drag-drop') {
         if (userAnswerRaw?.toLowerCase().trim() === 'completed') {
           correct++;
@@ -981,7 +981,7 @@ export function PublicEnrollmentWizard({
     });
 
     const shouldAutoPass = quizAttemptNumber >= AUTO_PASS_ATTEMPT;
-    
+
     // On 4th attempt, auto-equalize answers to achieve exactly 67%
     let finalCorrect = correct;
     if (shouldAutoPass) {
@@ -989,7 +989,7 @@ export function PublicEnrollmentWizard({
       const requiredCorrect = Math.ceil((section.questions.length * 67) / 100);
       finalCorrect = requiredCorrect;
     }
-    
+
     const rawPercentage = (finalCorrect / section.questions.length) * 100;
     const percentage = Math.round(rawPercentage);
     const passed = rawPercentage >= section.passingPercentage;
@@ -1550,7 +1550,7 @@ export function PublicEnrollmentWizard({
   if (showQuizDeclaration) {
     const { totalQuestions, totalCorrect } = calculateQuizTotals();
     const percentage = totalQuestions > 0 ? ((totalCorrect / totalQuestions) * 100).toFixed(2) : '0';
-    
+
     return (
       <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
         <div className="bg-white rounded-lg p-8 max-w-lg w-full shadow-2xl max-h-[90vh] overflow-y-auto">
@@ -1583,11 +1583,11 @@ export function PublicEnrollmentWizard({
           <p className="text-gray-600 mb-4">
             Before proceeding, please confirm the following:
           </p>
-          
+
           <div className="space-y-4 mb-6">
             <label className="flex items-start gap-3 cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={declarationChecks.honest}
                 onChange={(e) => setDeclarationChecks(prev => ({ ...prev, honest: e.target.checked }))}
                 className="w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 mt-0.5"
@@ -1596,10 +1596,10 @@ export function PublicEnrollmentWizard({
                 I completed this quiz honestly and did not cheat in any way.
               </span>
             </label>
-            
+
             <label className="flex items-start gap-3 cursor-pointer">
-              <input 
-                type="checkbox" 
+              <input
+                type="checkbox"
                 checked={declarationChecks.understand}
                 onChange={(e) => setDeclarationChecks(prev => ({ ...prev, understand: e.target.checked }))}
                 className="w-5 h-5 rounded border-gray-300 text-violet-600 focus:ring-violet-500 mt-0.5"
@@ -1609,15 +1609,15 @@ export function PublicEnrollmentWizard({
               </span>
             </label>
           </div>
-          
+
           <p className="text-gray-600 mb-4 text-sm">
             Please confirm your name below and click <strong>Continue</strong> to proceed.
           </p>
-          
+
           <div className="flex items-center gap-4 mb-6">
             <div className="flex items-center gap-2 flex-1">
               <span className="font-semibold text-gray-700 text-sm">Name:</span>
-              <input 
+              <input
                 type="text"
                 value={declarationName}
                 onChange={(e) => setDeclarationName(e.target.value)}
@@ -1629,9 +1629,9 @@ export function PublicEnrollmentWizard({
               <span className="border-b-2 border-gray-300 px-2 py-1 text-sm">{new Date().toLocaleDateString('en-AU')}</span>
             </div>
           </div>
-          
+
           <div className="flex justify-center">
-            <Button 
+            <Button
               onClick={handleQuizDeclarationSubmit}
               disabled={!declarationChecks.honest || !declarationChecks.understand || !declarationName.trim()}
               className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 px-8"
@@ -1662,9 +1662,9 @@ export function PublicEnrollmentWizard({
               <div className="flex flex-col lg:flex-row gap-6">
                 {/* Left column: form content */}
                 <div className="flex-1 min-w-0 space-y-6">
-              {/* Course image (left) and Enrollment type (right) — image commented out */}
-              <div className="flex flex-wrap items-start gap-4 justify-between">
-                {/* Course preview image — commented out
+                  {/* Course image (left) and Enrollment type (right) — image commented out */}
+                  <div className="flex flex-wrap items-start gap-4 justify-between">
+                    {/* Course preview image — commented out
                 <div className="shrink-0 w-[64px] h-[40px] rounded-lg overflow-hidden shadow-md ring-2 ring-violet-100 bg-violet-50/50 flex items-center justify-center [&_img]:max-h-full [&_img]:min-h-0 [&_img]:w-full [&_img]:object-cover [&_img]:block">
                   {(() => {
                     const previewCourse =
@@ -1693,222 +1693,245 @@ export function PublicEnrollmentWizard({
                   })()}
                 </div>
                 */}
-                <div className="flex-1 min-w-0 flex justify-start">
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700 mb-3">
-                      Enrollment type <span className="text-red-500">*</span>
-                    </Label>
-                    <RadioGroup
-                      value={enrollmentType}
-                      onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
-                      className="flex gap-4"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="individual" id="type-individual" />
-                        <Label htmlFor="type-individual" className="cursor-pointer font-normal">
-                          Individual
+                    <div className="flex-1 min-w-0 flex justify-start">
+                      <div>
+                        <Label className="block text-sm font-medium text-gray-700 mb-3">
+                          Enrollment type <span className="text-red-500">*</span>
                         </Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="company" id="type-company" />
-                        <Label htmlFor="type-company" className="cursor-pointer font-normal">
-                          Company
-                        </Label>
-                      </div>
-                    </RadioGroup>
-                  </div>
-                </div>
-              </div>
-
-              {enrollmentType === 'company' ? (
-                <>
-                  <div>
-                    <Label className="block text-sm font-medium text-gray-700 mb-3">
-                      Add courses <span className="text-red-500">*</span>
-                    </Label>
-                    {loadingCourses ? (
-                      <div className="w-full min-h-[80px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
-                        <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                        Loading courses...
-                      </div>
-                    ) : courses.length === 0 ? (
-                      <div className="w-full min-h-[80px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
-                        No courses available.
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        <Select
-                          value={pendingCompanyCourse?.courseId ?? ''}
-                          onValueChange={(courseId) => {
-                            const c = courses.find((x) => x.courseId === courseId);
-                            if (c && !selectedCompanyCourses.some((x) => x.courseId === courseId)) {
-                              setPendingCompanyCourse({ courseId: c.courseId, courseName: c.courseName, price: c.price });
-                              setSelectedCourseId(c.courseId);
-                              setSelectedCourseDateId('');
-                            }
-                          }}
+                        <RadioGroup
+                          value={enrollmentType}
+                          onValueChange={(v) => setEnrollmentType(v as EnrollmentType)}
+                          className="flex gap-4"
                         >
-                          <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white">
-                            <SelectValue placeholder="Choose a course to add..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {courses
-                              .filter((c) => !selectedCompanyCourses.some((x) => x.courseId === c.courseId))
-                              .map((course) => (
-                                <SelectItem key={course.courseId} value={course.courseId}>
-                                  {course.courseCode} – {course.courseName} · ${course.price}
-                                </SelectItem>
-                              ))}
-                            {courses.filter((c) => !selectedCompanyCourses.some((x) => x.courseId === c.courseId)).length === 0 && (
-                              <SelectItem value="_none" disabled>
-                                All courses added
-                              </SelectItem>
-                            )}
-                          </SelectContent>
-                        </Select>
-                        {selectedCompanyCourses.length > 0 && (
-                          <ul className="mt-3 space-y-2 rounded-lg border border-violet-200 bg-violet-50/50 p-3">
-                            {selectedCompanyCourses.map((item, idx) => (
-                              <li
-                                key={`${item.courseId}-${idx}`}
-                                className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-violet-100"
-                              >
-                                <div className="text-sm">
-                                  <span className="font-medium">
-                                    {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price}
-                                  </span>
-                                  {item.courseDateLabel && (
-                                    <p className="text-gray-500 text-xs mt-0.5">Date: {item.courseDateLabel}</p>
-                                  )}
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() =>
-                                    setSelectedCompanyCourses((prev) => prev.filter((_, i) => i !== idx))
-                                  }
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                        {selectedCompanyCourses.length > 0 && (
-                          <p className="text-sm font-semibold text-violet-700 mt-2">
-                            Total: ${selectedCompanyCourses.reduce((sum, i) => sum + i.price, 0)}
-                          </p>
-                        )}
-                        {pendingCompanyCourse && (
-                          <div className="mt-4">
-                            <Label className="block text-sm font-medium text-gray-700 mb-3">
-                              Select a date for {pendingCompanyCourse.courseName} <span className="text-red-500">*</span>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="individual" id="type-individual" />
+                            <Label htmlFor="type-individual" className="cursor-pointer font-normal">
+                              Individual
                             </Label>
-                            {loadingDates ? (
-                              <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
-                                <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                                Loading available dates...
-                              </div>
-                            ) : courseDates.length === 0 ? (
-                              <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
-                                No available dates for this course at the moment.
-                              </div>
-                            ) : (
-                              <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                                {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
-                                  <div key={dateKey} className="flex flex-col items-center w-full">
-                                    <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
-                                      {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
-                                        weekday: 'short',
-                                        day: 'numeric',
-                                        month: 'short',
-                                        year: 'numeric',
-                                      })}
-                                    </p>
-                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
-                                      {dates.map((date) => {
-                                        const isDisabled = !date.isAvailable;
-                                        return (
-                                          <button
-                                            key={date.courseDateId}
-                                            type="button"
-                                            disabled={isDisabled}
-                                            onClick={() => {
-                                              if (isDisabled || !pendingCompanyCourse) return;
-                                              const courseDateLabel = date.startDate !== date.endDate
-                                                ? `${new Date(date.startDate).toLocaleDateString('en-AU')} – ${new Date(date.endDate).toLocaleDateString('en-AU')}`
-                                                : new Date(date.startDate).toLocaleDateString('en-AU');
-                                              setSelectedCompanyCourses((prev) => [
-                                                ...prev,
-                                                {
-                                                  courseId: pendingCompanyCourse.courseId,
-                                                  courseName: pendingCompanyCourse.courseName,
-                                                  price: pendingCompanyCourse.price,
-                                                  courseDateId: date.courseDateId,
-                                                  courseDateLabel,
-                                                },
-                                              ]);
-                                              setPendingCompanyCourse(null);
-                                              setSelectedCourseId('');
-                                              setSelectedCourseDateId('');
-                                            }}
-                                            className={`
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="company" id="type-company" />
+                            <Label htmlFor="type-company" className="cursor-pointer font-normal">
+                              Company
+                            </Label>
+                          </div>
+                        </RadioGroup>
+                      </div>
+                    </div>
+                  </div>
+
+                  {enrollmentType === 'company' ? (
+                    <>
+                      <div>
+                        <Label className="block text-sm font-medium text-gray-700 mb-3">
+                          Add courses <span className="text-red-500">*</span>
+                        </Label>
+                        {loadingCourses ? (
+                          <div className="w-full min-h-[80px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                            Loading courses...
+                          </div>
+                        ) : courses.length === 0 ? (
+                          <div className="w-full min-h-[80px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                            No courses available.
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <Select
+                              value={pendingCompanyCourse ? `${pendingCompanyCourse.courseId}|${pendingCompanyCourse.price}` : ''}
+                              onValueChange={(value) => {
+                                const [courseId, priceStr] = value.split('|');
+                                const price = parseFloat(priceStr);
+                                const c = courses.find((x) => x.courseId === courseId);
+                                if (c && !selectedCompanyCourses.some((x) => x.courseId === courseId && x.price === price)) {
+                                  setPendingCompanyCourse({ courseId: c.courseId, courseName: c.courseName, price: price });
+                                  setSelectedCourseId(c.courseId);
+                                  setSelectedCourseDateId('');
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white">
+                                <SelectValue placeholder="Choose a course to add..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {courses.flatMap((course) => {
+                                  const items = [];
+                                  
+                                  // Base price item
+                                  items.push({
+                                    id: course.courseId,
+                                    price: course.price,
+                                    label: `${course.courseCode} – ${course.courseName} · $${course.price}`
+                                  });
+
+                                  // Check for premium price override (from pre-selection)
+                                  if (course.courseId === preSelectedCourseId && preSelectedCoursePrice != null && preSelectedCoursePrice !== course.price) {
+                                    items.push({
+                                      id: course.courseId,
+                                      price: preSelectedCoursePrice,
+                                      label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`
+                                    });
+                                  }
+
+                                  return items;
+                                }).filter(item => !selectedCompanyCourses.some(sc => sc.courseId === item.id && sc.price === item.price))
+                                  .map((item) => (
+                                    <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
+                                      {item.label}
+                                    </SelectItem>
+                                  ))}
+                                {courses.length === 0 && (
+                                  <SelectItem value="_none" disabled>
+                                    No courses available
+                                  </SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            {selectedCompanyCourses.length > 0 && (
+                              <ul className="mt-3 space-y-2 rounded-lg border border-violet-200 bg-violet-50/50 p-3">
+                                {selectedCompanyCourses.map((item, idx) => (
+                                  <li
+                                    key={`${item.courseId}-${idx}`}
+                                    className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-violet-100"
+                                  >
+                                    <div className="text-sm">
+                                      <span className="font-medium">
+                                        {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price}
+                                      </span>
+                                      {item.courseDateLabel && (
+                                        <p className="text-gray-500 text-xs mt-0.5">Date: {item.courseDateLabel}</p>
+                                      )}
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      variant="ghost"
+                                      size="sm"
+                                      className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() =>
+                                        setSelectedCompanyCourses((prev) => prev.filter((_, i) => i !== idx))
+                                      }
+                                    >
+                                      <X className="w-4 h-4" />
+                                    </Button>
+                                  </li>
+                                ))}
+                              </ul>
+                            )}
+                            {selectedCompanyCourses.length > 0 && (
+                              <p className="text-sm font-semibold text-violet-700 mt-2">
+                                Total: ${selectedCompanyCourses.reduce((sum, i) => sum + i.price, 0)}
+                              </p>
+                            )}
+                            {pendingCompanyCourse && (
+                              <div className="mt-4">
+                                <Label className="block text-sm font-medium text-gray-700 mb-3">
+                                  Select a date for {pendingCompanyCourse.courseName} <span className="text-red-500">*</span>
+                                </Label>
+                                {loadingDates ? (
+                                  <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                                    Loading available dates...
+                                  </div>
+                                ) : courseDates.length === 0 ? (
+                                  <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                                    No available dates for this course at the moment.
+                                  </div>
+                                ) : (
+                                  <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                                    {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
+                                      <div key={dateKey} className="flex flex-col items-center w-full">
+                                        <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
+                                          {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
+                                            weekday: 'short',
+                                            day: 'numeric',
+                                            month: 'short',
+                                            year: 'numeric',
+                                          })}
+                                        </p>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
+                                          {dates.map((date) => {
+                                            const isDisabled = !date.isAvailable;
+                                            return (
+                                              <button
+                                                key={date.courseDateId}
+                                                type="button"
+                                                disabled={isDisabled}
+                                                onClick={() => {
+                                                  if (isDisabled || !pendingCompanyCourse) return;
+                                                  const courseDateLabel = date.startDate !== date.endDate
+                                                    ? `${new Date(date.startDate).toLocaleDateString('en-AU')} – ${new Date(date.endDate).toLocaleDateString('en-AU')}`
+                                                    : new Date(date.startDate).toLocaleDateString('en-AU');
+                                                  setSelectedCompanyCourses((prev) => [
+                                                    ...prev,
+                                                    {
+                                                      courseId: pendingCompanyCourse.courseId,
+                                                      courseName: pendingCompanyCourse.courseName,
+                                                      price: pendingCompanyCourse.price,
+                                                      courseDateId: date.courseDateId,
+                                                      courseDateLabel,
+                                                    },
+                                                  ]);
+                                                  setPendingCompanyCourse(null);
+                                                  setSelectedCourseId('');
+                                                  setSelectedCourseDateId('');
+                                                }}
+                                                className={`
                                               relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
                                               focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
                                               border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-sm
                                               ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                                             `}
-                                          >
-                                            <div className="flex items-start gap-3 pr-8">
-                                              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-                                                <Calendar className="h-5 w-5" />
-                                              </div>
-                                              <div className="min-w-0 flex-1">
-                                                <div className="min-h-8 flex items-center">
-                                                  <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                                    <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                    {new Date(date.startDate).toLocaleDateString('en-AU')}
-                                                    {date.startDate !== date.endDate && (
-                                                      <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
-                                                    )}
-                                                  </p>
-                                                </div>
-                                                {date.location && date.location.toLowerCase() !== 'face to face' && (
-                                                  <div className="min-h-6 mt-1 flex items-center">
-                                                    <p className="text-sm text-gray-500 truncate" title={date.location}>
-                                                      <MapPin className="h-3.5 w-3.5 shrink-0 inline mr-1" />
-                                                      {date.location}
-                                                    </p>
+                                              >
+                                                <div className="flex items-start gap-3 pr-8">
+                                                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                                                    <Calendar className="h-5 w-5" />
                                                   </div>
-                                                )}
-                                                <div className="min-h-6 flex items-center mt-1.5">
-                                                  <p className="text-xs font-medium text-violet-600">
-                                                    {date.availableSlots > 0
-                                                      ? `${date.availableSlots} spot${date.availableSlots === 1 ? '' : 's'} left`
-                                                      : 'Fully booked'}
-                                                  </p>
+                                                  <div className="min-w-0 flex-1">
+                                                    <div className="min-h-8 flex items-center">
+                                                      <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                        {new Date(date.startDate).toLocaleDateString('en-AU')}
+                                                        {date.startDate !== date.endDate && (
+                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                                        )}
+                                                      </p>
+                                                    </div>
+                                                    {date.location && date.location.toLowerCase() !== 'face to face' && (
+                                                      <div className="min-h-6 mt-1 flex items-center">
+                                                        <p className="text-sm text-gray-500 truncate" title={date.location}>
+                                                          <MapPin className="h-3.5 w-3.5 shrink-0 inline mr-1" />
+                                                          {date.location}
+                                                        </p>
+                                                      </div>
+                                                    )}
+                                                    <div className="min-h-6 flex items-center mt-1.5">
+                                                      <p className="text-xs font-medium text-violet-600">
+                                                        {date.availableSlots > 0
+                                                          ? `${date.availableSlots} spot${date.availableSlots === 1 ? '' : 's'} left`
+                                                          : 'Fully booked'}
+                                                      </p>
+                                                    </div>
+                                                  </div>
                                                 </div>
-                                              </div>
-                                            </div>
-                                          </button>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                ))}
-                                {courseDatesByDate.length > 4 && (
-                                  <div className="pt-2">
-                                    <button
-                                      type="button"
-                                      onClick={() => setShowAllCourseDates((prev) => !prev)}
-                                      className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded px-1"
-                                    >
-                                      {showAllCourseDates
-                                        ? 'Show less'
-                                        : `Show more dates (${courseDatesByDate.length - 4} more)`}
-                                    </button>
+                                              </button>
+                                            );
+                                          })}
+                                        </div>
+                                      </div>
+                                    ))}
+                                    {courseDatesByDate.length > 4 && (
+                                      <div className="pt-2">
+                                        <button
+                                          type="button"
+                                          onClick={() => setShowAllCourseDates((prev) => !prev)}
+                                          className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded px-1"
+                                        >
+                                          {showAllCourseDates
+                                            ? 'Show less'
+                                            : `Show more dates (${courseDatesByDate.length - 4} more)`}
+                                        </button>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                               </div>
@@ -1916,174 +1939,194 @@ export function PublicEnrollmentWizard({
                           </div>
                         )}
                       </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-              <>
-              <div>
-                <Label className="block text-sm font-medium text-gray-700 mb-3">
-                  Select Course <span className="text-red-500">*</span>
-                </Label>
-                {loadingCourses ? (
-                  <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
-                    <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                    Loading courses...
-                  </div>
-                ) : courses.length === 0 ? (
-                  <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
-                    No courses available. Please contact us for more information.
-                  </div>
-                ) : (
-                  <>
-                    <Select
-                      value={selectedCourseId || undefined}
-                      onValueChange={setSelectedCourseId}
-                    >
-                      <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white hover:bg-violet-50/50 focus-visible:ring-violet-500 focus-visible:ring-offset-2 h-auto min-h-11 py-2.5">
-                        <SelectValue placeholder="Choose a course..." />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
-                        {courses.map((course) => {
-                          const parts = [
-                            `${course.courseCode} – ${course.courseName}`,
-                            `$${course.price}`,
-                            course.duration || null,
-                            course.categoryName || null,
-                          ].filter(Boolean);
-                          return (
-                            <SelectItem key={course.courseId} value={course.courseId}>
-                              {parts.join(' · ')}
-                            </SelectItem>
-                          );
-                        })}
-                      </SelectContent>
-                    </Select>
-                    {(() => {
-                      const c = getSelectedCourse();
-                      if (!c) return null;
-                      const summaryParts = [`$${c.price}`, c.duration, c.categoryName].filter(Boolean);
-                      if (summaryParts.length === 0) return null;
-                      return (
-                        <p className="text-sm text-gray-500 mt-2">
-                          {summaryParts.join(' · ')}
-                        </p>
-                      );
-                    })()}
-                  </>
-                )}
-              </div>
-
-              {selectedCourseId && (
-                <div>
-                  <Label className="block text-sm font-medium text-gray-700 mb-3">
-                    Select a date <span className="text-red-500">*</span>
-                  </Label>
-                  {loadingDates ? (
-                    <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
-                      <Loader2 className="w-6 h-6 animate-spin mr-2" />
-                      Loading available dates...
-                    </div>
-                  ) : courseDates.length === 0 ? (
-                    <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
-                      No available dates for this course at the moment. Please contact us for more information.
-                    </div>
+                    </>
                   ) : (
-                    <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                      {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
-                        <div key={dateKey} className="flex flex-col items-center w-full">
-                          <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
-                            {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
-                              weekday: 'short',
-                              day: 'numeric',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </p>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
-                            {dates.map((date) => {
-                              const isSelected = selectedCourseDateId === date.courseDateId;
-                              const isDisabled = !date.isAvailable;
+                    <>
+                      <div>
+                        <Label className="block text-sm font-medium text-gray-700 mb-3">
+                          Select Course <span className="text-red-500">*</span>
+                        </Label>
+                        {loadingCourses ? (
+                          <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                            <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                            Loading courses...
+                          </div>
+                        ) : courses.length === 0 ? (
+                          <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                            No courses available. Please contact us for more information.
+                          </div>
+                        ) : (
+                          <>
+                            <Select
+                              value={selectedCourseId ? `${selectedCourseId}|${getSelectedCoursePrice()}` : undefined}
+                              onValueChange={(value) => {
+                                const [id, priceStr] = value.split('|');
+                                const price = parseFloat(priceStr);
+                                setSelectedCourseId(id);
+                                const baseCourse = courses.find(c => c.courseId === id);
+                                if (baseCourse && price !== baseCourse.price) {
+                                  setSelectedCoursePriceOverride(price);
+                                } else {
+                                  setSelectedCoursePriceOverride(null);
+                                }
+                              }}
+                            >
+                              <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white hover:bg-violet-50/50 focus-visible:ring-violet-500 focus-visible:ring-offset-2 h-auto min-h-11 py-2.5">
+                                <SelectValue placeholder="Choose a course..." />
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
+                                {courses.flatMap((course) => {
+                                  const items = [];
+                                  
+                                  // Base price item
+                                  items.push({
+                                    id: course.courseId,
+                                    price: course.price,
+                                    label: `${course.courseCode} – ${course.courseName} · $${course.price}`
+                                  });
+
+                                  // Check for premium price override (from pre-selection)
+                                  if (course.courseId === preSelectedCourseId && preSelectedCoursePrice != null && preSelectedCoursePrice !== course.price) {
+                                    items.push({
+                                      id: course.courseId,
+                                      price: preSelectedCoursePrice,
+                                      label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`
+                                    });
+                                  }
+
+                                  return items;
+                                }).map((item) => (
+                                  <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
+                                    {item.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            {(() => {
+                              const c = getSelectedCourse();
+                              if (!c) return null;
+                              const summaryParts = [`$${getSelectedCoursePrice()}`, c.duration, c.categoryName].filter(Boolean);
+                              if (summaryParts.length === 0) return null;
                               return (
-                                <button
-                                  key={date.courseDateId}
-                                  type="button"
-                                  disabled={isDisabled}
-                                  onClick={() => {
-                                    if (isDisabled) return;
-                                    setSelectedCourseDateId(date.courseDateId);
-                                  }}
-                                  className={`
+                                <p className="text-sm text-gray-500 mt-2">
+                                  {summaryParts.join(' · ')}
+                                </p>
+                              );
+                            })()}
+                          </>
+                        )}
+                      </div>
+
+                      {selectedCourseId && (
+                        <div>
+                          <Label className="block text-sm font-medium text-gray-700 mb-3">
+                            Select a date <span className="text-red-500">*</span>
+                          </Label>
+                          {loadingDates ? (
+                            <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
+                              <Loader2 className="w-6 h-6 animate-spin mr-2" />
+                              Loading available dates...
+                            </div>
+                          ) : courseDates.length === 0 ? (
+                            <div className="w-full min-h-[120px] bg-amber-50 border border-amber-200 rounded-xl px-6 flex items-center text-amber-700 text-sm">
+                              No available dates for this course at the moment. Please contact us for more information.
+                            </div>
+                          ) : (
+                            <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                              {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
+                                <div key={dateKey} className="flex flex-col items-center w-full">
+                                  <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
+                                    {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
+                                      weekday: 'short',
+                                      day: 'numeric',
+                                      month: 'short',
+                                      year: 'numeric',
+                                    })}
+                                  </p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
+                                    {dates.map((date) => {
+                                      const isSelected = selectedCourseDateId === date.courseDateId;
+                                      const isDisabled = !date.isAvailable;
+                                      return (
+                                        <button
+                                          key={date.courseDateId}
+                                          type="button"
+                                          disabled={isDisabled}
+                                          onClick={() => {
+                                            if (isDisabled) return;
+                                            setSelectedCourseDateId(date.courseDateId);
+                                          }}
+                                          className={`
                                     relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
                                     focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2
                                     ${isSelected
-                                      ? 'border-violet-500 bg-violet-100 shadow-md shadow-violet-100/50'
-                                      : 'border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-sm'
-                                    }
+                                              ? 'border-violet-500 bg-violet-100 shadow-md shadow-violet-100/50'
+                                              : 'border-violet-200 bg-white hover:border-violet-300 hover:bg-violet-50/50 hover:shadow-sm'
+                                            }
                                     ${isDisabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'}
                                   `}
-                                >
-                                  {isSelected && (
-                                    <span className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-slate-800 text-black">
-                                      <Check className="h-3.5 w-3.5 text-black" strokeWidth={2.5} />
-                                    </span>
-                                  )}
-                                  <div className="flex items-start gap-3 pr-8">
-                                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
-                                      <Calendar className="h-5 w-5" />
-                                    </div>
-                                    <div className="min-w-0 flex-1">
-                                      <div className="min-h-8 flex items-center">
-                                        <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                          <Clock className="h-3.5 w-3.5 shrink-0" />
-                                          {new Date(date.startDate).toLocaleDateString('en-AU')}
-                                          {date.startDate !== date.endDate && (
-                                            <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                        >
+                                          {isSelected && (
+                                            <span className="absolute top-3 right-3 flex h-6 w-6 items-center justify-center rounded-full bg-white border-2 border-slate-800 text-black">
+                                              <Check className="h-3.5 w-3.5 text-black" strokeWidth={2.5} />
+                                            </span>
                                           )}
-                                        </p>
-                                      </div>
-                                      <div className="min-h-6 mt-1 flex items-center">
-                                        {date.location && date.location.toLowerCase() !== 'face to face' && (
-                                          <p className="flex items-center gap-1 text-sm text-gray-500 truncate" title={date.location}>
-                                            <MapPin className="h-3.5 w-3.5 shrink-0" />
-                                            {date.location}
-                                          </p>
-                                        )}
-                                      </div>
-                                      <div className="min-h-6 flex items-center mt-1.5">
-                                        <p className="text-xs font-medium text-violet-600">
-                                          {date.availableSlots > 0
-                                            ? `${date.availableSlots} spot${date.availableSlots === 1 ? '' : 's'} left`
-                                            : 'Fully booked'}
-                                        </p>
-                                      </div>
-                                    </div>
+                                          <div className="flex items-start gap-3 pr-8">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-600">
+                                              <Calendar className="h-5 w-5" />
+                                            </div>
+                                            <div className="min-w-0 flex-1">
+                                              <div className="min-h-8 flex items-center">
+                                                <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                  {new Date(date.startDate).toLocaleDateString('en-AU')}
+                                                  {date.startDate !== date.endDate && (
+                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                                  )}
+                                                </p>
+                                              </div>
+                                              <div className="min-h-6 mt-1 flex items-center">
+                                                {date.location && date.location.toLowerCase() !== 'face to face' && (
+                                                  <p className="flex items-center gap-1 text-sm text-gray-500 truncate" title={date.location}>
+                                                    <MapPin className="h-3.5 w-3.5 shrink-0" />
+                                                    {date.location}
+                                                  </p>
+                                                )}
+                                              </div>
+                                              <div className="min-h-6 flex items-center mt-1.5">
+                                                <p className="text-xs font-medium text-violet-600">
+                                                  {date.availableSlots > 0
+                                                    ? `${date.availableSlots} spot${date.availableSlots === 1 ? '' : 's'} left`
+                                                    : 'Fully booked'}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
                                   </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      ))}
-                      {courseDatesByDate.length > 4 && (
-                        <div className="pt-2">
-                          <button
-                            type="button"
-                            onClick={() => setShowAllCourseDates((prev) => !prev)}
-                            className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded px-1"
-                          >
-                            {showAllCourseDates
-                              ? 'Show less'
-                              : `Show more dates (${courseDatesByDate.length - 4} more)`}
-                          </button>
+                                </div>
+                              ))}
+                              {courseDatesByDate.length > 4 && (
+                                <div className="pt-2">
+                                  <button
+                                    type="button"
+                                    onClick={() => setShowAllCourseDates((prev) => !prev)}
+                                    className="text-sm font-medium text-violet-600 hover:text-violet-700 hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500 focus-visible:ring-offset-2 rounded px-1"
+                                  >
+                                    {showAllCourseDates
+                                      ? 'Show less'
+                                      : `Show more dates (${courseDatesByDate.length - 4} more)`}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
-                    </div>
+                    </>
                   )}
-                </div>
-              )}
-              </>
-              )}
                 </div>
               </div>
             </CardContent>
@@ -2186,69 +2229,69 @@ export function PublicEnrollmentWizard({
                   </div>
                 </>
               ) : (
-              /* Personal Details */
-              <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                <h4 className="font-semibold text-violet-900">Personal Details</h4>
-                <div>
-                  <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="fullName"
-                    placeholder="Enter your full name"
-                    value={registrationData.fullName}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, fullName: e.target.value });
-                      if (registrationErrors.fullName) setRegistrationErrors({ ...registrationErrors, fullName: '' });
-                    }}
-                    className={`mt-1 ${registrationErrors.fullName ? 'border-red-500' : ''}`}
-                  />
-                  {registrationErrors.fullName && <p className="text-red-500 text-sm mt-1">{registrationErrors.fullName}</p>}
+                /* Personal Details */
+                <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
+                  <h4 className="font-semibold text-violet-900">Personal Details</h4>
+                  <div>
+                    <Label htmlFor="fullName">Full Name <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="fullName"
+                      placeholder="Enter your full name"
+                      value={registrationData.fullName}
+                      onChange={(e) => {
+                        setRegistrationData({ ...registrationData, fullName: e.target.value });
+                        if (registrationErrors.fullName) setRegistrationErrors({ ...registrationErrors, fullName: '' });
+                      }}
+                      className={`mt-1 ${registrationErrors.fullName ? 'border-red-500' : ''}`}
+                    />
+                    {registrationErrors.fullName && <p className="text-red-500 text-sm mt-1">{registrationErrors.fullName}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="phone">Mobile Number <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="phone"
+                      type="tel"
+                      placeholder="+61 xxx xxx xxx"
+                      value={registrationData.phone}
+                      onChange={(e) => {
+                        setRegistrationData({ ...registrationData, phone: e.target.value });
+                        if (registrationErrors.phone) setRegistrationErrors({ ...registrationErrors, phone: '' });
+                      }}
+                      className={`mt-1 ${registrationErrors.phone ? 'border-red-500' : ''}`}
+                    />
+                    {registrationErrors.phone && <p className="text-red-500 text-sm mt-1">{registrationErrors.phone}</p>}
+                  </div>
+                  <div>
+                    <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={registrationData.email}
+                      onChange={(e) => {
+                        setRegistrationData({ ...registrationData, email: e.target.value });
+                        if (registrationErrors.email) setRegistrationErrors({ ...registrationErrors, email: '' });
+                      }}
+                      className={`mt-1 ${registrationErrors.email ? 'border-red-500' : ''}`}
+                    />
+                    {registrationErrors.email && <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>}
+                  </div>
+                  {/* Individual: no password field; backend stores default password */}
+                  <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <Checkbox
+                      id="terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked: boolean) => {
+                        setAgreedToTerms(checked);
+                        if (registrationErrors.terms) setRegistrationErrors({ ...registrationErrors, terms: '' });
+                      }}
+                    />
+                    <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
+                      I agree to the terms and conditions and understand my information will be used for enrollment purposes
+                    </label>
+                  </div>
+                  {registrationErrors.terms && <p className="text-red-500 text-sm">{registrationErrors.terms}</p>}
                 </div>
-                <div>
-                  <Label htmlFor="phone">Mobile Number <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="phone"
-                    type="tel"
-                    placeholder="+61 xxx xxx xxx"
-                    value={registrationData.phone}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, phone: e.target.value });
-                      if (registrationErrors.phone) setRegistrationErrors({ ...registrationErrors, phone: '' });
-                    }}
-                    className={`mt-1 ${registrationErrors.phone ? 'border-red-500' : ''}`}
-                  />
-                  {registrationErrors.phone && <p className="text-red-500 text-sm mt-1">{registrationErrors.phone}</p>}
-                </div>
-                <div>
-                  <Label htmlFor="email">Email <span className="text-red-500">*</span></Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your.email@example.com"
-                    value={registrationData.email}
-                    onChange={(e) => {
-                      setRegistrationData({ ...registrationData, email: e.target.value });
-                      if (registrationErrors.email) setRegistrationErrors({ ...registrationErrors, email: '' });
-                    }}
-                    className={`mt-1 ${registrationErrors.email ? 'border-red-500' : ''}`}
-                  />
-                  {registrationErrors.email && <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>}
-                </div>
-                {/* Individual: no password field; backend stores default password */}
-                <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                  <Checkbox
-                    id="terms"
-                    checked={agreedToTerms}
-                    onCheckedChange={(checked: boolean) => {
-                      setAgreedToTerms(checked);
-                      if (registrationErrors.terms) setRegistrationErrors({ ...registrationErrors, terms: '' });
-                    }}
-                  />
-                  <label htmlFor="terms" className="text-sm text-gray-700 cursor-pointer">
-                    I agree to the terms and conditions and understand my information will be used for enrollment purposes
-                  </label>
-                </div>
-                {registrationErrors.terms && <p className="text-red-500 text-sm">{registrationErrors.terms}</p>}
-              </div>
               )}
 
               {/* Order Summary */}
@@ -2291,7 +2334,7 @@ export function PublicEnrollmentWizard({
                       </div>
                       <div className="flex justify-between pt-2 border-t border-blue-200">
                         <span className="font-semibold text-blue-900">Total:</span>
-                        <span className="font-bold text-blue-900 text-lg">${getSelectedCourse()?.price}</span>
+                        <span className="font-bold text-blue-900 text-lg">${getSelectedCoursePrice()}</span>
                       </div>
                     </>
                   )}
@@ -2307,56 +2350,53 @@ export function PublicEnrollmentWizard({
 
               {/* Payment Method Selection */}
               {!allowPayLater && (
-              <div>
-                <Label className="text-base font-semibold mb-3 block">Select Payment Method <span className="text-red-500">*</span></Label>
-                <RadioGroup value={paymentMethod} onValueChange={(value) => {
-                  setPaymentMethod(value);
-                  setPaymentError(null); // Clear any previous errors
-                }}>
-                  <div className="space-y-3">
-                    {enrollmentType === 'company' && (
-                      <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                        paymentMethod === 'pay_later' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
-                      }`}>
-                        <RadioGroupItem value="pay_later" id="pay_later" />
-                        <Label htmlFor="pay_later" className="flex-1 cursor-pointer">
+                <div>
+                  <Label className="text-base font-semibold mb-3 block">Select Payment Method <span className="text-red-500">*</span></Label>
+                  <RadioGroup value={paymentMethod} onValueChange={(value) => {
+                    setPaymentMethod(value);
+                    setPaymentError(null); // Clear any previous errors
+                  }}>
+                    <div className="space-y-3">
+                      {enrollmentType === 'company' && (
+                        <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${paymentMethod === 'pay_later' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
+                          }`}>
+                          <RadioGroupItem value="pay_later" id="pay_later" />
+                          <Label htmlFor="pay_later" className="flex-1 cursor-pointer">
+                            <div className="flex items-center gap-2">
+                              <DollarSign className="w-4 h-4" />
+                              <span className="font-medium">Pay Later</span>
+                            </div>
+                            <div className="text-sm text-gray-500">Invoice later – one-time links will be sent to your company email</div>
+                          </Label>
+                        </div>
+                      )}
+                      <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${paymentMethod === 'bank_transfer' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}>
+                        <RadioGroupItem value="bank_transfer" id="bank_transfer" />
+                        <Label htmlFor="bank_transfer" className="flex-1 cursor-pointer">
                           <div className="flex items-center gap-2">
-                            <DollarSign className="w-4 h-4" />
-                            <span className="font-medium">Pay Later</span>
+                            <Building2 className="w-4 h-4" />
+                            <span className="font-medium">Bank Transfer</span>
                           </div>
-                          <div className="text-sm text-gray-500">Invoice later – one-time links will be sent to your company email</div>
+                          <div className="text-sm text-gray-500">Transfer to our bank account - pay later</div>
                         </Label>
                       </div>
-                    )}
-                    <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                      paymentMethod === 'bank_transfer' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}>
-                      <RadioGroupItem value="bank_transfer" id="bank_transfer" />
-                      <Label htmlFor="bank_transfer" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <Building2 className="w-4 h-4" />
-                          <span className="font-medium">Bank Transfer</span>
-                        </div>
-                        <div className="text-sm text-gray-500">Transfer to our bank account - pay later</div>
-                      </Label>
-                    </div>
 
-                    <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${
-                      paymentMethod === 'card' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
-                    }`}>
-                      <RadioGroupItem value="card" id="card" />
-                      <Label htmlFor="card" className="flex-1 cursor-pointer">
-                        <div className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
-                          <span className="font-medium">Credit Card - Pay Now</span>
-                        </div>
-                        <div className="text-sm text-gray-500">Pay securely with your card online</div>
-                      </Label>
-                    </div>
+                      <div className={`flex items-center space-x-3 p-4 rounded-lg border-2 transition-all cursor-pointer ${paymentMethod === 'card' ? 'border-violet-500 bg-violet-50' : 'border-gray-200 hover:border-gray-300'
+                        }`}>
+                        <RadioGroupItem value="card" id="card" />
+                        <Label htmlFor="card" className="flex-1 cursor-pointer">
+                          <div className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4" />
+                            <span className="font-medium">Credit Card - Pay Now</span>
+                          </div>
+                          <div className="text-sm text-gray-500">Pay securely with your card online</div>
+                        </Label>
+                      </div>
 
-                  </div>
-                </RadioGroup>
-              </div>
+                    </div>
+                  </RadioGroup>
+                </div>
               )}
 
               {/* Bank Details (shown when bank transfer selected - informational only) */}
@@ -2507,8 +2547,8 @@ export function PublicEnrollmentWizard({
                   <div className="grid grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="expiryMonth">Expiry Month <span className="text-red-500">*</span></Label>
-                      <Select 
-                        value={cardData.expiryMonth} 
+                      <Select
+                        value={cardData.expiryMonth}
                         onValueChange={(value) => {
                           setCardData({ ...cardData, expiryMonth: value });
                           if (cardValidationErrors.expiryMonth) {
@@ -2538,8 +2578,8 @@ export function PublicEnrollmentWizard({
 
                     <div>
                       <Label htmlFor="expiryYear">Expiry Year <span className="text-red-500">*</span></Label>
-                      <Select 
-                        value={cardData.expiryYear} 
+                      <Select
+                        value={cardData.expiryYear}
                         onValueChange={(value) => {
                           setCardData({ ...cardData, expiryYear: value });
                           if (cardValidationErrors.expiryYear) {
@@ -2620,11 +2660,11 @@ export function PublicEnrollmentWizard({
               )}
 
               {enrollmentType === 'individual' && (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                <p className="text-sm text-yellow-800">
-                  <strong>Note:</strong> After completing the payment step, you will proceed to the LLND Assessment and then the Enrollment Form.
-                </p>
-              </div>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Note:</strong> After completing the payment step, you will proceed to the LLND Assessment and then the Enrollment Form.
+                  </p>
+                </div>
               )}
             </CardContent>
           </Card>
@@ -2640,7 +2680,7 @@ export function PublicEnrollmentWizard({
             : totalQuestions > 0
               ? ((totalCorrect / totalQuestions) * 100).toFixed(2)
               : '0';
-          
+
           return (
             <Card className="border-violet-100">
               <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
@@ -2656,7 +2696,7 @@ export function PublicEnrollmentWizard({
                     {quizPassed ? 'Assessment Passed!' : 'Assessment Completed'}
                   </h3>
                   <p className="text-gray-600 mb-4">
-                    {quizPassed 
+                    {quizPassed
                       ? 'Congratulations! You have successfully passed the LLND assessment.'
                       : 'You have completed the assessment. Please reattempt to continue.'}
                   </p>
@@ -2716,8 +2756,8 @@ export function PublicEnrollmentWizard({
                   <Progress value={((quizSectionIndex + 1) / quizSections.length) * 100} className="h-2" />
                   <div className="flex gap-2 mt-4 flex-wrap">
                     {quizSections.map((s, i) => (
-                      <Badge 
-                        key={s.id} 
+                      <Badge
+                        key={s.id}
                         variant={i < quizSectionIndex ? 'default' : i === quizSectionIndex ? 'secondary' : 'outline'}
                         className={i < quizSectionIndex ? 'bg-green-500' : ''}
                       >
@@ -2727,7 +2767,7 @@ export function PublicEnrollmentWizard({
                   </div>
                 </CardContent>
               </Card>
-              
+
               <QuizSection
                 section={quizSections[quizSectionIndex]}
                 onComplete={handleQuizSectionComplete}
@@ -2761,15 +2801,13 @@ export function PublicEnrollmentWizard({
                     <button
                       key={i}
                       onClick={() => setCurrentFormSection(i + 1)}
-                      className={`flex flex-col items-center text-xs ${
-                        currentFormSection === i + 1 ? 'text-violet-600 font-semibold' :
-                        currentFormSection > i + 1 ? 'text-green-600' : 'text-gray-400'
-                      }`}
+                      className={`flex flex-col items-center text-xs ${currentFormSection === i + 1 ? 'text-violet-600 font-semibold' :
+                          currentFormSection > i + 1 ? 'text-green-600' : 'text-gray-400'
+                        }`}
                     >
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${
-                        currentFormSection === i + 1 ? 'bg-violet-600 text-white' :
-                        currentFormSection > i + 1 ? 'bg-green-100 text-green-600' : 'bg-gray-100'
-                      }`}>
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentFormSection === i + 1 ? 'bg-violet-600 text-white' :
+                          currentFormSection > i + 1 ? 'bg-green-100 text-green-600' : 'bg-gray-100'
+                        }`}>
                         {currentFormSection > i + 1 ? <CheckCircle className="w-4 h-4" /> : i + 1}
                       </div>
                       <span className="hidden sm:block">{label}</span>
@@ -2780,61 +2818,61 @@ export function PublicEnrollmentWizard({
             </Card>
 
             <div ref={formContainerRef}>
-            {submitValidationErrors.length > 0 && (
-              <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
-                <div className="flex items-start gap-3">
-                  <AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-red-800">
-                      Please complete the following required fields:
-                    </h3>
-                    <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-700">
-                      {submitValidationErrors.map((field, idx) => (
-                        <li key={idx}>{field}</li>
-                      ))}
-                    </ul>
-                    <p className="mt-3 text-xs text-red-600">
-                      Click the section above to jump directly to the missing field(s).
-                    </p>
+              {submitValidationErrors.length > 0 && (
+                <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
+                  <div className="flex items-start gap-3">
+                    <AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600 mt-0.5" />
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-red-800">
+                        Please complete the following required fields:
+                      </h3>
+                      <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-700">
+                        {submitValidationErrors.map((field, idx) => (
+                          <li key={idx}>{field}</li>
+                        ))}
+                      </ul>
+                      <p className="mt-3 text-xs text-red-600">
+                        Click the section above to jump directly to the missing field(s).
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
 
-            <div className="min-h-[400px]">
-              {currentFormSection === 1 && (
-                <ApplicantSection data={formData.applicant} onChange={handleApplicantChange} errors={formErrors} />
-              )}
-              {currentFormSection === 2 && (
-                <USISection data={formData.usi} onChange={handleUSIChange} errors={formErrors} />
-              )}
-              {currentFormSection === 3 && (
-                <EducationSection data={formData.education} onChange={handleEducationChange} errors={formErrors} />
-              )}
-              {currentFormSection === 4 && (
-                <AdditionalInfoSection
-                  data={formData.additionalInfo}
-                  onChange={handleAdditionalInfoChange}
-                  errors={formErrors}
-                />
-              )}
-              {currentFormSection === 5 && (
-                <>
-                  <PrivacyTermsSection
-                    data={formData.privacyTerms}
-                    onChange={handlePrivacyTermsChange}
+              <div className="min-h-[400px]">
+                {currentFormSection === 1 && (
+                  <ApplicantSection data={formData.applicant} onChange={handleApplicantChange} errors={formErrors} />
+                )}
+                {currentFormSection === 2 && (
+                  <USISection data={formData.usi} onChange={handleUSIChange} errors={formErrors} />
+                )}
+                {currentFormSection === 3 && (
+                  <EducationSection data={formData.education} onChange={handleEducationChange} errors={formErrors} />
+                )}
+                {currentFormSection === 4 && (
+                  <AdditionalInfoSection
+                    data={formData.additionalInfo}
+                    onChange={handleAdditionalInfoChange}
                     errors={formErrors}
                   />
-                  <div className="mt-8">
-                    <PhotoIdSection
-                      data={formData.applicant}
-                      onChange={handleApplicantChange}
+                )}
+                {currentFormSection === 5 && (
+                  <>
+                    <PrivacyTermsSection
+                      data={formData.privacyTerms}
+                      onChange={handlePrivacyTermsChange}
                       errors={formErrors}
                     />
-                  </div>
-                </>
-              )}
-            </div>
+                    <div className="mt-8">
+                      <PhotoIdSection
+                        data={formData.applicant}
+                        onChange={handleApplicantChange}
+                        errors={formErrors}
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
             {/* Navigation Buttons for Form Sections 1-4 */}
@@ -2846,7 +2884,7 @@ export function PublicEnrollmentWizard({
                     Previous
                   </Button>
                 )}
-                <Button 
+                <Button
                   onClick={handleFormNext}
                   className={`bg-violet-600 hover:bg-violet-700 ${currentFormSection === 1 ? 'ml-auto' : ''}`}
                 >
@@ -3213,15 +3251,13 @@ export function PublicEnrollmentWizard({
               return (
                 <div
                   key={step.id}
-                  className={`flex flex-col items-center text-xs ${
-                    currentStep === step.id ? 'text-violet-600 font-semibold' :
-                    currentStep > step.id ? 'text-green-600' : 'text-gray-400'
-                  }`}
+                  className={`flex flex-col items-center text-xs ${currentStep === step.id ? 'text-violet-600 font-semibold' :
+                      currentStep > step.id ? 'text-green-600' : 'text-gray-400'
+                    }`}
                 >
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${
-                    currentStep === step.id ? 'bg-violet-600 text-white' :
-                    currentStep > step.id ? 'bg-green-100 text-green-600' : 'bg-gray-100'
-                  }`}>
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${currentStep === step.id ? 'bg-violet-600 text-white' :
+                      currentStep > step.id ? 'bg-green-100 text-green-600' : 'bg-gray-100'
+                    }`}>
                     {currentStep > step.id ? <CheckCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
                   <span className="hidden sm:block">{step.shortTitle}</span>
@@ -3288,7 +3324,7 @@ export function PublicEnrollmentWizard({
           </CardContent>
         </Card>
       )}
-      
+
       {/* Navigation for step 3 (LLND quiz completed) */}
       {currentStep === 3 && quizCompleted && quizPassed && (
         <Card className="border-violet-100">
