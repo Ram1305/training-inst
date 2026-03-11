@@ -249,9 +249,10 @@ function DroppableCalendarCell({
               whileHover={{ scale: 1.02 }}
               onClick={() => onEventClick(event)}
             >
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 min-w-0">
                 {isSelected ? <Check className="w-3 h-3 flex-shrink-0" /> : <Clock className="w-3 h-3 flex-shrink-0" />}
-                <span className="truncate">{event.startTime}</span>
+                <span className="font-bold truncate shrink-0">{event.courseCode}</span>
+                <span className="truncate opacity-90">{event.startTime}</span>
               </div>
             </motion.div>
           );
@@ -298,9 +299,12 @@ function DroppableWeekCell({
               whileHover={{ scale: 1.02 }}
               onClick={() => onEventClick(event)}
             >
-              <div className="flex items-center gap-1 text-sm">
-                {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
-                <span className="font-medium truncate">{event.courseCode}</span>
+              <div className="flex flex-col gap-0.5 min-w-0">
+                <div className="flex items-center gap-1 text-sm">
+                  {isSelected && <Check className="w-4 h-4 flex-shrink-0" />}
+                  <span className="font-bold truncate">{event.courseCode}</span>
+                </div>
+                <div className="text-xs font-medium truncate opacity-90">{event.courseName || event.title}</div>
               </div>
               <div className="flex items-center gap-1 mt-1 text-xs opacity-75">
                 <Clock className="w-3 h-3" />
@@ -359,9 +363,12 @@ function DroppableDayCell({
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      {isSelected && <Check className="w-5 h-5 flex-shrink-0" />}
-                      <span className="font-semibold text-lg">{event.courseCode}</span>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2">
+                        {isSelected && <Check className="w-5 h-5 flex-shrink-0" />}
+                        <span className="font-bold text-lg">{event.courseCode}</span>
+                      </div>
+                      <div className="text-base font-medium opacity-90">{event.courseName || event.title}</div>
                     </div>
                     <div className="flex items-center gap-4 mt-3 text-sm">
                       <div className="flex items-center gap-1">
@@ -449,8 +456,12 @@ function DroppableListRow({
                     {isSelected ? <Check className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                     <span className="text-sm font-medium">{event.startTime}</span>
                   </div>
-                  <div className="flex-1">
-                    <span className="font-medium">{event.courseCode}</span>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold">{event.courseCode}</span>
+                      <span className="text-gray-400">|</span>
+                      <span className="font-medium truncate">{event.courseName || event.title}</span>
+                    </div>
                   </div>
                 </motion.div>
               );
