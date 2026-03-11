@@ -45,8 +45,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<List<CourseDropdownItemDto>> GetCoursesForDropdownAsync()
         {
+            var today = DateTime.UtcNow.Date;
             var items = await _context.Courses
-                .Where(c => c.IsActive)
+                // For public enrollment, show active courses, plus any courses that have upcoming active dates.
+                // This avoids hiding schedulable courses that were accidentally marked inactive.
+                .Where(c => c.IsActive || c.CourseDates.Any(cd => cd.IsActive && cd.ScheduledDate >= today))
                 .Include(c => c.Category)
                 .Select(c => new
                 {
