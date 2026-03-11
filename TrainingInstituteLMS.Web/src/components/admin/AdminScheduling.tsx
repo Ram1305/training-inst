@@ -59,27 +59,6 @@ interface DraggableEventTemplate {
 
 const eventTemplates: DraggableEventTemplate[] = [
   {
-    id: 'template-theory',
-    title: 'Theory Class',
-    type: 'theory',
-    color: 'text-blue-700',
-    bgColor: 'bg-blue-100'
-  },
-  {
-    id: 'template-practical',
-    title: 'Practical Session',
-    type: 'practical',
-    color: 'text-purple-700',
-    bgColor: 'bg-purple-100'
-  },
-  {
-    id: 'template-exam',
-    title: 'Exam',
-    type: 'exam',
-    color: 'text-rose-700',
-    bgColor: 'bg-rose-100'
-  },
-  {
     id: 'template-meeting',
     title: 'General',
     type: 'meeting',
@@ -118,23 +97,25 @@ const COURSE_COLOR_LABELS = ['Blue', 'Emerald', 'Violet', 'Amber', 'Rose', 'Cyan
 
 const MANUAL_COLORS_STORAGE_KEY = 'schedule-course-colors';
 
-function getCourseColor(courseCode: string): { color: string; bgColor: string } {
-  if (!courseCode) return { color: 'text-indigo-700', bgColor: 'bg-indigo-50' };
+function getUniqueColor(seed: string): { color: string; bgColor: string } {
+  if (!seed) return { color: 'text-indigo-700', bgColor: 'bg-indigo-50' };
   let hash = 0;
-  for (let i = 0; i < courseCode.length; i++) {
-    hash = ((hash << 5) - hash) + courseCode.charCodeAt(i);
+  for (let i = 0; i < seed.length; i++) {
+    hash = ((hash << 5) - hash) + seed.charCodeAt(i);
     hash |= 0;
   }
   const index = Math.abs(hash) % COURSE_COLOR_PALETTE.length;
   return COURSE_COLOR_PALETTE[index];
 }
 
-function getResolvedColor(courseCode: string, manualCourseColors: Record<string, number>): { color: string; bgColor: string } {
+function getResolvedColor(courseCode: string, scheduleId: string, manualCourseColors: Record<string, number>): { color: string; bgColor: string } {
+  // Manual course colors take priority for the whole course if set
   const idx = manualCourseColors[courseCode];
   if (idx !== undefined && idx >= 0 && idx < COURSE_COLOR_PALETTE.length) {
     return COURSE_COLOR_PALETTE[idx];
   }
-  return getCourseColor(courseCode);
+  // Otherwise, give a unique color based on the scheduleId (event instance)
+  return getUniqueColor(scheduleId || courseCode);
 }
 
 function DraggableEvent({ template }: { template: DraggableEventTemplate }) {
@@ -572,32 +553,31 @@ export function AdminScheduling() {
       );
 
       if (response.success && response.data) {
-        // If backend does not return color/bgColor, use manual color or course-based palette
-        const courseColors = response.data.map((item: ScheduleCalendarItem) => {
+        const mappedEvents: ScheduleEvent[] = response.data.map((item: ScheduleCalendarItem) => {
           const fromBackend = item.color && item.bgColor;
-          if (fromBackend) {
-            return { color: item.color, bgColor: item.bgColor };
-          }
-          return getResolvedColor(item.courseCode, manualCourseColors);
+          const resolvedColors = fromBackend 
+            ? { color: item.color, bgColor: item.bgColor }
+            : getResolvedColor(item.courseCode, item.scheduleId, manualCourseColors);
+
+          return {
+            id: item.scheduleId,
+            title: item.eventTitle,
+            type: item.eventType.toLowerCase() as 'theory' | 'practical' | 'exam' | 'meeting',
+            courseId: '',
+            courseCode: item.courseCode,
+            courseName: item.courseName,
+            startDate: new Date(item.scheduledDate),
+            startTime: item.startTime || '09:00',
+            endTime: item.endTime || '17:00',
+            location: item.location || 'TBD',
+            meetingLink: item.meetingLink,
+            status: item.status,
+            color: resolvedColors.color,
+            bgColor: resolvedColors.bgColor,
+            teacherId: item.teacherId,
+            teacherName: item.teacherName
+          };
         });
-        const mappedEvents: ScheduleEvent[] = response.data.map((item: ScheduleCalendarItem, index: number) => ({
-          id: item.scheduleId,
-          title: item.eventTitle,
-          type: item.eventType.toLowerCase() as 'theory' | 'practical' | 'exam' | 'meeting',
-          courseId: '',
-          courseCode: item.courseCode,
-          courseName: item.courseName,
-          startDate: new Date(item.scheduledDate),
-          startTime: item.startTime || '09:00',
-          endTime: item.endTime || '17:00',
-          location: item.location || 'TBD',
-          meetingLink: item.meetingLink,
-          status: item.status,
-          color: courseColors[index].color,
-          bgColor: courseColors[index].bgColor,
-          teacherId: item.teacherId,
-          teacherName: item.teacherName
-        }));
         setEvents(mappedEvents);
       }
     } catch (err) {
@@ -772,11 +752,11 @@ export function AdminScheduling() {
       });
       setEvents((prev) =>
         prev.map((e) =>
-          e.courseCode === courseCode ? { ...e, ...getCourseColor(e.courseCode) } : e
+          e.courseCode === courseCode ? { ...e, ...getUniqueColor(e.id) } : e
         )
       );
       setSelectedEvent((prev) =>
-        prev?.courseCode === courseCode ? { ...prev, ...getCourseColor(courseCode) } : prev
+        prev?.courseCode === courseCode ? { ...prev, ...getUniqueColor(prev.id) } : prev
       );
     } else {
       const colorSet = COURSE_COLOR_PALETTE[value];
@@ -825,8 +805,8 @@ export function AdminScheduling() {
       const response = await scheduleService.createSchedule(request);
 
       if (response.success && response.data) {
-        // Add the new event to the local state (use manual or course-based color)
-        const courseColor = getResolvedColor(selectedCourse?.courseCode || '', manualCourseColors);
+        // Add the new event to the local state (use manual or unique color)
+        const courseColor = getResolvedColor(selectedCourse?.courseCode || '', response.data.scheduleId, manualCourseColors);
         const newScheduleEvent: ScheduleEvent = {
           id: response.data.scheduleId,
           title: request.eventTitle,
@@ -1024,23 +1004,19 @@ export function AdminScheduling() {
               </div>
 
               <div className="mt-6 pt-6 border-t border-gray-200">
-                <h4 className="text-sm font-medium mb-3">Event Types:</h4>
+                <h4 className="text-sm font-medium mb-3">Event Status:</h4>
                 <div className="space-y-2 text-sm">
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-blue-100 rounded border-l-2 border-blue-700" />
-                    <span>Theory Class</span>
+                    <div className="w-4 h-4 bg-blue-100 rounded border-l-2 border-blue-600" />
+                    <span>Scheduled</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-purple-100 rounded border-l-2 border-purple-700" />
-                    <span>Practical Session</span>
+                    <div className="w-4 h-4 bg-green-100 rounded border-l-2 border-green-600" />
+                    <span>Completed</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-rose-100 rounded border-l-2 border-rose-700" />
-                    <span>Exam</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-4 h-4 bg-indigo-100 rounded border-l-2 border-indigo-700" />
-                    <span>General</span>
+                    <div className="w-4 h-4 bg-gray-100 rounded border-l-2 border-gray-400" />
+                    <span>Cancelled</span>
                   </div>
                 </div>
               </div>
@@ -1386,20 +1362,9 @@ export function AdminScheduling() {
                   </div>
                   <div>
                     <Label htmlFor="type">Event Type</Label>
-                    <Select
-                      value={newEvent.type}
-                      onValueChange={(value: 'theory' | 'practical' | 'exam' | 'meeting') => setNewEvent({ ...newEvent, type: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="theory">Theory Class</SelectItem>
-                        <SelectItem value="practical">Practical Session</SelectItem>
-                        <SelectItem value="exam">Exam</SelectItem>
                         <SelectItem value="meeting">General</SelectItem>
                       </SelectContent>
-                    </Select>
                   </div>
                 </div>
 
