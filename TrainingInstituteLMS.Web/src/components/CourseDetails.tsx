@@ -25,7 +25,7 @@ const logoImage = '/assets/SafetyTrainingAcademylogo.png';
 interface CourseDetailsPageProps {
   courseId: string;
   onBack: () => void;
-  onEnroll: (courseData?: { courseName?: string; courseCode?: string; coursePrice?: number }) => void;
+  onEnroll: (courseData?: { courseId?: string; courseName?: string; courseCode?: string; coursePrice?: number }) => void;
   onLogin?: () => void;
   onRegister?: () => void;
   onContact?: () => void;
@@ -1050,6 +1050,7 @@ export function CourseDetailsPage({
                   <div className="space-y-3 pt-4">
                     <Button 
                       onClick={() => onEnroll({
+                        courseId,
                         courseName: course.title,
                         courseCode: course.code,
                         coursePrice: course.price
@@ -1061,6 +1062,7 @@ export function CourseDetailsPage({
                     {course.promoPrice != null && course.promoPrice > 0 && (
                       <Button
                         onClick={() => onEnroll({
+                          courseId,
                           courseName: course.title,
                           courseCode: course.code,
                           coursePrice: course.promoPrice!

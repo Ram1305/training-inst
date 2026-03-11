@@ -412,8 +412,11 @@ export default function App() {
     }
   };
 
-  const handleCourseBooking = (courseData?: { courseName?: string; courseCode?: string; coursePrice?: number; experienceType?: 'with' | 'without' }) => {
+  const handleCourseBooking = (courseData?: { courseId?: string; courseName?: string; courseCode?: string; coursePrice?: number; experienceType?: 'with' | 'without' }) => {
     if (courseData) {
+      if (courseData.courseId) {
+        setSelectedCourseId(courseData.courseId);
+      }
       setSelectedCourseData(courseData);
     }
     setEnrollmentLinkData(null);
