@@ -79,60 +79,83 @@ const getEventTypeLabel = (type: string): string => {
 // Stable course-based colors: same course always gets same color across views
 // Stable course-based colors: same course always gets same color across views
 const COURSE_COLOR_PALETTE: { color: string; bgColor: string }[] = [
-  // Blues & Cyans
+  // Vibrant Blues
   { color: 'text-blue-700', bgColor: 'bg-blue-100' },
-  { color: 'text-cyan-700', bgColor: 'bg-cyan-100' },
-  { color: 'text-sky-700', bgColor: 'bg-sky-100' },
   { color: 'text-indigo-700', bgColor: 'bg-indigo-100' },
+  { color: 'text-sky-700', bgColor: 'bg-sky-100' },
   { color: 'text-blue-800', bgColor: 'bg-blue-50' },
-  { color: 'text-cyan-800', bgColor: 'bg-cyan-50' },
+  { color: 'text-indigo-800', bgColor: 'bg-indigo-50' },
+  { color: 'text-blue-900', bgColor: 'bg-blue-200' },
+  { color: 'text-sky-800', bgColor: 'bg-sky-50' },
   
-  // Greens & Teals
-  { color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+  // Vibrant Cyans & Teals
+  { color: 'text-cyan-700', bgColor: 'bg-cyan-100' },
   { color: 'text-teal-700', bgColor: 'bg-teal-100' },
-  { color: 'text-lime-700', bgColor: 'bg-lime-100' },
-  { color: 'text-green-700', bgColor: 'bg-green-100' },
-  { color: 'text-emerald-800', bgColor: 'bg-emerald-50' },
+  { color: 'text-cyan-800', bgColor: 'bg-cyan-50' },
   { color: 'text-teal-800', bgColor: 'bg-teal-50' },
+  { color: 'text-cyan-900', bgColor: 'bg-cyan-200' },
+  { color: 'text-teal-900', bgColor: 'bg-teal-200' },
   
-  // Violets & Pinks
-  { color: 'text-violet-700', bgColor: 'bg-violet-100' },
+  // Vibrant Emeralds & Greens
+  { color: 'text-emerald-700', bgColor: 'bg-emerald-100' },
+  { color: 'text-green-700', bgColor: 'bg-green-100' },
+  { color: 'text-lime-700', bgColor: 'bg-lime-100' },
+  { color: 'text-emerald-800', bgColor: 'bg-emerald-50' },
+  { color: 'text-green-800', bgColor: 'bg-green-50' },
+  { color: 'text-lime-800', bgColor: 'bg-lime-50' },
+  { color: 'text-emerald-900', bgColor: 'bg-emerald-200' },
+  
+  // Vibrant Purples & Violets
   { color: 'text-purple-700', bgColor: 'bg-purple-100' },
+  { color: 'text-violet-700', bgColor: 'bg-violet-100' },
   { color: 'text-fuchsia-700', bgColor: 'bg-fuchsia-100' },
+  { color: 'text-purple-800', bgColor: 'bg-purple-50' },
+  { color: 'text-violet-800', bgColor: 'bg-violet-50' },
+  { color: 'text-fuchsia-800', bgColor: 'bg-fuchsia-50' },
+  { color: 'text-purple-900', bgColor: 'bg-purple-200' },
+  
+  // Vibrant Pinks & Roses
   { color: 'text-pink-700', bgColor: 'bg-pink-100' },
   { color: 'text-rose-700', bgColor: 'bg-rose-100' },
-  { color: 'text-violet-800', bgColor: 'bg-violet-50' },
+  { color: 'text-pink-800', bgColor: 'bg-pink-50' },
+  { color: 'text-rose-800', bgColor: 'bg-rose-50' },
+  { color: 'text-pink-900', bgColor: 'bg-pink-200' },
+  { color: 'text-rose-900', bgColor: 'bg-rose-200' },
   
-  // Warm Colors
+  // Vibrant Ambers & Oranges
   { color: 'text-amber-700', bgColor: 'bg-amber-100' },
   { color: 'text-orange-700', bgColor: 'bg-orange-100' },
-  { color: 'text-rose-800', bgColor: 'bg-rose-50' },
   { color: 'text-amber-800', bgColor: 'bg-amber-50' },
   { color: 'text-orange-800', bgColor: 'bg-orange-50' },
-  { color: 'text-red-700', bgColor: 'bg-red-100' },
+  { color: 'text-amber-900', bgColor: 'bg-amber-200' },
+  { color: 'text-orange-900', bgColor: 'bg-orange-200' },
   
-  // More variants
-  { color: 'text-indigo-800', bgColor: 'bg-indigo-50' },
-  { color: 'text-purple-800', bgColor: 'bg-purple-50' },
-  { color: 'text-fuchsia-800', bgColor: 'bg-fuchsia-50' },
-  { color: 'text-pink-800', bgColor: 'bg-pink-50' },
-  { color: 'text-sky-800', bgColor: 'bg-sky-50' },
-  { color: 'text-lime-800', bgColor: 'bg-lime-50' },
-  { color: 'text-green-800', bgColor: 'bg-green-50' },
-  { color: 'text-slate-700', bgColor: 'bg-slate-100' },
-  { color: 'text-zinc-700', bgColor: 'bg-zinc-100' },
-  { color: 'text-stone-700', bgColor: 'bg-stone-100' },
-  { color: 'text-gray-700', bgColor: 'bg-gray-100' },
-  { color: 'text-blue-900', bgColor: 'bg-blue-200' },
+  // Vibrant Reds
+  { color: 'text-red-700', bgColor: 'bg-red-100' },
+  { color: 'text-red-800', bgColor: 'bg-red-50' },
+  { color: 'text-red-900', bgColor: 'bg-red-200' },
+  
+  // Extra Rich Combinations
+  { color: 'text-violet-950', bgColor: 'bg-violet-200' },
+  { color: 'text-fuchsia-950', bgColor: 'bg-fuchsia-200' },
+  { color: 'text-blue-950', bgColor: 'bg-blue-200' },
+  { color: 'text-emerald-950', bgColor: 'bg-emerald-200' },
+  { color: 'text-rose-950', bgColor: 'bg-rose-200' },
+  { color: 'text-amber-950', bgColor: 'bg-amber-200' },
+  { color: 'text-teal-950', bgColor: 'bg-teal-200' },
+  { color: 'text-indigo-950', bgColor: 'bg-indigo-200' },
+  { color: 'text-pink-950', bgColor: 'bg-pink-200' },
 ];
 
 const COURSE_COLOR_LABELS = [
-  'Blue', 'Cyan', 'Sky', 'Indigo', 'Soft Blue', 'Soft Cyan',
-  'Emerald', 'Teal', 'Lime', 'Green', 'Soft Emerald', 'Soft Teal',
-  'Violet', 'Purple', 'Fuchsia', 'Pink', 'Rose', 'Soft Violet',
-  'Amber', 'Orange', 'Soft Rose', 'Soft Amber', 'Soft Orange', 'Red',
-  'Deep Indigo', 'Deep Purple', 'Deep Fuchsia', 'Deep Pink', 'Deep Sky', 'Deep Lime',
-  'Deep Green', 'Slate', 'Zinc', 'Stone', 'Gray', 'Royal Blue'
+  'Vibrant Blue', 'Vibrant Indigo', 'Vibrant Sky', 'Soft Indigo', 'Deep Royal', 'Lighter Sky',
+  'Vibrant Cyan', 'Vibrant Teal', 'Soft Cyan', 'Soft Teal', 'Deep Cyan', 'Deep Teal',
+  'Vibrant Emerald', 'Vibrant Green', 'Vibrant Lime', 'Soft Emerald', 'Soft Green', 'Soft Lime', 'Deep Emerald',
+  'Vibrant Purple', 'Vibrant Violet', 'Vibrant Fuchsia', 'Soft Purple', 'Soft Violet', 'Soft Fuchsia', 'Deep Purple',
+  'Vibrant Pink', 'Vibrant Rose', 'Soft Pink', 'Soft Rose', 'Deep Pink', 'Deep Rose',
+  'Vibrant Amber', 'Vibrant Orange', 'Soft Amber', 'Soft Orange', 'Deep Amber', 'Deep Orange',
+  'Vibrant Red', 'Soft Red', 'Deep Red',
+  'Midnight Violet', 'Midnight Fuchsia', 'Midnight Blue', 'Midnight Emerald', 'Midnight Rose', 'Midnight Amber', 'Midnight Teal', 'Midnight Indigo', 'Midnight Pink'
 ];
 
 const MANUAL_COLORS_STORAGE_KEY = 'schedule-course-colors';
@@ -140,13 +163,14 @@ const MANUAL_COLORS_STORAGE_KEY = 'schedule-course-colors';
 function getUniqueColor(seed: string): { color: string; bgColor: string } {
   if (!seed) return { color: 'text-indigo-700', bgColor: 'bg-indigo-50' };
   
-  // Use a more complex hash to spread colors better
+  // Use a more complex hash with salt to seed distribution
   let hash = 5381;
-  for (let i = 0; i < seed.length; i++) {
-    hash = ((hash << 5) + hash) + seed.charCodeAt(i);
+  const saltedSeed = seed + "vibrant-v3-salt";
+  for (let i = 0; i < saltedSeed.length; i++) {
+    hash = ((hash << 5) + hash) + saltedSeed.charCodeAt(i);
   }
   
-  // Use bitwise XOR to further distribute
+  // Better distribution using bitwise operations
   hash = (hash ^ (hash >>> 16)) & 0x7FFFFFFF;
   
   const index = hash % COURSE_COLOR_PALETTE.length;
