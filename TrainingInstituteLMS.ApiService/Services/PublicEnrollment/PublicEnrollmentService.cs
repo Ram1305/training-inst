@@ -49,7 +49,9 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var items = await _context.Courses
                 // For public enrollment, show active courses, plus any courses that have upcoming active dates.
                 // This avoids hiding schedulable courses that were accidentally marked inactive.
-                .Where(c => c.IsActive || c.CourseDates.Any(cd => cd.IsActive && cd.ScheduledDate >= today))
+                // Note: some environments may have CourseDate.IsActive not maintained consistently; we still want
+                // schedulable courses to appear if they have any upcoming date.
+                .Where(c => c.IsActive || c.CourseDates.Any(cd => cd.ScheduledDate >= today))
                 .Include(c => c.Category)
                 .Select(c => new
                 {
@@ -92,7 +94,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var today = DateTime.UtcNow.Date;
             
             return await _context.CourseDates
-                .Where(cd => cd.CourseId == courseId && cd.IsActive && cd.ScheduledDate >= today)
+                // Align with course dropdown visibility: show any upcoming scheduled dates.
+                .Where(cd => cd.CourseId == courseId && cd.ScheduledDate >= today)
                 .Select(cd => new CourseDateDropdownItemDto
                 {
                     CourseDateId = cd.CourseDateId,

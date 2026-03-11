@@ -118,6 +118,18 @@ export function CourseDetailsPage({
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
+
+  const slBlPrice =
+    course?.promoPrice != null && course.promoPrice > 0
+      ? course.promoPrice
+      : course?.comboOffer?.price != null && course.comboOffer.price > 0
+        ? course.comboOffer.price
+        : null;
+
+  const slBlOriginalPrice =
+    course?.promoOriginalPrice != null && course.promoOriginalPrice > 0
+      ? course.promoOriginalPrice
+      : null;
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -961,13 +973,13 @@ export function CourseDetailsPage({
                         SAVE ${course.originalPrice - course.price}!
                       </Badge>
                     )}
-                    {course.promoPrice != null && course.promoPrice > 0 && (
+                    {slBlPrice != null && slBlPrice > 0 && (
                       <div className="mt-4 pt-4 border-t border-white/20">
                         <p className="text-blue-100 text-sm mb-1">SL + BL</p>
-                        {course.promoOriginalPrice != null && course.promoOriginalPrice > 0 && (
-                          <span className="price-strikethrough text-lg text-white/60 mr-2">${course.promoOriginalPrice}</span>
+                        {slBlOriginalPrice != null && (
+                          <span className="price-strikethrough text-lg text-white/60 mr-2">${slBlOriginalPrice}</span>
                         )}
-                        <span className="text-2xl font-bold">${course.promoPrice}</span>
+                        <span className="text-2xl font-bold">${slBlPrice}</span>
                       </div>
                     )}
                   </div>
@@ -1059,17 +1071,17 @@ export function CourseDetailsPage({
                     >
                       BOOK NOW — ${course.price}
                     </Button>
-                    {course.promoPrice != null && course.promoPrice > 0 && (
+                    {slBlPrice != null && slBlPrice > 0 && (
                       <Button
                         onClick={() => onEnroll({
                           courseId,
                           courseName: course.title,
                           courseCode: course.code,
-                          coursePrice: course.promoPrice!
+                          coursePrice: slBlPrice
                         })}
                         className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
                       >
-                        Book Now SL + BL — ${course.promoPrice}
+                        Book Now SL + BL — ${slBlPrice}
                       </Button>
                     )}
                     
