@@ -178,13 +178,18 @@ function getUniqueColor(seed: string): { color: string; bgColor: string } {
 }
 
 function getResolvedColor(courseCode: string, scheduleId: string, manualCourseColors: Record<string, number>): { color: string; bgColor: string } {
-  // Manual course colors take priority for the whole course if set
+  // If scheduleId is available, ALWAYS use it for a truly unique per-instance color
+  // as requested by the user ("separate separate")
+  if (scheduleId) {
+    return getUniqueColor(scheduleId);
+  }
+  
+  // Fallback to manual palette or course code if no scheduleId
   const idx = manualCourseColors[courseCode];
   if (idx !== undefined && idx >= 0 && idx < COURSE_COLOR_PALETTE.length) {
     return COURSE_COLOR_PALETTE[idx];
   }
-  // Otherwise, give a unique color based on the scheduleId (event instance)
-  return getUniqueColor(scheduleId || courseCode);
+  return getUniqueColor(courseCode);
 }
 
 function DraggableEvent({ template }: { template: DraggableEventTemplate }) {
@@ -417,8 +422,8 @@ function DroppableListRow({
     >
       <div className="flex">
         {/* Date Column */}
-        <div className={`w-32 p-4 flex-shrink-0 ${isToday(date) ? 'bg-blue-50' : 'bg-gray-50'}`}>
-          <div className={`font-semibold ${isToday(date) ? 'text-blue-600' : 'text-gray-700'}`}>
+        <div className={`w-32 p-4 flex-shrink-0 ${isToday(date) ? 'bg-blue-50' : 'bg-blue-50/30'}`}>
+          <div className={`font-semibold ${isToday(date) ? 'text-blue-600' : 'text-blue-700'}`}>
             {formatDate(date)}
           </div>
           {isToday(date) && (
@@ -623,10 +628,9 @@ export function AdminScheduling() {
 
       if (response.success && response.data) {
         const mappedEvents: ScheduleEvent[] = response.data.map((item: ScheduleCalendarItem) => {
-          const fromBackend = item.color && item.bgColor;
-          const resolvedColors = fromBackend 
-            ? { color: item.color, bgColor: item.bgColor }
-            : getResolvedColor(item.courseCode, item.scheduleId, manualCourseColors);
+          // Ignore backend colors as they may be "ash" (gray)
+          // Use our vibrant hash-based logic for everything
+          const resolvedColors = getResolvedColor(item.courseCode, item.scheduleId, manualCourseColors);
 
           return {
             id: item.scheduleId,
