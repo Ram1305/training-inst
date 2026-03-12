@@ -124,13 +124,15 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
         {
             try
             {
-                var result = await _vocService.SendVOCEmailOTPAsync(request.Email);
-                return Ok(new { success = result });
+                var (success, error) = await _vocService.SendVOCEmailOTPAsync(request.Email);
+                if (success)
+                    return Ok(new { success = true });
+                return StatusCode(500, new { success = false, message = error });
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error in SendOTP");
-                return StatusCode(500, new { success = false, message = "Internal server error" });
+                return StatusCode(500, new { success = false, message = ex.Message });
             }
         }
 

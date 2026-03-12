@@ -200,28 +200,48 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
             }
         }
 
-        public async Task<bool> SendVOCEmailOTPAsync(string email)
+        public async Task<(bool success, string error)> SendVOCEmailOTPAsync(string email)
         {
             try
             {
                 var otp = new Random().Next(100000, 999999).ToString();
-                var vocOtp = new VOCEmailOTP
+
+                // Try saving OTP to DB first
+                try
                 {
-                    Email = email,
-                    OTP = otp,
-                    ExpiresAt = DateTime.UtcNow.AddMinutes(10)
-                };
+                    var vocOtp = new VOCEmailOTP
+                    {
+                        Email = email,
+                        OTP = otp,
+                        ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+                    };
+                    _context.VOCEmailOTPs.Add(vocOtp);
+                    await _context.SaveChangesAsync();
+                    _logger.LogInformation("VOC OTP saved to DB for {Email}", email);
+                }
+                catch (Exception dbEx)
+                {
+                    _logger.LogError(dbEx, "DB error saving OTP for {Email}. Inner: {Inner}", email, dbEx.InnerException?.Message ?? "none");
+                    return (false, $"Database error: {dbEx.InnerException?.Message ?? dbEx.Message}");
+                }
 
-                _context.VOCEmailOTPs.Add(vocOtp);
-                await _context.SaveChangesAsync();
-
-                await _emailService.SendEmailOTPAsync(email, otp);
-                return true;
+                // Try sending email
+                try
+                {
+                    await _emailService.SendEmailOTPAsync(email, otp);
+                    _logger.LogInformation("VOC OTP email sent successfully to {Email}", email);
+                    return (true, string.Empty);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogError(emailEx, "Email error sending OTP to {Email}. Inner: {Inner}", email, emailEx.InnerException?.Message ?? "none");
+                    return (false, $"Email error: {emailEx.InnerException?.Message ?? emailEx.Message}");
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error sending VOC OTP to {Email}", email);
-                return false;
+                _logger.LogError(ex, "Unexpected error sending VOC OTP to {Email}", email);
+                return (false, ex.Message);
             }
         }
 

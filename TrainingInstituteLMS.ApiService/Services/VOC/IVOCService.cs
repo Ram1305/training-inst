@@ -11,7 +11,7 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
         Task<VOCSubmissionResponseDto?> UpdateVOCStatusAsync(Guid submissionId, string status);
         Task<bool> DeleteVOCSubmissionAsync(Guid submissionId);
         Task<VOCStatsResponseDto> GetVOCStatsAsync();
-        Task<bool> SendVOCEmailOTPAsync(string email);
+        Task<(bool success, string error)> SendVOCEmailOTPAsync(string email);
         Task<bool> VerifyVOCEmailOTPAsync(string email, string otp);
     }
 }
