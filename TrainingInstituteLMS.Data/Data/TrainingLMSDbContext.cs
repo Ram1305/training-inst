@@ -17,6 +17,7 @@ using TrainingInstituteLMS.Data.Entities.Reviews;
 using TrainingInstituteLMS.Data.Entities.Schedules;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.Data.Entities.System;
+using TrainingInstituteLMS.Data.Entities.VOC;
 
 namespace TrainingInstituteLMS.Data.Data
 {
@@ -72,6 +73,9 @@ namespace TrainingInstituteLMS.Data.Data
 
         // Gallery Images
         public DbSet<GalleryImage> GalleryImages { get; set; }
+
+        // VOC Submissions
+        public DbSet<VOCSubmission> VOCSubmissions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

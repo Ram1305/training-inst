@@ -19,6 +19,7 @@ using TrainingInstituteLMS.ApiService.Services.Payment;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Reviews;
 using TrainingInstituteLMS.ApiService.Services.Gallery;
+using TrainingInstituteLMS.ApiService.Services.VOC;
 using TrainingInstituteLMS.Data.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -109,6 +110,9 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 
 // Schedule service
 builder.Services.AddScoped<IScheduleService, ScheduleService>();
+
+// VOC service
+builder.Services.AddScoped<IVOCService, VOCService>();
 
 // Student Enrollment Form service
 builder.Services.AddScoped<IStudentEnrollmentFormService, StudentEnrollmentFormService>();

@@ -3,6 +3,7 @@ import { Home, ChevronLeft, ChevronRight, Loader2, Calendar } from 'lucide-react
 import { Button } from '../ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '../ui/card';
 import { enrollmentService } from '../../services/enrollment.service';
+import { vocManagementService, type VOCStatsResponse } from '../../services/vocManagement.service';
 import type { DailyBookingStat, WeeklyBookingStatsDto } from '../../services/enrollment.service';
 
 interface AdminDashboardProps {
@@ -28,6 +29,7 @@ function formatDateForApi(d: Date): string {
 export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboardProps) {
   const [weekStart, setWeekStart] = useState<Date>(() => getStartOfWeek(new Date()));
   const [stats, setStats] = useState<WeeklyBookingStatsDto | null>(null);
+  const [vocStats, setVocStats] = useState<VOCStatsResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,12 +37,22 @@ export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboa
     async function fetchStats() {
       setLoading(true);
       try {
-        const res = await enrollmentService.getWeeklyBookingStats(formatDateForApi(weekStart));
-        if (!cancelled && res.success && res.data) {
-          setStats(res.data);
+        const [enrollmentRes, vocRes] = await Promise.all([
+          enrollmentService.getWeeklyBookingStats(formatDateForApi(weekStart)),
+          vocManagementService.getStats(),
+        ]);
+
+        if (!cancelled && enrollmentRes.success && enrollmentRes.data) {
+          setStats(enrollmentRes.data);
+        }
+        if (!cancelled && vocRes.success && vocRes.data) {
+          setVocStats(vocRes.data);
         }
       } catch {
-        if (!cancelled) setStats(null);
+        if (!cancelled) {
+          setStats(null);
+          setVocStats(null);
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -141,6 +153,47 @@ export function AdminDashboard({ onNavigate, onNavigateToLanding }: AdminDashboa
           )}
         </CardContent>
       </Card>
+      {/* VOC Status Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="border-violet-100 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('voc')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">VOC Pending</CardTitle>
+            <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+              <span className="text-amber-600 font-bold text-lg">!</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{vocStats?.pendingSubmissions ?? 0}</div>
+            <p className="text-xs text-slate-500 mt-1">Pending verification</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-violet-100 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('voc')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">VOC Verified</CardTitle>
+            <div className="w-8 h-8 rounded-full bg-green-100 flex items-center justify-center">
+              <span className="text-green-600">✓</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{vocStats?.verifiedSubmissions ?? 0}</div>
+            <p className="text-xs text-slate-500 mt-1">Ready for next steps</p>
+          </CardContent>
+        </Card>
+
+        <Card className="border-violet-100 shadow-sm hover:shadow-md transition-all cursor-pointer" onClick={() => onNavigate('voc')}>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-slate-500">Total VOC</CardTitle>
+            <div className="w-8 h-8 rounded-full bg-violet-100 flex items-center justify-center text-violet-600">
+              <span className="font-bold text-sm">∑</span>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-slate-900">{vocStats?.totalSubmissions ?? 0}</div>
+            <p className="text-xs text-slate-500 mt-1">All time renewals</p>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quick Actions */}
       <Card className="border-violet-100 bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white">

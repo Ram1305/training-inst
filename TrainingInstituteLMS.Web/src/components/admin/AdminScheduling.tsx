@@ -1446,9 +1446,20 @@ export function AdminScheduling() {
                   </div>
                   <div>
                     <Label htmlFor="type">Event Type</Label>
+                    <Select
+                      value={newEvent.type}
+                      onValueChange={(value: 'theory' | 'practical' | 'exam' | 'meeting') => setNewEvent({ ...newEvent, type: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="theory">Theory Class</SelectItem>
+                        <SelectItem value="practical">Practical Session</SelectItem>
+                        <SelectItem value="exam">Exam</SelectItem>
                         <SelectItem value="meeting">General</SelectItem>
                       </SelectContent>
+                    </Select>
                   </div>
                 </div>
 

@@ -19,6 +19,7 @@ import {
   BarChart3,
   Star,
   Image,
+  ClipboardCheck,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type { User as UserType } from '../App';
@@ -37,6 +38,7 @@ import { AdminCompanyPayments } from './admin/AdminCompanyPayments';
 import { AdminReports } from './admin/AdminReports';
 import { AdminReviews } from './admin/AdminReviews';
 import { AdminGallery } from './admin/AdminGallery';
+import { AdminVOC } from './admin/AdminVOC';
 import { AdminBookingDetails } from './admin/AdminBookingDetails';
 import { adminCompanyOrdersService } from '../services/adminCompanyOrders.service';
 
@@ -62,6 +64,7 @@ type AdminPage =
   | 'reports'
   | 'google-reviews'
   | 'gallery'
+  | 'voc'
   | 'booking-details';
 
 const VALID_ADMIN_PAGES: AdminPage[] = [
@@ -80,6 +83,7 @@ const VALID_ADMIN_PAGES: AdminPage[] = [
   'reports',
   'google-reviews',
   'gallery',
+  'voc',
   'booking-details',
 ];
 
@@ -159,6 +163,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'reports', name: 'Reports', icon: BarChart3 },
     { id: 'google-reviews', name: 'Google Reviews', icon: Star },
     { id: 'gallery', name: 'Gallery', icon: Image },
+    { id: 'voc', name: 'VOC Submissions', icon: ClipboardCheck },
   ];
 
   const companyPaymentNav = [{ id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign }];
@@ -231,6 +236,8 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
         return <AdminReviews />;
       case 'gallery':
         return <AdminGallery />;
+      case 'voc':
+        return <AdminVOC />;
       case 'booking-details':
         return bookingDetailsDate ? (
           <AdminBookingDetails

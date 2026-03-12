@@ -18,6 +18,7 @@ import { GalleryPage } from './components/GalleryPage';
 import { PublicQuiz } from './components/student/PublicQuiz';
 import { PublicEnrollmentForm } from './components/student/PublicEnrollmentForm';
 import { PublicEnrollmentWizard } from './components/student/PublicEnrollmentWizard';
+import { PublicVOCForm } from './components/student/PublicVOCForm';
 import { useAuth } from './contexts/AuthContext';
 import type { AuthUser } from './contexts/AuthContext';
 import { publicEnrollmentWizardService } from './services/publicEnrollmentWizard.service';
@@ -79,6 +80,7 @@ const PATHS = {
   login: '/login',
   course: (id: string, slug?: string) => slug ? `/course/${id}/${slug}` : `/course/${id}`,
   enrollWithCode: (code: string) => `/enroll/${code}`,
+  voc: '/voc',
 } as const;
 
 // Create URL-safe slug from course name (e.g. "White Card Training" -> "white-card-training")
@@ -92,7 +94,7 @@ const courseNameToSlug = (name: string): string =>
     .replace(/^-|-$/g, '') || 'course';
 
 // Map pathname to page (for parsing URLs)
-type PublicPage = 'landing' | 'about' | 'contact' | 'bookNow' | 'publicEnrollmentWizard' | 'publicEnrollment' | 'forms' | 'feesRefund' | 'gallery' | 'publicQuiz' | 'login';
+type PublicPage = 'landing' | 'about' | 'contact' | 'bookNow' | 'publicEnrollmentWizard' | 'publicEnrollment' | 'forms' | 'feesRefund' | 'gallery' | 'publicQuiz' | 'login' | 'publicVOCForm';
 const PATHNAME_TO_PAGE: Record<string, PublicPage> = {
   '/': 'landing',
   '/home': 'landing',
@@ -106,6 +108,7 @@ const PATHNAME_TO_PAGE: Record<string, PublicPage> = {
   '/gallery': 'gallery',
   '/quiz': 'publicQuiz',
   '/login': 'login',
+  '/voc': 'publicVOCForm',
 };
 
 // Helper function to parse URL path
@@ -146,7 +149,7 @@ const updateUrl = (path: string, replace = false) => {
 
 export default function App() {
   const { user: authUser, setUser, isLoading, logout, isAuthenticated } = useAuth();
-  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'portal' | 'courseDetails' | 'handbookViewer' | 'courseBooking' | 'about' | 'contact' | 'bookNow' | 'publicQuiz' | 'publicEnrollment' | 'publicEnrollmentWizard' | 'forms' | 'feesRefund' | 'gallery'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'portal' | 'courseDetails' | 'handbookViewer' | 'courseBooking' | 'about' | 'contact' | 'bookNow' | 'publicQuiz' | 'publicEnrollment' | 'publicEnrollmentWizard' | 'forms' | 'feesRefund' | 'gallery' | 'publicVOCForm'>('landing');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [handbookViewerState, setHandbookViewerState] = useState<{ pdfUrl: string; title?: string; courseName?: string } | null>(null);
   const [selectedCourseData, setSelectedCourseData] = useState<{
@@ -340,6 +343,11 @@ export default function App() {
     updateUrl(PATHS.forms);
   };
 
+  const handleGoToVOCForm = () => {
+    setCurrentPage('publicVOCForm');
+    updateUrl(PATHS.voc);
+  };
+
   const handleGoToFeesRefund = () => {
     setCurrentPage('feesRefund');
     updateUrl(PATHS.feesRefund);
@@ -525,6 +533,7 @@ export default function App() {
         onFeesRefund={handleGoToFeesRefund}
         onGallery={handleGoToGallery}
         onBookCourse={handleBookCourse}
+        onVOC={handleGoToVOCForm}
       />
     );
   }
@@ -604,6 +613,14 @@ export default function App() {
         isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
         allowPayLater={enrollmentLinkData?.allowPayLater}
         enrollCode={enrollCode ?? ''}
+      />
+    );
+  }
+
+  if (currentPage === 'publicVOCForm') {
+    return (
+      <PublicVOCForm
+        onBack={handleBackToLanding}
       />
     );
   }

@@ -62,6 +62,7 @@ interface LandingPageProps {
   onFeesRefund?: () => void;
   onGallery?: () => void;
   onBookCourse?: (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => void;
+  onVOC?: () => void;
 }
 
 // Debounce hook
@@ -88,7 +89,7 @@ const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
 ];
 
-export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse }: LandingPageProps) {
+export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC }: LandingPageProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -473,6 +474,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               </Button>
               <Button
                 variant="outline"
+                onClick={onVOC}
                 className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
               >
                 VOC
@@ -542,7 +544,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <Button onClick={onBookNow || onLogin} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
                   Book now
                 </Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">
+                <Button variant="outline" onClick={onVOC} className="w-full border-2 border-cyan-400 text-cyan-400">
                   VOC
                 </Button>
                 <Button
@@ -648,7 +650,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   >
                     ENROL NOW
                   </Button>
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all">
+                  <Button 
+                    onClick={onVOC}
+                    className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
+                  >
                     VOC
                   </Button>
                 </CardContent>

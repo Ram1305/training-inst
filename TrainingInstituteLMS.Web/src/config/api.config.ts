@@ -181,5 +181,13 @@ export const API_CONFIG = {
       ADMIN_COMPANY_ORDER_STATUS: (orderId: string) => `/PublicEnrollment/admin/company-orders/${orderId}/status`,
       ADMIN_COMPANY_ORDERS_COUNT: '/PublicEnrollment/admin/company-orders/count',
     },
+    VOC: {
+      SUBMIT: '/VOC/submit',
+      ADMIN_LIST: '/VOC/admin/list',
+      ADMIN_BY_ID: (id: string) => `/VOC/admin/${id}`,
+      ADMIN_UPDATE_STATUS: (id: string) => `/VOC/admin/${id}/status`,
+      ADMIN_DELETE: (id: string) => `/VOC/admin/${id}`,
+      ADMIN_STATS: '/VOC/admin/stats',
+    },
   },
 };
