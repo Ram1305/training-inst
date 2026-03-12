@@ -863,5 +863,13 @@ Safety Training Academy";
                 _logger.LogWarning(ex, "Failed to send OTP email to {Email}", toEmail);
             }
         }
+
+        private static string FormatBookingIdForEmail(string bookingId)
+        {
+            if (string.IsNullOrWhiteSpace(bookingId)) return "00000000";
+            // Ensure exactly 8 characters/digits and uppercase
+            if (bookingId.Length >= 8) return bookingId[..8].ToUpperInvariant();
+            return bookingId.PadLeft(8, '0').ToUpperInvariant();
+        }
     }
 }

@@ -1085,7 +1085,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                         StudentName = student.FullName,
                         Email = student.Email ?? string.Empty,
                         CourseName = course.CourseName,
-                        CourseCode = course.CourseCode,
+                        CourseCode = course.CourseCode ?? string.Empty,
                         SelectedDate = courseDate.ScheduledDate,
                         AmountPaid = request.AmountPaid,
                         PaymentStatus = "Pending",
