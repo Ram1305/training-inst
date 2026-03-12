@@ -327,19 +327,21 @@ export function AdminVOC() {
                     </div>
                   </div>
                 </div>
-                <div className="space-y-3">
-                  <h4 className="font-bold text-slate-900 border-b pb-1">Booking Info</h4>
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar className="w-4 h-4" />
-                      {selectedSubmission.preferredStartDate ? format(new Date(selectedSubmission.preferredStartDate), 'PPP') : 'No date selected'}
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Clock className="w-4 h-4" />
-                      <span className="capitalize">{selectedSubmission.preferredTime || 'No time selected'} session</span>
+                {(selectedSubmission.preferredStartDate || selectedSubmission.preferredTime) && (
+                  <div className="space-y-3">
+                    <h4 className="font-bold text-slate-900 border-b pb-1">Booking Info</h4>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Calendar className="w-4 h-4" />
+                        {selectedSubmission.preferredStartDate ? format(new Date(selectedSubmission.preferredStartDate), 'PPP') : 'No date selected'}
+                      </div>
+                      <div className="flex items-center gap-2 text-sm text-slate-600">
+                        <Clock className="w-4 h-4" />
+                        <span className="capitalize">{selectedSubmission.preferredTime || 'No time selected'} session</span>
+                      </div>
                     </div>
                   </div>
-                </div>
+                )}
               </div>
 
               {selectedSubmission.comments && (
@@ -413,14 +415,14 @@ export function AdminVOC() {
                       src={API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath}
                       alt="Payment Proof"
                       className="w-full h-auto max-h-60 object-contain cursor-pointer transition-all group-hover:scale-[1.02]"
-                      onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath, '_blank')}
+                      onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath!, '_blank')}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                        <Button
                          variant="secondary"
                          size="sm"
                          className="gap-2"
-                         onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath, '_blank')}
+                         onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath!, '_blank')}
                        >
                          <Eye className="w-4 h-4" /> View Full Image
                        </Button>

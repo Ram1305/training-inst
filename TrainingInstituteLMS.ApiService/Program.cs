@@ -299,6 +299,8 @@ if (app.Environment.IsDevelopment())
 // Configure the HTTP request pipeline.
 app.UseExceptionHandler();
 
+app.UseStaticFiles();
+
 app.UseRouting();
 
 // CORS - Use the built-in policy
