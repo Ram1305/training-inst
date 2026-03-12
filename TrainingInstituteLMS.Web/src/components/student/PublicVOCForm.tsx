@@ -48,9 +48,18 @@ interface SelectedCourse {
 
 interface PublicVOCFormProps {
   onBack: () => void;
+  onLogin?: () => void;
+  onAbout?: () => void;
+  onContact?: () => void;
+  onBookNow?: () => void;
+  onForms?: () => void;
+  onFeesRefund?: () => void;
+  onGallery?: () => void;
+  onCourseDetails?: (courseId: string) => void;
+  onVOC?: () => void;
 }
 
-export function PublicVOCForm({ onBack }: PublicVOCFormProps) {
+export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, onForms, onFeesRefund, onGallery, onCourseDetails, onVOC }: PublicVOCFormProps) {
   const [currentStep, setCurrentStep] = useState<Step>('details');
   const [loading, setLoading] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -238,6 +247,15 @@ export function PublicVOCForm({ onBack }: PublicVOCFormProps) {
   return (
     <PublicLayout
       onBack={onBack}
+      onLogin={onLogin}
+      onAbout={onAbout}
+      onContact={onContact}
+      onBookNow={onBookNow}
+      onForms={onForms}
+      onFeesRefund={onFeesRefund}
+      onGallery={onGallery}
+      onCourseDetails={onCourseDetails}
+      onVOC={onVOC}
     >
       <div className="py-12 px-4 max-w-4xl mx-auto">
         {/* Progress Header */}

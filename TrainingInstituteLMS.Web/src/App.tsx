@@ -621,6 +621,15 @@ export default function App() {
     return (
       <PublicVOCForm
         onBack={handleBackToLanding}
+        onLogin={handleGoToLogin}
+        onAbout={handleGoToAbout}
+        onContact={handleGoToContact}
+        onBookNow={handleGoToBookNow}
+        onForms={handleGoToForms}
+        onFeesRefund={handleGoToFeesRefund}
+        onGallery={handleGoToGallery}
+        onCourseDetails={handleCourseDetails}
+        onVOC={handleGoToVOCForm}
       />
     );
   }

@@ -138,6 +138,7 @@ export function PublicHeader({
       <nav className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-b border-slate-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
+          {/* Left Nav Links */}
             <div className="hidden md:flex items-center gap-6">
               <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">HOME</button>
               
@@ -201,12 +202,15 @@ export function PublicHeader({
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">ABOUT</button>
               <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">CONTACT</button>
               <button onClick={onVOC} className="text-cyan-400 border-2 border-cyan-400/50 rounded-lg px-4 py-1 text-xs font-bold hover:bg-cyan-400 hover:text-slate-900 transition-all">VOC</button>
-              
+            </div>
+
+            {/* Right Action Buttons */}
+            <div className="hidden md:flex items-center gap-3">
               <Button onClick={onBookNow} className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6 h-9 text-xs font-bold uppercase tracking-wider shadow-lg shadow-cyan-500/20">
                 Book Now
               </Button>
               
-              <Button onClick={onLogin} variant="outline" className="border-white text-white hover:bg-white hover:text-slate-900 rounded-full px-6 h-9 text-xs font-bold uppercase">
+              <Button onClick={onLogin} className="bg-white hover:bg-cyan-400 text-slate-900 hover:text-white rounded-full px-6 h-9 text-xs font-bold uppercase border border-white transition-all">
                 Login / Register
               </Button>
             </div>
