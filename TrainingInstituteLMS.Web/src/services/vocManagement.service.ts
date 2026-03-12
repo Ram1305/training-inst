@@ -116,11 +116,11 @@ class VOCManagementService {
   }
 
   async sendOTP(email: string): Promise<{ success: boolean }> {
-    return apiService.post<{ success: boolean }>('/api/VOC/send-otp', { email });
+    return apiService.post<{ success: boolean }>(API_CONFIG.ENDPOINTS.VOC.SEND_OTP, { email });
   }
 
   async verifyOTP(email: string, otp: string): Promise<{ success: boolean }> {
-    return apiService.post<{ success: boolean }>('/api/VOC/verify-otp', { email, otp });
+    return apiService.post<{ success: boolean }>(API_CONFIG.ENDPOINTS.VOC.VERIFY_OTP, { email, otp });
   }
 }
 

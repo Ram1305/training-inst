@@ -11,7 +11,8 @@ class ApiService {
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const url = `${this.baseURL}${endpoint}`;
+    const normalizedEndpoint = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+    const url = `${this.baseURL}${normalizedEndpoint}`;
     
     const config: RequestInit = {
       ...options,

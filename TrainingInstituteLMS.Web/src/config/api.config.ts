@@ -188,6 +188,8 @@ export const API_CONFIG = {
       ADMIN_UPDATE_STATUS: (id: string) => `/VOC/admin/${id}/status`,
       ADMIN_DELETE: (id: string) => `/VOC/admin/${id}`,
       ADMIN_STATS: '/VOC/admin/stats',
+      SEND_OTP: '/VOC/send-otp',
+      VERIFY_OTP: '/VOC/verify-otp',
     },
   },
 };
