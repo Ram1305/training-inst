@@ -24,7 +24,6 @@ import {
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
-import { Textarea } from "../ui/textarea";
 import {
   Select,
   SelectContent,
@@ -74,10 +73,6 @@ const yearOptions = Array.from({ length: 11 }, (_, i) => {
 export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, onForms, onFeesRefund, onGallery, onCourseDetails, onVOC }: PublicVOCFormProps) {
   const [currentStep, setCurrentStep] = useState<Step>('details');
   const [loading, setLoading] = useState(false);
-  const [emailVerified, setEmailVerified] = useState(false);
-  const [otpSent, setOtpSent] = useState(false);
-  const [otp, setOtp] = useState("");
-  const [otpLoading, setOtpLoading] = useState(false);
 
   // Form State
   const [formData, setFormData] = useState({
@@ -90,7 +85,6 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
     city: "",
     state: "",
     postcode: "",
-    comments: "",
   });
 
   // Course Data State
@@ -156,42 +150,6 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
     }
   };
 
-  const handleSendOTP = async () => {
-    if (!formData.email) { toast.error("Please enter your email first"); return; }
-    setOtpLoading(true);
-    try {
-      const res = await vocManagementService.sendOTP(formData.email);
-      if (res.success) {
-        setOtpSent(true);
-        toast.success("OTP sent to your email");
-      } else {
-        const errMsg = (res as any).message || "Failed to send OTP. Please try again.";
-        toast.error(errMsg);
-      }
-    } catch (error) {
-      toast.error("Error sending OTP");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async () => {
-    if (!otp) { toast.error("Please enter the OTP"); return; }
-    setOtpLoading(true);
-    try {
-      const res = await vocManagementService.verifyOTP(formData.email, otp);
-      if (res.success) {
-        setEmailVerified(true);
-        toast.success("Email verified successfully");
-      } else {
-        toast.error("Invalid OTP. Please check and try again.");
-      }
-    } catch (error) {
-      toast.error("Error verifying OTP");
-    } finally {
-      setOtpLoading(false);
-    }
-  };
 
   const handleAddCourse = () => {
     const course = availableCourses.find(c => c.courseId === currentSelectedCourseId);
@@ -367,52 +325,19 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                     </div>
                   </div>
 
-                  {/* Email with OTP */}
+                  {/* Email */}
                   <div className="space-y-2">
                     <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Address</Label>
-                    <div className="flex gap-3">
-                      <div className="relative flex-grow">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                        <Input
-                          placeholder="you@example.com"
-                          type="email"
-                          className={`pl-10 h-11 ${emailVerified ? 'border-green-400 bg-green-50' : ''}`}
-                          value={formData.email}
-                          onChange={e => { setFormData({ ...formData, email: e.target.value }); setEmailVerified(false); setOtpSent(false); }}
-                          disabled={emailVerified}
-                        />
-                        {emailVerified && <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-5 h-5 text-green-500" />}
-                      </div>
-                      {!emailVerified && (
-                        <Button
-                          onClick={handleSendOTP}
-                          disabled={otpLoading || !formData.email}
-                          className="h-11 px-4 bg-slate-900 hover:bg-slate-700 text-white font-bold text-xs whitespace-nowrap"
-                        >
-                          {otpLoading && !otpSent ? <Loader2 className="w-4 h-4 animate-spin" /> : "Send OTP"}
-                        </Button>
-                      )}
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        placeholder="you@example.com"
+                        type="email"
+                        className="pl-10 h-11"
+                        value={formData.email}
+                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                      />
                     </div>
-
-                    {/* OTP input */}
-                    {otpSent && !emailVerified && (
-                      <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} className="flex gap-3 mt-2">
-                        <Input
-                          placeholder="Enter 6-digit OTP"
-                          className="h-11 text-center text-lg font-bold tracking-widest"
-                          value={otp}
-                          onChange={e => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
-                          maxLength={6}
-                        />
-                        <Button onClick={handleVerifyOTP} disabled={otpLoading || otp.length < 6} className="h-11 px-6 bg-green-600 hover:bg-green-700 text-white font-bold text-xs">
-                          {otpLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify"}
-                        </Button>
-                        <Button variant="ghost" onClick={handleSendOTP} disabled={otpLoading} className="h-11 text-xs text-slate-500">
-                          Resend
-                        </Button>
-                      </motion.div>
-                    )}
-                    {emailVerified && <p className="text-green-600 text-xs font-semibold flex items-center gap-1 mt-1"><CheckCircle className="w-3 h-3" /> Email verified</p>}
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -462,14 +387,10 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Additional Comments (Optional)</Label>
-                    <Textarea placeholder="Any additional information..." className="resize-none" rows={3} value={formData.comments} onChange={e => setFormData({ ...formData, comments: e.target.value })} />
-                  </div>
 
                   <Button
                     onClick={() => setCurrentStep('courses')}
-                    disabled={!emailVerified || !formData.firstName || !formData.lastName || !formData.phone}
+                    disabled={!formData.firstName || !formData.lastName || !formData.email || !formData.phone}
                     className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm uppercase tracking-widest rounded-xl"
                   >
                     SELECT COURSES <ChevronRight className="w-5 h-5 ml-2" />
