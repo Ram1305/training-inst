@@ -132,35 +132,41 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     },
   ];
 
-  const fetchCourses = useCallback(async (immediateSearch?: string) => {
+  const fetchCourses = useCallback(async (searchTerm?: string) => {
     try {
-      setIsLoading(true);
+      // Only show main loader if we have no courses yet
       setError(null);
-
-      const searchTerm = immediateSearch !== undefined ? immediateSearch.trim() : debouncedSearch.trim();
+      
+      const term = searchTerm?.trim() || "";
 
       const filter: { searchQuery?: string; pageSize: number; sortBy?: string; sortDescending?: boolean } = {
-        pageSize: 1000,  // Fetch all courses so categories dropdown and section show every category
+        pageSize: 1000,
         sortBy: 'displayOrder',
         sortDescending: false
       };
 
-      if (searchTerm) {
-        filter.searchQuery = searchTerm;
+      if (term) {
+        filter.searchQuery = term;
       }
+
+      // Check if we already have courses to avoid blink
+      setCourses(prev => {
+        if (prev.length === 0) setIsLoading(true);
+        return prev;
+      });
 
       const response = await courseService.getActiveCourses(filter);
 
       if (response.success && response.data) {
         let list = response.data.courses;
-        // Client-side filter so search works even if API doesn't support searchQuery (match name, code, category)
-        if (searchTerm) {
-          const term = searchTerm.toLowerCase();
+        // Client-side filter fallback
+        if (term) {
+          const lowerTerm = term.toLowerCase();
           list = list.filter(
             (c) =>
-              c.courseName?.toLowerCase().includes(term) ||
-              c.courseCode?.toLowerCase().includes(term) ||
-              (c.categoryName && c.categoryName.toLowerCase().includes(term))
+              c.courseName?.toLowerCase().includes(lowerTerm) ||
+              c.courseCode?.toLowerCase().includes(lowerTerm) ||
+              (c.categoryName && c.categoryName.toLowerCase().includes(lowerTerm))
           );
         }
         setCourses(list);
@@ -173,7 +179,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     } finally {
       setIsLoading(false);
     }
-  }, [debouncedSearch]);
+  }, []);
 
   const fetchCategories = async () => {
     try {
@@ -211,10 +217,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     fetchReviews();
   }, [fetchReviews]);
 
-  // Fetch courses when search changes (debounced)
+  // Fetch courses on mount and when search changes (debounced)
   useEffect(() => {
-    fetchCourses();
-  }, [fetchCourses]);
+    const timer = setTimeout(() => {
+      fetchCourses(searchQuery);
+    }, searchQuery ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [searchQuery, fetchCourses]);
 
   // Auto-play slider
   useEffect(() => {
@@ -611,8 +620,17 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                         document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
                       }
                     }}
-                    className="pl-12 h-14 rounded-full border-2 border-blue-200 focus:border-cyan-400 bg-white"
+                    className="pl-12 pr-10 h-14 rounded-full border-2 border-blue-200 focus:border-cyan-400 bg-white"
                   />
+                  {searchQuery && (
+                    <button
+                      onClick={() => setSearchQuery('')}
+                      className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                      title="Clear search"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
                 <Button
                   className="bg-cyan-500 hover:bg-cyan-600 text-white h-14 px-8 rounded-full text-lg font-semibold shadow-lg shadow-cyan-500/50"
@@ -964,12 +982,12 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
       {/* Courses Section - Organized by Category */}
       <section id="courses" className="py-20 bg-gradient-to-br from-cyan-50 via-blue-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-20">
-          {isLoading ? (
+          {isLoading && courses.length === 0 ? (
             <div className="flex items-center justify-center py-20">
               <Loader2 className="w-8 h-8 animate-spin text-cyan-600" />
               <span className="ml-2 text-gray-600">Loading courses...</span>
             </div>
-          ) : error ? (
+          ) : error && courses.length === 0 ? (
             <div className="text-center py-20">
               <p className="text-red-500 mb-4">{error}</p>
               <Button onClick={() => fetchCourses()} variant="outline">
@@ -1183,6 +1201,31 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 </motion.div>
               );
             })
+          )}
+
+          {/* No Results Message */}
+          {!isLoading && courses.length === 0 && !error && (
+            <motion.div
+              className="text-center py-20"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+            >
+              <div className="inline-flex items-center justify-center w-20 h-20 bg-blue-100 rounded-full mb-4">
+                <Search className="w-10 h-10 text-blue-600" />
+              </div>
+              <h3 className="text-2xl font-bold text-gray-700 mb-2">No courses found</h3>
+              <p className="text-gray-600 max-w-md mx-auto">
+                We couldn't find any courses matching "{searchQuery}". 
+                Try searching for something else or clear the search.
+              </p>
+              <Button 
+                variant="outline" 
+                className="mt-6 border-cyan-500 text-cyan-600 rounded-full"
+                onClick={() => setSearchQuery('')}
+              >
+                Clear Search
+              </Button>
+            </motion.div>
           )}
         </div>
       </section>

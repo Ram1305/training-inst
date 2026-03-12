@@ -1756,7 +1756,7 @@ export function PublicEnrollmentWizard({
                               <SelectContent>
                                 {courses.flatMap((course) => {
                                   const items = [];
-                                  
+
                                   // Base price item
                                   items.push({
                                     id: course.courseId,
@@ -1977,7 +1977,7 @@ export function PublicEnrollmentWizard({
                               <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
                                 {courses.flatMap((course) => {
                                   const items = [];
-                                  
+
                                   // Base price item
                                   items.push({
                                     id: course.courseId,
@@ -2802,11 +2802,11 @@ export function PublicEnrollmentWizard({
                       key={i}
                       onClick={() => setCurrentFormSection(i + 1)}
                       className={`flex flex-col items-center text-xs ${currentFormSection === i + 1 ? 'text-violet-600 font-semibold' :
-                          currentFormSection > i + 1 ? 'text-green-600' : 'text-gray-400'
+                        currentFormSection > i + 1 ? 'text-green-600' : 'text-gray-400'
                         }`}
                     >
                       <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-1 ${currentFormSection === i + 1 ? 'bg-violet-600 text-white' :
-                          currentFormSection > i + 1 ? 'bg-green-100 text-green-600' : 'bg-gray-100'
+                        currentFormSection > i + 1 ? 'bg-green-100 text-green-600' : 'bg-gray-100'
                         }`}>
                         {currentFormSection > i + 1 ? <CheckCircle className="w-4 h-4" /> : i + 1}
                       </div>
@@ -3252,11 +3252,11 @@ export function PublicEnrollmentWizard({
                 <div
                   key={step.id}
                   className={`flex flex-col items-center text-xs ${currentStep === step.id ? 'text-violet-600 font-semibold' :
-                      currentStep > step.id ? 'text-green-600' : 'text-gray-400'
+                    currentStep > step.id ? 'text-green-600' : 'text-gray-400'
                     }`}
                 >
                   <div className={`w-10 h-10 rounded-full flex items-center justify-center mb-1 ${currentStep === step.id ? 'bg-violet-600 text-white' :
-                      currentStep > step.id ? 'bg-green-100 text-green-600' : 'bg-gray-100'
+                    currentStep > step.id ? 'bg-green-100 text-green-600' : 'bg-gray-100'
                     }`}>
                     {currentStep > step.id ? <CheckCircle className="w-5 h-5" /> : <Icon className="w-5 h-5" />}
                   </div>
