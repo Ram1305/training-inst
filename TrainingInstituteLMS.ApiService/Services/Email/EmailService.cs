@@ -811,24 +811,37 @@ Safety Training Academy";
 
             try
             {
-                var user = _settings.User?.Trim() ?? string.Empty;
-                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
-                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
-                using var client = new SmtpClient();
+            var user = _settings.User?.Trim() ?? string.Empty;
+            var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+            var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+
+            _logger.LogInformation("Email: Attempting to send VOC submission confirmation to {Email} for submission {Id} via {Host}:{Port}", toEmail, submissionId, _settings.SmtpHost, _settings.SmtpPort);
+
+            using var client = new SmtpClient();
+            try
+            {
                 await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                _logger.LogInformation("Email: SMTP connected to {Host}:{Port} using {Options} for VOC submission", _settings.SmtpHost, _settings.SmtpPort, socketOptions);
+
                 await client.AuthenticateAsync(user, smtpPassword);
+                _logger.LogInformation("Email: SMTP authenticated as {User} for VOC submission", user);
 
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_settings.FromName, user));
                 message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
                 message.Subject = subject;
                 message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+
                 await client.SendAsync(message);
+                _logger.LogInformation("Email: VOC submission confirmation sent to {Email} for submission {Id}", toEmail, submissionId);
+
                 await client.DisconnectAsync(true);
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to send VOC confirmation to {Email}", toEmail);
+                var innerMsg = ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "";
+                _logger.LogError(ex, "Email: Failed to send VOC confirmation to {Email}. Error: {Message}{InnerMessage}", toEmail, ex.Message, innerMsg);
+                throw;
             }
         }
 
@@ -846,26 +859,36 @@ Safety Training Academy";
 <p style='color: #6b7280; font-size: 12px; margin-top: 20px;'>This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
 </div></body></html>";
 
+            var user = _settings.User?.Trim() ?? string.Empty;
+            var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+            var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+
+            _logger.LogInformation("Email: Attempting to send OTP email to {Email} via {Host}:{Port}", toEmail, _settings.SmtpHost, _settings.SmtpPort);
+
+            using var client = new SmtpClient();
             try
             {
-                var user = _settings.User?.Trim() ?? string.Empty;
-                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
-                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
-                using var client = new SmtpClient();
                 await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                _logger.LogInformation("Email: SMTP connected to {Host}:{Port} using {Options} for OTP", _settings.SmtpHost, _settings.SmtpPort, socketOptions);
+
                 await client.AuthenticateAsync(user, smtpPassword);
+                _logger.LogInformation("Email: SMTP authenticated as {User} for OTP", user);
 
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_settings.FromName, user));
                 message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
                 message.Subject = subject;
                 message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+                
                 await client.SendAsync(message);
+                _logger.LogInformation("Email: OTP email successfully sent to {Email}", toEmail);
+
                 await client.DisconnectAsync(true);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to send OTP email to {Email}", toEmail);
+                var innerMsg = ex.InnerException != null ? $" Inner: {ex.InnerException.Message}" : "";
+                _logger.LogError(ex, "Email: Failed to send OTP email to {Email}. Error: {Message}{InnerMessage}", toEmail, ex.Message, innerMsg);
                 throw;
             }
         }
