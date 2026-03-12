@@ -187,7 +187,8 @@ info@safetytrainingacademy.edu.au";
                 var user = _settings.User?.Trim() ?? string.Empty;
                 var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
                 using var client = new SmtpClient();
-                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
                 await client.AuthenticateAsync(user, smtpPassword);
 
                 try
@@ -331,8 +332,9 @@ info@safetytrainingacademy.edu.au";
             {
                 var user = _settings.User?.Trim() ?? string.Empty;
                 var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
                 using var client = new SmtpClient();
-                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
                 await client.AuthenticateAsync(user, smtpPassword);
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_settings.FromName, user));
@@ -691,11 +693,12 @@ Best regards,
 
                 _logger.LogInformation("Email: Attempting to send enrollment confirmation to {ToEmail} (order {OrderId}) via {Host}:{Port}", toEmail, orderId, _settings.SmtpHost, _settings.SmtpPort);
 
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
                 using var client = new SmtpClient();
                 try
                 {
-                    await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
-                    _logger.LogInformation("Email: SMTP connected to {Host}:{Port}", _settings.SmtpHost, _settings.SmtpPort);
+                    await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                    _logger.LogInformation("Email: SMTP connected to {Host}:{Port} using {Options}", _settings.SmtpHost, _settings.SmtpPort, socketOptions);
                 }
                 catch (Exception connectEx)
                 {
@@ -810,8 +813,9 @@ Safety Training Academy";
             {
                 var user = _settings.User?.Trim() ?? string.Empty;
                 var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
                 using var client = new SmtpClient();
-                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
                 await client.AuthenticateAsync(user, smtpPassword);
 
                 var message = new MimeMessage();
@@ -846,8 +850,9 @@ Safety Training Academy";
             {
                 var user = _settings.User?.Trim() ?? string.Empty;
                 var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
                 using var client = new SmtpClient();
-                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
                 await client.AuthenticateAsync(user, smtpPassword);
 
                 var message = new MimeMessage();
@@ -860,7 +865,8 @@ Safety Training Academy";
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to send OTP email to {Email}", toEmail);
+                _logger.LogError(ex, "Failed to send OTP email to {Email}", toEmail);
+                throw;
             }
         }
 
