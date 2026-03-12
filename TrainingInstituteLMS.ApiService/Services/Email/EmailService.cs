@@ -895,7 +895,24 @@ Safety Training Academy";
         private static string FormatBookingIdForEmail(string bookingId)
         {
             if (string.IsNullOrWhiteSpace(bookingId)) return "00000000";
-            // Ensure exactly 8 characters/digits and uppercase
+            
+            // If it's already an 8-digit numeric string, return it as-is
+            if (bookingId.Length == 8 && bookingId.All(char.IsDigit)) return bookingId;
+            
+            // Attempt to convert Guid to a consistent 8-digit decimal number
+            if (Guid.TryParse(bookingId, out var guid))
+            {
+                var bytes = guid.ToByteArray();
+                var num = BitConverter.ToUInt32(bytes, 0) % 100000000;
+                return num.ToString("D8");
+            }
+
+            // Attempt to extract digits only and use that
+            var numericPart = new string(bookingId.Where(char.IsDigit).ToArray());
+            if (numericPart.Length >= 8) return numericPart[..8];
+            if (numericPart.Length > 0) return numericPart.PadLeft(8, '0');
+            
+            // Fallback: 8 characters uppercase
             if (bookingId.Length >= 8) return bookingId[..8].ToUpperInvariant();
             return bookingId.PadLeft(8, '0').ToUpperInvariant();
         }

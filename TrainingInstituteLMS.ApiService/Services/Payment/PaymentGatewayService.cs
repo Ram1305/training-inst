@@ -47,9 +47,9 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
 
         public async Task<CardPaymentResultResponseDto> ProcessCardPaymentAsync(ProcessCardPaymentRequestDto request)
         {
-            // Generate invoice number
-            var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8]}";
-            var invoiceReference = $"LMS-{request.CourseId.ToString()[..8]}-{DateTime.UtcNow:yyyyMMdd}";
+            // Generate an 8-digit numeric invoice number
+            var invoiceNumber = Random.Shared.Next(10000000, 100000000).ToString();
+            var invoiceReference = $"INV-{request.CourseId.ToString()[..8]}-{DateTime.UtcNow:yyyyMMdd}";
 
             try
             {
@@ -319,8 +319,9 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
 
         public async Task<CardPaymentResultResponseDto> ProcessCardPaymentExistingStudentAsync(ProcessCardPaymentExistingStudentRequestDto request)
         {
-            var invoiceNumber = $"INV-{DateTime.UtcNow:yyyyMMddHHmmss}-{Guid.NewGuid().ToString()[..8]}";
-            var invoiceReference = $"LMS-{request.CourseId.ToString()[..8]}-{DateTime.UtcNow:yyyyMMdd}";
+            // Generate an 8-digit numeric invoice number
+            var invoiceNumber = Random.Shared.Next(10000000, 100000000).ToString();
+            var invoiceReference = $"INV-{request.CourseId.ToString()[..8]}-{DateTime.UtcNow:yyyyMMdd}";
 
             try
             {
