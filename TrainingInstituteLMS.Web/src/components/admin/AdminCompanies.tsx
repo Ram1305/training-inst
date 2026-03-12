@@ -31,11 +31,13 @@ export function AdminCompanies() {
     password: '',
   });
 
-  const fetchCompanies = async () => {
-    setLoading(true);
+  const fetchCompanies = async (query?: string) => {
+    if (companies.length === 0) {
+      setLoading(true);
+    }
     try {
       const response = await companyManagementService.getAllCompanies({
-        searchQuery: searchQuery || undefined,
+        searchQuery: (query ?? searchQuery) || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         pageNumber: currentPage,
         pageSize: pageSize,
@@ -53,7 +55,10 @@ export function AdminCompanies() {
   };
 
   useEffect(() => {
-    fetchCompanies();
+    const timer = setTimeout(() => {
+      fetchCompanies(searchQuery);
+    }, searchQuery ? 300 : 0);
+    return () => clearTimeout(timer);
   }, [currentPage, searchQuery, statusFilter]);
 
   const handleCreateCompany = async (e: React.FormEvent) => {
@@ -291,7 +296,6 @@ export function AdminCompanies() {
                 placeholder="Search companies..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && fetchCompanies()}
                 className="pl-10 pr-10"
               />
               {searchQuery && (
@@ -316,7 +320,7 @@ export function AdminCompanies() {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-            <Button onClick={fetchCompanies} variant="outline">
+            <Button onClick={() => fetchCompanies()} variant="outline">
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>

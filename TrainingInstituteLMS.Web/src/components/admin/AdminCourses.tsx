@@ -392,8 +392,9 @@ export function AdminCourses() {
   const [editingCourseId, setEditingCourseId] = useState<string | null>(null);
   const [managingDatesForCourse, setManagingDatesForCourse] = useState<{ id: string; name: string; code: string } | null>(null);
   
-  // Search state
+  // Search and filter state
   const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'active' | 'inactive' | 'all'>('all');
   
   // Data states
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -476,10 +477,13 @@ export function AdminCourses() {
 
   const fetchCourses = async (query?: string) => {
     try {
-      setIsLoading(true);
+      if (courses.length === 0) {
+        setIsLoading(true);
+      }
       const response = await courseService.getAllCourses({
         pageSize: 100,
         searchQuery: (query ?? searchQuery).trim() || undefined,
+        isActive: statusFilter === 'all' ? undefined : (statusFilter === 'active'),
         sortBy: 'displayOrder',
         sortDescending: false,
       });
@@ -502,7 +506,7 @@ export function AdminCourses() {
       fetchCourses(searchQuery);
     }, searchQuery ? 300 : 0); // Debounce when typing, immediate when clearing
     return () => clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, statusFilter]);
 
   const fetchCategories = async () => {
     try {
@@ -2656,27 +2660,51 @@ export function AdminCourses() {
         </div>
       )}
 
-      {/* Search */}
-      <div className="relative max-w-md">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-        <Input
-          type="text"
-          placeholder="Search courses by name or code..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && fetchCourses(searchQuery)}
-          className="pl-10 pr-10"
-        />
-        {searchQuery && (
-          <button
-            onClick={() => setSearchQuery('')}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
-            title="Clear search"
-          >
-            <X className="w-4 h-4" />
-          </button>
-        )}
-      </div>
+      {/* Search & Filter */}
+      <Card className="border-violet-100 mb-6">
+        <CardHeader>
+          <CardTitle>Search & Filter</CardTitle>
+          <CardDescription>Find courses by name or course code</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex gap-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+              <Input
+                type="text"
+                placeholder="Search courses by name or code..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 pr-10"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  title="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
+            </div>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value as 'active' | 'inactive' | 'all');
+              }}
+              className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-violet-500"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+            <Button onClick={() => fetchCourses()} variant="outline">
+              <Search className="w-4 h-4 mr-2" />
+              Search
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Courses List - Grouped by Category (aligned with landing page) */}
       <div className="space-y-8">

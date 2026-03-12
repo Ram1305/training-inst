@@ -97,11 +97,13 @@ export function AdminStudentEnrollments({ initialSearchQuery, initialEmailToView
   }, []);
 
   // Fetch enrollment forms
-  const fetchEnrollmentForms = useCallback(async () => {
-    setLoading(true);
+  const fetchEnrollmentForms = useCallback(async (query?: string) => {
+    if (enrollmentForms.length === 0) {
+      setLoading(true);
+    }
     try {
       const response = await studentEnrollmentFormService.getEnrollmentFormsForAdmin({
-        searchQuery: searchQuery || undefined,
+        searchQuery: (query ?? searchQuery) || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         page: currentPage,
         pageSize: pageSize,
@@ -133,9 +135,12 @@ export function AdminStudentEnrollments({ initialSearchQuery, initialEmailToView
   }, []);
 
   useEffect(() => {
-    fetchEnrollmentForms();
+    const timer = setTimeout(() => {
+      fetchEnrollmentForms(searchQuery);
+    }, searchQuery ? 300 : 0);
     fetchStats();
-  }, [fetchEnrollmentForms, fetchStats]);
+    return () => clearTimeout(timer);
+  }, [fetchEnrollmentForms, fetchStats, searchQuery]);
 
   // Auto-open view dialog when navigated from Students tab with initialEmailToView
   useEffect(() => {

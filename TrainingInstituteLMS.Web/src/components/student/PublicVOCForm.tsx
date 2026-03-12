@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
 import {
   CheckCircle,
   AlertCircle,
@@ -52,7 +51,6 @@ interface PublicVOCFormProps {
 }
 
 export function PublicVOCForm({ onBack }: PublicVOCFormProps) {
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState<Step>('details');
   const [loading, setLoading] = useState(false);
   const [emailVerified, setEmailVerified] = useState(false);
@@ -240,7 +238,6 @@ export function PublicVOCForm({ onBack }: PublicVOCFormProps) {
   return (
     <PublicLayout
       onBack={onBack}
-      onVOC={() => navigate('/voc-renewal')}
     >
       <div className="py-12 px-4 max-w-4xl mx-auto">
         {/* Progress Header */}
@@ -713,7 +710,7 @@ export function PublicVOCForm({ onBack }: PublicVOCFormProps) {
                   Thank you for your VOC renewal request. We've sent a confirmation email to <strong>{formData.email}</strong> with your order details and next steps.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <Button onClick={() => navigate('/')} className="h-12 px-10 bg-slate-900 font-bold rounded-xl">
+                  <Button onClick={onBack} className="h-12 px-10 bg-slate-900 font-bold rounded-xl">
                     Back to Home
                   </Button>
                   <Button variant="outline" onClick={() => window.location.reload()} className="h-12 border-slate-200 font-bold rounded-xl">

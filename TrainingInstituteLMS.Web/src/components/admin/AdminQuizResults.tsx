@@ -51,9 +51,12 @@ export function AdminQuizResults({ initialSearchQuery, initialEmailToView, onCle
 
   // Fetch data on component mount and when filters change
   useEffect(() => {
-    fetchQuizResults();
-    fetchStatistics();
-  }, [pageNumber, statusFilter]);
+    const timer = setTimeout(() => {
+      fetchQuizResults(searchQuery);
+      fetchStatistics();
+    }, searchQuery ? 300 : 0);
+    return () => clearTimeout(timer);
+  }, [pageNumber, statusFilter, searchQuery]);
 
   // Auto-open detail dialog when navigated from Students tab with initialEmailToView
   useEffect(() => {
@@ -67,12 +70,14 @@ export function AdminQuizResults({ initialSearchQuery, initialEmailToView, onCle
     onClearInitialView?.();
   }, [resultsData?.results, initialEmailToView]);
 
-  const fetchQuizResults = async () => {
-    setIsLoading(true);
+  const fetchQuizResults = async (query?: string) => {
+    if (!resultsData?.results?.length) {
+      setIsLoading(true);
+    }
     setError(null);
     try {
       const response = await adminQuizService.getAllQuizResults({
-        search: searchQuery || undefined,
+        search: (query ?? searchQuery) || undefined,
         status: statusFilter || undefined,
         pageNumber,
         pageSize,
@@ -332,7 +337,6 @@ export function AdminQuizResults({ initialSearchQuery, initialEmailToView, onCle
                 placeholder="Search by student name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                 className="pl-10 pr-10"
               />
               {searchQuery && (
@@ -361,7 +365,7 @@ export function AdminQuizResults({ initialSearchQuery, initialEmailToView, onCle
               <option value="approved">Approved</option>
               <option value="rejected">Rejected</option>
             </select>
-            <Button onClick={handleSearch} variant="outline">
+            <Button onClick={() => handleSearch()} variant="outline">
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>
