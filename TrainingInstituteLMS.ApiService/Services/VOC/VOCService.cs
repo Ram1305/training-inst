@@ -114,12 +114,13 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                 }
 
                 var totalCount = await query.CountAsync();
-                var submissions = await query
+                var submissionEntities = await query
                     .OrderByDescending(s => s.CreatedAt)
                     .Skip((pageNumber - 1) * pageSize)
                     .Take(pageSize)
-                    .Select(s => MapToResponse(s))
                     .ToListAsync();
+
+                var submissions = submissionEntities.Select(s => MapToResponse(s)).ToList();
 
                 var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
 

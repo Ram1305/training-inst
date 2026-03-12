@@ -430,7 +430,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
 
                   <Button
                     onClick={() => setCurrentStep('courses')}
-                    disabled={!formData.firstName || !formData.lastName || !formData.email || !formData.phone}
+                    disabled={!formData.firstName || !formData.lastName || !formData.email || !formData.phone || !formData.australianStudentId || !formData.streetAddress || !formData.city || !formData.state || !formData.postcode}
                     className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm uppercase tracking-widest rounded-xl"
                   >
                     SELECT COURSES <ChevronRight className="w-5 h-5 ml-2" />
