@@ -76,6 +76,7 @@ namespace TrainingInstituteLMS.Data.Data
 
         // VOC Submissions
         public DbSet<VOCSubmission> VOCSubmissions { get; set; }
+        public DbSet<VOCEmailOTP> VOCEmailOTPs { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

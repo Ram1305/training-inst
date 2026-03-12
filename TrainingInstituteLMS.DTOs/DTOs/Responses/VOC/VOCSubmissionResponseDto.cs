@@ -17,6 +17,10 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.VOC
         public DateTime? PreferredStartDate { get; set; }
         public string? PreferredTime { get; set; }
         public string? Comments { get; set; }
+        public string SelectedCoursesJson { get; set; } = "[]";
+        public string? PaymentMethod { get; set; }
+        public decimal TotalAmount { get; set; }
+        public string? TransactionId { get; set; }
         public string Status { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
     }

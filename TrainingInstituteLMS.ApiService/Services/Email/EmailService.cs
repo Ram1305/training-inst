@@ -765,20 +765,103 @@ Best regards,
             }
         }
 
-        /// <summary>
-        /// Formats the booking/order ID to exactly 8 digits for display in emails.
-        /// Extracts digits and pads or truncates to 8 characters.
-        /// </summary>
-        private static string FormatBookingIdForEmail(string orderId)
+        public async Task SendVOCSubmissionConfirmationAsync(
+            string toEmail,
+            string firstName,
+            string lastName,
+            string submissionId,
+            decimal amountPaid,
+            string paymentMethod,
+            string selectedCoursesJson)
         {
-            if (string.IsNullOrWhiteSpace(orderId)) return orderId ?? string.Empty;
-            var digits = new string(orderId.Where(char.IsDigit).ToArray());
-            if (digits.Length >= 8)
-                return digits[^8..];
-            if (digits.Length > 0)
-                return digits.PadLeft(8, '0');
-            // Fallback: take last 8 chars if no digits (e.g. alphanumeric ID)
-            return orderId.Length <= 8 ? orderId.Trim() : orderId.Trim()[^8..];
+            if (!_settings.IsConfigured || string.IsNullOrWhiteSpace(toEmail)) return;
+
+            var subject = $"VOC Submission Received - #{submissionId.Substring(0, 8)}";
+            var priceStr = "$" + amountPaid.ToString("N2", CultureInfo.CreateSpecificCulture("en-US"));
+            
+            var plainBody = $@"Dear {firstName} {lastName},
+
+Thank you for your VOC submission to Safety Training Academy.
+
+Your submission details:
+ID: {submissionId.Substring(0, 8)}
+Amount: {priceStr}
+Payment Method: {paymentMethod}
+
+We have received your request and will process it shortly.
+
+Kind regards,
+Safety Training Academy";
+
+            var htmlBody = $@"<!DOCTYPE html><html><body>
+<h2>VOC Submission Confirmation</h2>
+<p>Dear {firstName} {lastName},</p>
+<p>Thank you for your VOC submission. We have received your request.</p>
+<table border='0' cellpadding='8' cellspacing='0'>
+<tr><td><strong>Submission ID:</strong></td><td>{submissionId.Substring(0, 8)}</td></tr>
+<tr><td><strong>Amount Paid:</strong></td><td>{priceStr}</td></tr>
+<tr><td><strong>Payment Method:</strong></td><td>{paymentMethod}</td></tr>
+</table>
+<p>Our team will review your application and get back to you soon.</p>
+<p>Best regards,<br/><strong>Safety Training Academy</strong></p>
+</body></html>";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.AuthenticateAsync(user, smtpPassword);
+
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_settings.FromName, user));
+                message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send VOC confirmation to {Email}", toEmail);
+            }
+        }
+
+        public async Task SendEmailOTPAsync(string toEmail, string otp)
+        {
+            if (!_settings.IsConfigured || string.IsNullOrWhiteSpace(toEmail)) return;
+
+            var subject = $"{otp} is your verification code";
+            var plainBody = $"Your verification code for VOC submission is: {otp}. It will expire in 10 minutes.";
+            var htmlBody = $@"<!DOCTYPE html><html><body>
+<div style='font-family: Arial, sans-serif; padding: 20px; border: 1px solid #e0e0e0; border-radius: 8px;'>
+<h2 style='color: #4f46e5;'>Verify your email</h2>
+<p>Use the following code to verify your email address for VOC submission:</p>
+<div style='background-color: #f3f4f6; padding: 15px; border-radius: 4px; font-size: 24px; font-weight: bold; text-align: center; letter-spacing: 5px; color: #1f2937;'>{otp}</div>
+<p style='color: #6b7280; font-size: 12px; margin-top: 20px;'>This code will expire in 10 minutes. If you did not request this, please ignore this email.</p>
+</div></body></html>";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, SecureSocketOptions.Auto);
+                await client.AuthenticateAsync(user, smtpPassword);
+
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_settings.FromName, user));
+                message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send OTP email to {Email}", toEmail);
+            }
         }
     }
 }

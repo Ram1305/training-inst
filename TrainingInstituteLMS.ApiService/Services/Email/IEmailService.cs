@@ -52,5 +52,15 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             string paymentMethod,
             string loginId,
             string password);
+        Task SendVOCSubmissionConfirmationAsync(
+            string toEmail,
+            string firstName,
+            string lastName,
+            string submissionId,
+            decimal amountPaid,
+            string paymentMethod,
+            string selectedCoursesJson);
+
+        Task SendEmailOTPAsync(string toEmail, string otp);
     }
 }

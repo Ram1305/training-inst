@@ -52,6 +52,16 @@ namespace TrainingInstituteLMS.Data.Entities.VOC
 
         public string? Comments { get; set; }
 
+        public string SelectedCoursesJson { get; set; } = "[]"; // List of { courseId, courseDateId }
+
+        [MaxLength(50)]
+        public string? PaymentMethod { get; set; } // CreditCard, BankTransfer
+
+        public decimal TotalAmount { get; set; }
+
+        [MaxLength(100)]
+        public string? TransactionId { get; set; }
+
         [Required]
         [MaxLength(20)]
         public string Status { get; set; } = "Pending"; // Pending, Verified, Completed, Rejected

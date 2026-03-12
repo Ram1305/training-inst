@@ -117,5 +117,48 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
                 return StatusCode(500, new { success = false, message = "Internal server error" });
             }
         }
+
+        [HttpPost("send-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> SendOTP([FromBody] SendOTPRequest request)
+        {
+            try
+            {
+                var result = await _vocService.SendVOCEmailOTPAsync(request.Email);
+                return Ok(new { success = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in SendOTP");
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
+        }
+
+        [HttpPost("verify-otp")]
+        [AllowAnonymous]
+        public async Task<IActionResult> VerifyOTP([FromBody] VerifyOTPRequest request)
+        {
+            try
+            {
+                var result = await _vocService.VerifyVOCEmailOTPAsync(request.Email, request.OTP);
+                return Ok(new { success = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error in VerifyOTP");
+                return StatusCode(500, new { success = false, message = "Internal server error" });
+            }
+        }
+    }
+
+    public class SendOTPRequest
+    {
+        public string Email { get; set; } = string.Empty;
+    }
+
+    public class VerifyOTPRequest
+    {
+        public string Email { get; set; } = string.Empty;
+        public string OTP { get; set; } = string.Empty;
     }
 }

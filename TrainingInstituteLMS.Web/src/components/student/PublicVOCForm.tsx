@@ -1,404 +1,729 @@
-import { useState } from 'react';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
-  Phone,
-  Mail,
-  MapPin,
-  Facebook,
-  Linkedin,
-  Instagram,
-  ChevronDown,
-  ArrowLeft,
   CheckCircle,
-  Shield,
-  Calendar as CalendarIcon,
+  AlertCircle,
+  Mail,
+  Phone,
+  User,
+  MapPin,
+  Calendar,
   Clock,
-  Send,
-  Loader2,
-  Menu,
-  X
-} from 'lucide-react';
-import { Button } from '../ui/button';
-import { Input } from '../ui/input';
-import { Label } from '../ui/label';
-import { Textarea } from '../ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../ui/card';
-import { Popover, PopoverContent, PopoverTrigger } from '../ui/popover';
-import { Calendar } from '../ui/calendar';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
-import { motion, AnimatePresence } from 'motion/react';
-import { format } from 'date-fns';
-import { toast } from 'sonner';
-import { vocManagementService } from '../../services/vocManagement.service';
+  Shield,
+  CreditCard,
+  Building,
+  Plus,
+  Trash2,
+  ChevronRight,
+  ChevronLeft,
+  ArrowRight,
+  Check,
+} from "lucide-react";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Label } from "../ui/label";
+import { Textarea } from "../ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Card, CardContent } from "../ui/card";
+import { motion, AnimatePresence } from "motion/react";
+import { toast } from "sonner";
+import { PublicLayout } from "../layout/PublicLayout";
+import { vocManagementService } from "../../services/vocManagement.service";
+import { publicEnrollmentWizardService, type CourseDropdownItem, type CourseDateDropdownItem } from "../../services/publicEnrollmentWizard.service";
 
-interface PublicVOCFormProps {
-  onBack: () => void;
+type Step = 'details' | 'courses' | 'payment' | 'success';
+
+interface SelectedCourse {
+  courseId: string;
+  courseName: string;
+  price: number;
+  courseDateId?: string;
+  courseDateDisplay?: string;
 }
 
-export function PublicVOCForm({ onBack }: PublicVOCFormProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [date, setDate] = useState<Date>();
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+export default function PublicVOCForm() {
+  const navigate = useNavigate();
+  const [currentStep, setCurrentStep] = useState<Step>('details');
+  const [loading, setLoading] = useState(false);
+  const [emailVerified, setEmailVerified] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [otpLoading, setOtpLoading] = useState(false);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Get form data
-    const formData = new FormData(e.target as HTMLFormElement);
-    const data = {
-      firstName: formData.get('firstName') as string,
-      lastName: formData.get('lastName') as string,
-      australianStudentId: formData.get('studentId') as string,
-      email: formData.get('email') as string,
-      phone: formData.get('phone') as string,
-      streetAddress: formData.get('street') as string,
-      city: formData.get('city') as string,
-      state: (formData.get('state') as string) || 'NSW',
-      postcode: formData.get('zip') as string,
-      preferredStartDate: date?.toISOString(),
-      preferredTime: formData.get('preferredTime') as string,
-      comments: formData.get('comments') as string,
-    };
+  // Form State
+  const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    australianStudentId: "",
+    streetAddress: "",
+    city: "",
+    state: "",
+    postcode: "",
+    comments: "",
+  });
 
-    setIsSubmitting(true);
+  // Course Data State
+  const [availableCourses, setAvailableCourses] = useState<CourseDropdownItem[]>([]);
+  const [selectedCourses, setSelectedCourses] = useState<SelectedCourse[]>([]);
+  const [courseDates, setCourseDates] = useState<Record<string, CourseDateDropdownItem[]>>({});
+  const [currentSelectedCourseId, setCurrentSelectedCourseId] = useState<string>("");
+
+  // Payment State
+  const [paymentMethod, setPaymentMethod] = useState<'CreditCard' | 'BankTransfer'>('CreditCard');
+  const [cardData, setCardData] = useState({
+    cardName: "",
+    cardNumber: "",
+    expiry: "",
+    cvv: "",
+  });
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  const fetchCourses = async () => {
     try {
-      const response = await vocManagementService.submitVOC(data);
-      if (response.success) {
-        toast.success('VOC Booking submitted successfully!');
-        // Reset form or navigate back
-        setTimeout(() => onBack(), 2000);
-      } else {
-        toast.error(response.message || 'Failed to submit booking');
+      const res = await publicEnrollmentWizardService.getCoursesForDropdown();
+      if (res.success) {
+        setAvailableCourses(res.data);
       }
     } catch (error) {
-      toast.error('An error occurred while submitting. Please try again.');
-    } finally {
-      setIsSubmitting(false);
+      console.error("Error fetching courses:", error);
     }
   };
 
-  const handleVerify = async () => {
-    setIsVerifying(true);
-    // Mock verification
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    toast.success('Australian Student ID verified!');
-    setIsVerifying(false);
+  const fetchDates = async (courseId: string) => {
+    if (courseDates[courseId]) return;
+    try {
+      const res = await publicEnrollmentWizardService.getCourseDates(courseId);
+      if (res.success) {
+        setCourseDates(prev => ({ ...prev, [courseId]: res.data }));
+      }
+    } catch (error) {
+      console.error("Error fetching dates:", error);
+    }
+  };
+
+  const handleSendOTP = async () => {
+    if (!formData.email) {
+      toast.error("Please enter your email first");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await vocManagementService.sendOTP(formData.email);
+      if (res.success) {
+        setOtpSent(true);
+        toast.success("OTP sent to your email");
+      } else {
+        toast.error("Failed to send OTP. Please try again.");
+      }
+    } catch (error) {
+      toast.error("Error sending OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async () => {
+    if (!otp) {
+      toast.error("Please enter the OTP");
+      return;
+    }
+    setOtpLoading(true);
+    try {
+      const res = await vocManagementService.verifyOTP(formData.email, otp);
+      if (res.success) {
+        setEmailVerified(true);
+        toast.success("Email verified successfully");
+      } else {
+        toast.error("Invalid OTP. Please check and try again.");
+      }
+    } catch (error) {
+      toast.error("Error verifying OTP");
+    } finally {
+      setOtpLoading(false);
+    }
+  };
+
+  const handleAddCourse = () => {
+    const course = availableCourses.find(c => c.courseId === currentSelectedCourseId);
+    if (course) {
+      if (selectedCourses.some(sc => sc.courseId === course.courseId)) {
+        toast.error("Course already added");
+        return;
+      }
+      setSelectedCourses([...selectedCourses, {
+        courseId: course.courseId,
+        courseName: course.courseName,
+        price: course.price
+      }]);
+      fetchDates(course.courseId);
+      setCurrentSelectedCourseId("");
+    }
+  };
+
+  const handleRemoveCourse = (courseId: string) => {
+    setSelectedCourses(selectedCourses.filter(c => c.courseId !== courseId));
+  };
+
+  const handleDateSelect = (courseId: string, dateId: string) => {
+    const dates = courseDates[courseId] || [];
+    const date = dates.find(d => d.courseDateId === dateId);
+    if (date) {
+      const display = `${new Date(date.startDate).toLocaleDateString()} - ${new Date(date.endDate).toLocaleDateString()}`;
+      setSelectedCourses(selectedCourses.map(c => 
+        c.courseId === courseId ? { ...c, courseDateId: dateId, courseDateDisplay: display } : c
+      ));
+    }
+  };
+
+  const totalPrice = selectedCourses.reduce((sum, c) => sum + c.price, 0);
+
+  const handleSubmit = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      const res = await vocManagementService.submitVOC({
+        ...formData,
+        selectedCourses: selectedCourses.map(c => ({ courseId: c.courseId, courseDateId: c.courseDateId })),
+        paymentMethod,
+        totalAmount: totalPrice,
+        transactionId: paymentMethod === 'CreditCard' ? "TRX_" + Math.random().toString(36).substring(7).toUpperCase() : undefined
+      });
+
+      if (res.success) {
+        setCurrentStep('success');
+        toast.success("VOC Submission Successful!");
+      } else {
+        toast.error(res.message || "Failed to submit VOC");
+      }
+    } catch (error) {
+      toast.error("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const renderStepIcon = (step: Step, label: string, index: number) => {
+    const stepOrder: Step[] = ['details', 'courses', 'payment', 'success'];
+    const currentIndex = stepOrder.indexOf(currentStep);
+    const active = currentStep === step;
+    const completed = currentIndex > index;
+
+    return (
+      <div className="flex flex-col items-center relative z-10">
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${
+          active ? 'bg-cyan-500 text-white shadow-lg shadow-cyan-500/30' : 
+          completed ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'
+        }`}>
+          {completed ? <Check className="w-5 h-5" /> : <span>{index + 1}</span>}
+        </div>
+        <span className={`text-[10px] uppercase font-bold mt-2 ${active ? 'text-cyan-600' : 'text-slate-400'}`}>
+          {label}
+        </span>
+      </div>
+    );
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 font-sans">
-      {/* Dark Header/Navigation */}
-      <nav className="bg-slate-950 text-white sticky top-0 z-50 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-20">
-            {/* Logo and Back Button */}
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={onBack}
-                className="p-2 hover:bg-slate-800 rounded-full transition-colors group"
-                title="Back to Home"
-              >
-                <ArrowLeft className="w-6 h-6 text-slate-400 group-hover:text-white" />
-              </button>
-              <div className="flex items-center">
-                <img
-                  src="/assets/SafetyTrainingAcademylogo.png"
-                  alt="Safety Training Academy"
-                  className="h-10 md:h-12 brightness-0 invert"
-                />
-              </div>
-            </div>
-
-            {/* Desktop Menu Icons */}
-            <div className="hidden md:flex items-center gap-6">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Shield className="w-5 h-5 text-cyan-400" />
-                <span className="text-sm font-semibold">VOC RENEWAL</span>
-              </div>
-              <button className="p-2 text-slate-300 hover:text-white">
-                <Menu className="w-6 h-6" />
-              </button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg text-white hover:bg-slate-800"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+    <PublicLayout 
+      onBack={() => navigate('/')}
+      onVOC={() => navigate('/voc-renewal')}
+    >
+      <div className="py-12 px-4 max-w-4xl mx-auto">
+        {/* Progress Header */}
+        <div className="relative mb-12">
+          <div className="absolute top-5 left-0 w-full h-0.5 bg-slate-200 -z-0"></div>
+          <div className="flex justify-between">
+            {renderStepIcon('details', 'Your Details', 0)}
+            {renderStepIcon('courses', 'Courses', 1)}
+            {renderStepIcon('payment', 'Payment', 2)}
+            {renderStepIcon('success', 'Done', 3)}
           </div>
         </div>
-      </nav>
 
-      {/* Main Content */}
-      <main className="max-w-4xl mx-auto px-4 py-12 md:py-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Form Header */}
-          <div className="text-center mb-12">
-            <h1 className="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight">
-              VOC Course Renewal Form
-            </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto">
-              Verify your competency and renew your certification quickly and easily.
-            </p>
-          </div>
+        <AnimatePresence mode="wait">
+          {currentStep === 'details' && (
+            <motion.div
+              key="details"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-6"
+            >
+              <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden">
+                <div className="bg-slate-900 p-6 text-white text-center">
+                  <h1 className="text-2xl font-bold">VOC Renewal Form</h1>
+                  <p className="text-slate-400 text-sm mt-2">Personal & Contact Information</p>
+                </div>
+                <CardContent className="p-8 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">First Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input 
+                          placeholder="John" 
+                          className="pl-10 h-11 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20"
+                          value={formData.firstName}
+                          onChange={e => setFormData({ ...formData, firstName: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Last Name</Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input 
+                          placeholder="Doe" 
+                          className="pl-10 h-11 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20"
+                          value={formData.lastName}
+                          onChange={e => setFormData({ ...formData, lastName: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
 
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Section 1: Personal Information */}
-            <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden">
-              <div className="h-2 bg-gradient-to-r from-cyan-500 to-blue-600" />
-              <CardHeader className="bg-slate-50/50">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <CheckCircle className="w-5 h-5 text-cyan-600" />
-                  Personal Information
-                </CardTitle>
-                <CardDescription>Enter your basic details as shown on your ID.</CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName">First Name</Label>
-                  <Input name="firstName" id="firstName" placeholder="e.g. John" required className="h-12 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="lastName">Last Name</Label>
-                  <Input name="lastName" id="lastName" placeholder="e.g. Doe" required className="h-12 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500" />
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="studentId">Australian Student ID</Label>
-                  <div className="flex gap-2">
-                    <Input 
-                      name="studentId"
-                      id="studentId" 
-                      placeholder="Enter your Student ID" 
-                      className="h-12 border-slate-200 flex-1 focus:border-cyan-500 focus:ring-cyan-500"
-                    />
-                    <Button 
-                      type="button" 
-                      onClick={handleVerify}
-                      disabled={isVerifying}
-                      className="h-12 px-6 bg-blue-600 hover:bg-blue-700 text-white font-bold transition-all shadow-md active:scale-95"
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Email Address</Label>
+                    <div className="flex gap-2">
+                      <div className="relative flex-grow">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input 
+                          type="email"
+                          placeholder="john@example.com" 
+                          className={`pl-10 h-11 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20 ${emailVerified ? 'border-green-500 bg-green-50' : ''}`}
+                          value={formData.email}
+                          onChange={e => {
+                            setFormData({ ...formData, email: e.target.value });
+                            setEmailVerified(false);
+                            setOtpSent(false);
+                          }}
+                          disabled={emailVerified}
+                        />
+                        {emailVerified && (
+                          <CheckCircle className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-green-500" />
+                        )}
+                      </div>
+                      {!emailVerified && (
+                        <Button 
+                          onClick={handleSendOTP} 
+                          disabled={otpLoading || !formData.email}
+                          className="h-11 bg-slate-900 hover:bg-slate-800 text-xs font-bold"
+                        >
+                          {otpSent ? 'Resend' : 'Send OTP'}
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  {otpSent && !emailVerified && (
+                    <motion.div 
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="p-4 bg-slate-50 rounded-xl border border-slate-200 space-y-4"
                     >
-                      {isVerifying ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify'}
+                      <div className="flex items-center gap-2 text-xs font-bold text-slate-600">
+                        <Shield className="w-4 h-4 text-cyan-500" />
+                        PLEASE ENTER THE 6-DIGIT CODE SENT TO YOUR EMAIL
+                      </div>
+                      <div className="flex gap-2">
+                        <Input 
+                          placeholder="123456" 
+                          className="h-11 text-center text-lg tracking-[1em] font-bold"
+                          maxLength={6}
+                          value={otp}
+                          onChange={e => setOtp(e.target.value)}
+                        />
+                        <Button 
+                          onClick={handleVerifyOTP}
+                          disabled={otpLoading || otp.length < 6}
+                          className="h-11 bg-cyan-500 hover:bg-cyan-600 font-bold"
+                        >
+                          VERIFY
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Phone Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input 
+                          placeholder="0400 000 000" 
+                          className="pl-10 h-11 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20"
+                          value={formData.phone}
+                          onChange={e => setFormData({ ...formData, phone: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Student ID / License #</Label>
+                      <div className="relative">
+                        <Shield className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                        <Input 
+                          placeholder="AUS-123456" 
+                          className="pl-10 h-11 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20"
+                          value={formData.australianStudentId}
+                          onChange={e => setFormData({ ...formData, australianStudentId: e.target.value })}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Street Address</Label>
+                    <div className="relative">
+                      <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input 
+                        placeholder="123 Example St" 
+                        className="pl-10 h-11 border-slate-200 focus:border-cyan-500 focus:ring-cyan-500/20"
+                        value={formData.streetAddress}
+                        onChange={e => setFormData({ ...formData, streetAddress: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">City/Suburb</Label>
+                      <Input 
+                        className="h-11 border-slate-200"
+                        value={formData.city}
+                        onChange={e => setFormData({ ...formData, city: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">State</Label>
+                      <Select 
+                        value={formData.state}
+                        onValueChange={v => setFormData({ ...formData, state: v })}
+                      >
+                        <SelectTrigger className="h-11 border-slate-200">
+                          <SelectValue placeholder="Select" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {['NSW', 'VIC', 'QLD', 'WA', 'SA', 'TAS', 'ACT', 'NT'].map(s => (
+                            <SelectItem key={s} value={s}>{s}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">Postcode</Label>
+                      <Input 
+                        className="h-11 border-slate-200"
+                        maxLength={4}
+                        value={formData.postcode}
+                        onChange={e => setFormData({ ...formData, postcode: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <Button 
+                    onClick={() => setCurrentStep('courses')}
+                    disabled={!emailVerified || !formData.firstName || !formData.lastName || !formData.phone}
+                    className="w-full h-12 bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-sm uppercase tracking-widest rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98]"
+                  >
+                    SELECT COURSES <ChevronRight className="w-5 h-5 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {currentStep === 'courses' && (
+            <motion.div
+              key="courses"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <Card className="border-none shadow-xl overflow-hidden">
+                <div className="bg-slate-900 p-6 text-white text-center">
+                  <h1 className="text-2xl font-bold">Course Selection</h1>
+                  <p className="text-slate-400 text-sm mt-2">Select the courses you wish to renew</p>
+                </div>
+                <CardContent className="p-8 space-y-8">
+                  {/* Select Course Dropdown */}
+                  <div className="flex gap-4">
+                    <div className="flex-grow space-y-2">
+                      <Label className="text-xs font-bold text-slate-500">CHOOSE A COURSE</Label>
+                      <Select value={currentSelectedCourseId} onValueChange={setCurrentSelectedCourseId}>
+                        <SelectTrigger className="h-12 border-slate-200 text-base">
+                          <SelectValue placeholder="Select a course to add..." />
+                        </SelectTrigger>
+                        <SelectContent className="max-h-[300px]">
+                          {availableCourses.map(course => (
+                            <SelectItem key={course.courseId} value={course.courseId}>
+                              {course.courseName} - ${course.price}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button 
+                      onClick={handleAddCourse}
+                      disabled={!currentSelectedCourseId}
+                      className="mt-8 h-12 w-12 rounded-xl bg-cyan-500"
+                    >
+                      <Plus className="w-6 h-6" />
                     </Button>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Section 2: Contact Details */}
-            <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden">
-              <CardHeader className="bg-slate-50/50">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <Phone className="w-5 h-5 text-cyan-600" />
-                  Contact Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email Address</Label>
-                  <Input name="email" id="email" type="email" placeholder="john.doe@example.com" required className="h-12 border-slate-200 focus:border-cyan-500" />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Phone Number</Label>
-                  <Input name="phone" id="phone" type="tel" placeholder="e.g. 0400 000 000" required className="h-12 border-slate-200 focus:border-cyan-500" />
-                </div>
-              </CardContent>
-            </Card>
+                  {/* Selected Courses List */}
+                  <div className="space-y-4">
+                    {selectedCourses.length === 0 ? (
+                      <div className="text-center py-12 bg-slate-50 rounded-2xl border-2 border-dashed border-slate-200">
+                        <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                        <p className="text-slate-500 font-medium">No courses selected yet</p>
+                      </div>
+                    ) : (
+                      selectedCourses.map((course, idx) => (
+                        <motion.div 
+                          key={course.courseId}
+                          initial={{ opacity: 0, y: 10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm hover:shadow-md transition-all group"
+                        >
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <CheckCircle className="w-4 h-4 text-green-500" />
+                                <h3 className="font-bold text-slate-800">{course.courseName}</h3>
+                              </div>
+                              <p className="text-cyan-600 font-bold text-sm">${course.price}</p>
+                            </div>
+                            <Button 
+                              variant="ghost" 
+                              size="icon" 
+                              onClick={() => handleRemoveCourse(course.courseId)}
+                              className="text-slate-300 hover:text-red-500 transition-colors"
+                            >
+                              <Trash2 className="w-5 h-5" />
+                            </Button>
+                          </div>
 
-            {/* Section 3: Address Section */}
-            <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden">
-              <CardHeader className="bg-slate-50/50">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <MapPin className="w-5 h-5 text-cyan-600" />
-                  Address Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="street">Street Address</Label>
-                  <Input name="street" id="street" placeholder="123 Example St" required className="h-12 border-slate-200 focus:border-cyan-500" />
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input name="city" id="city" placeholder="Sydney" required className="h-12 border-slate-200 focus:border-cyan-500" />
+                          <div className="mt-4 space-y-2">
+                            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Select Course Date</Label>
+                            <Select 
+                              value={course.courseDateId || ""} 
+                              onValueChange={(v) => handleDateSelect(course.courseId, v)}
+                            >
+                              <SelectTrigger className="h-10 border-slate-100 bg-slate-50 text-xs">
+                                <SelectValue placeholder="Choose an available date..." />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {courseDates[course.courseId]?.map(date => (
+                                  <SelectItem key={date.courseDateId} value={date.courseDateId}>
+                                    {new Date(date.startDate).toLocaleDateString()} - {new Date(date.endDate).toLocaleDateString()} ({date.availableSlots} slots left)
+                                  </SelectItem>
+                                ))}
+                                {(!courseDates[course.courseId] || courseDates[course.courseId].length === 0) && (
+                                  <SelectItem value="NO_DATES" disabled>No dates available</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </motion.div>
+                      ))
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="state">State/Province</Label>
-                    <Select name="state" defaultValue="NSW">
-                      <SelectTrigger className="h-12 border-slate-200">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="NSW">New South Wales</SelectItem>
-                        <SelectItem value="VIC">Victoria</SelectItem>
-                        <SelectItem value="QLD">Queensland</SelectItem>
-                        <SelectItem value="WA">Western Australia</SelectItem>
-                        <SelectItem value="SA">South Australia</SelectItem>
-                        <SelectItem value="TAS">Tasmania</SelectItem>
-                        <SelectItem value="ACT">ACT</SelectItem>
-                        <SelectItem value="NT">Northern Territory</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="zip">ZIP/Postal Code</Label>
-                    <Input name="zip" id="zip" placeholder="2000" required className="h-12 border-slate-200 focus:border-cyan-500" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Section 4: Booking Details */}
-            <Card className="border-none shadow-xl shadow-slate-200/50 overflow-hidden">
-              <CardHeader className="bg-slate-50/50">
-                <CardTitle className="text-xl font-bold flex items-center gap-2">
-                  <CalendarIcon className="w-5 h-5 text-cyan-600" />
-                  Booking Details
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label>Preferred Start Date</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={`w-full h-12 justify-start text-left font-normal border-slate-200 ${!date && "text-muted-foreground"}`}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                  <div className="pt-4 border-t border-slate-100 flex justify-between items-center bg-slate-50 -mx-8 px-8 py-6">
+                    <div>
+                      <p className="text-slate-500 text-xs font-bold uppercase tracking-widest">Total Investment</p>
+                      <p className="text-3xl font-black text-slate-900">${totalPrice}</p>
+                    </div>
+                    <div className="flex gap-4">
+                      <Button variant="outline" onClick={() => setCurrentStep('details')} className="h-12 px-6 font-bold text-slate-600">
+                        <ChevronLeft className="w-5 h-5 mr-2" /> BACK
                       </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                <div className="space-y-2">
-                  <Label>Preferred Time</Label>
-                  <Select name="preferredTime">
-                    <SelectTrigger className="h-12 border-slate-200">
-                      <SelectValue placeholder="Select time session" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="morning">Morning (8:00 AM - 12:00 PM)</SelectItem>
-                      <SelectItem value="afternoon">Afternoon (1:00 PM - 5:00 PM)</SelectItem>
-                      <SelectItem value="evening">Evening (6:00 PM - 10:00 PM)</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="md:col-span-2 space-y-2">
-                  <Label htmlFor="comments">Additional Comments</Label>
-                  <Textarea 
-                    name="comments"
-                    id="comments" 
-                    placeholder="Provide any additional information here..." 
-                    className="min-h-[120px] border-slate-200 focus:border-cyan-500"
-                  />
-                </div>
-              </CardContent>
-            </Card>
+                      <Button 
+                        onClick={() => setCurrentStep('payment')}
+                        disabled={selectedCourses.length === 0 || selectedCourses.some(c => !c.courseDateId)}
+                        className="h-12 px-8 bg-cyan-500 hover:bg-cyan-600 font-bold"
+                      >
+                        CONTINUE TO PAYMENT <ArrowRight className="w-5 h-5 ml-2" />
+                      </Button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
 
-            {/* Submit Button */}
-            <div className="pt-6">
-              <Button 
-                type="submit" 
-                disabled={isSubmitting}
-                className="w-full h-14 bg-gradient-to-r from-cyan-600 to-blue-700 hover:from-cyan-700 hover:to-blue-800 text-white text-lg font-bold rounded-xl shadow-lg shadow-cyan-500/30 transition-all hover:scale-[1.01] active:scale-[0.99]"
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center gap-2">
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                    Submitting...
-                  </span>
-                ) : (
-                  <span className="flex items-center gap-2">
-                    <Send className="w-5 h-5" />
-                    Submit Booking
-                  </span>
-                )}
-              </Button>
-            </div>
-          </form>
-        </motion.div>
-      </main>
-
-      {/* Footer */}
-      <footer className="bg-slate-900 text-slate-300 py-16 px-4 mt-20 border-t border-slate-800">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12">
-          {/* Logo and About */}
-          <div className="space-y-6">
-            <img
-              src="/assets/SafetyTrainingAcademylogo.png"
-              alt="Safety Training Academy"
-              className="h-12 brightness-0 invert opacity-80"
-            />
-            <p className="text-sm leading-relaxed max-w-xs">
-              Providing nationally recognized safety training and certifications across Australia. Leading with quality and excellence since established.
-            </p>
-            <div className="flex gap-4">
-              <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-cyan-500 transition-colors group">
-                <Facebook className="w-5 h-5 group-hover:text-white" />
-              </a>
-              <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-indigo-600 transition-colors group">
-                <Linkedin className="w-5 h-5 group-hover:text-white" />
-              </a>
-              <a href="#" className="p-2 bg-slate-800 rounded-full hover:bg-pink-600 transition-colors group">
-                <Instagram className="w-5 h-5 group-hover:text-white" />
-              </a>
-            </div>
-          </div>
-
-          {/* Quick Contact */}
-          <div className="space-y-6">
-            <h3 className="text-white font-bold text-lg">Head Office</h3>
-            <ul className="space-y-4 text-sm font-medium">
-              <li className="flex items-start gap-3">
-                <MapPin className="w-5 h-5 text-cyan-500 shrink-0" />
-                <span>3/14-16 Marjorie Street, Sefton NSW 2162</span>
-              </li>
-              <li className="flex items-center gap-3">
-                <Phone className="w-5 h-5 text-cyan-500 shrink-0" />
-                <a href="tel:1300976097" className="hover:text-cyan-400 transition-colors">1300 976 097</a>
-              </li>
-              <li className="flex items-center gap-3">
-                <Mail className="w-5 h-5 text-cyan-500 shrink-0" />
-                <a href="mailto:info@safetytrainingacademy.edu.au" className="hover:text-cyan-400 transition-colors">info@safetytrainingacademy.edu.au</a>
-              </li>
-            </ul>
-          </div>
-
-          {/* Accreditation */}
-          <div className="space-y-6">
-            <h3 className="text-white font-bold text-lg">Accreditation</h3>
-            <div className="bg-slate-800/50 p-6 rounded-2xl border border-slate-700/50">
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-cyan-500/20 rounded-xl flex items-center justify-center">
-                  <Shield className="w-6 h-6 text-cyan-400" />
+          {currentStep === 'payment' && (
+            <motion.div
+              key="payment"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="space-y-6"
+            >
+              <Card className="border-none shadow-xl overflow-hidden">
+                <div className="bg-slate-900 p-6 text-white text-center">
+                  <h1 className="text-2xl font-bold">Secure Payment</h1>
+                  <p className="text-slate-400 text-sm mt-2">Choose your preferred payment method</p>
                 </div>
-                <div>
-                  <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">RTO Provider</div>
-                  <div className="text-xl font-black text-white tracking-tighter">#45234</div>
+                <CardContent className="p-8 space-y-8">
+                  <div className="grid grid-cols-2 gap-4">
+                    <button 
+                      onClick={() => setPaymentMethod('CreditCard')}
+                      className={`p-6 rounded-2xl border-2 transition-all text-left ${
+                        paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-50 ring-4 ring-cyan-500/10' : 'border-slate-100 hover:border-slate-200'
+                      }`}
+                    >
+                      <CreditCard className={`w-8 h-8 mb-4 ${paymentMethod === 'CreditCard' ? 'text-cyan-500' : 'text-slate-400'}`} />
+                      <p className="font-bold text-slate-800">Credit / Debit Card</p>
+                      <p className="text-xs text-slate-500 mt-1">Stripe Secure Payment</p>
+                    </button>
+                    <button 
+                      onClick={() => setPaymentMethod('BankTransfer')}
+                      className={`p-6 rounded-2xl border-2 transition-all text-left ${
+                        paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-500/10' : 'border-slate-100 hover:border-slate-200'
+                      }`}
+                    >
+                      <Building className={`w-8 h-8 mb-4 ${paymentMethod === 'BankTransfer' ? 'text-indigo-500' : 'text-slate-400'}`} />
+                      <p className="font-bold text-slate-800">Bank Transfer</p>
+                      <p className="text-xs text-slate-500 mt-1">Manual Transfer Details</p>
+                    </button>
+                  </div>
+
+                  <AnimatePresence mode="wait">
+                    {paymentMethod === 'CreditCard' ? (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="space-y-4 p-6 bg-slate-50 rounded-2xl border border-slate-200"
+                      >
+                         <h3 className="text-sm font-bold text-slate-700 mb-4 flex items-center gap-2">
+                            <Shield className="w-4 h-4 text-green-500" /> CARD DETAILS
+                         </h3>
+                         <div className="space-y-4">
+                           <div className="space-y-2">
+                             <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Cardholder Name</Label>
+                             <Input 
+                                placeholder="FULL NAME AS ON CARD" 
+                                className="h-11 border-slate-200"
+                             />
+                           </div>
+                           <div className="space-y-2">
+                             <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Card Number</Label>
+                             <Input 
+                                placeholder="0000 0000 0000 0000" 
+                                className="h-11 border-slate-200"
+                             />
+                           </div>
+                           <div className="grid grid-cols-2 gap-4">
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Expiry</Label>
+                                <Input placeholder="MM / YY" className="h-11 border-slate-200"/>
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CVV</Label>
+                                <Input placeholder="123" className="h-11 border-slate-200"/>
+                              </div>
+                           </div>
+                         </div>
+                      </motion.div>
+                    ) : (
+                      <motion.div 
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="p-6 bg-indigo-50 border border-indigo-100 rounded-2xl space-y-4"
+                      >
+                         <div className="flex items-center gap-2 text-indigo-700 font-bold text-sm">
+                            <AlertCircle className="w-5 h-5" /> BANK TRANSFER INSTRUCTIONS
+                         </div>
+                         <p className="text-sm text-indigo-600 leading-relaxed">
+                            Please transfer the total amount to the following account. Use your <strong>First Name + Phone Number</strong> as reference.
+                         </p>
+                         <div className="bg-white p-4 rounded-xl border border-indigo-100 space-y-3 shadow-sm">
+                            <div className="flex justify-between border-b pb-2">
+                               <span className="text-slate-500 text-xs">Account Name:</span>
+                               <span className="text-slate-800 font-bold text-xs uppercase">Safety Training Academy PTY LTD</span>
+                            </div>
+                            <div className="flex justify-between border-b pb-2">
+                               <span className="text-slate-500 text-xs">BSB:</span>
+                               <span className="text-slate-800 font-bold">123-456</span>
+                            </div>
+                            <div className="flex justify-between pt-1">
+                               <span className="text-slate-500 text-xs">Account Number:</span>
+                               <span className="text-slate-800 font-bold">987654321</span>
+                            </div>
+                         </div>
+                         <p className="text-[10px] text-indigo-500 italic mt-2">
+                            * Note: Your submission will be processed once we confirm receipt of funds (usually 1-2 business days).
+                         </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div className="bg-slate-900 -mx-8 p-8 flex justify-between items-center text-white">
+                     <div>
+                        <p className="text-slate-400 text-xs font-bold uppercase">Payable Now</p>
+                        <p className="text-3xl font-black text-cyan-400">${totalPrice}</p>
+                     </div>
+                     <div className="flex gap-4">
+                        <Button variant="ghost" onClick={() => setCurrentStep('courses')} className="text-white hover:bg-slate-800 border border-slate-700 h-12 px-6 font-bold">
+                           <ChevronLeft className="w-5 h-5 mr-1" /> BACK
+                        </Button>
+                        <Button 
+                           onClick={handleSubmit} 
+                           disabled={loading}
+                           className="h-12 px-10 bg-cyan-500 hover:bg-cyan-600 font-black text-xs uppercase tracking-[2px] shadow-lg shadow-cyan-500/20"
+                        >
+                           {loading ? 'PROCESSING...' : 'COMPLETE REGISTRATION'}
+                        </Button>
+                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {currentStep === 'success' && (
+            <motion.div
+              key="success"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center"
+            >
+              <Card className="border-none shadow-2xl py-16 px-8 rounded-3xl overflow-hidden">
+                <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-green-400 to-cyan-500"></div>
+                <div className="w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-8 shadow-inner">
+                  <CheckCircle className="w-12 h-12 text-green-500" />
                 </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="max-w-7xl mx-auto mt-16 pt-8 border-t border-slate-800 text-center text-xs text-slate-500">
-          © {new Date().getFullYear()} Safety Training Academy. All rights reserved. RTO Provider #45234
-        </div>
-      </footer>
-    </div>
+                <h1 className="text-3xl font-black text-slate-800 mb-4">Submission Successful!</h1>
+                <p className="text-slate-500 mb-10 max-w-md mx-auto leading-relaxed">
+                  Thank you for your VOC renewal request. We've sent a confirmation email to <strong>{formData.email}</strong> with your order details and next steps.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                  <Button onClick={() => navigate('/')} className="h-12 px-10 bg-slate-900 font-bold rounded-xl">
+                    Back to Home
+                  </Button>
+                  <Button variant="outline" onClick={() => window.location.reload()} className="h-12 border-slate-200 font-bold rounded-xl">
+                    Submit Another
+                  </Button>
+                </div>
+              </Card>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </PublicLayout>
   );
 }

@@ -1,4 +1,6 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.VOC;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.VOC;
@@ -9,11 +11,13 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
     public class VOCService : IVOCService
     {
         private readonly TrainingLMSDbContext _context;
+        private readonly IEmailService _emailService;
         private readonly ILogger<VOCService> _logger;
 
-        public VOCService(TrainingLMSDbContext context, ILogger<VOCService> logger)
+        public VOCService(TrainingLMSDbContext context, IEmailService emailService, ILogger<VOCService> logger)
         {
             _context = context;
+            _emailService = emailService;
             _logger = logger;
         }
 
@@ -36,6 +40,10 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                     PreferredStartDate = request.PreferredStartDate,
                     PreferredTime = request.PreferredTime,
                     Comments = request.Comments,
+                    SelectedCoursesJson = JsonSerializer.Serialize(request.SelectedCourses),
+                    PaymentMethod = request.PaymentMethod,
+                    TotalAmount = request.TotalAmount,
+                    TransactionId = request.TransactionId,
                     Status = "Pending",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -44,6 +52,16 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                 await _context.SaveChangesAsync();
 
                 _logger.LogInformation("VOC Submission created: {Email}", request.Email);
+
+                // Send confirmation email
+                await _emailService.SendVOCSubmissionConfirmationAsync(
+                    request.Email,
+                    request.FirstName,
+                    request.LastName,
+                    submission.SubmissionId.ToString(),
+                    request.TotalAmount,
+                    request.PaymentMethod ?? "None",
+                    submission.SelectedCoursesJson);
 
                 return MapToResponse(submission);
             }
@@ -182,6 +200,53 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
             }
         }
 
+        public async Task<bool> SendVOCEmailOTPAsync(string email)
+        {
+            try
+            {
+                var otp = new Random().Next(100000, 999999).ToString();
+                var vocOtp = new VOCEmailOTP
+                {
+                    Email = email,
+                    OTP = otp,
+                    ExpiresAt = DateTime.UtcNow.AddMinutes(10)
+                };
+
+                _context.VOCEmailOTPs.Add(vocOtp);
+                await _context.SaveChangesAsync();
+
+                await _emailService.SendEmailOTPAsync(email, otp);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error sending VOC OTP to {Email}", email);
+                return false;
+            }
+        }
+
+        public async Task<bool> VerifyVOCEmailOTPAsync(string email, string otp)
+        {
+            try
+            {
+                var vocOtp = await _context.VOCEmailOTPs
+                    .Where(o => o.Email == email && o.OTP == otp && !o.IsUsed && o.ExpiresAt > DateTime.UtcNow)
+                    .OrderByDescending(o => o.CreatedAt)
+                    .FirstOrDefaultAsync();
+
+                if (vocOtp == null) return false;
+
+                vocOtp.IsUsed = true;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error verifying VOC OTP for {Email}", email);
+                return false;
+            }
+        }
+
         private static VOCSubmissionResponseDto MapToResponse(VOCSubmission submission)
         {
             return new VOCSubmissionResponseDto
@@ -199,6 +264,10 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                 PreferredStartDate = submission.PreferredStartDate,
                 PreferredTime = submission.PreferredTime,
                 Comments = submission.Comments,
+                SelectedCoursesJson = submission.SelectedCoursesJson,
+                PaymentMethod = submission.PaymentMethod,
+                TotalAmount = submission.TotalAmount,
+                TransactionId = submission.TransactionId,
                 Status = submission.Status,
                 CreatedAt = submission.CreatedAt
             };

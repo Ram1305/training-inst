@@ -49,6 +49,22 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.VOC
         public string? PreferredTime { get; set; }
 
         public string? Comments { get; set; }
+
+        public List<VOCSelectedCourseRequestDto> SelectedCourses { get; set; } = new();
+
+        [StringLength(50)]
+        public string? PaymentMethod { get; set; }
+
+        public decimal TotalAmount { get; set; }
+
+        [StringLength(100)]
+        public string? TransactionId { get; set; }
+    }
+
+    public class VOCSelectedCourseRequestDto
+    {
+        public Guid CourseId { get; set; }
+        public Guid? CourseDateId { get; set; }
     }
 
     public class VOCStatusUpdateRequestDto

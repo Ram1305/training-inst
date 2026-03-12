@@ -15,7 +15,8 @@ import {
   Filter,
   MoreVertical,
   Download,
-  Shield
+  Shield,
+  BookOpen
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -347,6 +348,54 @@ export function AdminVOC() {
                   </div>
                 </div>
               )}
+
+              {/* Selected Courses */}
+              <div className="space-y-3">
+                <h4 className="font-bold text-slate-900 border-b pb-1 flex items-center gap-2">
+                  <BookOpen className="w-4 h-4 text-violet-500" /> Selected Courses
+                </h4>
+                <div className="grid gap-2">
+                  {selectedSubmission.selectedCoursesJson ? (
+                    (() => {
+                      try {
+                        const courses = JSON.parse(selectedSubmission.selectedCoursesJson);
+                        return Array.isArray(courses) ? courses.map((c: any, idx: number) => (
+                          <div key={idx} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg shadow-sm">
+                            <span className="font-semibold text-sm">{c.courseName}</span>
+                            <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded">${c.price}</span>
+                          </div>
+                        )) : <div className="text-slate-400 italic">No courses listed</div>;
+                      } catch {
+                        return <div className="text-red-400 italic">Error parsing course data</div>;
+                      }
+                    })()
+                  ) : (
+                    <div className="text-slate-400 italic text-sm">No courses selected</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Payment Summary */}
+              <div className="p-4 bg-slate-900 rounded-xl text-white">
+                <div className="flex justify-between items-center mb-4">
+                  <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Payment Information</div>
+                  <Badge className={selectedSubmission.paymentMethod === 'CreditCard' ? "bg-green-500" : "bg-indigo-500"}>
+                    {selectedSubmission.paymentMethod || 'N/A'}
+                  </Badge>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-[10px] text-slate-400 uppercase font-bold">Total Amount</p>
+                    <p className="text-xl font-black text-cyan-400">${selectedSubmission.totalAmount?.toFixed(2) || '0.00'}</p>
+                  </div>
+                  {selectedSubmission.transactionId && (
+                    <div className="text-right">
+                      <p className="text-[10px] text-slate-400 uppercase font-bold">Transaction ID</p>
+                      <p className="text-xs font-mono text-slate-300 truncate">{selectedSubmission.transactionId}</p>
+                    </div>
+                  )}
+                </div>
+              </div>
 
               <div className="flex justify-between items-center pt-4 border-t">
                 <div className="flex gap-2">

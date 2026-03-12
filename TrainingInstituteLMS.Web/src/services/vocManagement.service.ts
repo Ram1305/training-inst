@@ -14,6 +14,11 @@ export interface VOCSubmissionRequest {
   preferredStartDate?: string;
   preferredTime?: string;
   comments?: string;
+  // Multi-course support
+  selectedCourses: { courseId: string; courseDateId?: string }[];
+  paymentMethod: string; // 'CreditCard' | 'BankTransfer'
+  totalAmount: number;
+  transactionId?: string;
 }
 
 export interface VOCSubmissionResponse {
@@ -30,6 +35,10 @@ export interface VOCSubmissionResponse {
   preferredStartDate?: string;
   preferredTime?: string;
   comments?: string;
+  selectedCoursesJson?: string;
+  paymentMethod?: string;
+  totalAmount?: number;
+  transactionId?: string;
   status: string;
   createdAt: string;
 }
@@ -104,6 +113,14 @@ class VOCManagementService {
     return apiService.get<ApiResponse<VOCStatsResponse>>(
       API_CONFIG.ENDPOINTS.VOC.ADMIN_STATS
     );
+  }
+
+  async sendOTP(email: string): Promise<{ success: boolean }> {
+    return apiService.post<{ success: boolean }>('/api/VOC/send-otp', { email });
+  }
+
+  async verifyOTP(email: string, otp: string): Promise<{ success: boolean }> {
+    return apiService.post<{ success: boolean }>('/api/VOC/verify-otp', { email, otp });
   }
 }
 
