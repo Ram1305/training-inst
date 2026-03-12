@@ -22,6 +22,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.VOC
         public decimal TotalAmount { get; set; }
         public string? TransactionId { get; set; }
         public string Status { get; set; } = string.Empty;
+        public string? PaymentProofPath { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 

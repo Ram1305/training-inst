@@ -19,6 +19,7 @@ export interface VOCSubmissionRequest {
   paymentMethod: string; // 'CreditCard' | 'BankTransfer'
   totalAmount: number;
   transactionId?: string;
+  paymentProof?: File;
 }
 
 export interface VOCSubmissionResponse {
@@ -39,6 +40,7 @@ export interface VOCSubmissionResponse {
   paymentMethod?: string;
   totalAmount?: number;
   transactionId?: string;
+  paymentProofPath?: string;
   status: string;
   createdAt: string;
 }
@@ -68,9 +70,27 @@ export interface ApiResponse<T> {
 
 class VOCManagementService {
   async submitVOC(data: VOCSubmissionRequest): Promise<ApiResponse<VOCSubmissionResponse>> {
+    const formData = new FormData();
+    
+    // Add all basic fields
+    Object.entries(data).forEach(([key, value]) => {
+      if (key !== 'selectedCourses' && key !== 'paymentProof' && value !== undefined) {
+        formData.append(key, value.toString());
+      }
+    });
+
+    // Add selected courses as JSON string
+    formData.append('selectedCourses', JSON.stringify(data.selectedCourses));
+
+    // Add file if exists
+    if (data.paymentProof) {
+      formData.append('paymentProof', data.paymentProof);
+    }
+
     return apiService.post<ApiResponse<VOCSubmissionResponse>>(
       API_CONFIG.ENDPOINTS.VOC.SUBMIT,
-      data
+      formData,
+      { headers: { 'Content-Type': 'multipart/form-data' } }
     );
   }
 

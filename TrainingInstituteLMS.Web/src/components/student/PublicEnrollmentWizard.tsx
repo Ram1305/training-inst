@@ -33,8 +33,9 @@ import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { Progress } from '../ui/progress';
 import { Checkbox } from '../ui/checkbox';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../ui/select';
 import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
+import { COURSE_CATEGORY_ORDER, CATEGORY_OTHER } from '../../config/courseCategories.config';
 import {
   publicEnrollmentWizardService,
   type CourseDropdownItem,
@@ -404,6 +405,58 @@ export function PublicEnrollmentWizard({
       .sort()
       .map((dateKey) => ({ dateKey, dates: byDate[dateKey] }));
   }, [courseDates]);
+
+  // Generate all items for dropdowns and group them
+  const groupedCourseItems = useMemo(() => {
+    const allCourseItems = courses.flatMap((course) => {
+      const items = [];
+      const categoryName = course.categoryName?.trim() || CATEGORY_OTHER;
+      items.push({
+        id: course.courseId,
+        price: course.price,
+        label: `${course.courseCode} – ${course.courseName} · $${course.price}`,
+        categoryName
+      });
+      if (course.courseId === preSelectedCourseId && preSelectedCoursePrice != null && preSelectedCoursePrice !== course.price) {
+        items.push({
+          id: course.courseId,
+          price: preSelectedCoursePrice,
+          label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`,
+          categoryName
+        });
+      }
+      return items;
+    });
+
+    return (filterFn?: (item: any) => boolean) => {
+      const filteredItems = filterFn ? allCourseItems.filter(filterFn) : allCourseItems;
+      const groups: Record<string, typeof filteredItems> = {};
+      filteredItems.forEach(item => {
+        if (!groups[item.categoryName]) groups[item.categoryName] = [];
+        groups[item.categoryName].push(item);
+      });
+
+      const orderedGroups: { category: string, items: typeof filteredItems }[] = [];
+      COURSE_CATEGORY_ORDER.forEach(cat => {
+        if (groups[cat] && groups[cat].length > 0) {
+          orderedGroups.push({ category: cat, items: groups[cat] });
+          delete groups[cat];
+        }
+      });
+
+      Object.keys(groups).sort().forEach(cat => {
+        if (cat !== CATEGORY_OTHER && groups[cat] && groups[cat].length > 0) {
+          orderedGroups.push({ category: cat, items: groups[cat] });
+        }
+      });
+
+      if (groups[CATEGORY_OTHER] && groups[CATEGORY_OTHER].length > 0) {
+        orderedGroups.push({ category: CATEGORY_OTHER, items: groups[CATEGORY_OTHER] });
+      }
+
+      return orderedGroups;
+    };
+  }, [courses, preSelectedCourseId, preSelectedCoursePrice]);
 
   // Step 3: Payment (moved up). When allowPayLater, force pay_later.
   const [paymentMethod, setPaymentMethod] = useState(allowPayLater ? 'pay_later' : 'bank_transfer');
@@ -1754,32 +1807,16 @@ export function PublicEnrollmentWizard({
                                 <SelectValue placeholder="Choose a course to add..." />
                               </SelectTrigger>
                               <SelectContent>
-                                {courses.flatMap((course) => {
-                                  const items = [];
-
-                                  // Base price item
-                                  items.push({
-                                    id: course.courseId,
-                                    price: course.price,
-                                    label: `${course.courseCode} – ${course.courseName} · $${course.price}`
-                                  });
-
-                                  // Check for premium price override (from pre-selection)
-                                  if (course.courseId === preSelectedCourseId && preSelectedCoursePrice != null && preSelectedCoursePrice !== course.price) {
-                                    items.push({
-                                      id: course.courseId,
-                                      price: preSelectedCoursePrice,
-                                      label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`
-                                    });
-                                  }
-
-                                  return items;
-                                }).filter(item => !selectedCompanyCourses.some(sc => sc.courseId === item.id && sc.price === item.price))
-                                  .map((item) => (
-                                    <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
-                                      {item.label}
-                                    </SelectItem>
-                                  ))}
+                                {groupedCourseItems(item => !selectedCompanyCourses.some(sc => sc.courseId === item.id && sc.price === item.price)).map(group => (
+                                  <SelectGroup key={group.category}>
+                                    <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
+                                    {group.items.map(item => (
+                                      <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
+                                        {item.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
+                                ))}
                                 {courses.length === 0 && (
                                   <SelectItem value="_none" disabled>
                                     No courses available
@@ -1975,31 +2012,21 @@ export function PublicEnrollmentWizard({
                                 <SelectValue placeholder="Choose a course..." />
                               </SelectTrigger>
                               <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
-                                {courses.flatMap((course) => {
-                                  const items = [];
-
-                                  // Base price item
-                                  items.push({
-                                    id: course.courseId,
-                                    price: course.price,
-                                    label: `${course.courseCode} – ${course.courseName} · $${course.price}`
-                                  });
-
-                                  // Check for premium price override (from pre-selection)
-                                  if (course.courseId === preSelectedCourseId && preSelectedCoursePrice != null && preSelectedCoursePrice !== course.price) {
-                                    items.push({
-                                      id: course.courseId,
-                                      price: preSelectedCoursePrice,
-                                      label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`
-                                    });
-                                  }
-
-                                  return items;
-                                }).map((item) => (
-                                  <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
-                                    {item.label}
-                                  </SelectItem>
+                                {groupedCourseItems().map(group => (
+                                  <SelectGroup key={group.category}>
+                                    <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
+                                    {group.items.map(item => (
+                                      <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
+                                        {item.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectGroup>
                                 ))}
+                                {courses.length === 0 && (
+                                  <SelectItem value="_none" disabled>
+                                    No courses available
+                                  </SelectItem>
+                                )}
                               </SelectContent>
                             </Select>
                             {(() => {

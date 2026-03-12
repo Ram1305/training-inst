@@ -1,5 +1,7 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Hosting;
+using System.IO;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.VOC;
@@ -13,18 +15,35 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
         private readonly TrainingLMSDbContext _context;
         private readonly IEmailService _emailService;
         private readonly ILogger<VOCService> _logger;
+        private readonly IWebHostEnvironment _webHostEnvironment;
 
-        public VOCService(TrainingLMSDbContext context, IEmailService emailService, ILogger<VOCService> logger)
+        public VOCService(TrainingLMSDbContext context, IEmailService emailService, ILogger<VOCService> logger, IWebHostEnvironment webHostEnvironment)
         {
             _context = context;
             _emailService = emailService;
             _logger = logger;
+            _webHostEnvironment = webHostEnvironment;
         }
 
         public async Task<VOCSubmissionResponseDto?> SubmitVOCAsync(VOCSubmissionRequestDto request)
         {
             try
             {
+                string? paymentProofPath = null;
+                if (request.PaymentProof != null && request.PaymentProof.Length > 0)
+                {
+                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "voc", "payments");
+                    if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
+
+                    var uniqueFileName = Guid.NewGuid().ToString() + "_" + request.PaymentProof.FileName;
+                    var filePath = Path.Combine(uploadsFolder, uniqueFileName);
+                    using (var fileStream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await request.PaymentProof.CopyToAsync(fileStream);
+                    }
+                    paymentProofPath = "/uploads/voc/payments/" + uniqueFileName;
+                }
+
                 var submission = new VOCSubmission
                 {
                     SubmissionId = Guid.NewGuid(),
@@ -40,10 +59,11 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                     PreferredStartDate = request.PreferredStartDate,
                     PreferredTime = request.PreferredTime,
                     Comments = request.Comments,
-                    SelectedCoursesJson = JsonSerializer.Serialize(request.SelectedCourses),
+                    SelectedCoursesJson = request.SelectedCourses,
                     PaymentMethod = request.PaymentMethod,
                     TotalAmount = request.TotalAmount,
                     TransactionId = request.TransactionId,
+                    PaymentProofPath = paymentProofPath,
                     Status = "Pending",
                     CreatedAt = DateTime.UtcNow
                 };
@@ -289,6 +309,7 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                 TotalAmount = submission.TotalAmount,
                 TransactionId = submission.TransactionId,
                 Status = submission.Status,
+                PaymentProofPath = submission.PaymentProofPath,
                 CreatedAt = submission.CreatedAt
             };
         }

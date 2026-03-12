@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import {
   CheckCircle,
   AlertCircle,
@@ -27,7 +27,9 @@ import { Label } from "../ui/label";
 import {
   Select,
   SelectContent,
+  SelectGroup,
   SelectItem,
+  SelectLabel,
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
@@ -38,6 +40,7 @@ import { PublicLayout } from "../layout/PublicLayout";
 import { vocManagementService } from "../../services/vocManagement.service";
 import { publicEnrollmentWizardService, type CourseDropdownItem, type CourseDateDropdownItem } from "../../services/publicEnrollmentWizard.service";
 import { paymentService } from "../../services/payment.service";
+import { COURSE_CATEGORY_ORDER, CATEGORY_OTHER } from '../../config/courseCategories.config';
 
 type Step = 'details' | 'courses' | 'payment' | 'success';
 
@@ -114,6 +117,36 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
   const [bankFileError, setBankFileError] = useState<string | null>(null);
   const [bankUploading, setBankUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Generate and group items
+  const groupedCourseItems = useMemo(() => {
+    const groups: Record<string, typeof availableCourses> = {};
+    availableCourses.forEach(item => {
+      const catName = item.categoryName?.trim() || CATEGORY_OTHER;
+      if (!groups[catName]) groups[catName] = [];
+      groups[catName].push(item);
+    });
+
+    const orderedGroups: { category: string, items: typeof availableCourses }[] = [];
+    COURSE_CATEGORY_ORDER.forEach(cat => {
+      if (groups[cat] && groups[cat].length > 0) {
+        orderedGroups.push({ category: cat, items: groups[cat] });
+        delete groups[cat];
+      }
+    });
+
+    Object.keys(groups).sort().forEach(cat => {
+      if (cat !== CATEGORY_OTHER && groups[cat] && groups[cat].length > 0) {
+        orderedGroups.push({ category: cat, items: groups[cat] });
+      }
+    });
+
+    if (groups[CATEGORY_OTHER] && groups[CATEGORY_OTHER].length > 0) {
+      orderedGroups.push({ category: CATEGORY_OTHER, items: groups[CATEGORY_OTHER] });
+    }
+
+    return orderedGroups;
+  }, [availableCourses]);
 
   useEffect(() => {
     fetchCourses();
@@ -238,12 +271,19 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
     try {
       const res = await vocManagementService.submitVOC({
         ...formData,
-        selectedCourses: selectedCourses.map(c => ({ courseId: c.courseId, courseDateId: c.courseDateId })),
+        selectedCourses: selectedCourses.map(c => ({ 
+          courseId: c.courseId, 
+          courseDateId: c.courseDateId,
+          courseName: c.courseName,
+          courseDateDisplay: c.courseDateDisplay,
+          price: c.price
+        })),
         paymentMethod,
         totalAmount: totalPrice,
         transactionId: paymentMethod === 'CreditCard'
           ? "CC_" + Math.random().toString(36).substring(2, 9).toUpperCase()
           : transactionId,
+        paymentProof: bankFile || undefined,
       });
       if (res.success) {
         setCurrentStep('success');
@@ -418,11 +458,21 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                           <SelectValue placeholder="Select a course to add..." />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
-                          {availableCourses.map(course => (
-                            <SelectItem key={course.courseId} value={course.courseId}>
-                              {course.courseName} — <span className="font-bold text-cyan-600">${VOC_COURSE_PRICE}</span>
-                            </SelectItem>
+                          {groupedCourseItems.map(group => (
+                            <SelectGroup key={group.category}>
+                              <SelectLabel className="font-bold text-cyan-800 bg-cyan-50">{group.category}</SelectLabel>
+                              {group.items.map(course => (
+                                <SelectItem key={course.courseId} value={course.courseId}>
+                                  {course.courseName} — <span className="font-bold text-cyan-600">${VOC_COURSE_PRICE}</span>
+                                </SelectItem>
+                              ))}
+                            </SelectGroup>
                           ))}
+                          {availableCourses.length === 0 && (
+                            <SelectItem value="_none" disabled>
+                              No courses available
+                            </SelectItem>
+                          )}
                         </SelectContent>
                       </Select>
                     </div>

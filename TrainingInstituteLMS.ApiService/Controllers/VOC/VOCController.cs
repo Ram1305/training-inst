@@ -21,7 +21,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
 
         [HttpPost("submit")]
         [AllowAnonymous]
-        public async Task<IActionResult> SubmitVOC([FromBody] VOCSubmissionRequestDto request)
+        public async Task<IActionResult> SubmitVOC([FromForm] VOCSubmissionRequestDto request)
         {
             try
             {

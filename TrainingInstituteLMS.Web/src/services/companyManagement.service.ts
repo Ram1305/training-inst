@@ -5,12 +5,14 @@ export interface CreateCompanyRequest {
   companyName: string;
   email: string;
   password: string;
+  mobileNumber?: string;
 }
 
 export interface UpdateCompanyRequest {
   companyName: string;
   email: string;
   password?: string;
+  mobileNumber?: string;
 }
 
 export interface CompanyResponse {
@@ -21,6 +23,7 @@ export interface CompanyResponse {
   isActive: boolean;
   createdAt: string;
   lastLoginAt?: string;
+  mobileNumber?: string;
 }
 
 export interface CompanyListResponse {

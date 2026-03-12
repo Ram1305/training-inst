@@ -62,6 +62,9 @@ namespace TrainingInstituteLMS.Data.Entities.VOC
         [MaxLength(100)]
         public string? TransactionId { get; set; }
 
+        [MaxLength(500)]
+        public string? PaymentProofPath { get; set; }
+
         [Required]
         [MaxLength(20)]
         public string Status { get; set; } = "Pending"; // Pending, Verified, Completed, Rejected

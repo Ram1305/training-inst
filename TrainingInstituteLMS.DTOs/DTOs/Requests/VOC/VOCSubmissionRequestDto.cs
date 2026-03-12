@@ -1,5 +1,6 @@
-using System;
 using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
 
 namespace TrainingInstituteLMS.DTOs.DTOs.Requests.VOC
 {
@@ -50,7 +51,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.VOC
 
         public string? Comments { get; set; }
 
-        public List<VOCSelectedCourseRequestDto> SelectedCourses { get; set; } = new();
+        public string SelectedCourses { get; set; } = "[]";
 
         [StringLength(50)]
         public string? PaymentMethod { get; set; }
@@ -59,12 +60,17 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.VOC
 
         [StringLength(100)]
         public string? TransactionId { get; set; }
+
+        public IFormFile? PaymentProof { get; set; }
     }
 
     public class VOCSelectedCourseRequestDto
     {
         public Guid CourseId { get; set; }
         public Guid? CourseDateId { get; set; }
+        public string CourseName { get; set; } = string.Empty;
+        public string? CourseDateDisplay { get; set; }
+        public decimal Price { get; set; }
     }
 
     public class VOCStatusUpdateRequestDto

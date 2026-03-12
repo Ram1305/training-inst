@@ -17,6 +17,9 @@ namespace TrainingInstituteLMS.Data.Entities.Companies
         [MaxLength(200)]
         public string CompanyName { get; set; } = string.Empty;
 
+        [MaxLength(20)]
+        public string? MobileNumber { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

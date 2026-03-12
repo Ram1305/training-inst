@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Search, Edit, Trash2, Mail, Lock, Eye, EyeOff, X } from 'lucide-react';
+import { Building2, Plus, Search, Edit, Trash2, Mail, Lock, Eye, EyeOff, X, Phone } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -29,6 +29,7 @@ export function AdminCompanies() {
     companyName: '',
     email: '',
     password: '',
+    mobileNumber: '',
   });
 
   const fetchCompanies = async (query?: string) => {
@@ -70,6 +71,7 @@ export function AdminCompanies() {
         companyName: formData.companyName,
         email: formData.email,
         password: formData.password,
+        mobileNumber: formData.mobileNumber,
       });
 
       if (response.success) {
@@ -97,6 +99,7 @@ export function AdminCompanies() {
         companyName: formData.companyName,
         email: formData.email,
         password: formData.password || undefined,
+        mobileNumber: formData.mobileNumber,
       });
 
       if (response.success) {
@@ -159,6 +162,7 @@ export function AdminCompanies() {
       companyName: company.companyName,
       email: company.email,
       password: '',
+      mobileNumber: company.mobileNumber || '',
     });
     setEditDialogOpen(true);
   };
@@ -168,6 +172,7 @@ export function AdminCompanies() {
       companyName: '',
       email: '',
       password: '',
+      mobileNumber: '',
     });
     setShowPassword(false);
   };
@@ -229,6 +234,22 @@ export function AdminCompanies() {
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="pl-10"
                     required
+                    disabled={loading}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="create-mobile">Mobile Number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <Input
+                    id="create-mobile"
+                    type="tel"
+                    placeholder="0400 000 000"
+                    value={formData.mobileNumber}
+                    onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                    className="pl-10"
                     disabled={loading}
                   />
                 </div>
@@ -367,7 +388,7 @@ export function AdminCompanies() {
                           </div>
                         </TableCell>
                         <TableCell>{company.email}</TableCell>
-                        <TableCell>—</TableCell>
+                        <TableCell>{company.mobileNumber || '—'}</TableCell>
                         <TableCell>
                           <Badge
                             className={
@@ -493,6 +514,22 @@ export function AdminCompanies() {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   className="pl-10"
                   required
+                  disabled={loading}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="edit-mobile">Mobile Number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <Input
+                  id="edit-mobile"
+                  type="tel"
+                  placeholder="0400 000 000"
+                  value={formData.mobileNumber}
+                  onChange={(e) => setFormData({ ...formData, mobileNumber: e.target.value })}
+                  className="pl-10"
                   disabled={loading}
                 />
               </div>

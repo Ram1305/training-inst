@@ -1,48 +1,50 @@
 import { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Search, 
-  Trash2, 
-  Eye, 
-  CheckCircle, 
-  XCircle, 
-  X, 
-  Clock, 
-  Mail, 
-  Phone, 
-  MapPin, 
+import { API_CONFIG } from '../../config/api.config';
+import {
+  Users,
+  Search,
+  Trash2,
+  Eye,
+  CheckCircle,
+  XCircle,
+  X,
+  Clock,
+  Mail,
+  Phone,
+  MapPin,
   Calendar,
   Filter,
   MoreVertical,
   Download,
   Shield,
-  BookOpen
+  BookOpen,
+  FileText
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
 import { Badge } from '../ui/badge';
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '../ui/table';
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle
 } from '../ui/dialog';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
 } from '../ui/select';
 import { toast } from 'sonner';
 import { vocManagementService, type VOCSubmissionResponse } from '../../services/vocManagement.service';
@@ -329,11 +331,11 @@ export function AdminVOC() {
                   <h4 className="font-bold text-slate-900 border-b pb-1">Booking Info</h4>
                   <div className="space-y-2">
                     <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Calendar className="w-4 h-4" /> 
+                      <Calendar className="w-4 h-4" />
                       {selectedSubmission.preferredStartDate ? format(new Date(selectedSubmission.preferredStartDate), 'PPP') : 'No date selected'}
                     </div>
                     <div className="flex items-center gap-2 text-sm text-slate-600">
-                      <Clock className="w-4 h-4" /> 
+                      <Clock className="w-4 h-4" />
                       <span className="capitalize">{selectedSubmission.preferredTime || 'No time selected'} session</span>
                     </div>
                   </div>
@@ -361,7 +363,10 @@ export function AdminVOC() {
                         const courses = JSON.parse(selectedSubmission.selectedCoursesJson);
                         return Array.isArray(courses) ? courses.map((c: any, idx: number) => (
                           <div key={idx} className="flex justify-between items-center p-3 bg-white border border-slate-100 rounded-lg shadow-sm">
-                            <span className="font-semibold text-sm">{c.courseName}</span>
+                            <div className="flex flex-col">
+                              <span className="font-semibold text-sm">{c.courseName}</span>
+                              {c.courseDateDisplay && <span className="text-[10px] text-slate-500 font-medium">{c.courseDateDisplay}</span>}
+                            </div>
                             <span className="text-xs font-bold text-violet-600 bg-violet-50 px-2 py-1 rounded">${c.price}</span>
                           </div>
                         )) : <div className="text-slate-400 italic">No courses listed</div>;
@@ -397,24 +402,51 @@ export function AdminVOC() {
                 </div>
               </div>
 
+              {/* Payment Proof */}
+              {selectedSubmission.paymentProofPath && (
+                <div className="space-y-3">
+                  <h4 className="font-bold text-slate-900 border-b pb-1 flex items-center gap-2">
+                    <FileText className="w-4 h-4 text-violet-500" /> Payment Receipt
+                  </h4>
+                  <div className="border border-slate-200 rounded-xl overflow-hidden group relative bg-slate-50">
+                    <img
+                      src={API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath}
+                      alt="Payment Proof"
+                      className="w-full h-auto max-h-60 object-contain cursor-pointer transition-all group-hover:scale-[1.02]"
+                      onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath, '_blank')}
+                    />
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                       <Button
+                         variant="secondary"
+                         size="sm"
+                         className="gap-2"
+                         onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath, '_blank')}
+                       >
+                         <Eye className="w-4 h-4" /> View Full Image
+                       </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between items-center pt-4 border-t">
                 <div className="flex gap-2">
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     className="bg-green-600 hover:bg-green-700 text-white"
                     onClick={() => handleUpdateStatus(selectedSubmission.submissionId, 'Verified')}
                   >
                     <CheckCircle className="w-4 h-4 mr-2" /> Mark Verified
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="outline"
                     onClick={() => handleUpdateStatus(selectedSubmission.submissionId, 'Completed')}
                   >
                     Mark Completed
                   </Button>
-                  <Button 
-                    size="sm" 
+                  <Button
+                    size="sm"
                     variant="destructive"
                     onClick={() => handleUpdateStatus(selectedSubmission.submissionId, 'Rejected')}
                   >

@@ -82,7 +82,8 @@ export function AdminBookingDetails({ selectedDate, onBack }: AdminBookingDetail
 
   const formattedDate = (() => {
     try {
-      const d = new Date(selectedDate);
+      const [year, month, day] = selectedDate.split('-').map(Number);
+      const d = new Date(year, month - 1, day);
       return d.toLocaleDateString('en-AU', {
         weekday: 'long',
         day: 'numeric',
