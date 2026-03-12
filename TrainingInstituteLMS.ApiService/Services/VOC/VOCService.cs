@@ -32,7 +32,8 @@ namespace TrainingInstituteLMS.ApiService.Services.VOC
                 string? paymentProofPath = null;
                 if (request.PaymentProof != null && request.PaymentProof.Length > 0)
                 {
-                    var uploadsFolder = Path.Combine(_webHostEnvironment.WebRootPath, "uploads", "voc", "payments");
+                    var rootPath = _webHostEnvironment.WebRootPath ?? Path.Combine(_webHostEnvironment.ContentRootPath, "wwwroot");
+                    var uploadsFolder = Path.Combine(rootPath, "uploads", "voc", "payments");
                     if (!Directory.Exists(uploadsFolder)) Directory.CreateDirectory(uploadsFolder);
 
                     var uniqueFileName = Guid.NewGuid().ToString() + "_" + request.PaymentProof.FileName;
