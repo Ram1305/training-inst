@@ -89,8 +89,7 @@ class VOCManagementService {
 
     return apiService.post<ApiResponse<VOCSubmissionResponse>>(
       API_CONFIG.ENDPOINTS.VOC.SUBMIT,
-      formData,
-      { headers: { 'Content-Type': 'multipart/form-data' } }
+      formData
     );
   }
 
