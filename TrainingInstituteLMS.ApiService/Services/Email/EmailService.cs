@@ -809,8 +809,7 @@ Safety Training Academy";
 <p>Best regards,<br/><strong>Safety Training Academy</strong></p>
 </body></html>";
 
-            try
-            {
+
             var user = _settings.User?.Trim() ?? string.Empty;
             var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
             var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
