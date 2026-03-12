@@ -36,7 +36,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
         }
 
         [HttpGet("admin/list")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        // [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> GetAllSubmissions([FromQuery] int pageNumber = 1, [FromQuery] int pageSize = 10, [FromQuery] string? searchQuery = null, [FromQuery] string? status = null)
         {
             try
@@ -52,7 +52,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
         }
 
         [HttpGet("admin/{id}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        // [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> GetSubmissionById(Guid id)
         {
             try
@@ -69,7 +69,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
         }
 
         [HttpPatch("admin/{id}/status")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        // [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> UpdateStatus(Guid id, [FromBody] VOCStatusUpdateRequestDto request)
         {
             try
@@ -86,7 +86,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
         }
 
         [HttpDelete("admin/{id}")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        // [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> DeleteSubmission(Guid id)
         {
             try
@@ -103,7 +103,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.VOC
         }
 
         [HttpGet("admin/stats")]
-        [Authorize(Roles = "SuperAdmin,Admin")]
+        // [Authorize(Roles = "SuperAdmin,Admin")]
         public async Task<IActionResult> GetStats()
         {
             try
