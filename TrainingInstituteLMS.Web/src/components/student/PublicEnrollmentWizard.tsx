@@ -395,15 +395,20 @@ export function PublicEnrollmentWizard({
   // Group course dates by calendar date for grid layout (same as Booking Form)
   const courseDatesByDate = useMemo(() => {
     const byDate = courseDates.reduce<Record<string, CourseDateDropdownItem[]>>((acc, d) => {
-      const key = (d.startDate || '').split('T')[0];
-      if (!key) return acc;
+      const datePart = (d.startDate || '').split('T')[0];
+      if (!datePart) return acc;
+      // Group by date + dateType so different session types on the same day get separate boxes
+      const key = `${datePart}__${d.dateType || 'General'}`;
       if (!acc[key]) acc[key] = [];
       acc[key].push(d);
       return acc;
     }, {});
     return Object.keys(byDate)
       .sort()
-      .map((dateKey) => ({ dateKey, dates: byDate[dateKey] }));
+      .map((key) => {
+        const dateKey = key.split('__')[0];
+        return { dateKey, dates: byDate[key] };
+      });
   }, [courseDates]);
 
   // Generate all items for dropdowns and group them
@@ -1876,7 +1881,7 @@ export function PublicEnrollmentWizard({
                                 ) : (
                                   <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
                                     {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
-                                      <div key={dateKey} className="flex flex-col items-center w-full">
+                                      <div key={`${dateKey}-${dates[0]?.dateType}`} className="flex flex-col items-center w-full">
                                         <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
                                           {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
                                             weekday: 'short',
@@ -1925,20 +1930,13 @@ export function PublicEnrollmentWizard({
                                                   </div>
                                                   <div className="min-w-0 flex-1">
                                                     <div className="min-h-8 flex items-center">
-                                                      <div className="flex flex-col gap-0.5">
-                                                        {date.dateType && (
-                                                          <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 uppercase tracking-widest mb-0.5">
-                                                            {date.dateType}
-                                                          </span>
+                                                      <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                        <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                        {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                                                        {date.startDate !== date.endDate && (
+                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
                                                         )}
-                                                        <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                                          <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                          {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-                                                          {date.startDate !== date.endDate && (
-                                                            <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
-                                                          )}
-                                                        </p>
-                                                      </div>
+                                                      </p>
                                                     </div>
                                                     {date.location && date.location.toLowerCase() !== 'face to face' && (
                                                       <div className="min-h-6 mt-1 flex items-center">
@@ -2068,7 +2066,7 @@ export function PublicEnrollmentWizard({
                           ) : (
                             <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
                               {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
-                                <div key={dateKey} className="flex flex-col items-center w-full">
+                                <div key={`${dateKey}-${dates[0]?.dateType}`} className="flex flex-col items-center w-full">
                                   <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
                                     {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
                                       weekday: 'short',
@@ -2111,20 +2109,13 @@ export function PublicEnrollmentWizard({
                                             </div>
                                             <div className="min-w-0 flex-1">
                                               <div className="min-h-8 flex items-center">
-                                                <div className="flex flex-col gap-0.5">
-                                                  {date.dateType && (
-                                                    <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 uppercase tracking-widest mb-0.5">
-                                                      {date.dateType}
-                                                    </span>
+                                                <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                  <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                  {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                                                  {date.startDate !== date.endDate && (
+                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
                                                   )}
-                                                  <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                                    <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                    {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-                                                    {date.startDate !== date.endDate && (
-                                                      <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
-                                                    )}
-                                                  </p>
-                                                </div>
+                                                </p>
                                               </div>
                                               <div className="min-h-6 mt-1 flex items-center">
                                                 {date.location && date.location.toLowerCase() !== 'face to face' && (
