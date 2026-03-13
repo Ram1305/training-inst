@@ -367,7 +367,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateRange = link.CourseDate != null 
                     ? $"{link.CourseDate.ScheduledDate:dd/MM/yyyy}"
                     : null,
-                IsOneTimeLink = link.MaxUses == 1,
+                IsOneTimeLink = link.CompanyOrderId.HasValue,
                 AllowPayLater = allowPayLater
             };
         }
