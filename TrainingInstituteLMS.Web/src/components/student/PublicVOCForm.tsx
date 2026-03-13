@@ -832,7 +832,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                 {paymentMethod === 'BankTransfer' && (
                   <div className="mb-8 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-800 max-w-md mx-auto">
                     <p className="font-bold mb-1">⏳ Bank Transfer Pending</p>
-                    <p>Once we confirm receipt of your payment (1–2 business days), your VOC renewal will be processed.</p>
+                    <p>Once we confirm receipt of your payment, your VOC renewal will be processed.</p>
                   </div>
                 )}
                 <div className="flex flex-col sm:flex-row gap-4 justify-center mt-4">
