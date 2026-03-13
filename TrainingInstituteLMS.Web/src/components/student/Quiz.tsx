@@ -695,16 +695,7 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
         <p className="text-gray-600">Complete all sections to proceed with course enrollment</p>
       </div>
 
-      {isMobile && (
-        <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-4 text-amber-900">
-          <p className="text-sm font-medium">
-            For the best experience with drag-and-drop questions, please use a desktop or tablet, or use your browser&apos;s &quot;Request desktop site&quot; / &quot;Desktop site&quot; option in the menu.
-          </p>
-        </div>
-      )}
-
       {/* Progress */}
-      <div className={isMobile ? 'lln-desktop-mode-wrapper' : ''}>
       <Card className="border-violet-100">
         <CardHeader>
           <div className="flex items-center justify-between mb-2">
@@ -745,7 +736,6 @@ export function Quiz({ courseName, onComplete, onCancel }: QuizProps) {
         onComplete={handleSectionComplete}
         onCancel={onCancel}
       />
-      </div>
     </div>
   );
 }

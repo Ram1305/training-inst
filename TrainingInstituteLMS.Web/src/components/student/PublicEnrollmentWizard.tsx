@@ -2773,14 +2773,6 @@ export function PublicEnrollmentWizard({
 
         return (
           <div className="space-y-4">
-            {isMobile && (
-              <div className="rounded-lg border-2 border-amber-200 bg-amber-50 p-4 text-amber-900">
-                <p className="text-sm font-medium">
-                  For the best experience with drag-and-drop questions, please use a desktop or tablet, or use your browser&apos;s &quot;Request desktop site&quot; / &quot;Desktop site&quot; option in the menu.
-                </p>
-              </div>
-            )}
-            <div className={isMobile ? 'lln-desktop-mode-wrapper' : ''}>
               <Card className="border-violet-100">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -2811,7 +2803,6 @@ export function PublicEnrollmentWizard({
                 section={quizSections[quizSectionIndex]}
                 onComplete={handleQuizSectionComplete}
               />
-            </div>
           </div>
         );
 
