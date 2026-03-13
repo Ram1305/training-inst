@@ -176,7 +176,8 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Course
         {
             try
             {
-                if (await _courseService.CourseCodeExistsAsync(request.CourseCode))
+                if (!string.IsNullOrWhiteSpace(request.CourseCode) &&
+                    await _courseService.CourseCodeExistsAsync(request.CourseCode))
                 {
                     return BadRequest(new ApiResponse<object>
                     {

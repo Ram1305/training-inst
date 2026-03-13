@@ -212,7 +212,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             }
 
             // Handle Enrollment Link if provided
-            EnrollmentLink? link = null;
+            EnrollmentLinkEntity? link = null;
             if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
             {
                 link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);

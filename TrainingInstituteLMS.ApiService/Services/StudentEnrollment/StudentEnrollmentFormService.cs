@@ -235,7 +235,8 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 _context.Enrollments.Add(enrollment);
 
                 // Update course enrollment count
-                course.EnrolledStudentsCount++;
+                if (course != null)
+                    course.EnrolledStudentsCount++;
 
                 // Update course date enrollment count
                 var courseDate = await _context.CourseDates.FindAsync(request.CourseDateId.Value);
