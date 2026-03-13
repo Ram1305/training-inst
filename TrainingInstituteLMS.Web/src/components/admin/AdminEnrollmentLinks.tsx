@@ -6,17 +6,16 @@ import {
   Download,
   Trash2,
   Plus,
-  Search,
   Loader2,
   CheckCircle,
   XCircle,
   Eye,
-  RefreshCw,
   ExternalLink,
   Calendar,
   Users,
-  X,
-  Clock
+  Clock,
+  Edit2,
+  AlertTriangle
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -57,6 +56,13 @@ export function AdminEnrollmentLinks() {
     expiresAt: undefined,
     allowPayLater: false
   });
+
+  // Edit dialog
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [linkToEdit, setLinkToEdit] = useState<EnrollmentLinkResponse | null>(null);
+  const [editExpiresAt, setEditExpiresAt] = useState('');
+  const [editMaxUses, setEditMaxUses] = useState<number | undefined>(undefined);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
 
   // View dialog
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
@@ -146,6 +152,50 @@ export function AdminEnrollmentLinks() {
     }
   };
 
+  // Open edit dialog
+  const handleOpenEdit = (link: EnrollmentLinkResponse) => {
+    setLinkToEdit(link);
+    // Convert ISO date to YYYY-MM-DD for <input type="date">
+    setEditExpiresAt(link.expiresAt ? link.expiresAt.split('T')[0] : '');
+    setEditMaxUses(link.maxUses ?? undefined);
+    setEditDialogOpen(true);
+  };
+
+  // Save expiry / maxUses edit by deleting the old link and creating a replacement
+  // (since there is no PATCH endpoint for these fields yet, we re-create)
+  const handleSaveEdit = async () => {
+    if (!linkToEdit) return;
+    setIsSavingEdit(true);
+    try {
+      // Re-create with updated fields; keep same name/course/allowPayLater
+      const payload: EnrollmentLinkRequest = {
+        name: linkToEdit.name,
+        description: linkToEdit.description,
+        courseId: linkToEdit.courseId,
+        allowPayLater: linkToEdit.allowPayLater ?? false,
+        maxUses: editMaxUses && editMaxUses > 0 ? editMaxUses : undefined,
+        expiresAt: editExpiresAt || undefined,
+      };
+      // Delete old link first
+      await publicEnrollmentWizardService.deleteEnrollmentLink(linkToEdit.linkId);
+      // Create new link
+      const response = await publicEnrollmentWizardService.createEnrollmentLink(payload);
+      if (response.success) {
+        toast.success('Enrollment link updated — a new link URL and QR code have been generated.');
+        setEditDialogOpen(false);
+        setLinkToEdit(null);
+        fetchLinks();
+      } else {
+        toast.error(response.message || 'Failed to update link');
+      }
+    } catch (error) {
+      const err = error as Error;
+      toast.error(err.message || 'Failed to update enrollment link');
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
   // Copy URL to clipboard
   const handleCopyUrl = async (url: string) => {
     try {
@@ -227,10 +277,22 @@ export function AdminEnrollmentLinks() {
     }
   };
 
+  // Always use en-AU locale (DD/MM/YYYY) to avoid US/AU date ambiguity
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('en-AU', {
+      day: '2-digit', month: '2-digit', year: 'numeric'
+    });
   };
+
+  const isLinkExpired = (link: EnrollmentLinkResponse) =>
+    !!link.expiresAt && new Date(link.expiresAt) < new Date();
+
+  const isLinkFull = (link: EnrollmentLinkResponse) =>
+    !!link.maxUses && link.usedCount >= link.maxUses;
+
+  const isLinkEffectivelyInactive = (link: EnrollmentLinkResponse) =>
+    !link.isActive || isLinkExpired(link) || isLinkFull(link);
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
@@ -333,7 +395,10 @@ export function AdminEnrollmentLinks() {
                   </TableHeader>
                   <TableBody>
                     {links.map((link) => (
-                      <TableRow key={link.linkId}>
+                      <TableRow
+                        key={link.linkId}
+                        className={isLinkExpired(link) ? 'bg-red-50/60' : isLinkFull(link) ? 'bg-orange-50/60' : ''}
+                      >
                         <TableCell>
                           <div>
                             <div className="font-medium">{link.name}</div>
@@ -356,9 +421,17 @@ export function AdminEnrollmentLinks() {
                         <TableCell>{formatDate(link.expiresAt)}</TableCell>
                         <TableCell>
                           <div className="flex flex-wrap gap-1">
-                            <Badge className={link.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                              {link.isActive ? 'Active' : 'Inactive'}
-                            </Badge>
+                            {isLinkExpired(link) ? (
+                              <Badge className="bg-red-100 text-red-700 flex items-center gap-1">
+                                <AlertTriangle className="w-3 h-3" /> Expired
+                              </Badge>
+                            ) : isLinkFull(link) ? (
+                              <Badge className="bg-orange-100 text-orange-700">Full</Badge>
+                            ) : (
+                              <Badge className={link.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
+                                {link.isActive ? 'Active' : 'Inactive'}
+                              </Badge>
+                            )}
                             {link.allowPayLater && (
                               <Badge variant="outline" className="border-violet-300 text-violet-700">
                                 Pay Later
@@ -399,6 +472,15 @@ export function AdminEnrollmentLinks() {
                               title="Download QR Code"
                             >
                               <Download className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleOpenEdit(link)}
+                              title="Edit Expiry / Max Uses"
+                              className={isLinkExpired(link) ? 'border-red-300 text-red-600 hover:text-red-700' : ''}
+                            >
+                              <Edit2 className="w-4 h-4" />
                             </Button>
                             <Button
                               size="sm"
@@ -543,6 +625,7 @@ export function AdminEnrollmentLinks() {
                   id="expiresAt"
                   type="date"
                   value={newLink.expiresAt || ''}
+                  min={new Date().toISOString().split('T')[0]}
                   onChange={(e) => setNewLink({ ...newLink, expiresAt: e.target.value || undefined })}
                 />
               </div>
@@ -650,6 +733,62 @@ export function AdminEnrollmentLinks() {
             <Button onClick={() => selectedLink && handleDownloadQR(selectedLink)}>
               <Download className="w-4 h-4 mr-2" />
               Download QR
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Expiry / Max Uses Dialog */}
+      <Dialog open={editDialogOpen} onOpenChange={setEditDialogOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Edit2 className="w-4 h-4 text-violet-600" />
+              Edit Link: {linkToEdit?.name}
+            </DialogTitle>
+            <DialogDescription>
+              Update the expiry date or max uses. A new unique URL and QR code will be generated.
+            </DialogDescription>
+          </DialogHeader>
+          {linkToEdit && isLinkExpired(linkToEdit) && (
+            <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+              <AlertTriangle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+              <span>This link expired on <strong>{formatDate(linkToEdit.expiresAt)}</strong>. Set a new expiry date to reactivate it.</span>
+            </div>
+          )}
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="editExpiresAt">Expiry Date</Label>
+              <Input
+                id="editExpiresAt"
+                type="date"
+                value={editExpiresAt}
+                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setEditExpiresAt(e.target.value)}
+              />
+              <p className="text-xs text-gray-400 mt-1">Leave blank for no expiry.</p>
+            </div>
+            <div>
+              <Label htmlFor="editMaxUses">Max Uses</Label>
+              <Input
+                id="editMaxUses"
+                type="number"
+                placeholder="Unlimited"
+                min={1}
+                value={editMaxUses ?? ''}
+                onChange={(e) => setEditMaxUses(e.target.value ? parseInt(e.target.value) : undefined)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditDialogOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSaveEdit}
+              disabled={isSavingEdit}
+              className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
+            >
+              {isSavingEdit ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Edit2 className="w-4 h-4 mr-2" />}
+              Save & Regenerate
             </Button>
           </DialogFooter>
         </DialogContent>
