@@ -67,6 +67,8 @@ export function AdminEnrollmentLinks() {
   // View dialog
   const [viewDialogOpen, setViewDialogOpen] = useState(false);
   const [selectedLink, setSelectedLink] = useState<EnrollmentLinkResponse | null>(null);
+  const [viewLinkStudents, setViewLinkStudents] = useState<EnrollmentLinkStudent[]>([]);
+  const [viewLinkStudentsLoading, setViewLinkStudentsLoading] = useState(false);
 
   // Delete confirmation
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -255,10 +257,20 @@ export function AdminEnrollmentLinks() {
     }
   };
 
-  // View link details
-  const handleViewLink = (link: EnrollmentLinkResponse) => {
+  // View link details — also auto-load enrolled students
+  const handleViewLink = async (link: EnrollmentLinkResponse) => {
     setSelectedLink(link);
+    setViewLinkStudents([]);
     setViewDialogOpen(true);
+    setViewLinkStudentsLoading(true);
+    try {
+      const res = await publicEnrollmentWizardService.getLinkStudents(link.linkId);
+      setViewLinkStudents(res.data?.students ?? []);
+    } catch {
+      setViewLinkStudents([]);
+    } finally {
+      setViewLinkStudentsLoading(false);
+    }
   };
 
   // View students who joined via a link
@@ -647,7 +659,7 @@ export function AdminEnrollmentLinks() {
 
       {/* View Link Dialog */}
       <Dialog open={viewDialogOpen} onOpenChange={setViewDialogOpen}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>{selectedLink?.name}</DialogTitle>
             <DialogDescription>
@@ -723,6 +735,59 @@ export function AdminEnrollmentLinks() {
                 {selectedLink.allowPayLater && (
                   <div className="col-span-2">
                     <Badge variant="outline" className="border-violet-300 text-violet-700">Pay Later</Badge>
+                  </div>
+                )}
+              </div>
+
+              {/* Enrolled Students */}
+              <div className="border-t pt-4">
+                <div className="flex items-center gap-2 mb-3">
+                  <Users className="w-4 h-4 text-violet-600" />
+                  <span className="font-semibold text-gray-900 text-sm">
+                    Enrolled Students
+                    {!viewLinkStudentsLoading && (
+                      <span className="ml-2 text-gray-400 font-normal">({viewLinkStudents.length})</span>
+                    )}
+                  </span>
+                </div>
+
+                {viewLinkStudentsLoading ? (
+                  <div className="flex items-center justify-center gap-2 py-6 text-gray-400 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading students…
+                  </div>
+                ) : viewLinkStudents.length === 0 ? (
+                  <div className="flex flex-col items-center py-6 text-gray-400">
+                    <Users className="w-8 h-8 mb-1 text-gray-300" />
+                    <p className="text-sm">No one has enrolled via this link yet</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto rounded-lg border">
+                    <table className="w-full text-sm">
+                      <thead className="bg-gray-50 border-b">
+                        <tr>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500">Name</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500">Email</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500">Phone</th>
+                          <th className="text-left px-3 py-2 text-xs font-semibold text-gray-500">Enrolled On</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {viewLinkStudents.map((s, i) => (
+                          <tr key={s.studentId} className="hover:bg-gray-50 transition-colors">
+                            <td className="px-3 py-2.5 text-gray-400 text-xs">{i + 1}</td>
+                            <td className="px-3 py-2.5 font-medium text-gray-900">{s.fullName}</td>
+                            <td className="px-3 py-2.5 text-gray-600">{s.email}</td>
+                            <td className="px-3 py-2.5 text-gray-600">{s.phone || '—'}</td>
+                            <td className="px-3 py-2.5 text-gray-500 text-xs">
+                              {new Date(s.enrolledAt).toLocaleDateString('en-AU', {
+                                day: 'numeric', month: 'short', year: 'numeric'
+                              })}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
                 )}
               </div>
