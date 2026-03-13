@@ -625,7 +625,7 @@ export function AdminEnrollmentLinks() {
                   id="expiresAt"
                   type="date"
                   value={newLink.expiresAt || ''}
-                  min={new Date().toISOString().split('T')[0]}
+                  min={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()}
                   onChange={(e) => setNewLink({ ...newLink, expiresAt: e.target.value || undefined })}
                 />
               </div>
@@ -763,7 +763,7 @@ export function AdminEnrollmentLinks() {
                 id="editExpiresAt"
                 type="date"
                 value={editExpiresAt}
-                min={new Date().toISOString().split('T')[0]}
+                min={(() => { const d = new Date(); d.setDate(d.getDate() + 1); return d.toISOString().split('T')[0]; })()}
                 onChange={(e) => setEditExpiresAt(e.target.value)}
               />
               <p className="text-xs text-gray-400 mt-1">Leave blank for no expiry.</p>
