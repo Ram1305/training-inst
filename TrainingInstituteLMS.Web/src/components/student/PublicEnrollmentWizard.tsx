@@ -1896,8 +1896,8 @@ export function PublicEnrollmentWizard({
                                                 onClick={() => {
                                                   if (isDisabled || !pendingCompanyCourse) return;
                                                   const courseDateLabel = date.startDate !== date.endDate
-                                                    ? `${new Date(date.startDate).toLocaleDateString('en-AU')} – ${new Date(date.endDate).toLocaleDateString('en-AU')}`
-                                                    : new Date(date.startDate).toLocaleDateString('en-AU');
+                                                    ? `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} – ${new Date(date.endDate).toLocaleDateString('en-AU')} ${new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`
+                                                    : `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`;
                                                   setSelectedCompanyCourses((prev) => [
                                                     ...prev,
                                                     {
@@ -1927,9 +1927,9 @@ export function PublicEnrollmentWizard({
                                                     <div className="min-h-8 flex items-center">
                                                       <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                                         <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                        {new Date(date.startDate).toLocaleDateString('en-AU')}
+                                                        {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
                                                         {date.startDate !== date.endDate && (
-                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
                                                         )}
                                                       </p>
                                                     </div>
@@ -2106,9 +2106,9 @@ export function PublicEnrollmentWizard({
                                               <div className="min-h-8 flex items-center">
                                                 <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                                   <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                  {new Date(date.startDate).toLocaleDateString('en-AU')}
+                                                  {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
                                                   {date.startDate !== date.endDate && (
-                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU')}</>
+                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
                                                   )}
                                                 </p>
                                               </div>
