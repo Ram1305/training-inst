@@ -105,6 +105,13 @@ namespace TrainingInstituteLMS.Data.Data
                 .HasForeignKey<Company>(c => c.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
+            // Student -> Company
+            modelBuilder.Entity<Student>()
+                .HasOne(s => s.Company)
+                .WithMany()
+                .HasForeignKey(s => s.CompanyId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // AdminBypass relationships
             modelBuilder.Entity<AdminBypass>()
                 .HasOne(ab => ab.Student)

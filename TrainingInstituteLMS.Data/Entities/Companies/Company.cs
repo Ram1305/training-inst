@@ -26,5 +26,7 @@ namespace TrainingInstituteLMS.Data.Entities.Companies
 
         [ForeignKey(nameof(UserId))]
         public virtual User User { get; set; } = null!;
+
+        public virtual ICollection<Students.Student> Students { get; set; } = new List<Students.Student>();
     }
 }

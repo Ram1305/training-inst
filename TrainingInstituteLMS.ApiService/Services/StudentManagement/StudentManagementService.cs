@@ -25,6 +25,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
             {
                 var query = _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Company)
                     .Include(s => s.Enrollments)
                     .AsNoTracking();
 
@@ -55,6 +56,12 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                 if (!string.IsNullOrWhiteSpace(filter.EmploymentType))
                 {
                     query = query.Where(s => s.EmploymentType == filter.EmploymentType);
+                }
+
+                // Apply company filter
+                if (filter.CompanyId.HasValue)
+                {
+                    query = query.Where(s => s.CompanyId == filter.CompanyId.Value);
                 }
 
                 // Get total count
@@ -92,6 +99,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
             {
                 var student = await _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Company)
                     .Include(s => s.Enrollments)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.StudentId == studentId);
@@ -111,6 +119,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
             {
                 var student = await _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Company)
                     .Include(s => s.Enrollments)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.UserId == userId);
@@ -213,6 +222,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                 // Reload with navigation properties
                 var createdStudent = await _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Company)
                     .Include(s => s.Enrollments)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.StudentId == student.StudentId);
@@ -299,6 +309,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                 // Reload with navigation properties
                 var updatedStudent = await _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Company)
                     .Include(s => s.Enrollments)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(s => s.StudentId == studentId);
@@ -318,6 +329,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
             {
                 var student = await _context.Students
                     .Include(s => s.User)
+                    .Include(s => s.Company)
                     .Include(s => s.Enrollments)
                     .FirstOrDefaultAsync(s => s.StudentId == studentId);
 
@@ -497,7 +509,9 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                 IsActive = student.IsActive,
                 CreatedAt = student.CreatedAt,
                 LastLoginAt = student.User?.LastLoginAt,
-                EnrollmentCount = student.Enrollments?.Count ?? 0
+                EnrollmentCount = student.Enrollments?.Count ?? 0,
+                CompanyId = student.CompanyId,
+                CompanyName = student.Company?.CompanyName
             };
         }
     }

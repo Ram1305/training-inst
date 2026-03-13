@@ -9,5 +9,6 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Company
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
+        public int StudentCount { get; set; }
     }
 }

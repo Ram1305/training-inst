@@ -30,5 +30,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Student
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
         public int EnrollmentCount { get; set; }
+        public Guid? CompanyId { get; set; }
+        public string? CompanyName { get; set; }
     }
 }

@@ -83,6 +83,8 @@ export interface StudentResponse {
   createdAt: string;
   lastLoginAt?: string;
   enrollmentCount: number;
+  companyId?: string;
+  companyName?: string;
 }
 
 export interface StudentListResponse {
@@ -109,6 +111,7 @@ export interface StudentFilterRequest {
   employmentType?: string;
   pageNumber?: number;
   pageSize?: number;
+  companyId?: string;
 }
 
 export interface ApiResponse<T> {
@@ -128,6 +131,7 @@ class StudentManagementService {
     if (filter.employmentType) params.append('employmentType', filter.employmentType);
     if (filter.pageNumber) params.append('pageNumber', filter.pageNumber.toString());
     if (filter.pageSize) params.append('pageSize', filter.pageSize.toString());
+    if (filter.companyId) params.append('companyId', filter.companyId);
 
     const queryString = params.toString();
     const endpoint = queryString 
