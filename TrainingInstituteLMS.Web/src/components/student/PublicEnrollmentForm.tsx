@@ -704,15 +704,15 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
       {/* Navigation Buttons */}
       <Card className="border-violet-100">
         <CardContent className="py-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <Button variant="ghost" onClick={onCancel}>
+          <div className="enrollment-navigation">
+            <div className="enrollment-navigation-left">
+              <Button variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
                 Cancel
               </Button>
             </div>
-            <div className="flex gap-3">
+            <div className="enrollment-navigation-right">
               {currentSection > 1 && (
-                <Button variant="outline" onClick={handlePrevious}>
+                <Button variant="outline" onClick={handlePrevious} className="w-full sm:w-auto">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
@@ -720,7 +720,7 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
               {currentSection < 5 ? (
                 <Button
                   onClick={handleNext}
-                  className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+                  className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -729,7 +729,7 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
                 <Button
                   onClick={handleSubmit}
                   disabled={isSaving}
-                  className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                 >
                   {isSaving ? (
                     <>

@@ -2583,7 +2583,7 @@ export function PublicEnrollmentWizard({
                   </div>
 
                   {/* Expiry and CVV */}
-                  <div className="grid grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div>
                       <Label htmlFor="expiryMonth">Expiry Month <span className="text-red-500">*</span></Label>
                       <Select
