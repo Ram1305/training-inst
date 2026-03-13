@@ -319,11 +319,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Infection Control Poster
   const InfectionPoster = () => (
     <div className="flex justify-center my-6">
-      <div className="max-w-xs">
+      <div className="w-full max-w-sm px-2">
         <img 
           src="/assets/infection_control.png" 
           alt="9 Ways to Protect Your Patients - Infection Control Poster" 
-          className="w-full rounded-lg shadow-lg"
+          className="w-full h-auto rounded-lg shadow-lg"
         />
       </div>
     </div>
@@ -332,38 +332,39 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Incident Report Form Scenario (display only - no inputs needed)
   const IncidentFormScenario = () => (
     <div className="my-6 space-y-4">
-      <div className="bg-gray-100 p-6 rounded-lg space-y-3">
+      <div className="bg-gray-100 p-4 sm:p-6 rounded-lg space-y-3">
         <h3 className="font-bold text-gray-800">SCENARIO</h3>
-        <p className="text-gray-700">Jenny is a full time worker in the Moulding section. Her ID number is JEN-123.</p>
-        <p className="text-gray-700">Jenny only used one hand getting onto the forklift and slipped. She bruised her right hip falling onto the ground.</p>
-        <p className="text-gray-700">The accident happened at 10 am on the 6th of February. An ice pack was put on Jenny's hip.</p>
-        <p className="text-gray-700">The accident was reported at 10:30 am on the same day.</p>
+        <p className="text-gray-700 text-sm sm:text-base">Jenny is a full time worker in the Moulding section. Her ID number is JEN-123.</p>
+        <p className="text-gray-700 text-sm sm:text-base">Jenny only used one hand getting onto the forklift and slipped. She bruised her right hip falling onto the ground.</p>
+        <p className="text-gray-700 text-sm sm:text-base">The accident happened at 10 am on the 6th of February. An ice pack was put on Jenny's hip.</p>
+        <p className="text-gray-700 text-sm sm:text-base">The accident was reported at 10:30 am on the same day.</p>
       </div>
-      <div className="bg-gray-200 p-6 rounded-lg">
+      <div className="bg-gray-200 p-4 sm:p-6 rounded-lg overflow-x-auto">
         <h3 className="font-bold text-gray-800 mb-4">Incident Report Form</h3>
-        <div className="grid grid-cols-2 gap-4 text-sm">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 text-sm">
           <div className="flex items-center gap-2">
-            <span className="font-semibold">Name:</span>
-            <span className="px-2 py-1 bg-white border rounded">Jenny</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-semibold">Sex:</span>
-            <span className="px-2 py-1 bg-white border rounded">Female</span>
+            <span className="font-semibold min-w-[70px]">Name:</span>
+            <span className="px-2 py-1 bg-white border rounded flex-1">Jenny</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-semibold">Section:</span>
-            <span className="px-2 py-1 bg-white border rounded">Moulding</span>
+            <span className="font-semibold min-w-[70px]">Sex:</span>
+            <span className="px-2 py-1 bg-white border rounded flex-1">Female</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="font-semibold">ID Number:</span>
-            <span className="px-2 py-1 bg-white border rounded">JEN-123</span>
+            <span className="font-semibold min-w-[70px]">Section:</span>
+            <span className="px-2 py-1 bg-white border rounded flex-1">Moulding</span>
           </div>
-          <div className="col-span-2 flex items-center gap-2">
-            <span className="font-semibold">Employment:</span>
-            <span className="px-2 py-1 bg-white border rounded">Full Time</span>
+          <div className="flex items-center gap-2">
+            <span className="font-semibold min-w-[70px]">ID Number:</span>
+            <span className="px-2 py-1 bg-white border rounded flex-1">JEN-123</span>
           </div>
-          <div className="col-span-2">
-            <span className="font-semibold">Describe the incident:</span> Date: 6 of Feb, Time: 10:00 am
+          <div className="sm:col-span-2 flex items-center gap-2">
+            <span className="font-semibold min-w-[70px]">Employment:</span>
+            <span className="px-2 py-1 bg-white border rounded flex-1 sm:flex-none">Full Time</span>
+          </div>
+          <div className="sm:col-span-2 mt-2">
+            <span className="font-semibold block mb-1">Describe the incident:</span> 
+            <span className="bg-white p-2 border rounded block">Date: 6 of Feb, Time: 10:00 am</span>
           </div>
         </div>
       </div>
@@ -373,29 +374,29 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // PPE Reading Paragraph
   const PPEReadingParagraph = () => (
     <div className="my-6 space-y-4">
-      <div className="bg-white p-6 rounded-lg border-2 border-pink-500">
-        <p className="text-gray-700 leading-relaxed">
+      <div className="bg-white p-4 sm:p-6 rounded-lg border-2 border-pink-500">
+        <p className="text-gray-700 leading-relaxed text-sm sm:text-base">
           "All workers must wear hard hats, steel-capped boots and high-visibility vests while on a construction site. 
           Personal protective equipment (PPE) must be checked daily. Report any damaged PPE or equipment immediately to 
           the site supervisor. Workers must follow all safety signs and instructions at all times."
         </p>
       </div>
       <div className="flex justify-center">
-        <div className="flex gap-3">
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-4xl">⛑</span>
+        <div className="flex flex-wrap justify-center gap-2 sm:gap-3">
+          <div className="w-14 h-14 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-3xl sm:text-4xl">⛑</span>
           </div>
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-4xl">🧤</span>
+          <div className="w-14 h-14 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-3xl sm:text-4xl">🧤</span>
           </div>
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-4xl">👂</span>
+          <div className="w-14 h-14 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-3xl sm:text-4xl">👂</span>
           </div>
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-4xl">👢</span>
+          <div className="w-14 h-14 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-3xl sm:text-4xl">👢</span>
           </div>
-          <div className="w-20 h-20 bg-blue-600 rounded-full flex items-center justify-center">
-            <span className="text-4xl">🦺</span>
+          <div className="w-14 h-14 sm:w-20 sm:h-20 bg-blue-600 rounded-full flex items-center justify-center">
+            <span className="text-3xl sm:text-4xl">🦺</span>
           </div>
         </div>
       </div>
@@ -405,23 +406,23 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // PPE Notice
   const PPENotice = () => (
     <div className="flex justify-center my-6">
-      <div className="border-4 border-black p-6 bg-white max-w-sm">
+      <div className="border-4 border-black p-4 sm:p-6 bg-white w-full max-w-sm mx-2">
         <div className="text-center space-y-2">
-          <div className="font-bold text-lg">THIS PROTECTIVE EQUIPMENT</div>
-          <div className="font-bold text-2xl">MUST BE WORN</div>
-          <div className="font-semibold">ON THIS SITE</div>
-          <div className="flex justify-center gap-3 mt-4">
-            <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl">⛑</span>
+          <div className="font-bold text-base sm:text-lg">THIS PROTECTIVE EQUIPMENT</div>
+          <div className="font-bold text-xl sm:text-2xl">MUST BE WORN</div>
+          <div className="font-semibold text-sm sm:text-base">ON THIS SITE</div>
+          <div className="flex flex-wrap justify-center gap-2 sm:gap-3 mt-4">
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">⛑</span>
             </div>
-            <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl">🧤</span>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">🧤</span>
             </div>
-            <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl">👂</span>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">👂</span>
             </div>
-            <div className="w-14 h-14 bg-blue-600 rounded-full flex items-center justify-center">
-              <span className="text-2xl">🦺</span>
+            <div className="w-12 h-12 sm:w-14 sm:h-14 bg-blue-600 rounded-full flex items-center justify-center">
+              <span className="text-xl sm:text-2xl">🦺</span>
             </div>
           </div>
         </div>
