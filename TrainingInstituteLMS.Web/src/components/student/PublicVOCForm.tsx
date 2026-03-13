@@ -454,8 +454,8 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                 </div>
                 <CardContent className="p-8 space-y-8">
                   {/* Add Course Row */}
-                  <div className="flex gap-4 items-end">
-                    <div className="flex-grow space-y-2">
+                  <div className="flex gap-4 items-end w-full">
+                    <div className="flex-grow min-w-0 space-y-2">
                       <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Choose a Course</Label>
                       <Select value={currentSelectedCourseId} onValueChange={setCurrentSelectedCourseId}>
                         <SelectTrigger className="h-12 border-slate-200 text-base w-full overflow-hidden">
@@ -486,7 +486,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                     <Button
                       onClick={handleAddCourse}
                       disabled={!currentSelectedCourseId}
-                      className="h-12 px-5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold flex items-center gap-2"
+                      className="h-12 px-5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold flex items-center gap-2 shrink-0"
                     >
                       <Plus className="w-5 h-5" /> Add Course
                     </Button>
