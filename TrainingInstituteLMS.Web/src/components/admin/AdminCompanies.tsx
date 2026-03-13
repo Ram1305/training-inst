@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Search, Edit, Trash2, Mail, Lock, Eye, EyeOff, X, Phone } from 'lucide-react';
+import { Building2, Plus, Search, Edit, Trash2, Mail, Lock, Eye, EyeOff, X, Phone, Loader2, BookOpen, ExternalLink, Users, Copy, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { toast } from 'sonner';
 import { companyManagementService, type CompanyResponse } from '../../services/companyManagement.service';
+import { adminCompanyOrdersService, type AdminCompanyOrderDetail } from '../../services/adminCompanyOrders.service';
+import { publicEnrollmentWizardService, type EnrollmentLinkStudent } from '../../services/publicEnrollmentWizard.service';
 
 export function AdminCompanies() {
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
@@ -24,6 +26,14 @@ export function AdminCompanies() {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [selectedCompany, setSelectedCompany] = useState<CompanyResponse | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+
+  // View detail dialog
+  const [viewCompany, setViewCompany] = useState<CompanyResponse | null>(null);
+  const [viewOrders, setViewOrders] = useState<AdminCompanyOrderDetail[]>([]);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewStudentsMap, setViewStudentsMap] = useState<Record<string, EnrollmentLinkStudent[]>>({});
+  const [viewStudentsLoading, setViewStudentsLoading] = useState(false);
+  const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     companyName: '',
@@ -179,7 +189,56 @@ export function AdminCompanies() {
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'Never';
-    return new Date(dateString).toLocaleDateString();
+    return new Date(dateString).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  };
+
+  const formatCurrency = (amount: number) =>
+    new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(amount);
+
+  const openViewDialog = async (company: CompanyResponse) => {
+    setViewCompany(company);
+    setViewOrders([]);
+    setViewStudentsMap({});
+    setExpandedOrderId(null);
+    setViewLoading(true);
+    try {
+      const res = await adminCompanyOrdersService.getCompanyOrders({ search: company.email, pageSize: 200 });
+      const items = res.data?.items ?? [];
+      // Fetch full detail (links) for each order in parallel
+      const details = await Promise.all(
+        items.map(async (item) => {
+          try {
+            const d = await adminCompanyOrdersService.getCompanyOrderById(item.orderId);
+            return d.data ?? { ...item, links: [] };
+          } catch {
+            return { ...item, links: [] } as AdminCompanyOrderDetail;
+          }
+        })
+      );
+      setViewOrders(details);
+      setExpandedOrderId(details[0]?.orderId ?? null);
+      // Auto-load all students for all links in all orders
+      setViewStudentsLoading(true);
+      const allLinks = details.flatMap(d => d.links ?? []);
+      const results = await Promise.all(
+        allLinks.map(async (link) => {
+          try {
+            const r = await publicEnrollmentWizardService.getLinkStudents(link.linkId);
+            return { linkId: link.linkId, students: r.data?.students ?? [] };
+          } catch {
+            return { linkId: link.linkId, students: [] };
+          }
+        })
+      );
+      const map: Record<string, EnrollmentLinkStudent[]> = {};
+      results.forEach(({ linkId, students }) => { map[linkId] = students; });
+      setViewStudentsMap(map);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : 'Failed to load company details');
+    } finally {
+      setViewLoading(false);
+      setViewStudentsLoading(false);
+    }
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
@@ -402,7 +461,15 @@ export function AdminCompanies() {
                         </TableCell>
                         <TableCell>{formatDate(company.lastLoginAt)}</TableCell>
                         <TableCell>
-                          <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => openViewDialog(company)}
+                              title="View Details"
+                            >
+                              <Eye className="w-4 h-4 text-violet-600" />
+                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
@@ -479,6 +546,196 @@ export function AdminCompanies() {
         </CardContent>
       </Card>
 
+      {/* Company View Detail Dialog */}
+      <Dialog open={!!viewCompany} onOpenChange={(open) => { if (!open) setViewCompany(null); }}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              {viewCompany?.companyName} — Order & Enrollment Details
+            </DialogTitle>
+            <DialogDescription>
+              All courses purchased and students enrolled via this company's enrollment links
+            </DialogDescription>
+          </DialogHeader>
+
+          {viewLoading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+              <span className="ml-3 text-gray-500">Loading orders and students…</span>
+            </div>
+          ) : (
+            <div className="space-y-6">
+
+              {/* Company info banner */}
+              <div className="flex flex-wrap items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 text-lg">{viewCompany?.companyName}</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600">
+                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{viewCompany?.email}</span>
+                    {viewCompany?.mobileNumber && (
+                      <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{viewCompany.mobileNumber}</span>
+                    )}
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Joined {formatDate(viewCompany?.createdAt)}</span>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <Badge className={viewCompany?.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
+                    {viewCompany?.isActive ? 'Active' : 'Inactive'}
+                  </Badge>
+                  <span className="text-xs text-gray-400">Last login: {formatDate(viewCompany?.lastLoginAt)}</span>
+                </div>
+              </div>
+
+              {/* Summary */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-violet-50 rounded-lg border border-violet-100">
+                  <p className="text-2xl font-bold text-violet-700">{viewOrders.length}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Orders</p>
+                </div>
+                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <p className="text-2xl font-bold text-blue-700">
+                    {viewOrders.reduce((s, o) => s + (o.links?.length ?? 0), 0)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Courses Purchased</p>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+                  <p className="text-2xl font-bold text-green-700">
+                    {Object.values(viewStudentsMap).reduce((s, arr) => s + arr.length, 0)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Students Enrolled</p>
+                </div>
+              </div>
+
+              {viewOrders.length === 0 ? (
+                <div className="flex flex-col items-center py-10 text-gray-400">
+                  <BookOpen className="w-10 h-10 mb-2 text-gray-300" />
+                  <p className="font-medium">No orders found for this company</p>
+                  <p className="text-sm mt-1">Orders created via the company enrollment flow will appear here</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {viewOrders.map((order, oi) => (
+                    <div key={order.orderId} className="border border-gray-200 rounded-xl overflow-hidden">
+                      {/* Order header */}
+                      <button
+                        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 transition-colors"
+                        onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
+                      >
+                        <div className="w-6 h-6 bg-slate-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {oi + 1}
+                        </div>
+                        <div className="flex-1 text-left">
+                          <span className="font-semibold text-gray-800 text-sm">
+                            Order — {formatDate(order.createdAt)}
+                          </span>
+                          <span className="ml-3 text-xs text-gray-500 capitalize">{(order.paymentMethod || '').replace('_', ' ')}</span>
+                        </div>
+                        <span className="font-bold text-blue-700 text-sm">{formatCurrency(order.totalAmount)}</span>
+                        <Badge variant="outline" className={
+                          order.status === 'Completed' ? 'border-green-200 bg-green-50 text-green-700 text-xs'
+                          : order.status === 'Pending' ? 'border-amber-200 bg-amber-50 text-amber-700 text-xs'
+                          : 'border-red-200 bg-red-50 text-red-700 text-xs'
+                        }>{order.status}</Badge>
+                        {expandedOrderId === order.orderId
+                          ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                      </button>
+
+                      {/* Courses + students inside order */}
+                      {expandedOrderId === order.orderId && (
+                        <div className="divide-y divide-gray-100">
+                          {(order.links ?? []).length === 0 ? (
+                            <p className="text-center text-gray-400 py-6 text-sm">No course links in this order</p>
+                          ) : (
+                            (order.links ?? []).map((link, li) => {
+                              const students = viewStudentsMap[link.linkId] ?? [];
+                              const isLoaded = link.linkId in viewStudentsMap;
+                              return (
+                                <div key={link.linkId}>
+                                  {/* Course header */}
+                                  <div className="flex items-center gap-3 px-4 py-2.5 bg-violet-50 border-b border-violet-100">
+                                    <div className="w-6 h-6 bg-violet-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                      {li + 1}
+                                    </div>
+                                    <span className="flex-1 font-medium text-gray-900 text-sm">{link.courseName}</span>
+                                    <Badge className={`text-xs ${students.length > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                      <Users className="w-3 h-3 mr-1" />{students.length} enrolled
+                                    </Badge>
+                                    {link.fullUrl && (
+                                      <>
+                                        <button
+                                          onClick={() => navigator.clipboard.writeText(link.fullUrl).then(() => toast.success('Link copied!'))}
+                                          className="p-1 rounded hover:bg-violet-100 text-violet-500" title="Copy link"
+                                        >
+                                          <Copy className="w-3.5 h-3.5" />
+                                        </button>
+                                        <a href={link.fullUrl} target="_blank" rel="noopener noreferrer"
+                                          className="p-1 rounded hover:bg-violet-100 text-violet-500" title="Open link"
+                                        >
+                                          <ExternalLink className="w-3.5 h-3.5" />
+                                        </a>
+                                      </>
+                                    )}
+                                  </div>
+
+                                  {/* Students table */}
+                                  {!isLoaded || viewStudentsLoading ? (
+                                    <div className="flex justify-center py-5">
+                                      <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+                                    </div>
+                                  ) : students.length === 0 ? (
+                                    <div className="flex flex-col items-center py-5 text-gray-400">
+                                      <Users className="w-7 h-7 mb-1 text-gray-300" />
+                                      <p className="text-sm">No students enrolled yet</p>
+                                    </div>
+                                  ) : (
+                                    <div className="overflow-x-auto">
+                                      <table className="w-full text-sm">
+                                        <thead className="bg-gray-50 border-b">
+                                          <tr>
+                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
+                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Name</th>
+                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Email</th>
+                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Phone</th>
+                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Enrolled On</th>
+                                          </tr>
+                                        </thead>
+                                        <tbody className="divide-y divide-gray-100">
+                                          {students.map((s, si) => (
+                                            <tr key={s.studentId} className="hover:bg-gray-50">
+                                              <td className="px-4 py-2.5 text-gray-400 text-xs">{si + 1}</td>
+                                              <td className="px-4 py-2.5 font-medium text-gray-900">{s.fullName}</td>
+                                              <td className="px-4 py-2.5 text-gray-600">{s.email}</td>
+                                              <td className="px-4 py-2.5 text-gray-600">{s.phone || '—'}</td>
+                                              <td className="px-4 py-2.5 text-gray-500 text-xs">
+                                                {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                              </td>
+                                            </tr>
+                                          ))}
+                                        </tbody>
+                                      </table>
+                                    </div>
+                                  )}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
       <Dialog open={editDialogOpen} onOpenChange={(open) => { setEditDialogOpen(open); if (!open) { setSelectedCompany(null); resetForm(); } }}>
         <DialogContent className="max-w-md">
           <DialogHeader>
