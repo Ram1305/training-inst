@@ -32,6 +32,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.Payment
 
         [Required]
         public Guid SelectedCourseDateId { get; set; }
+        
+        public string? EnrollmentCode { get; set; }
 
         // Payment Amount (in cents for eWay)
         [Required]

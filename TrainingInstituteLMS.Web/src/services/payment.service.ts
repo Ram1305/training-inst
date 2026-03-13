@@ -9,6 +9,7 @@ export interface ProcessCardPaymentRequest {
   password: string;
   courseId: string;
   selectedCourseDateId: string;
+  enrollmentCode?: string;
   amountCents: number;
   currency?: string;
   cardName: string;

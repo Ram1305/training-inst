@@ -107,6 +107,23 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                     };
                 }
 
+                if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
+                {
+                    var link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
+                    if (link == null)
+                    {
+                        return new CardPaymentResultResponseDto { Success = false, ErrorMessages = "Enrollment link not found or inactive", AmountPaidCents = request.AmountCents, InvoiceNumber = invoiceNumber };
+                    }
+                    if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
+                    {
+                        return new CardPaymentResultResponseDto { Success = false, ErrorMessages = "Enrollment link has expired", AmountPaidCents = request.AmountCents, InvoiceNumber = invoiceNumber };
+                    }
+                    if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                    {
+                        return new CardPaymentResultResponseDto { Success = false, ErrorMessages = "This enrollment link has already been used", AmountPaidCents = request.AmountCents, InvoiceNumber = invoiceNumber };
+                    }
+                }
+
                 // 2. Process payment with eWay Direct API (no redirect/callback URLs - synchronous request/response only).
                 // eWAY portal: Site URL and redirect URLs are optional; we do not send them in the API request.
                 var ewayRequest = new EwayDirectPaymentRequest
@@ -702,6 +719,28 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                     };
                     _context.Students.Add(student);
 
+                    // Handle Enrollment Link if provided
+                    EnrollmentLink? link = null;
+                    if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
+                    {
+                        link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
+                        if (link != null)
+                        {
+                            // Note: validation of MaxUses should theoretically happen BEFORE payment too, 
+                            // but we must consume it here after payment success.
+                            if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
+                                throw new InvalidOperationException("Enrollment link has expired");
+
+                            if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                                throw new InvalidOperationException("This enrollment link has already been used");
+
+                            link.UsedCount++;
+                            link.UpdatedAt = DateTime.UtcNow;
+                            if (link.MaxUses == 1)
+                                link.IsActive = false;
+                        }
+                    }
+
                     // 5. Create Enrollment - Already paid via card
                     var enrollment = new Data.Entities.Enrollments.Enrollment
                     {
@@ -716,7 +755,9 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                         QuizCompleted = false,
                         Status = "Active",
                         EnrolledAt = DateTime.UtcNow,
-                        PaymentVerifiedAt = DateTime.UtcNow
+                        PaymentVerifiedAt = DateTime.UtcNow,
+                        EnrollmentType = link?.CompanyOrderId.HasValue == true ? "Company" : "Individual",
+                        EnrollmentLinkId = link?.LinkId
                     };
                     _context.Enrollments.Add(enrollment);
 

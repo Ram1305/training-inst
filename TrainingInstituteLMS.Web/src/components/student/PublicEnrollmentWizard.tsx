@@ -682,6 +682,7 @@ export function PublicEnrollmentWizard({
         password: enrollmentType === 'individual' ? '123456' : registrationData.password,
         courseId: selectedCourseId,
         selectedCourseDateId: selectedCourseDateId,
+        enrollmentCode: enrollCode || undefined,
         amountCents: Math.round(coursePrice * 100),
         currency: 'AUD',
         cardName: cardData.cardName.trim(),
@@ -1520,6 +1521,7 @@ export function PublicEnrollmentWizard({
         password: string;
         courseId?: string;
         courseDateId?: string;
+        enrollmentCode?: string;
         paymentMethod?: string;
         transactionId?: string;
         paymentAmount?: number;
@@ -1547,6 +1549,7 @@ export function PublicEnrollmentWizard({
         // Course selection
         courseId: selectedCourseId,
         courseDateId: selectedCourseDateId,
+        enrollmentCode: enrollCode || undefined,
         // Payment details
         paymentMethod: effectivePaymentMethod,
         transactionId: transactionId || undefined,

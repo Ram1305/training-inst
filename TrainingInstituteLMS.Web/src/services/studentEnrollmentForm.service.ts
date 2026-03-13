@@ -252,6 +252,7 @@ export interface ReviewEnrollmentFormRequest {
 
 export interface PublicEnrollmentFormRequest extends SubmitEnrollmentFormRequest {
   password: string;
+  enrollmentCode?: string;
   paymentMethod?: string;
   transactionId?: string;
   paymentAmount?: number;

@@ -199,6 +199,26 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                         ? "Pending"
                         : "Unpaid";
 
+                // Handle Enrollment Link if provided
+                EnrollmentLink? link = null;
+                if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
+                {
+                    link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
+                    if (link != null)
+                    {
+                        if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
+                            throw new InvalidOperationException("Enrollment link has expired");
+
+                        if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                            throw new InvalidOperationException("This enrollment link has already been used");
+
+                        link.UsedCount++;
+                        link.UpdatedAt = DateTime.UtcNow;
+                        if (link.MaxUses == 1)
+                            link.IsActive = false;
+                    }
+                }
+
                 enrollment = new Data.Entities.Enrollments.Enrollment
                 {
                     EnrollmentId = Guid.NewGuid(),
@@ -206,12 +226,23 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                     CourseId = request.CourseId.Value,
                     CourseDateId = request.CourseDateId.Value,
                     EnrolledAt = DateTime.UtcNow,
-                    Status = "Pending",
+                    Status = "Active",
                     PaymentStatus = paymentStatus,
-                    EnrollmentType = "Individual"
+                    EnrollmentType = link?.CompanyOrderId.HasValue == true ? "Company" : "Individual",
+                    EnrollmentLinkId = link?.LinkId
                 };
 
                 _context.Enrollments.Add(enrollment);
+
+                // Update course enrollment count
+                course.EnrolledStudentsCount++;
+
+                // Update course date enrollment count
+                var courseDate = await _context.CourseDates.FindAsync(request.CourseDateId.Value);
+                if (courseDate != null)
+                {
+                    courseDate.CurrentEnrollments++;
+                }
 
                 // Create PaymentProof when: (1) transaction ID provided, OR (2) direct_pay/bank_transfer (so it shows on admin payment side)
                 var shouldCreatePaymentProof = hasTransactionId || isDirectPay || isBankTransfer;

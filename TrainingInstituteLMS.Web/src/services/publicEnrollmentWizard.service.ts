@@ -43,6 +43,7 @@ export interface CourseEnrollmentRequest {
   studentId: string;
   courseId: string;
   courseDateId: string;
+  enrollmentCode?: string;
   paymentMethod: string; // 'online' | 'cash' | 'bank_transfer'
 }
 

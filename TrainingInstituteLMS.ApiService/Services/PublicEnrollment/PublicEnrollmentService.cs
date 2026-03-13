@@ -211,6 +211,26 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 throw new InvalidOperationException("This course date is fully booked");
             }
 
+            // Handle Enrollment Link if provided
+            EnrollmentLink? link = null;
+            if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
+            {
+                link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
+                if (link != null)
+                {
+                    if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
+                        throw new InvalidOperationException("Enrollment link has expired");
+
+                    if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                        throw new InvalidOperationException("This enrollment link has already been used");
+
+                    link.UsedCount++;
+                    link.UpdatedAt = DateTime.UtcNow;
+                    if (link.MaxUses == 1)
+                        link.IsActive = false;
+                }
+            }
+
             // Create enrollment
             var enrollment = new EnrollmentEntity
             {
@@ -218,16 +238,21 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 StudentId = request.StudentId,
                 CourseId = request.CourseId,
                 CourseDateId = request.CourseDateId,
-                Status = "Pending",
+                Status = "Active",
                 PaymentStatus = request.PaymentMethod == "cash" ? "Pending" : "Awaiting",
                 EnrolledAt = DateTime.UtcNow,
-                EnrollmentType = "Individual"
+                EnrollmentType = link?.CompanyOrderId.HasValue == true ? "Company" : "Individual",
+                EnrollmentLinkId = link?.LinkId
             };
 
             await _context.Enrollments.AddAsync(enrollment);
 
-            // Update course date enrollment count
+            // Update counts
             courseDate.CurrentEnrollments++;
+            if (courseDate.Course != null)
+            {
+                courseDate.Course.EnrolledStudentsCount++;
+            }
 
             await _context.SaveChangesAsync();
 
@@ -846,14 +871,26 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 StudentId = student.StudentId,
                 CourseId = link.CourseId!.Value,
                 CourseDateId = courseDateId.Value,
-                Status = "Pending",
+                Status = "Active",
                 PaymentStatus = paymentStatus,
                 EnrolledAt = DateTime.UtcNow,
                 EnrollmentType = link.CompanyOrderId.HasValue ? "Company" : "Individual",
                 EnrollmentLinkId = link.LinkId
             };
             await _context.Enrollments.AddAsync(enrollment);
+
+            // Update counts
             courseDate.CurrentEnrollments++;
+            if (courseDate.Course != null)
+            {
+                courseDate.Course.EnrolledStudentsCount++;
+            }
+            else
+            {
+                // Fallback if course navigation is not loaded
+                var course = await _context.Courses.FindAsync(link.CourseId.Value);
+                if (course != null) course.EnrolledStudentsCount++;
+            }
 
             link.UsedCount++;
             link.UpdatedAt = DateTime.UtcNow;

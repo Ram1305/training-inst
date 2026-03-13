@@ -22,6 +22,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.StudentEnrollment
         // Course Selection
         public Guid? CourseId { get; set; }
         public Guid? CourseDateId { get; set; }
+        public string? EnrollmentCode { get; set; }
         public string? PaymentMethod { get; set; }
 
         // Payment Details

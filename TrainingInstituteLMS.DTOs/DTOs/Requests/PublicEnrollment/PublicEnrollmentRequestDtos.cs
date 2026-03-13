@@ -7,12 +7,13 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public required string Phone { get; set; }
         public required string Password { get; set; }
     }
-    
+      
     public class PublicCourseEnrollmentRequestDto
     {
         public required Guid StudentId { get; set; }
         public required Guid CourseId { get; set; }
         public required Guid CourseDateId { get; set; }
+        public string? EnrollmentCode { get; set; }
         public required string PaymentMethod { get; set; } // bank_transfer, cash, card
     }
     
