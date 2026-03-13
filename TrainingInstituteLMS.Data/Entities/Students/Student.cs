@@ -371,11 +371,6 @@ namespace TrainingInstituteLMS.Data.Entities.Students
         [ForeignKey(nameof(UserId))]
         public virtual User User { get; set; } = null!;
 
-        public Guid? CompanyId { get; set; }
-
-        [ForeignKey(nameof(CompanyId))]
-        public virtual Companies.Company? Company { get; set; }
-
         public virtual ICollection<PreEnrollmentQuizAttempt> QuizAttempts { get; set; } = new List<PreEnrollmentQuizAttempt>();
         public virtual ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
     }

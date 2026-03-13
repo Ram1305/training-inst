@@ -791,23 +791,6 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             };
             await _context.Users.AddAsync(user);
 
-            // Fetch company order if applicable to determine companyId and payment status
-            Guid? companyId = null;
-            var paymentStatus = "Paid";
-            
-            if (link.CompanyOrderId.HasValue)
-            {
-                var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
-                if (order != null)
-                {
-                    companyId = order.CompanyId;
-                    if (string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase))
-                    {
-                        paymentStatus = "Pending";
-                    }
-                }
-            }
-
             var student = new Student
             {
                 StudentId = Guid.NewGuid(),
@@ -815,7 +798,6 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 FullName = request.FullName.Trim(),
                 Email = request.Email.Trim(),
                 PhoneNumber = request.Phone.Trim(),
-                CompanyId = companyId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -839,6 +821,17 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
             if (courseDate.CurrentEnrollments >= (courseDate.MaxCapacity ?? 30))
                 throw new InvalidOperationException("This course date is fully booked");
+
+            // Respect CompanyOrder.PaymentMethod: pay_later => Pending, otherwise => Paid
+            var paymentStatus = "Paid";
+            if (link.CompanyOrderId.HasValue)
+            {
+                var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
+                if (order != null && string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase))
+                {
+                    paymentStatus = "Pending";
+                }
+            }
 
             var enrollment = new EnrollmentEntity
             {

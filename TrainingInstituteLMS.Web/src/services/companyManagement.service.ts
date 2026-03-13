@@ -24,7 +24,6 @@ export interface CompanyResponse {
   createdAt: string;
   lastLoginAt?: string;
   mobileNumber?: string;
-  studentCount: number;
 }
 
 export interface CompanyListResponse {

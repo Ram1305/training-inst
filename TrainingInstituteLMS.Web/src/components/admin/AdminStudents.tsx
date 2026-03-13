@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Users, Plus, Search, Edit, Trash2, Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, FileText, CheckCircle, XCircle, X, BookOpen, DollarSign, Download, Loader2, Building2 } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Eye, EyeOff, Mail, Lock, User, Phone, GraduationCap, FileText, CheckCircle, XCircle, X, BookOpen, DollarSign, Download, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -913,12 +913,6 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                           <span className="inline-flex items-center gap-1.5 text-gray-600">
                             <Phone className="w-4 h-4 text-violet-500" />
                             {detailsStudent.phoneNumber}
-                          </span>
-                        )}
-                        {detailsStudent.companyName && (
-                          <span className="inline-flex items-center gap-1.5 text-gray-600">
-                            <Building2 className="w-4 h-4 text-violet-500" />
-                            {detailsStudent.companyName}
                           </span>
                         )}
                       </div>

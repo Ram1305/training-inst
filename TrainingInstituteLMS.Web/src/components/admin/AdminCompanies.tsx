@@ -9,7 +9,6 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { toast } from 'sonner';
 import { companyManagementService, type CompanyResponse } from '../../services/companyManagement.service';
-import { studentManagementService, type StudentResponse } from '../../services/studentManagement.service';
 
 export function AdminCompanies() {
   const [companies, setCompanies] = useState<CompanyResponse[]>([]);
@@ -32,32 +31,6 @@ export function AdminCompanies() {
     password: '',
     mobileNumber: '',
   });
-
-  // Details Modal State
-  const [detailsModalOpen, setDetailsModalOpen] = useState(false);
-  const [detailsCompany, setDetailsCompany] = useState<CompanyResponse | null>(null);
-  const [companyStudents, setCompanyStudents] = useState<StudentResponse[]>([]);
-  const [detailsLoading, setDetailsLoading] = useState(false);
-  const [detailsError, setDetailsError] = useState<string | null>(null);
-
-  const handleViewDetails = async (company: CompanyResponse) => {
-    setDetailsCompany(company);
-    setDetailsModalOpen(true);
-    setDetailsLoading(true);
-    setDetailsError(null);
-    try {
-      const response = await studentManagementService.getAllStudents({ companyId: company.companyId, pageSize: 100 });
-      if (response.success) {
-        setCompanyStudents(response.data.students);
-      } else {
-        setDetailsError(response.message || 'Failed to load associated students');
-      }
-    } catch (error) {
-      setDetailsError('Failed to load students');
-    } finally {
-      setDetailsLoading(false);
-    }
-  };
 
   const fetchCompanies = async (query?: string) => {
     if (companies.length === 0) {
@@ -397,7 +370,6 @@ export function AdminCompanies() {
                       <TableHead>Company</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Company mobile number</TableHead>
-                      <TableHead>Students</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Last Login</TableHead>
                       <TableHead className="text-right">Actions</TableHead>
@@ -418,11 +390,6 @@ export function AdminCompanies() {
                         <TableCell>{company.email}</TableCell>
                         <TableCell>{company.mobileNumber || '—'}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className="bg-violet-50 text-violet-700 hover:bg-violet-100 border-violet-200">
-                            {company.studentCount || 0}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
                           <Badge
                             className={
                               company.isActive
@@ -436,15 +403,6 @@ export function AdminCompanies() {
                         <TableCell>{formatDate(company.lastLoginAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center justify-end gap-2">
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleViewDetails(company)}
-                              disabled={loading}
-                              title="View Details"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
                             <Button
                               size="sm"
                               variant="outline"
@@ -620,114 +578,6 @@ export function AdminCompanies() {
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={detailsModalOpen} onOpenChange={setDetailsModalOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
-          <DialogHeader>
-            <DialogTitle className="text-xl font-semibold">
-              {detailsCompany ? `Company details: ${detailsCompany.companyName}` : 'Company details'}
-            </DialogTitle>
-            <DialogDescription>
-              {detailsCompany
-                ? `Associated students and activity for ${detailsCompany.companyName}`
-                : 'View company profile and associated students'}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-6 pb-4">
-            {detailsLoading ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-violet-600 mb-4"></div>
-                <p className="text-gray-500">Loading company details...</p>
-              </div>
-            ) : detailsError ? (
-              <div className="text-center py-12">
-                <p className="text-red-600">{detailsError}</p>
-              </div>
-            ) : detailsCompany && (
-              <>
-                <div className="rounded-2xl bg-gradient-to-br from-violet-50 via-white to-indigo-50 border border-violet-100 p-6">
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 flex items-center justify-center text-white text-2xl font-bold shadow-lg">
-                      <Building2 className="w-8 h-8" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <h2 className="text-xl font-bold text-gray-900 truncate">{detailsCompany.companyName}</h2>
-                      <div className="flex flex-wrap gap-3 mt-2">
-                        <span className="inline-flex items-center gap-1.5 text-gray-600">
-                          <Mail className="w-4 h-4 text-violet-500" />
-                          <a href={`mailto:${detailsCompany.email}`} className="hover:text-violet-600">{detailsCompany.email}</a>
-                        </span>
-                        {detailsCompany.mobileNumber && (
-                          <span className="inline-flex items-center gap-1.5 text-gray-600">
-                            <Phone className="w-4 h-4 text-violet-500" />
-                            {detailsCompany.mobileNumber}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex flex-wrap gap-2 mt-3">
-                        <Badge className={detailsCompany.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                          {detailsCompany.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <Badge variant="outline" className="border-violet-200 bg-violet-50 text-violet-700">
-                          {detailsCompany.studentCount} Students
-                        </Badge>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
-                    <Building2 className="w-5 h-5 text-violet-600" />
-                    Registered Students ({companyStudents.length})
-                  </h3>
-                  {companyStudents.length === 0 ? (
-                    <Card className="border-dashed border-violet-200 bg-violet-50/50">
-                      <CardContent className="py-12 text-center">
-                        <p className="text-gray-600 font-medium">No students registered yet</p>
-                        <p className="text-gray-500 text-sm mt-1">This company has not registered any students</p>
-                      </CardContent>
-                    </Card>
-                  ) : (
-                    <div className="border rounded-lg overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Student Name</TableHead>
-                            <TableHead>Email</TableHead>
-                            <TableHead>Phone</TableHead>
-                            <TableHead>Status</TableHead>
-                            <TableHead>Enrollments</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {companyStudents.map((student) => (
-                            <TableRow key={student.studentId}>
-                              <TableCell className="font-medium text-gray-900">{student.fullName}</TableCell>
-                              <TableCell>{student.email}</TableCell>
-                              <TableCell>{student.phoneNumber || '—'}</TableCell>
-                              <TableCell>
-                                <Badge className={student.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}>
-                                  {student.isActive ? 'Active' : 'Inactive'}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="border-violet-200">
-                                  {student.enrollmentCount || 0}
-                                </Badge>
-                              </TableCell>
-                            </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </div>
-                  )}
-                </div>
-              </>
-            )}
-          </div>
         </DialogContent>
       </Dialog>
     </div>

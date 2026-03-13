@@ -8,6 +8,5 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.Student
         public string? EmploymentType { get; set; }
         public int PageNumber { get; set; } = 1;
         public int PageSize { get; set; } = 10;
-        public Guid? CompanyId { get; set; }
     }
 }

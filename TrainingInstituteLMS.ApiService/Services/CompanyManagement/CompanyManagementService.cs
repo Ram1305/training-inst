@@ -24,7 +24,6 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
             {
                 var query = _context.Companies
                     .Include(c => c.User)
-                    .Include(c => c.Students)
                     .AsNoTracking();
 
                 if (!string.IsNullOrWhiteSpace(filter.SearchQuery))
@@ -74,7 +73,6 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
             {
                 var company = await _context.Companies
                     .Include(c => c.User)
-                    .Include(c => c.Students)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 
@@ -93,7 +91,6 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
             {
                 var company = await _context.Companies
                     .Include(c => c.User)
-                    .Include(c => c.Students)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.UserId == userId);
 
@@ -165,7 +162,6 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
 
                 var createdCompany = await _context.Companies
                     .Include(c => c.User)
-                    .Include(c => c.Students)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CompanyId == company.CompanyId);
 
@@ -214,7 +210,6 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
 
                 var updatedCompany = await _context.Companies
                     .Include(c => c.User)
-                    .Include(c => c.Students)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 
@@ -294,8 +289,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 Email = company.User?.Email ?? string.Empty,
                 IsActive = company.IsActive,
                 CreatedAt = company.CreatedAt,
-                LastLoginAt = company.User?.LastLoginAt,
-                StudentCount = company.Students?.Count ?? 0
+                LastLoginAt = company.User?.LastLoginAt
             };
         }
     }
