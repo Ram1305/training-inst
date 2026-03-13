@@ -9,8 +9,10 @@ import {
   Eye,
   ExternalLink,
   Users,
-  ChevronDown,
-  ChevronRight,
+  Copy,
+  Mail,
+  Phone,
+  Calendar,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -46,10 +48,9 @@ export function AdminCompanyPayments() {
   const [detailOrder, setDetailOrder] = useState<AdminCompanyOrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
 
-  // Per-link expanded students
-  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
+  // Per-link students loaded in parallel when detail opens
   const [linkStudentsMap, setLinkStudentsMap] = useState<Record<string, EnrollmentLinkStudent[]>>({});
-  const [linkStudentsLoading, setLinkStudentsLoading] = useState<Record<string, boolean>>({});
+  const [allStudentsLoading, setAllStudentsLoading] = useState(false);
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
@@ -119,29 +120,29 @@ export function AdminCompanyPayments() {
 
   const openDetails = (orderId: string) => {
     setDetailOrderId(orderId);
-    setExpandedLinkId(null);
     setLinkStudentsMap({});
-    setLinkStudentsLoading({});
   };
   const closeDetails = () => setDetailOrderId(null);
 
-  const handleToggleLinkStudents = async (linkId: string) => {
-    if (expandedLinkId === linkId) {
-      setExpandedLinkId(null);
-      return;
-    }
-    setExpandedLinkId(linkId);
-    if (linkStudentsMap[linkId]) return; // already loaded
-    setLinkStudentsLoading(prev => ({ ...prev, [linkId]: true }));
-    try {
-      const res = await publicEnrollmentWizardService.getLinkStudents(linkId);
-      setLinkStudentsMap(prev => ({ ...prev, [linkId]: res.data?.students ?? [] }));
-    } catch {
-      setLinkStudentsMap(prev => ({ ...prev, [linkId]: [] }));
-    } finally {
-      setLinkStudentsLoading(prev => ({ ...prev, [linkId]: false }));
-    }
-  };
+  // Auto-load all students for all links when detail order is fetched
+  useEffect(() => {
+    if (!detailOrder?.links?.length) return;
+    setAllStudentsLoading(true);
+    Promise.all(
+      detailOrder.links.map(async (link) => {
+        try {
+          const res = await publicEnrollmentWizardService.getLinkStudents(link.linkId);
+          return { linkId: link.linkId, students: res.data?.students ?? [] };
+        } catch {
+          return { linkId: link.linkId, students: [] };
+        }
+      })
+    ).then((results) => {
+      const map: Record<string, EnrollmentLinkStudent[]> = {};
+      results.forEach(({ linkId, students }) => { map[linkId] = students; });
+      setLinkStudentsMap(map);
+    }).finally(() => setAllStudentsLoading(false));
+  }, [detailOrder]);
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     setUpdatingStatusId(orderId);
@@ -335,11 +336,14 @@ export function AdminCompanyPayments() {
       </Card>
 
       <Dialog open={!!detailOrderId} onOpenChange={(open) => !open && closeDetails()}>
-        <DialogContent className="max-w-lg max-h-[85vh] overflow-y-auto">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Order details</DialogTitle>
+            <DialogTitle className="flex items-center gap-2">
+              <Building2 className="w-5 h-5 text-blue-600" />
+              Company Order Details
+            </DialogTitle>
             <DialogDescription>
-              Company order summary and courses purchased for the selected order
+              Full order summary with all courses purchased and enrolled student details
             </DialogDescription>
           </DialogHeader>
           {detailLoading ? (
@@ -347,122 +351,158 @@ export function AdminCompanyPayments() {
               <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
             </div>
           ) : detailOrder ? (
-            <div className="space-y-5">
-              <div className="flex items-center gap-3 pb-3 border-b">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-5 h-5 text-white" />
+            <div className="space-y-6">
+
+              {/* Company Info Banner */}
+              <div className="flex flex-wrap items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
+                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                  <Building2 className="w-6 h-6 text-white" />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-900">{detailOrder.companyName || '—'}</p>
-                  <p className="text-sm text-gray-600">{detailOrder.companyEmail}</p>
-                  {detailOrder.companyMobile && (
-                    <p className="text-xs text-gray-500">{detailOrder.companyMobile}</p>
-                  )}
+                <div className="flex-1 min-w-0">
+                  <p className="font-bold text-gray-900 text-lg">{detailOrder.companyName || '—'}</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600">
+                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{detailOrder.companyEmail}</span>
+                    {detailOrder.companyMobile && (
+                      <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{detailOrder.companyMobile}</span>
+                    )}
+                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(detailOrder.createdAt)}</span>
+                  </div>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 text-sm">
-                <div>
-                  <span className="text-gray-500">Total amount</span>
-                  <p className="font-semibold">{formatCurrency(detailOrder.totalAmount)}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Payment</span>
-                  <p className="capitalize">{(detailOrder.paymentMethod || '').replace('_', ' ')}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Date</span>
-                  <p>{formatDate(detailOrder.createdAt)}</p>
-                </div>
-                <div>
-                  <span className="text-gray-500">Status</span>
-                  <Badge
-                    variant="outline"
-                    className={
-                      detailOrder.status === 'Completed'
-                        ? 'border-green-200 bg-green-50 text-green-700'
-                        : detailOrder.status === 'Pending'
-                        ? 'border-amber-200 bg-amber-50 text-amber-700'
-                        : 'border-red-200 bg-red-50 text-red-700'
-                    }
-                  >
-                    {detailOrder.status}
-                  </Badge>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="text-2xl font-bold text-blue-700">{formatCurrency(detailOrder.totalAmount)}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-gray-500 capitalize">{(detailOrder.paymentMethod || '').replace('_', ' ')}</span>
+                    <Badge
+                      variant="outline"
+                      className={
+                        detailOrder.status === 'Completed'
+                          ? 'border-green-200 bg-green-50 text-green-700'
+                          : detailOrder.status === 'Pending'
+                          ? 'border-amber-200 bg-amber-50 text-amber-700'
+                          : 'border-red-200 bg-red-50 text-red-700'
+                      }
+                    >
+                      {detailOrder.status}
+                    </Badge>
+                  </div>
                 </div>
               </div>
-              <div className="pt-3 border-t">
-                <div className="flex items-center gap-2 mb-2">
+
+              {/* Summary stats */}
+              <div className="grid grid-cols-3 gap-3">
+                <div className="text-center p-3 bg-violet-50 rounded-lg border border-violet-100">
+                  <p className="text-2xl font-bold text-violet-700">{detailOrder.courseCount}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Courses Purchased</p>
+                </div>
+                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
+                  <p className="text-2xl font-bold text-green-700">
+                    {Object.values(linkStudentsMap).reduce((s, arr) => s + arr.length, 0)}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Students Enrolled</p>
+                </div>
+                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
+                  <p className="text-2xl font-bold text-blue-700">
+                    {(detailOrder.links ?? []).filter(l => l.usedCount === 0).length}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-0.5">Pending Links</p>
+                </div>
+              </div>
+
+              {/* Course Links + Enrolled Students */}
+              <div className="space-y-4">
+                <div className="flex items-center gap-2">
                   <BookOpen className="w-5 h-5 text-violet-600" />
-                  <span className="font-semibold text-gray-900">
-                    Courses purchased: {detailOrder.courseCount}
-                  </span>
+                  <h3 className="font-semibold text-gray-900">Courses &amp; Enrolled Students</h3>
                 </div>
-                <ul className="space-y-2 pl-1">
-                  {detailOrder.links?.map((link) => (
-                    <li key={link.linkId} className="border rounded-lg overflow-hidden">
-                      <button
-                        className="w-full flex items-center gap-2 text-sm text-gray-700 px-3 py-2 hover:bg-gray-50 transition-colors"
-                        onClick={() => handleToggleLinkStudents(link.linkId)}
-                      >
-                        {expandedLinkId === link.linkId
-                          ? <ChevronDown className="w-4 h-4 text-violet-500 flex-shrink-0" />
-                          : <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0" />}
-                        <span className="flex-1 text-left font-medium">{link.courseName}</span>
-                        <span className="text-xs text-gray-400 mr-1">{link.usedCount} joined</span>
-                        {link.fullUrl && (
-                          <a
-                            href={link.fullUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-violet-600 hover:underline flex items-center gap-0.5"
-                            title="Open link"
-                            onClick={e => e.stopPropagation()}
-                          >
-                            <ExternalLink className="w-3.5 h-3.5" />
-                          </a>
-                        )}
-                      </button>
-                      {expandedLinkId === link.linkId && (
-                        <div className="border-t bg-gray-50 px-3 py-2">
-                          {linkStudentsLoading[link.linkId] ? (
-                            <div className="flex justify-center py-4">
-                              <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
-                            </div>
-                          ) : (linkStudentsMap[link.linkId] ?? []).length === 0 ? (
-                            <div className="text-center py-3 text-gray-400 text-sm">
-                              <Users className="w-6 h-6 mx-auto mb-1 text-gray-300" />
-                              No students joined yet.
-                            </div>
-                          ) : (
-                            <table className="w-full text-xs">
-                              <thead>
-                                <tr className="text-gray-500 border-b">
-                                  <th className="text-left py-1 font-medium">#</th>
-                                  <th className="text-left py-1 font-medium">Name</th>
-                                  <th className="text-left py-1 font-medium">Email</th>
-                                  <th className="text-left py-1 font-medium">Phone</th>
-                                  <th className="text-left py-1 font-medium">Enrolled</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {(linkStudentsMap[link.linkId] ?? []).map((s: EnrollmentLinkStudent, i: number) => (
-                                  <tr key={s.studentId} className="border-b last:border-0">
-                                    <td className="py-1 text-gray-400">{i + 1}</td>
-                                    <td className="py-1 font-medium text-gray-800">{s.fullName}</td>
-                                    <td className="py-1 text-gray-600">{s.email}</td>
-                                    <td className="py-1 text-gray-600">{s.phone || '—'}</td>
-                                    <td className="py-1 text-gray-600">
-                                      {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                    </td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
+
+                {allStudentsLoading && (
+                  <div className="flex items-center justify-center gap-2 py-4 text-gray-500 text-sm">
+                    <Loader2 className="w-4 h-4 animate-spin" /> Loading student details…
+                  </div>
+                )}
+
+                {(detailOrder.links ?? []).map((link, idx) => {
+                  const students = linkStudentsMap[link.linkId] ?? [];
+                  const isLoaded = link.linkId in linkStudentsMap;
+                  return (
+                    <div key={link.linkId} className="border border-gray-200 rounded-xl overflow-hidden">
+                      {/* Course header */}
+                      <div className="flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-violet-50 to-fuchsia-50 border-b border-gray-200">
+                        <div className="w-7 h-7 bg-violet-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                          {idx + 1}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-gray-900">{link.courseName}</p>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          <Badge className={`text-xs ${
+                            students.length > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            <Users className="w-3 h-3 mr-1" />
+                            {students.length} enrolled
+                          </Badge>
+                          {link.fullUrl && (
+                            <button
+                              onClick={() => navigator.clipboard.writeText(link.fullUrl).then(() => toast.success('Link copied!'))}
+                              className="p-1 rounded hover:bg-violet-100 text-violet-500" title="Copy enrollment link"
+                            >
+                              <Copy className="w-3.5 h-3.5" />
+                            </button>
+                          )}
+                          {link.fullUrl && (
+                            <a href={link.fullUrl} target="_blank" rel="noopener noreferrer"
+                              className="p-1 rounded hover:bg-violet-100 text-violet-500" title="Open link"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
                           )}
                         </div>
+                      </div>
+
+                      {/* Students table */}
+                      {!isLoaded || allStudentsLoading ? (
+                        <div className="flex justify-center py-6">
+                          <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+                        </div>
+                      ) : students.length === 0 ? (
+                        <div className="flex flex-col items-center py-6 text-gray-400">
+                          <Users className="w-8 h-8 mb-1 text-gray-300" />
+                          <p className="text-sm">No one has enrolled via this link yet</p>
+                          <p className="text-xs mt-0.5">Share the link above to get started</p>
+                        </div>
+                      ) : (
+                        <div className="overflow-x-auto">
+                          <table className="w-full text-sm">
+                            <thead className="bg-gray-50 border-b">
+                              <tr>
+                                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
+                                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Name</th>
+                                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Email</th>
+                                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Phone</th>
+                                <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Enrolled On</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-gray-100">
+                              {students.map((s, i) => (
+                                <tr key={s.studentId} className="hover:bg-gray-50 transition-colors">
+                                  <td className="px-4 py-2.5 text-gray-400 text-xs">{i + 1}</td>
+                                  <td className="px-4 py-2.5 font-medium text-gray-900">{s.fullName}</td>
+                                  <td className="px-4 py-2.5 text-gray-600">{s.email}</td>
+                                  <td className="px-4 py-2.5 text-gray-600">{s.phone || '—'}</td>
+                                  <td className="px-4 py-2.5 text-gray-500 text-xs">
+                                    {new Date(s.enrolledAt).toLocaleDateString('en-AU', {
+                                      day: 'numeric', month: 'short', year: 'numeric'
+                                    })}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
                       )}
-                    </li>
-                  ))}
-                </ul>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           ) : null}
