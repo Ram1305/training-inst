@@ -66,6 +66,7 @@ interface PublicVOCFormProps {
   onGallery?: () => void;
   onCourseDetails?: (courseId: string) => void;
   onVOC?: () => void;
+  onViewCourses?: () => void;
 }
 
 const yearOptions = Array.from({ length: 11 }, (_, i) => {
@@ -73,7 +74,7 @@ const yearOptions = Array.from({ length: 11 }, (_, i) => {
   return (y + i).toString().padStart(2, '0');
 });
 
-export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, onForms, onFeesRefund, onGallery, onCourseDetails, onVOC }: PublicVOCFormProps) {
+export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, onForms, onFeesRefund, onGallery, onCourseDetails, onVOC, onViewCourses }: PublicVOCFormProps) {
   const [currentStep, setCurrentStep] = useState<Step>('details');
   const [loading, setLoading] = useState(false);
 
@@ -329,6 +330,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
       onGallery={onGallery}
       onCourseDetails={onCourseDetails}
       onVOC={onVOC}
+      onViewCourses={onViewCourses}
     >
       <div className="py-12 px-4 max-w-4xl mx-auto">
         {/* Progress Header */}

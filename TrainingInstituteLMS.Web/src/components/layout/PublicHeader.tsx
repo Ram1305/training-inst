@@ -10,6 +10,8 @@ import {
   Award,
   Users,
   CheckCircle,
+  Building,
+  ChevronUp,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { motion, AnimatePresence } from "motion/react";
@@ -30,6 +32,7 @@ interface PublicHeaderProps {
   onFeesRefund?: () => void;
   onGallery?: () => void;
   onVOC?: () => void;
+  onViewCourses?: () => void;
 }
 
 export function PublicHeader({
@@ -44,6 +47,7 @@ export function PublicHeader({
   onFeesRefund,
   onGallery,
   onVOC,
+  onViewCourses,
 }: PublicHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
@@ -106,30 +110,56 @@ export function PublicHeader({
             <img
               src={logoImage}
               alt="Safety Training Academy"
-              className="h-10 md:h-12"
+              className="h-14 md:h-16"
             />
           </motion.div>
 
-          {/* Info Badges */}
+          {/* Info Badges - Gen Z Style */}
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
-            <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-center w-8 h-8 bg-cyan-100 rounded-lg">
-                <Award className="w-4 h-4 text-cyan-600" />
+            <motion.div
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+            >
+              <div className="flex items-center justify-center w-10 h-10 bg-cyan-100 rounded-lg flex-shrink-0">
+                <Award className="w-5 h-5 text-cyan-600" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[8px] text-gray-500 font-bold uppercase">RTO</span>
-                <span className="text-xs font-bold text-slate-800">#45234</span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">RTO</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight whitespace-nowrap">#45234</span>
               </div>
-            </div>
-            <div className="flex items-center gap-4 bg-white px-4 py-2 rounded-xl border border-gray-200 shadow-sm">
-              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg">
-                <Users className="w-4 h-4 text-blue-600" />
+            </motion.div>
+
+            <motion.div
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+            >
+              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg flex-shrink-0">
+                <Users className="w-5 h-5 text-blue-600" />
               </div>
-              <div className="flex flex-col">
-                <span className="text-[8px] text-gray-500 font-bold uppercase">FACE TO FACE</span>
-                <span className="text-xs font-bold text-slate-800">Training</span>
+              <div className="flex flex-col items-start justify-center">
+                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight whitespace-nowrap">FACE TO FACE</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight">Training</span>
               </div>
-            </div>
+            </motion.div>
+
+            <motion.div
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+            >
+              <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-indigo-600" />
+              </div>
+              <div className="flex flex-col items-start justify-center">
+                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">QUALIFIED</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight">Trainers</span>
+              </div>
+            </motion.div>
           </div>
         </div>
       </div>
@@ -138,81 +168,148 @@ export function PublicHeader({
       <nav className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-b border-slate-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            {/* Left Nav Links */}
+            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center gap-6">
-              <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">HOME</button>
-
+              <button
+                onClick={onBack}
+                className="text-white hover:text-cyan-400 transition-colors text-sm font-medium"
+              >
+                HOME
+              </button>
               {/* Courses Dropdown */}
               <div
                 className="relative"
-                onMouseEnter={() => setCoursesDropdownOpen(true)}
+                onMouseEnter={() => {
+                  setCoursesDropdownOpen(true);
+                  const categoriesWithCourses = categories.filter(cat =>
+                    courses.some(course => course.categoryId === cat.categoryId)
+                  );
+                  if (categoriesWithCourses.length > 0 && !activeCategory) {
+                    setActiveCategory(categoriesWithCourses[0].categoryId);
+                  }
+                }}
                 onMouseLeave={() => {
-                  setCoursesDropdownOpen(false);
                   setActiveCategory(null);
+                  setCoursesDropdownOpen(false);
                 }}
               >
-                <button className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-xs font-bold uppercase">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onViewCourses) {
+                      onViewCourses();
+                    } else {
+                      onBack?.();
+                    }
+                  }}
+                  className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-sm font-medium cursor-pointer"
+                >
                   COURSES
-                  <ChevronDown className={`w-3 h-3 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown className={`w-4 h-4 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
-                <AnimatePresence>
-                  {coursesDropdownOpen && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 10 }}
-                      className="absolute left-0 top-full pt-2 z-50 min-w-[600px]"
-                    >
-                      <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden bg-slate-950">
-                        <div className="w-1/2 border-r border-slate-800 p-2">
-                          {categories.map((category) => (
+                {coursesDropdownOpen && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: 10 }}
+                    className="absolute left-0 top-full pt-2 z-50"
+                  >
+                    <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
+                      <div className="dropdown-category-panel">
+                        {categories
+                          .filter(category => courses.some(course => course.categoryId === category.categoryId))
+                          .map((category) => (
                             <button
                               key={category.categoryId}
                               onMouseEnter={() => setActiveCategory(category.categoryId)}
-                              className={`w-full flex items-center justify-between p-3 rounded-lg text-sm font-medium transition-colors ${activeCategory === category.categoryId ? 'bg-cyan-500/10 text-cyan-400' : 'text-slate-300 hover:bg-slate-900'}`}
+                              className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
                             >
-                              {category.categoryName}
-                              <ChevronRight className="w-4 h-4" />
+                              <span>{category.categoryName}</span>
+                              <ChevronRight className="w-4 h-4 flex-shrink-0" />
                             </button>
                           ))}
-                        </div>
-                        <div className="w-1/2 p-2 bg-slate-900/50">
-                          {activeCategory && courses.filter(c => c.categoryId === activeCategory).map((course) => (
-                            <button
-                              key={course.courseId}
-                              onClick={() => {
-                                onCourseDetails?.(course.courseId);
-                                setCoursesDropdownOpen(false);
-                              }}
-                              className="w-full text-left p-3 rounded-lg text-sm text-slate-300 hover:text-white hover:bg-slate-800 transition-colors"
-                            >
-                              {course.courseName}
-                            </button>
-                          ))}
-                        </div>
                       </div>
-                    </motion.div>
-                  )}
-                </AnimatePresence>
+                      <div className="dropdown-courses-panel">
+                        {activeCategory && (
+                          <div>
+                            {courses
+                              .filter(course => course.categoryId === activeCategory)
+                              .map((course) => (
+                                <button
+                                  key={course.courseId}
+                                  onClick={() => {
+                                    onCourseDetails?.(course.courseId);
+                                    setCoursesDropdownOpen(false);
+                                  }}
+                                  className="dropdown-course-item"
+                                >
+                                  {course.courseName}
+                                </button>
+                              ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
               </div>
 
               <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
 
-              <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">ABOUT</button>
-              <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">CONTACT</button>
-              <button onClick={onVOC} className="text-cyan-400 border-2 border-cyan-400/50 rounded-lg px-4 py-1 text-xs font-bold hover:bg-cyan-400 hover:text-slate-900 transition-all">VOC</button>
-            </div>
-
-            {/* Right Action Buttons */}
-            <div className="hidden md:flex items-center gap-3">
-              <Button onClick={onBookNow} className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6 h-9 text-xs font-bold uppercase tracking-wider shadow-lg shadow-cyan-500/20">
-                Book Now
+              <button
+                onClick={onAbout}
+                className="text-white hover:text-cyan-400 transition-colors text-sm font-medium"
+              >
+                ABOUT
+              </button>
+              <button
+                onClick={onContact}
+                className="text-white hover:text-cyan-400 transition-colors text-sm font-medium"
+              >
+                CONTACT
+              </button>
+              <div className="relative">
+                <button
+                  onClick={onBack}
+                  className="text-white hover:text-cyan-400 transition-colors text-sm font-bold px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/50 animate-pulse"
+                >
+                  COMBO COURSES
+                </button>
+              </div>
+              <Button
+                onClick={onBookNow}
+                className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6"
+              >
+                Book now
               </Button>
-
-              <Button onClick={onLogin} className="bg-white hover:bg-cyan-400 text-slate-900 hover:text-white rounded-full px-6 h-9 text-xs font-bold uppercase border border-white transition-all">
+              <Button
+                variant="outline"
+                onClick={onVOC}
+                className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
+              >
+                VOC
+              </Button>
+              <Button
+                onClick={onLogin}
+                variant="outline"
+                className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 rounded-full px-6 font-semibold"
+              >
                 Login / Register
               </Button>
+
+              {/* Contact Number - Desktop Inline */}
+              <div className="flex items-center ml-6">
+                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
+                  <Phone className="w-4 h-4 text-cyan-400" />
+                  <a
+                    href="tel:1300976097"
+                    className="text-white phone-number-link hover:text-cyan-400 transition-colors"
+                  >
+                    1300 976 097
+                  </a>
+                </div>
+              </div>
             </div>
 
             {/* Mobile Menu */}
@@ -231,11 +328,24 @@ export function PublicHeader({
               >
                 <div className="flex flex-col mt-4 space-y-2">
                   <button onClick={onBack} className="text-white text-left p-2 hover:bg-slate-800 rounded">HOME</button>
+                  <button onClick={onViewCourses || onBack} className="text-white text-left p-2 hover:bg-slate-800 rounded">COURSES</button>
+                  <button onClick={onForms} className="text-white text-left p-2 hover:bg-slate-800 rounded">FORMS</button>
+                  <button onClick={onFeesRefund} className="text-white text-left p-2 hover:bg-slate-800 rounded">FEES & REFUND</button>
+                  <button onClick={onGallery} className="text-white text-left p-2 hover:bg-slate-800 rounded">GALLERY</button>
                   <button onClick={onAbout} className="text-white text-left p-2 hover:bg-slate-800 rounded">ABOUT</button>
                   <button onClick={onContact} className="text-white text-left p-2 hover:bg-slate-800 rounded">CONTACT</button>
-                  <button onClick={onVOC} className="text-cyan-400 text-left p-2 hover:bg-slate-800 rounded">VOC</button>
-                  <Button onClick={onBookNow} className="w-full bg-cyan-500">Book Now</Button>
-                  <Button onClick={onLogin} variant="outline" className="w-full border-white text-white">Login / Register</Button>
+                  <Button onClick={onBookNow || onLogin} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
+                    Book now
+                  </Button>
+                  <Button variant="outline" onClick={onVOC} className="w-full border-2 border-cyan-400 text-cyan-400">
+                    VOC
+                  </Button>
+                  <Button
+                    onClick={onLogin}
+                    className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 font-semibold"
+                  >
+                    Login / Register
+                  </Button>
                 </div>
               </motion.div>
             )}

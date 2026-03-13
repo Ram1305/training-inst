@@ -13,6 +13,7 @@ import { WhatsAppButton } from './ui/WhatsAppButton';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 import buildingImage from '/assets/Safety-Training-Academy-Office-in-Sydney.jpg';
 import classroomImage from '/assets/Safety-Training-Academy-Class-in-Sydney.jpg';
+import { PublicHeader } from './layout/PublicHeader';
 import { ResourcesDropdown } from './ui/ResourcesDropdown';
 
 interface AboutUsPageProps {
@@ -26,12 +27,10 @@ interface AboutUsPageProps {
   onForms?: () => void;
   onFeesRefund?: () => void;
   onGallery?: () => void;
+  onVOC?: () => void;
 }
 
-export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery }: AboutUsPageProps) {
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery, onVOC }: AboutUsPageProps) {
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
 
@@ -201,177 +200,19 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
         </div>
       </div>
 
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-b border-slate-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6">
-              <a href="#" onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                HOME
-              </a>
-              {/* Courses Dropdown */}
-              <div
-                className="relative"
-                onMouseEnter={() => {
-                  setCoursesDropdownOpen(true);
-                  const categoriesWithCourses = categories.filter(cat =>
-                    allCourses.some(course => course.categoryId === cat.categoryId)
-                  );
-                  if (categoriesWithCourses.length > 0 && !activeCategory) {
-                    setActiveCategory(categoriesWithCourses[0].categoryId);
-                  }
-                }}
-                onMouseLeave={() => {
-                  setCoursesDropdownOpen(false);
-                  setActiveCategory(null);
-                }}
-              >
-                <a
-                  href="#courses"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    onBack();
-                  }}
-                  className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-sm font-medium cursor-pointer"
-                >
-                  COURSES
-                  <ChevronDown className={`w-4 h-4 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
-                </a>
-
-                {coursesDropdownOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 10 }}
-                    className="absolute left-0 top-full pt-2 z-50"
-                  >
-                    <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
-                      <div className="dropdown-category-panel">
-                        {categories
-                          .filter(category => allCourses.some(course => course.categoryId === category.categoryId))
-                          .map((category) => (
-                            <button
-                              key={category.categoryId}
-                              onMouseEnter={() => setActiveCategory(category.categoryId)}
-                              className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
-                            >
-                              <span>{category.categoryName}</span>
-                              <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                            </button>
-                          ))}
-                      </div>
-                      <div className="dropdown-courses-panel">
-                        {activeCategory && (
-                          <div>
-                            {allCourses
-                              .filter(course => course.categoryId === activeCategory)
-                              .map((course) => (
-                                <button
-                                  key={course.courseId}
-                                  onClick={() => {
-                                    if (onCourseDetails) {
-                                      onCourseDetails(course.courseId);
-                                    }
-                                    setCoursesDropdownOpen(false);
-                                  }}
-                                  className="dropdown-course-item"
-                                >
-                                  {course.courseName}
-                                </button>
-                              ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </motion.div>
-                )}
-              </div>
-              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
-              <a href="#" className="text-cyan-400 border-b-2 border-cyan-400 transition-colors text-sm font-bold">
-                ABOUT
-              </a>
-              <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                CONTACT
-              </button>
-              <div className="relative">
-                <button
-                  onClick={onBack}
-                  className="text-white hover:text-cyan-400 transition-colors text-sm font-bold px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/50 animate-pulse"
-                >
-                  COMBO COURSES
-                </button>
-              </div>
-              <Button
-                onClick={onBookNow}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6"
-              >
-                Book now
-              </Button>
-              <Button
-                variant="outline"
-                className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
-              >
-                VOC
-              </Button>
-              <Button
-                onClick={onRegister}
-                variant="outline"
-                className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 rounded-full px-6 font-semibold"
-              >
-                Login / Register
-              </Button>
-
-              {/* Contact Number - Desktop Inline */}
-              <div className="flex items-center ml-6">
-                <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <Phone className="w-4 h-4 text-cyan-400" />
-                  <a
-                    href="tel:1300976097"
-                    className="text-white phone-number-link hover:text-cyan-400 transition-colors"
-                  >
-                    1300 976 097
-                  </a>
-                </div>
-              </div>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg text-white hover:bg-slate-700 transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <motion.div
-              className="md:hidden py-6 border-t border-slate-700"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex flex-col gap-4">
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">HOME</button>
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">COURSES</button>
-                <a href="#about" className="text-cyan-400 font-bold px-4 py-2">ABOUT</a>
-                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">CONTACT</button>
-                <button onClick={onBack} className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center">COMBO COURSES</button>
-                <Button onClick={onBookNow} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">Book now</Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
-                <Button
-                  onClick={onRegister}
-                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
-                >
-                  Login / Register
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </nav>
+      <PublicHeader
+        onBack={onBack}
+        onLogin={onLogin}
+        onRegister={onRegister}
+        onAbout={() => {}}
+        onContact={onContact}
+        onCourseDetails={onCourseDetails}
+        onBookNow={onBookNow}
+        onForms={onForms}
+        onFeesRefund={onFeesRefund}
+        onGallery={onGallery}
+        onVOC={onVOC}
+      />
 
       {/* Hero Section */}
       <section className="relative py-20 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-800 overflow-hidden">

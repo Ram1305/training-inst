@@ -16,6 +16,7 @@ interface PublicLayoutProps {
   onGallery?: () => void;
   onCourseDetails?: (courseId: string) => void;
   onVOC?: () => void;
+  onViewCourses?: () => void;
 }
 
 export function PublicLayout({
@@ -31,6 +32,7 @@ export function PublicLayout({
   onGallery,
   onCourseDetails,
   onVOC,
+  onViewCourses,
 }: PublicLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
@@ -46,6 +48,7 @@ export function PublicLayout({
         onGallery={onGallery}
         onCourseDetails={onCourseDetails}
         onVOC={onVOC}
+        onViewCourses={onViewCourses}
       />
       <main className="flex-grow">
         {children}

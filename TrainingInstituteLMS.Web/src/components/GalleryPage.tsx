@@ -4,6 +4,7 @@ import { Button } from './ui/button';
 import { motion } from 'motion/react';
 import { galleryService, getFullImageUrl, type GalleryImage } from '../services/gallery.service';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import { PublicHeader } from './layout/PublicHeader';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 
 interface GalleryPageProps {
@@ -16,6 +17,8 @@ interface GalleryPageProps {
   onCourseDetails?: (courseId: string) => void;
   onForms?: () => void;
   onFeesRefund?: () => void;
+  onVOC?: () => void;
+  onViewCourses?: () => void;
 }
 
 export function GalleryPage({
@@ -27,6 +30,8 @@ export function GalleryPage({
   onBookNow,
   onForms,
   onFeesRefund,
+  onVOC,
+  onViewCourses,
 }: GalleryPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -50,128 +55,19 @@ export function GalleryPage({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Bar with Contact Info */}
-      <div className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
-          <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4" />
-            1300 976 097
-          </span>
-          <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4" />
-            info@safetytrainingacademy.edu.au
-          </span>
-          <span className="flex items-center gap-2 font-medium">
-            <MapPin className="w-4 h-4" />
-            3/14-16 Marjorie Street, Sefton NSW 2162
-          </span>
-        </div>
-      </div>
-
-      {/* Logo and Header */}
-      <div className="bg-white border-b border-gray-200 shadow-sm py-4 px-4">
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <motion.div
-            className="flex items-center cursor-pointer"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            onClick={onBack}
-          >
-            <img
-              src={logoImage}
-              alt="Safety Training Academy"
-              className="h-14 md:h-16"
-            />
-          </motion.div>
-
-          <div className="hidden md:flex items-center gap-6">
-            <button onClick={onBack} className="text-gray-600 hover:text-violet-600 font-medium transition-colors">
-              Home
-            </button>
-            {onForms && (
-              <button onClick={onForms} className="text-gray-600 hover:text-violet-600 font-medium transition-colors">
-                Forms
-              </button>
-            )}
-            {onFeesRefund && (
-              <button onClick={onFeesRefund} className="text-gray-600 hover:text-violet-600 font-medium transition-colors">
-                Fees & Refund
-              </button>
-            )}
-            {onAbout && (
-              <button onClick={onAbout} className="text-gray-600 hover:text-violet-600 font-medium transition-colors">
-                About
-              </button>
-            )}
-            {onContact && (
-              <button onClick={onContact} className="text-gray-600 hover:text-violet-600 font-medium transition-colors">
-                Contact
-              </button>
-            )}
-            {onBookNow && (
-              <Button
-                onClick={onBookNow}
-                className="bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
-              >
-                Book Now
-              </Button>
-            )}
-            <Button variant="outline" onClick={onLogin}>
-              Login
-            </Button>
-          </div>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </Button>
-        </div>
-
-        {mobileMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="md:hidden mt-4 pb-4 border-t border-gray-100 pt-4 flex flex-col gap-2"
-          >
-            <button onClick={onBack} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
-              Home
-            </button>
-            {onForms && (
-              <button onClick={onForms} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
-                Forms
-              </button>
-            )}
-            {onFeesRefund && (
-              <button onClick={onFeesRefund} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
-                Fees & Refund
-              </button>
-            )}
-            {onAbout && (
-              <button onClick={onAbout} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
-                About
-              </button>
-            )}
-            {onContact && (
-              <button onClick={onContact} className="text-left py-2 text-gray-600 hover:text-violet-600 font-medium">
-                Contact
-              </button>
-            )}
-            {onBookNow && (
-              <Button onClick={onBookNow} className="w-full bg-gradient-to-r from-violet-600 to-fuchsia-600">
-                Book Now
-              </Button>
-            )}
-            <Button variant="outline" onClick={onLogin} className="w-full">
-              Login
-            </Button>
-          </motion.div>
-        )}
-      </div>
+      <PublicHeader
+        onBack={onBack}
+        onLogin={onLogin}
+        onRegister={onRegister}
+        onAbout={onAbout}
+        onContact={onContact}
+        onBookNow={onBookNow}
+        onForms={onForms}
+        onFeesRefund={onFeesRefund}
+        onGallery={undefined}
+        onVOC={onVOC}
+        onViewCourses={onViewCourses}
+      />
 
  {/* Hero Section - Blue Theme */}
 <div className="relative py-20 px-4 sm:py-24 lg:py-28 overflow-hidden">

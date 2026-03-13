@@ -63,6 +63,7 @@ interface LandingPageProps {
   onGallery?: () => void;
   onBookCourse?: (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => void;
   onVOC?: () => void;
+  onViewCourses?: () => void;
 }
 
 // Debounce hook
@@ -89,7 +90,7 @@ const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
 ];
 
-export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC }: LandingPageProps) {
+export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC, onViewCourses }: LandingPageProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -395,6 +396,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               >
                 <a
                   href="#courses"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (onViewCourses) onViewCourses();
+                  }}
                   className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-sm font-medium cursor-pointer"
                 >
                   COURSES
@@ -530,7 +535,15 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <a href="#home" className="text-white hover:text-cyan-400 transition-colors px-4 py-2">
                   HOME
                 </a>
-                <a href="#courses" className="text-white hover:text-cyan-400 transition-colors px-4 py-2">
+                <a 
+                  href="#courses" 
+                  onClick={(e) => {
+                    e.preventDefault();
+                    setMobileMenuOpen(false);
+                    if (onViewCourses) onViewCourses();
+                  }}
+                  className="text-white hover:text-cyan-400 transition-colors px-4 py-2"
+                >
                   COURSES
                 </a>
                 <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 w-full text-left">

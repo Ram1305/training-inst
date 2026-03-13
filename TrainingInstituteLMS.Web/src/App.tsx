@@ -534,6 +534,7 @@ export default function App() {
         onGallery={handleGoToGallery}
         onBookCourse={handleBookCourse}
         onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }
@@ -550,6 +551,8 @@ export default function App() {
         onCourseDetails={handleCourseDetails}
         onFeesRefund={handleGoToFeesRefund}
         onGallery={handleGoToGallery}
+        onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }
@@ -565,6 +568,8 @@ export default function App() {
         onBookNow={handleGoToBookNow}
         onCourseDetails={handleCourseDetails}
         onGallery={handleGoToGallery}
+        onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }
@@ -580,6 +585,8 @@ export default function App() {
         onBookNow={handleGoToBookNow}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }
@@ -630,6 +637,7 @@ export default function App() {
         onGallery={handleGoToGallery}
         onCourseDetails={handleCourseDetails}
         onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }
@@ -646,6 +654,8 @@ export default function App() {
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
         onGallery={handleGoToGallery}
+        onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }
@@ -663,6 +673,7 @@ export default function App() {
         onGallery={handleGoToGallery}
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
+        onVOC={handleGoToVOCForm}
       />
     );
   }
@@ -680,6 +691,7 @@ export default function App() {
         onForms={handleGoToForms}
         onFeesRefund={handleGoToFeesRefund}
         onGallery={handleGoToGallery}
+        onVOC={handleGoToVOCForm}
       />
     );
   }
@@ -718,6 +730,7 @@ export default function App() {
         onGallery={handleGoToGallery}
         onViewHandbook={handleViewHandbook}
         onCourseUrlReady={handleCourseUrlReady}
+        onVOC={handleGoToVOCForm}
       />
     );
   }
@@ -740,6 +753,8 @@ export default function App() {
         onGallery={handleGoToGallery}
         onLogin={handleGoToLogin}
         onRegister={handleGoToLogin}
+        onVOC={handleGoToVOCForm}
+        onViewCourses={handleViewCourses}
       />
     );
   }

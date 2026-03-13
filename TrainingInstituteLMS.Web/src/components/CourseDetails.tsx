@@ -36,6 +36,7 @@ interface CourseDetailsPageProps {
   onForms?: () => void;
   onFeesRefund?: () => void;
   onGallery?: () => void;
+  onVOC?: () => void;
   onViewHandbook?: (url: string, title?: string, courseName?: string) => void;
   /** Called when course is loaded so the URL can be updated with the course name slug */
   onCourseUrlReady?: (courseId: string, courseName: string) => void;
@@ -107,6 +108,7 @@ export function CourseDetailsPage({
   onForms,
   onFeesRefund,
   onGallery,
+  onVOC,
   onViewHandbook,
   onCourseUrlReady
 }: CourseDetailsPageProps) {

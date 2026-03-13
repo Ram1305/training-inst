@@ -26,6 +26,7 @@ import {
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { ResourcesDropdown } from "./ui/ResourcesDropdown";
+import { PublicHeader } from "./layout/PublicHeader";
 import { PaymentSuccessCard } from "./PaymentSuccessCard";
 import { PaymentFailureCard } from "./PaymentFailureCard";
 import { courseDateService } from "../services/courseDate.service";
@@ -50,6 +51,8 @@ interface CourseBookingProps {
   onGallery?: () => void;
   onLogin?: () => void;
   onRegister?: () => void;
+  onVOC?: () => void;
+  onViewCourses?: () => void;
 }
 
 type PaymentMethod = "bank" | "card";
@@ -70,6 +73,8 @@ export function CourseBooking({
   onBookNow,
   onLogin,
   onRegister,
+  onVOC,
+  onViewCourses,
 }: CourseBookingProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank");
@@ -394,198 +399,19 @@ export function CourseBooking({
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2.5 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
-          <span className="flex items-center gap-2 font-medium">
-            <Phone className="w-4 h-4" />
-            1300 976 097
-          </span>
-          <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4" />
-            info@safetytrainingacademy.edu.au
-          </span>
-          <span className="flex items-center gap-2 font-medium">
-            <MapPin className="w-4 h-4" />
-            3/14-16 Marjorie Street, Sefton NSW 2162
-          </span>
-        </div>
-      </div>
-
-      {/* Logo and Info Section - White Background */}
-      <div className="bg-white border-b border-gray-200 py-4 px-4">
-        <div className="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-6">
-          {/* Logo */}
-          <motion.div
-            className="flex items-center cursor-pointer"
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.5 }}
-            onClick={onBack}
-          >
-            <img
-              src={logoImage}
-              alt="Safety Training Academy"
-              className="h-14 md:h-16"
-            />
-          </motion.div>
-
-          {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
-            <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              <div className="flex items-center justify-center w-10 h-10 bg-cyan-100 rounded-lg flex-shrink-0">
-                <Award className="w-5 h-5 text-cyan-600" />
-              </div>
-              <div className="flex flex-col items-start justify-center">
-                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">RTO</span>
-                <span className="text-sm font-bold text-slate-800 leading-tight whitespace-nowrap">#45234</span>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-            >
-              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg flex-shrink-0">
-                <Users className="w-5 h-5 text-blue-600" />
-              </div>
-              <div className="flex flex-col items-start justify-center">
-                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight whitespace-nowrap">FACE TO FACE</span>
-                <span className="text-sm font-bold text-slate-800 leading-tight">Training</span>
-              </div>
-            </motion.div>
-
-            <motion.div 
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.3 }}
-            >
-              <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-indigo-600" />
-              </div>
-              <div className="flex flex-col items-start justify-center">
-                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">QUALIFIED</span>
-                <span className="text-sm font-bold text-slate-800 leading-tight">Trainers</span>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </div>
-
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-b border-slate-700 shadow-lg">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center gap-6">
-              <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                HOME
-              </button>
-              <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                COURSES
-              </button>
-              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
-              <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                ABOUT
-              </button>
-              <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
-                CONTACT
-              </button>
-              <div className="relative">
-                <button
-                  onClick={onBack}
-                  className="text-white hover:text-cyan-400 transition-colors text-sm font-bold px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/50 animate-pulse"
-                >
-                  COMBO COURSES
-                </button>
-              </div>
-              <Button
-                onClick={onBookNow}
-                className="bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 rounded-full px-6 hover:bg-cyan-400/20 transition-colors"
-              >
-                Book now
-              </Button>
-              <Button
-                variant="outline"
-                className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
-              >
-                VOC
-              </Button>
-              <Button
-                onClick={onLogin ?? onRegister}
-                variant="outline"
-                className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 rounded-full px-6 font-semibold"
-              >
-                Login / Register
-              </Button>
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button
-              className="md:hidden p-2 rounded-lg text-white hover:bg-slate-700 transition-colors"
-              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            >
-              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
-          </div>
-
-          {/* Mobile Navigation */}
-          {mobileMenuOpen && (
-            <motion.div
-              className="md:hidden py-6 border-t border-slate-700"
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-            >
-              <div className="flex flex-col gap-4">
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  HOME
-                </button>
-                <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  COURSES
-                </button>
-                <button onClick={() => { setMobileMenuOpen(false); onForms?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  FORMS
-                </button>
-                <button onClick={() => { setMobileMenuOpen(false); onFeesRefund?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  FEES & REFUND
-                </button>
-                <button onClick={() => { setMobileMenuOpen(false); onGallery?.(); }} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  GALLERY
-                </button>
-                <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  ABOUT
-                </button>
-                <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors px-4 py-2 text-left">
-                  CONTACT
-                </button>
-                <button
-                  onClick={onBack}
-                  className="text-white font-bold px-4 py-2 bg-gradient-to-r from-cyan-500 to-blue-600 rounded-full text-center"
-                >
-                  COMBO COURSES
-                </button>
-                <Button onClick={onBookNow} className="w-full bg-cyan-500/20 text-cyan-400 border-2 border-cyan-400 hover:bg-cyan-400/20 transition-colors">Book now</Button>
-                <Button variant="outline" className="w-full border-2 border-cyan-400 text-cyan-400">VOC</Button>
-                <Button
-                  onClick={onLogin ?? onRegister}
-                  className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900"
-                >
-                  Login / Register
-                </Button>
-              </div>
-            </motion.div>
-          )}
-        </div>
-      </nav>
+      <PublicHeader
+        onBack={onBack}
+        onLogin={onLogin}
+        onRegister={onRegister}
+        onAbout={onAbout}
+        onContact={onContact}
+        onBookNow={onBookNow}
+        onForms={onForms}
+        onFeesRefund={onFeesRefund}
+        onGallery={onGallery}
+        onVOC={onVOC}
+        onViewCourses={onViewCourses}
+      />
 
       {/* Hero Section with Search */}
       <div className="relative bg-gradient-to-r from-cyan-500 to-blue-600 py-16 px-4">
@@ -969,7 +795,7 @@ export function CourseBooking({
                       </div>
                       <div className="flex">
                         <span className="font-semibold text-gray-700 w-44">Account Name:</span>
-                        <span className="text-gray-900 ml-2">aietcollege</span>
+                        <span className="text-gray-900 ml-2">AIET College</span>
                       </div>
                       <div className="flex">
                         <span className="font-semibold text-gray-700 w-44">Account Number:</span>
@@ -977,7 +803,7 @@ export function CourseBooking({
                       </div>
                       <div className="flex">
                         <span className="font-semibold text-gray-700 w-44">Bank BSB:</span>
-                        <span className="text-gray-900 font-mono ml-2">062141</span>
+                        <span className="text-gray-900 font-mono ml-2">062 141</span>
                       </div>
                     </div>
                   </div>
