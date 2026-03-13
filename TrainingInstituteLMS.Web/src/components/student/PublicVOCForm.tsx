@@ -22,6 +22,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { Button } from "../ui/button";
+import { Badge } from "../ui/badge";
 import { Input } from "../ui/input";
 import { Label } from "../ui/label";
 import {
@@ -581,30 +582,36 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                   {/* Method Tabs */}
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button
+                      type="button"
                       onClick={() => setPaymentMethod('CreditCard')}
-                      className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-50 ring-4 ring-cyan-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+                      className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden group ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-50 ring-4 ring-cyan-500/20' : 'border-slate-200 hover:border-cyan-200 bg-white'}`}
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <CreditCard className={`w-8 h-8 ${paymentMethod === 'CreditCard' ? 'text-cyan-500' : 'text-slate-400'}`} />
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-500' : 'border-slate-300'}`}>
-                          {paymentMethod === 'CreditCard' && <div className="w-2 h-2 rounded-full bg-white" />}
+                      <div className="flex justify-between items-start mb-4 pointer-events-none">
+                        <CreditCard className={`w-8 h-8 transition-colors ${paymentMethod === 'CreditCard' ? 'text-cyan-500' : 'text-slate-400 group-hover:text-cyan-400'}`} />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.4)]' : 'border-slate-300'}`}>
+                          {paymentMethod === 'CreditCard' && <Check className="w-3 h-3 text-white" />}
                         </div>
                       </div>
-                      <p className="font-bold text-slate-800">Credit / Debit Card</p>
-                      <p className="text-xs text-slate-500 mt-1">Secure card payment</p>
+                      <div className="pointer-events-none">
+                        <p className={`font-bold transition-colors ${paymentMethod === 'CreditCard' ? 'text-slate-900' : 'text-slate-600'}`}>Credit / Debit Card</p>
+                        <p className="text-xs text-slate-500 mt-1">Pay securely with card</p>
+                      </div>
                     </button>
                     <button
+                      type="button"
                       onClick={() => setPaymentMethod('BankTransfer')}
-                      className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
+                      className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden group ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-500/20' : 'border-slate-200 hover:border-indigo-200 bg-white'}`}
                     >
-                      <div className="flex justify-between items-start mb-4">
-                        <Building className={`w-8 h-8 ${paymentMethod === 'BankTransfer' ? 'text-indigo-500' : 'text-slate-400'}`} />
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'}`}>
-                          {paymentMethod === 'BankTransfer' && <div className="w-2 h-2 rounded-full bg-white" />}
+                      <div className="flex justify-between items-start mb-4 pointer-events-none">
+                        <Building className={`w-8 h-8 transition-colors ${paymentMethod === 'BankTransfer' ? 'text-indigo-500' : 'text-slate-400 group-hover:text-indigo-400'}`} />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.4)]' : 'border-slate-300'}`}>
+                          {paymentMethod === 'BankTransfer' && <Check className="w-3 h-3 text-white" />}
                         </div>
                       </div>
-                      <p className="font-bold text-slate-800">Bank Transfer</p>
-                      <p className="text-xs text-slate-500 mt-1">Upload proof of payment</p>
+                      <div className="pointer-events-none">
+                        <p className={`font-bold transition-colors ${paymentMethod === 'BankTransfer' ? 'text-slate-900' : 'text-slate-600'}`}>Bank Transfer</p>
+                        <p className="text-xs text-slate-500 mt-1">Upload proof of payment</p>
+                      </div>
                     </button>
                   </div>
 
@@ -722,7 +729,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                           </div>
                           <div className="flex justify-between border-b pb-2">
                             <span className="text-slate-500 text-xs">BSB:</span>
-                            <span className="text-slate-800 font-bold">062141</span>
+                            <span className="text-slate-800 font-extrabold">062 141</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-slate-500 text-xs">Account Number:</span>
@@ -787,7 +794,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                           {bankFileError && <p className="text-red-500 text-xs">{bankFileError}</p>}
                         </div>
 
-                        <p className="text-[10px] text-indigo-500 italic">* Your submission will be processed once we confirm receipt of funds (usually 1–2 business days).</p>
+                        <p className="text-[10px] text-indigo-500 italic">* Your submission will be processed once we confirm receipt of funds.</p>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -795,9 +802,14 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                   {/* Pay Bar */}
                   <div className="bg-slate-900 -mx-8 px-8 py-6 flex justify-between items-center text-white">
                     <div>
-                      <p className="text-slate-400 text-xs font-bold uppercase">Total Payable</p>
-                      <p className="text-3xl font-black text-cyan-400">${totalPrice}.00</p>
-                      <p className="text-slate-500 text-xs">{selectedCourses.length} course{selectedCourses.length !== 1 ? 's' : ''} × $150</p>
+                      <div className="flex items-center gap-2 mb-1">
+                        <p className="text-slate-400 text-[10px] font-bold uppercase tracking-wider">Total Payable</p>
+                        <Badge className={`text-[9px] px-1.5 py-0 h-4 ${paymentMethod === 'CreditCard' ? 'bg-cyan-500' : 'bg-indigo-500'}`}>
+                          {paymentMethod === 'CreditCard' ? 'CREDIT CARD' : 'BANK TRANSFER'}
+                        </Badge>
+                      </div>
+                      <p className="text-3xl font-black text-cyan-400 leading-none mb-1">${totalPrice}.00</p>
+                      <p className="text-slate-500 text-[10px] font-medium tracking-wide">{selectedCourses.length} COURSE{selectedCourses.length !== 1 ? 'S' : ''} × $150</p>
                     </div>
                     <div className="flex gap-4">
                       <Button variant="ghost" onClick={() => setCurrentStep('courses')} className="text-white hover:bg-slate-800 border border-slate-700 h-12 px-6 font-bold">
