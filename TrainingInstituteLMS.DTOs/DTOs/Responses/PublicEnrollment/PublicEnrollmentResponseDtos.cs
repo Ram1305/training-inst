@@ -160,4 +160,28 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string Email { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
     }
+
+    /// <summary>
+    /// A student who enrolled via a specific enrollment link.
+    /// </summary>
+    public class EnrollmentLinkStudentDto
+    {
+        public string StudentId { get; set; } = string.Empty;
+        public string FullName { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public string? Phone { get; set; }
+        public string? CourseName { get; set; }
+        public DateTime EnrolledAt { get; set; }
+    }
+
+    /// <summary>
+    /// Response for the admin endpoint that returns all students who joined via a specific link.
+    /// </summary>
+    public class EnrollmentLinkStudentsResponseDto
+    {
+        public string LinkId { get; set; } = string.Empty;
+        public string LinkName { get; set; } = string.Empty;
+        public List<EnrollmentLinkStudentDto> Students { get; set; } = new();
+    }
 }
+

@@ -36,5 +36,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         // One-time link: complete enrollment with name/email/phone/password only
         Task<OneTimeLinkCompleteResponseDto> CompleteEnrollmentViaLinkAsync(string code, OneTimeLinkCompleteRequestDto request);
+
+        // Admin: students who joined via a specific enrollment link
+        Task<EnrollmentLinkStudentsResponseDto?> GetStudentsByLinkIdAsync(Guid linkId);
     }
 }

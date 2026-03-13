@@ -8,6 +8,9 @@ import {
   BookOpen,
   Eye,
   ExternalLink,
+  Users,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -27,6 +30,10 @@ import {
   type AdminCompanyOrderListItem,
   type AdminCompanyOrderDetail,
 } from '../../services/adminCompanyOrders.service';
+import {
+  publicEnrollmentWizardService,
+  type EnrollmentLinkStudent,
+} from '../../services/publicEnrollmentWizard.service';
 
 export function AdminCompanyPayments() {
   const [orders, setOrders] = useState<AdminCompanyOrderListItem[]>([]);
@@ -38,6 +45,11 @@ export function AdminCompanyPayments() {
   const [detailOrderId, setDetailOrderId] = useState<string | null>(null);
   const [detailOrder, setDetailOrder] = useState<AdminCompanyOrderDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+
+  // Per-link expanded students
+  const [expandedLinkId, setExpandedLinkId] = useState<string | null>(null);
+  const [linkStudentsMap, setLinkStudentsMap] = useState<Record<string, EnrollmentLinkStudent[]>>({});
+  const [linkStudentsLoading, setLinkStudentsLoading] = useState<Record<string, boolean>>({});
 
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'N/A';
@@ -105,8 +117,31 @@ export function AdminCompanyPayments() {
     };
   }, [detailOrderId]);
 
-  const openDetails = (orderId: string) => setDetailOrderId(orderId);
+  const openDetails = (orderId: string) => {
+    setDetailOrderId(orderId);
+    setExpandedLinkId(null);
+    setLinkStudentsMap({});
+    setLinkStudentsLoading({});
+  };
   const closeDetails = () => setDetailOrderId(null);
+
+  const handleToggleLinkStudents = async (linkId: string) => {
+    if (expandedLinkId === linkId) {
+      setExpandedLinkId(null);
+      return;
+    }
+    setExpandedLinkId(linkId);
+    if (linkStudentsMap[linkId]) return; // already loaded
+    setLinkStudentsLoading(prev => ({ ...prev, [linkId]: true }));
+    try {
+      const res = await publicEnrollmentWizardService.getLinkStudents(linkId);
+      setLinkStudentsMap(prev => ({ ...prev, [linkId]: res.data?.students ?? [] }));
+    } catch {
+      setLinkStudentsMap(prev => ({ ...prev, [linkId]: [] }));
+    } finally {
+      setLinkStudentsLoading(prev => ({ ...prev, [linkId]: false }));
+    }
+  };
 
   const handleStatusChange = async (orderId: string, newStatus: string) => {
     setUpdatingStatusId(orderId);
@@ -361,24 +396,69 @@ export function AdminCompanyPayments() {
                     Courses purchased: {detailOrder.courseCount}
                   </span>
                 </div>
-                <ul className="space-y-1.5 pl-1">
+                <ul className="space-y-2 pl-1">
                   {detailOrder.links?.map((link) => (
-                    <li
-                      key={link.linkId}
-                      className="flex items-center gap-2 text-sm text-gray-700"
-                    >
-                      <span className="text-violet-600">•</span>
-                      <span>{link.courseName}</span>
-                      {link.fullUrl && (
-                        <a
-                          href={link.fullUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-violet-600 hover:underline flex items-center gap-0.5"
-                          title="Open link"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
+                    <li key={link.linkId} className="border rounded-lg overflow-hidden">
+                      <button
+                        className="w-full flex items-center gap-2 text-sm text-gray-700 px-3 py-2 hover:bg-gray-50 transition-colors"
+                        onClick={() => handleToggleLinkStudents(link.linkId)}
+                      >
+                        {expandedLinkId === link.linkId
+                          ? <ChevronDown className="w-4 h-4 text-violet-500 flex-shrink-0" />
+                          : <ChevronRight className="w-4 h-4 text-violet-500 flex-shrink-0" />}
+                        <span className="flex-1 text-left font-medium">{link.courseName}</span>
+                        <span className="text-xs text-gray-400 mr-1">{link.usedCount} joined</span>
+                        {link.fullUrl && (
+                          <a
+                            href={link.fullUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-violet-600 hover:underline flex items-center gap-0.5"
+                            title="Open link"
+                            onClick={e => e.stopPropagation()}
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </a>
+                        )}
+                      </button>
+                      {expandedLinkId === link.linkId && (
+                        <div className="border-t bg-gray-50 px-3 py-2">
+                          {linkStudentsLoading[link.linkId] ? (
+                            <div className="flex justify-center py-4">
+                              <Loader2 className="w-5 h-5 animate-spin text-violet-500" />
+                            </div>
+                          ) : (linkStudentsMap[link.linkId] ?? []).length === 0 ? (
+                            <div className="text-center py-3 text-gray-400 text-sm">
+                              <Users className="w-6 h-6 mx-auto mb-1 text-gray-300" />
+                              No students joined yet.
+                            </div>
+                          ) : (
+                            <table className="w-full text-xs">
+                              <thead>
+                                <tr className="text-gray-500 border-b">
+                                  <th className="text-left py-1 font-medium">#</th>
+                                  <th className="text-left py-1 font-medium">Name</th>
+                                  <th className="text-left py-1 font-medium">Email</th>
+                                  <th className="text-left py-1 font-medium">Phone</th>
+                                  <th className="text-left py-1 font-medium">Enrolled</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {(linkStudentsMap[link.linkId] ?? []).map((s: EnrollmentLinkStudent, i: number) => (
+                                  <tr key={s.studentId} className="border-b last:border-0">
+                                    <td className="py-1 text-gray-400">{i + 1}</td>
+                                    <td className="py-1 font-medium text-gray-800">{s.fullName}</td>
+                                    <td className="py-1 text-gray-600">{s.email}</td>
+                                    <td className="py-1 text-gray-600">{s.phone || '—'}</td>
+                                    <td className="py-1 text-gray-600">
+                                      {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          )}
+                        </div>
                       )}
                     </li>
                   ))}

@@ -121,6 +121,21 @@ export interface OneTimeLinkCompleteResponse {
   fullName: string;
 }
 
+export interface EnrollmentLinkStudent {
+  studentId: string;
+  fullName: string;
+  email: string;
+  phone?: string;
+  courseName?: string;
+  enrolledAt: string;
+}
+
+export interface EnrollmentLinkStudentsResponse {
+  linkId: string;
+  linkName: string;
+  students: EnrollmentLinkStudent[];
+}
+
 interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -228,5 +243,10 @@ export const publicEnrollmentWizardService = {
   // Admin: Regenerate QR code
   async regenerateQRCode(linkId: string): Promise<ApiResponse<{ qrCodeDataUrl: string }>> {
     return apiService.post<ApiResponse<{ qrCodeDataUrl: string }>>(`/PublicEnrollment/admin/links/${linkId}/regenerate-qr`, {});
+  },
+
+  // Admin: Get students who joined via a specific enrollment link
+  async getLinkStudents(linkId: string): Promise<ApiResponse<EnrollmentLinkStudentsResponse>> {
+    return apiService.get<ApiResponse<EnrollmentLinkStudentsResponse>>(`/PublicEnrollment/admin/links/${linkId}/students`);
   },
 };

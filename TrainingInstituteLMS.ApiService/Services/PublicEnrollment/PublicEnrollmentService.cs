@@ -842,7 +842,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 Status = "Pending",
                 PaymentStatus = paymentStatus,
                 EnrolledAt = DateTime.UtcNow,
-                EnrollmentType = link.CompanyOrderId.HasValue ? "Company" : "Individual"
+                EnrollmentType = link.CompanyOrderId.HasValue ? "Company" : "Individual",
+                EnrollmentLinkId = link.LinkId
             };
             await _context.Enrollments.AddAsync(enrollment);
             courseDate.CurrentEnrollments++;
@@ -889,6 +890,37 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 StudentId = student.StudentId.ToString(),
                 Email = user.Email,
                 FullName = user.FullName
+            };
+        }
+
+        public async Task<EnrollmentLinkStudentsResponseDto?> GetStudentsByLinkIdAsync(Guid linkId)
+        {
+            var link = await _context.EnrollmentLinks.AsNoTracking()
+                .FirstOrDefaultAsync(l => l.LinkId == linkId);
+            if (link == null) return null;
+
+            var students = await _context.Enrollments
+                .AsNoTracking()
+                .Where(e => e.EnrollmentLinkId == linkId)
+                .Include(e => e.Student)
+                .Include(e => e.Course)
+                .OrderBy(e => e.EnrolledAt)
+                .Select(e => new EnrollmentLinkStudentDto
+                {
+                    StudentId = e.StudentId.ToString(),
+                    FullName = e.Student.FullName,
+                    Email = e.Student.Email,
+                    Phone = e.Student.PhoneNumber,
+                    CourseName = e.Course.CourseName,
+                    EnrolledAt = e.EnrolledAt
+                })
+                .ToListAsync();
+
+            return new EnrollmentLinkStudentsResponseDto
+            {
+                LinkId = link.LinkId.ToString(),
+                LinkName = link.Name,
+                Students = students
             };
         }
 

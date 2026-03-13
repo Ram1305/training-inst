@@ -429,6 +429,25 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             }
         }
 
+        /// <summary>
+        /// Get students who enrolled via a specific link.
+        /// </summary>
+        [HttpGet("admin/links/{linkId}/students")]
+        public async Task<IActionResult> GetStudentsByLink(Guid linkId)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.GetStudentsByLinkIdAsync(linkId);
+                if (result == null)
+                    return NotFound(ApiResponse<object>.FailureResponse("Enrollment link not found"));
+                return Ok(ApiResponse<object>.SuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
         #endregion
     }
 }

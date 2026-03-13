@@ -32,7 +32,9 @@ import {
   publicEnrollmentWizardService,
   type EnrollmentLinkResponse,
   type EnrollmentLinkRequest,
-  type CourseDropdownItem
+  type CourseDropdownItem,
+  type EnrollmentLinkStudent,
+  type EnrollmentLinkStudentsResponse
 } from '../../services/publicEnrollmentWizard.service';
 
 export function AdminEnrollmentLinks() {
@@ -64,6 +66,11 @@ export function AdminEnrollmentLinks() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [linkToDelete, setLinkToDelete] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  // Students dialog
+  const [studentsDialogOpen, setStudentsDialogOpen] = useState(false);
+  const [studentsData, setStudentsData] = useState<EnrollmentLinkStudentsResponse | null>(null);
+  const [studentsLoading, setStudentsLoading] = useState(false);
 
   // Fetch links
   const fetchLinks = useCallback(async () => {
@@ -202,6 +209,22 @@ export function AdminEnrollmentLinks() {
   const handleViewLink = (link: EnrollmentLinkResponse) => {
     setSelectedLink(link);
     setViewDialogOpen(true);
+  };
+
+  // View students who joined via a link
+  const handleViewStudents = async (link: EnrollmentLinkResponse) => {
+    setStudentsData(null);
+    setStudentsDialogOpen(true);
+    setStudentsLoading(true);
+    try {
+      const res = await publicEnrollmentWizardService.getLinkStudents(link.linkId);
+      if (res.success && res.data) setStudentsData(res.data);
+      else setStudentsData({ linkId: link.linkId, linkName: link.name, students: [] });
+    } catch {
+      setStudentsData({ linkId: link.linkId, linkName: link.name, students: [] });
+    } finally {
+      setStudentsLoading(false);
+    }
   };
 
   const formatDate = (dateString?: string) => {
@@ -352,6 +375,14 @@ export function AdminEnrollmentLinks() {
                               title="View Details"
                             >
                               <Eye className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleViewStudents(link)}
+                              title="View Students"
+                            >
+                              <Users className="w-4 h-4 text-violet-600" />
                             </Button>
                             <Button
                               size="sm"
@@ -639,6 +670,65 @@ export function AdminEnrollmentLinks() {
               {isDeleting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Trash2 className="w-4 h-4 mr-2" />}
               Delete
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Students Dialog */}
+      <Dialog open={studentsDialogOpen} onOpenChange={setStudentsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5 text-violet-600" />
+              Students – {studentsData?.linkName}
+            </DialogTitle>
+            <DialogDescription>
+              {studentsData ? `${studentsData.students.length} student(s) registered via this link` : 'Loading...'}
+            </DialogDescription>
+          </DialogHeader>
+          {studentsLoading ? (
+            <div className="flex justify-center py-10">
+              <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+            </div>
+          ) : studentsData && studentsData.students.length === 0 ? (
+            <div className="text-center py-10 text-gray-500">
+              <Users className="w-10 h-10 mx-auto mb-2 text-gray-300" />
+              No students have joined via this link yet.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>#</TableHead>
+                    <TableHead>Name</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Phone</TableHead>
+                    <TableHead>Course</TableHead>
+                    <TableHead>Enrolled</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {studentsData?.students.map((s: EnrollmentLinkStudent, idx: number) => (
+                    <TableRow key={s.studentId}>
+                      <TableCell className="text-gray-400 text-sm">{idx + 1}</TableCell>
+                      <TableCell className="font-medium">{s.fullName}</TableCell>
+                      <TableCell className="text-sm text-gray-600">{s.email}</TableCell>
+                      <TableCell className="text-sm text-gray-600">{s.phone || '—'}</TableCell>
+                      <TableCell>
+                        {s.courseName ? <Badge variant="outline">{s.courseName}</Badge> : <span className="text-gray-400">—</span>}
+                      </TableCell>
+                      <TableCell className="text-sm text-gray-600">
+                        {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setStudentsDialogOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

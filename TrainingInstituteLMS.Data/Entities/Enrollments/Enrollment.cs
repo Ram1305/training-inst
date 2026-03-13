@@ -71,6 +71,11 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         [MaxLength(50)]
         public string EnrollmentType { get; set; } = "Individual";
 
+        /// <summary>
+        /// The enrollment link used to register for this enrollment, if any.
+        /// </summary>
+        public Guid? EnrollmentLinkId { get; set; }
+
         // Navigation Properties
         [ForeignKey(nameof(StudentId))]
         public virtual Student Student { get; set; } = null!;
@@ -80,6 +85,9 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
 
         [ForeignKey(nameof(CourseDateId))]
         public virtual CourseDate? CourseDate { get; set; }
+
+        [ForeignKey(nameof(EnrollmentLinkId))]
+        public virtual EnrollmentLink? EnrollmentLink { get; set; }
 
         [ForeignKey(nameof(QuizAttemptId))]
         public virtual PreEnrollmentQuizAttempt? QuizAttempt { get; set; }
