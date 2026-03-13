@@ -458,16 +458,19 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                     <div className="flex-grow space-y-2">
                       <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Choose a Course</Label>
                       <Select value={currentSelectedCourseId} onValueChange={setCurrentSelectedCourseId}>
-                        <SelectTrigger className="h-12 border-slate-200 text-base">
-                          <SelectValue placeholder="Select a course to add..." />
+                        <SelectTrigger className="h-12 border-slate-200 text-base w-full overflow-hidden">
+                          <SelectValue placeholder="Select a course to add..." className="truncate" />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
                           {groupedCourseItems.map(group => (
                             <SelectGroup key={group.category}>
                               <SelectLabel className="font-bold text-cyan-800 bg-cyan-50">{group.category}</SelectLabel>
                               {group.items.map(course => (
-                                <SelectItem key={course.courseId} value={course.courseId}>
-                                  {course.courseName} — <span className="font-bold text-cyan-600">${VOC_COURSE_PRICE}</span>
+                                <SelectItem key={course.courseId} value={course.courseId} className="max-w-full">
+                                  <div className="flex items-center justify-between w-full gap-2">
+                                    <span className="truncate flex-1">{course.courseName}</span>
+                                    <span className="font-bold text-cyan-600 shrink-0">${VOC_COURSE_PRICE}</span>
+                                  </div>
                                 </SelectItem>
                               ))}
                             </SelectGroup>
@@ -510,8 +513,8 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                               <div className="w-9 h-9 bg-cyan-100 rounded-xl flex items-center justify-center">
                                 <CheckCircle className="w-5 h-5 text-cyan-600" />
                               </div>
-                              <div>
-                                <h3 className="font-bold text-slate-800">{course.courseName}</h3>
+                              <div className="min-w-0">
+                                <h3 className="font-bold text-slate-800 truncate" title={course.courseName}>{course.courseName}</h3>
                                 <p className="text-cyan-600 font-bold text-sm">${course.price}.00</p>
                               </div>
                             </div>
