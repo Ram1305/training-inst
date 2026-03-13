@@ -5854,31 +5854,67 @@ nav > div {
 
 /* Digital Devices Layout - Sticky Labels with Scrollable Devices */
 .quiz-devices-container {
-  display: grid !important;
-  grid-template-columns: 280px 1fr !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 1.5rem !important;
-  max-height: 600px !important;
-  overflow: hidden !important;
+}
+
+@media (min-width: 768px) {
+  .quiz-devices-container {
+    display: grid !important;
+    grid-template-columns: 280px 1fr !important;
+    max-height: 600px !important;
+    overflow: hidden !important;
+  }
 }
 
 .quiz-devices-labels-sticky {
-  position: sticky !important;
-  top: 0 !important;
-  align-self: start !important;
   background-color: #f9fafb !important;
   padding: 1rem !important;
   border-radius: 0.5rem !important;
-  max-height: 600px !important;
-  overflow-y: auto !important;
+}
+
+@media (max-width: 767px) {
+  .quiz-devices-labels-sticky .space-y-2 {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.5rem !important;
+  }
+  .quiz-devices-labels-sticky .space-y-2 > div {
+    margin-top: 0 !important;
+    flex: 1 1 auto;
+  }
+}
+
+@media (min-width: 768px) {
+  .quiz-devices-labels-sticky {
+    position: sticky !important;
+    top: 0 !important;
+    align-self: start !important;
+    max-height: 600px !important;
+    overflow-y: auto !important;
+  }
 }
 
 .quiz-devices-scroll-area {
   overflow-y: auto !important;
   overflow-x: hidden !important;
-  max-height: 600px !important;
-  padding: 1rem !important;
   background-color: #ffffff !important;
   border-radius: 0.5rem !important;
+}
+
+@media (max-width: 767px) {
+  .quiz-devices-scroll-area .grid-cols-2 {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+  }
+}
+
+@media (min-width: 768px) {
+  .quiz-devices-scroll-area {
+    padding: 1rem !important;
+    max-height: 600px !important;
+  }
 }
 
 .quiz-devices-scroll-area::-webkit-scrollbar {
@@ -5901,20 +5937,43 @@ nav > div {
 
 /* Desktop Files Container - Better Alignment */
 .quiz-desktop-files-container {
-  display: grid !important;
-  grid-template-columns: auto 1fr !important;
-  gap: 3rem !important;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 1.5rem !important;
   margin-top: 1.5rem !important;
   margin-bottom: 1.5rem !important;
-  align-items: start !important;
+  align-items: center !important;
+}
+
+@media (min-width: 768px) {
+  .quiz-desktop-files-container {
+    display: grid !important;
+    grid-template-columns: auto 1fr !important;
+    gap: 3rem !important;
+    align-items: start !important;
+  }
 }
 
 .quiz-draggable-files-left {
   display: flex !important;
-  flex-direction: column !important;
+  flex-direction: row !important;
+  flex-wrap: wrap !important;
   align-items: center !important;
-  gap: 1.5rem !important;
-  padding: 1rem !important;
+  justify-content: center !important;
+  gap: 1rem !important;
+  padding: 0.5rem !important;
+  background: #f9fafb !important;
+  border-radius: 0.5rem !important;
+  width: 100% !important;
+}
+
+@media (min-width: 768px) {
+  .quiz-draggable-files-left {
+    flex-direction: column !important;
+    padding: 1rem !important;
+    background: transparent !important;
+    width: auto !important;
+  }
 }
 
 .quiz-desktop-screen-right {
@@ -5938,12 +5997,37 @@ nav > div {
 /* Folder Drop Zones on Desktop - Inside Monitor Screen */
 .quiz-desktop-folders {
   position: absolute !important;
-  top: 20% !important;
+  top: 15% !important;
   left: 45% !important;
   display: flex !important;
   flex-direction: column !important;
-  gap: 0.75rem !important;
+  gap: 0.25rem !important;
   z-index: 10 !important;
+}
+
+.quiz-desktop-folders .quiz-drop-zone {
+  padding: 0.25rem 0.5rem !important;
+  font-size: 0.75rem !important;
+}
+
+.quiz-desktop-folders .quiz-drop-zone .text-xl {
+  font-size: 1rem !important;
+  line-height: 1 !important;
+}
+
+@media (min-width: 500px) {
+  .quiz-desktop-folders {
+    top: 20% !important;
+    gap: 0.75rem !important;
+  }
+  .quiz-desktop-folders .quiz-drop-zone {
+    padding: 0.75rem 1rem !important;
+    font-size: 1rem !important;
+  }
+  .quiz-desktop-folders .quiz-drop-zone .text-xl {
+    font-size: 1.25rem !important;
+    line-height: 1.75rem !important;
+  }
 }
 
 /* File Label Text */
