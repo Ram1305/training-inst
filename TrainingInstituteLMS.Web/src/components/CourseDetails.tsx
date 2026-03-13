@@ -592,42 +592,42 @@ export function CourseDetailsPage({
               className="grid grid-cols-2 md:grid-cols-4 gap-4"
             >
               <Card className="border-2 border-cyan-100 shadow-lg rounded-2xl bg-gradient-to-br from-cyan-50 to-white">
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
-                    <Globe className="w-6 h-6 text-white stroke-white" />
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-cyan-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <Globe className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Delivery</div>
-                  <div className="text-sm font-bold text-slate-900">{course.delivery}</div>
+                  <div className="text-sm font-bold text-slate-900 line-clamp-2 sm:line-clamp-1 h-10 sm:h-auto flex items-center justify-center">{course.delivery}</div>
                 </CardContent>
               </Card>
 
               <Card className="border-2 border-green-100 shadow-lg rounded-2xl bg-gradient-to-br from-green-50 to-white">
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
-                    <DollarSign className="w-6 h-6 text-white stroke-white" />
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Price</div>
-                  <div className="text-sm font-bold text-slate-900">${course.price}</div>
+                  <div className="text-sm font-bold text-slate-900 h-10 sm:h-auto flex items-center justify-center">${course.price}</div>
                 </CardContent>
               </Card>
 
               <Card className="border-2 border-purple-100 shadow-lg rounded-2xl bg-gradient-to-br from-purple-50 to-white">
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-2 [&_svg]:text-amber-200 [&_svg]:stroke-amber-200">
-                    <Calendar className="w-6 h-6 text-amber-200 stroke-amber-200" />
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-2 [&_svg]:text-amber-200 [&_svg]:stroke-amber-200">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 stroke-amber-200" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Duration</div>
-                  <div className="text-sm font-bold text-slate-900">{course.duration || '—'}</div>
+                  <div className="text-sm font-bold text-slate-900 line-clamp-2 sm:line-clamp-1 h-10 sm:h-auto flex items-center justify-center">{course.duration || '—'}</div>
                 </CardContent>
               </Card>
 
               <Card className="border-2 border-orange-100 shadow-lg rounded-2xl bg-gradient-to-br from-orange-50 to-white">
-                <CardContent className="p-4 text-center">
-                  <div className="w-12 h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
-                    <MapPin className="w-6 h-6 text-white stroke-white" />
+                <CardContent className="p-3 sm:p-4 text-center">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-gray-500 mb-1">Location</div>
-                  <div className="text-sm font-bold text-slate-900 line-clamp-1">{course.location}</div>
+                  <div className="text-sm font-bold text-slate-900 line-clamp-2 sm:line-clamp-1 h-10 sm:h-auto flex items-center justify-center">{course.location}</div>
                 </CardContent>
               </Card>
             </motion.div>
@@ -640,7 +640,7 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.15 }}
               >
                 <Card className="border-2 border-violet-200 shadow-xl rounded-3xl bg-gradient-to-r from-violet-600 via-fuchsia-600 to-pink-600 overflow-hidden">
-                  <CardContent className="p-6 relative">
+                  <CardContent className="p-4 sm:p-6 relative">
                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
                     <div className="relative">
@@ -656,13 +656,13 @@ export function CourseDetailsPage({
                       <p className="text-white/90 mb-4 text-lg">
                         {course.comboOffer.description}
                       </p>
-                      <div className="flex items-center gap-4">
-                        <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                        <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 flex-1 sm:flex-none">
                           <div className="text-sm text-white/80">Combo Price</div>
                           <div className="text-3xl font-bold text-white">${course.comboOffer.price}</div>
                         </div>
                         {course.comboOffer.duration && (
-                          <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3">
+                          <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 flex-1 sm:flex-none">
                             <div className="text-sm text-white/80">Duration</div>
                             <div className="text-xl font-bold text-white">{course.comboOffer.duration}</div>
                           </div>
@@ -673,7 +673,7 @@ export function CourseDetailsPage({
                             courseCode: course.code,
                             coursePrice: course.comboOffer?.price || course.price
                           })}
-                          className="ml-auto bg-white text-violet-600 hover:bg-white/90 rounded-full px-8 h-12 font-bold shadow-xl"
+                          className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto bg-white text-violet-600 hover:bg-white/90 rounded-full px-8 h-12 font-bold shadow-xl"
                         >
                           Book Combo Now
                         </Button>
@@ -690,18 +690,18 @@ export function CourseDetailsPage({
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-white">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                      <BookOpen className="w-6 h-6" />
+              <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-white overflow-hidden">
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     Course Overview
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6 overflow-x-auto">
                   <div
-                    className="course-description-content text-gray-700 text-lg leading-relaxed [&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic"
+                    className="course-description-content text-gray-700 text-base sm:text-lg leading-relaxed [&_.course-desc-h2]:text-lg sm:[&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-base sm:[&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-4 sm:[&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-4 sm:[&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic [&_table]:w-full [&_table]:overflow-hidden [&_table]:block sm:[&_table]:table [&_table]:overflow-x-auto"
                     dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(course.courseDescription) }}
                   />
                   
@@ -740,15 +740,15 @@ export function CourseDetailsPage({
               transition={{ duration: 0.5, delay: 0.25 }}
             >
               <Card className="border-2 border-orange-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-orange-50">
-                <CardHeader>
-                  <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg text-white">
-                      <Target className="w-6 h-6" />
+                <CardHeader className="p-4 sm:p-6">
+                  <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-orange-500 to-red-500 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <Target className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     Entry Requirements
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="p-4 sm:p-6">
                   <ul className="space-y-3">
                     {course.entryRequirements.map((item: string, index: number) => (
                       <li key={index} className="flex items-start gap-3 bg-white p-4 rounded-xl shadow-sm">
@@ -769,15 +769,15 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <Card className="border-2 border-purple-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-purple-50">
-                  <CardHeader>
-                    <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                        <Clock className="w-6 h-6" />
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-purple-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
                       </div>
                       Duration
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <p className="text-gray-700 text-lg">
                       The total duration is <strong className="text-purple-600">{course.duration.toLowerCase()}</strong>. Training and assessment are conducted in our modern training facilities with industry-standard equipment.
                     </p>
@@ -794,15 +794,15 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.35 }}
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
-                  <CardHeader>
-                    <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                        <TrendingUp className="w-6 h-6" />
+                  <CardHeader className="p-4 sm:p-6">
+                    <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
                       </div>
                       Training Overview
                     </CardTitle>
                   </CardHeader>
-                  <CardContent>
+                  <CardContent className="p-4 sm:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {course.trainingOverview.map((item: string, index: number) => (
                         <div key={index} className="flex items-start gap-3 bg-white p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
@@ -988,9 +988,9 @@ export function CourseDetailsPage({
                 <CardContent className="p-6 space-y-6">
                   {/* Course Details */}
                   <div className="space-y-4">
-                    <h3 className="text-xl font-bold text-slate-900 mb-4">Course Details</h3>
+                    <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-4">Course Details</h3>
 
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 gap-1 sm:gap-4">
                       <span className="text-gray-700 flex items-center gap-2 font-semibold">
                         <Clock className="w-5 h-5 text-cyan-600" />
                         Duration
@@ -999,7 +999,7 @@ export function CourseDetailsPage({
                     </div>
 
                     {course.resourcePdf && (
-                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-slate-50 to-blue-50 rounded-xl border border-slate-200 gap-1 sm:gap-4">
                         <span className="text-gray-700 flex items-center gap-2 font-semibold">
                           <BookOpen className="w-5 h-5 text-cyan-600 flex-shrink-0" />
                           Handbook
@@ -1018,7 +1018,7 @@ export function CourseDetailsPage({
                     )}
 
                     {course.validityPeriod && (
-                      <div className="flex items-center justify-between p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border border-purple-100">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-purple-50 to-violet-50 rounded-xl border border-purple-100 gap-1 sm:gap-4">
                         <span className="text-gray-700 flex items-center gap-2 font-semibold">
                           <Award className="w-5 h-5 text-purple-600" />
                           Validity
@@ -1027,7 +1027,7 @@ export function CourseDetailsPage({
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-100">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl border border-orange-100 gap-1 sm:gap-4">
                       <span className="text-gray-700 flex items-center gap-2 font-semibold">
                         <MapPin className="w-5 h-5 text-orange-600" />
                         Location
