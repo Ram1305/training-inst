@@ -396,7 +396,7 @@ export function StudentEnrolmentForm() {
               <div className="flex items-center gap-4 text-blue-100 text-sm mt-1">
                 <span className="flex items-center gap-1">
                   <MapPin className="w-4 h-4" />
-                  14–16 Marjorie Street, Sefton NSW 2162
+                  3/14-16 Marjorie Street, Sefton NSW 2162
                 </span>
                 <span className="flex items-center gap-1">
                   <Phone className="w-4 h-4" />

@@ -59,7 +59,7 @@ const fakeData = {
     employmentStatus: "01",             // 01..08
     employerName: "Example Pty Ltd",
     supervisorName: "John Smith",
-    employerAddress: "14-16 Marjorie Street, Sefton NSW 2162",
+    employerAddress: "3/14-16 Marjorie Street, Sefton NSW 2162",
     employerEmail: "hr@example.com",
     employerPhone: "02 9999 1111"
   },

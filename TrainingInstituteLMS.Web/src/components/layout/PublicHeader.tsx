@@ -87,7 +87,7 @@ export function PublicHeader({
           </span>
           <span className="flex items-center gap-2 font-medium">
             <MapPin className="w-4 h-4" />
-            3/14-16 Marjorie street sefton nsw 2162
+            3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
       </div>
@@ -138,24 +138,24 @@ export function PublicHeader({
       <nav className="sticky top-0 z-50 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 backdrop-blur-xl border-b border-slate-700 shadow-lg">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-          {/* Left Nav Links */}
+            {/* Left Nav Links */}
             <div className="hidden md:flex items-center gap-6">
               <button onClick={onBack} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">HOME</button>
-              
+
               {/* Courses Dropdown */}
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => setCoursesDropdownOpen(true)}
                 onMouseLeave={() => {
-                   setCoursesDropdownOpen(false);
-                   setActiveCategory(null);
+                  setCoursesDropdownOpen(false);
+                  setActiveCategory(null);
                 }}
               >
                 <button className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-xs font-bold uppercase">
                   COURSES
                   <ChevronDown className={`w-3 h-3 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                
+
                 <AnimatePresence>
                   {coursesDropdownOpen && (
                     <motion.div
@@ -198,7 +198,7 @@ export function PublicHeader({
               </div>
 
               <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
-              
+
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">ABOUT</button>
               <button onClick={onContact} className="text-white hover:text-cyan-400 transition-colors text-xs font-bold">CONTACT</button>
               <button onClick={onVOC} className="text-cyan-400 border-2 border-cyan-400/50 rounded-lg px-4 py-1 text-xs font-bold hover:bg-cyan-400 hover:text-slate-900 transition-all">VOC</button>
@@ -209,7 +209,7 @@ export function PublicHeader({
               <Button onClick={onBookNow} className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6 h-9 text-xs font-bold uppercase tracking-wider shadow-lg shadow-cyan-500/20">
                 Book Now
               </Button>
-              
+
               <Button onClick={onLogin} className="bg-white hover:bg-cyan-400 text-slate-900 hover:text-white rounded-full px-6 h-9 text-xs font-bold uppercase border border-white transition-all">
                 Login / Register
               </Button>

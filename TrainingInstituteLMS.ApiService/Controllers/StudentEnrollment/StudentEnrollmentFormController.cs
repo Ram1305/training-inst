@@ -91,17 +91,15 @@ namespace TrainingInstituteLMS.ApiService.Controllers.StudentEnrollment
             }
         }
 
-        /// <summary>
-        /// Get enrollment form by student ID
-        /// </summary>
         [HttpGet("student/{studentId}")]
         public async Task<IActionResult> GetEnrollmentFormByStudentId(Guid studentId)
         {
             try
             {
                 var form = await _enrollmentFormService.GetEnrollmentFormAsync(studentId);
+                // Return success even if not found, to avoid console 404 errors
                 if (form == null)
-                    return NotFound(ApiResponse<object>.FailureResponse("Enrollment form not found"));
+                    return Ok(ApiResponse<object>.SuccessResponse(null, "Enrollment form not found"));
 
                 return Ok(ApiResponse<object>.SuccessResponse(form));
             }

@@ -1808,16 +1808,20 @@ export function PublicEnrollmentWizard({
                                 }
                               }}
                             >
-                              <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white">
-                                <SelectValue placeholder="Choose a course to add..." />
+                              <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white overflow-hidden">
+                                <SelectValue placeholder="Choose a course to add..." className="truncate pr-4" />
                               </SelectTrigger>
                               <SelectContent>
                                 {groupedCourseItems(item => !selectedCompanyCourses.some(sc => sc.courseId === item.id && sc.price === item.price)).map(group => (
                                   <SelectGroup key={group.category}>
                                     <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
                                     {group.items.map(item => (
-                                      <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
-                                        {item.label}
+                                      <SelectItem 
+                                        key={`${item.id}|${item.price}`} 
+                                        value={`${item.id}|${item.price}`}
+                                        className="max-w-full"
+                                      >
+                                        <div className="truncate max-w-[280px] sm:max-w-[400px]">{item.label}</div>
                                       </SelectItem>
                                     ))}
                                   </SelectGroup>
@@ -1836,12 +1840,12 @@ export function PublicEnrollmentWizard({
                                     key={`${item.courseId}-${idx}`}
                                     className="flex items-center justify-between rounded-lg bg-white px-3 py-2 border border-violet-100"
                                   >
-                                    <div className="text-sm">
-                                      <span className="font-medium">
+                                    <div className="text-sm min-w-0 flex-1 mr-3">
+                                      <span className="font-medium block truncate" title={item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId}>
                                         {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price}
                                       </span>
                                       {item.courseDateLabel && (
-                                        <p className="text-gray-500 text-xs mt-0.5">Date: {item.courseDateLabel}</p>
+                                        <p className="text-gray-500 text-xs mt-0.5 truncate" title={item.courseDateLabel}>Date: {item.courseDateLabel}</p>
                                       )}
                                     </div>
                                     <Button
@@ -1867,7 +1871,7 @@ export function PublicEnrollmentWizard({
                             {pendingCompanyCourse && (
                               <div className="mt-4">
                                 <Label className="block text-sm font-medium text-gray-700 mb-3">
-                                  Select a date for {pendingCompanyCourse.courseName} <span className="text-red-500">*</span>
+                                  Select a date for <span className="text-violet-700 font-bold break-words">{pendingCompanyCourse.courseName}</span> <span className="text-red-500">*</span>
                                 </Label>
                                 {loadingDates ? (
                                   <div className="w-full min-h-[140px] bg-violet-50 border border-violet-200 rounded-xl px-6 flex items-center justify-center text-violet-600">
@@ -2013,8 +2017,8 @@ export function PublicEnrollmentWizard({
                                 }
                               }}
                             >
-                              <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white hover:bg-violet-50/50 focus-visible:ring-violet-500 focus-visible:ring-offset-2 h-auto min-h-11 py-2.5">
-                                <SelectValue placeholder="Choose a course..." />
+                              <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white hover:bg-violet-50/50 focus-visible:ring-violet-500 focus-visible:ring-offset-2 h-auto min-h-11 py-2.5 overflow-hidden">
+                                <SelectValue placeholder="Choose a course..." className="truncate pr-4" />
                               </SelectTrigger>
                               <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
                                 {groupedCourseItems().map(group => (

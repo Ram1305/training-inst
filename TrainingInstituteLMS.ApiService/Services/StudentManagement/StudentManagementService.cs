@@ -94,7 +94,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                     .Include(s => s.User)
                     .Include(s => s.Enrollments)
                     .AsNoTracking()
-                    .FirstOrDefaultAsync(s => s.StudentId == studentId);
+                    .FirstOrDefaultAsync(s => s.StudentId == studentId || s.UserId == studentId);
 
                 return student == null ? null : MapToStudentResponse(student);
             }

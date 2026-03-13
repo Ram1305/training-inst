@@ -364,10 +364,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseId = link.CourseId?.ToString(),
                 CourseName = link.Course?.CourseName,
                 CourseDateId = link.CourseDateId?.ToString(),
-                CourseDateRange = link.CourseDate != null 
-                    ? $"{link.CourseDate.ScheduledDate:dd/MM/yyyy}"
-                    : null,
-                IsOneTimeLink = link.CompanyOrderId.HasValue,
+                CourseDateRange = link.CourseDate?.ScheduledDate.ToString("dd/MM/yyyy"),
+                IsOneTimeLink = link.CompanyOrderId.HasValue && link.CourseId.HasValue,
                 AllowPayLater = allowPayLater
             };
         }
@@ -745,7 +743,10 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 throw new InvalidOperationException("This enrollment link has already been used");
 
             if (!link.CourseId.HasValue)
-                throw new InvalidOperationException("This link is not associated with a course");
+            {
+                _logger.LogError("One-time enrollment link {Code} (ID: {LinkId}) is missing its CourseId association.", code, link.LinkId);
+                throw new InvalidOperationException("This link is not correctly associated with a course. Please contact the administrator.");
+            }
 
             var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email.Trim());
             if (existingUser != null)
