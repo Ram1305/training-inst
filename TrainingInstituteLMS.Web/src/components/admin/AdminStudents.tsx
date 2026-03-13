@@ -64,13 +64,11 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   });
 
   // Fetch students
-  const fetchStudents = async (query?: string) => {
-    if (students.length === 0) {
+  const fetchStudents = async () => {
       setLoading(true);
-    }
     try {
       const response = await studentManagementService.getAllStudents({
-        searchQuery: (query ?? searchQuery) || undefined,
+        searchQuery: searchQuery || undefined,
         status: statusFilter !== 'all' ? statusFilter : undefined,
         pageNumber: currentPage,
         pageSize: pageSize,
@@ -146,10 +144,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchStudents(searchQuery);
-    }, searchQuery ? 300 : 0);
-    return () => clearTimeout(timer);
+    fetchStudents();
   }, [currentPage, searchQuery, statusFilter]);
 
   const handleCreateStudent = async (e: React.FormEvent) => {
@@ -473,6 +468,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                 placeholder="Search students by name or email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && fetchStudents()}
                 className="pl-10 pr-10"
               />
               {searchQuery && (
@@ -500,7 +496,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
             </select>
-            <Button onClick={() => fetchStudents()} variant="outline">
+            <Button onClick={fetchStudents} variant="outline">
               <Search className="w-4 h-4 mr-2" />
               Search
             </Button>

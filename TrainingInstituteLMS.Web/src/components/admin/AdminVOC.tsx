@@ -48,7 +48,12 @@ import {
 } from '../ui/select';
 import { toast } from 'sonner';
 import { vocManagementService, type VOCSubmissionResponse } from '../../services/vocManagement.service';
-import { format } from 'date-fns';
+import { format } from 'date-fns';const getFullImageUrl = (path: string | undefined | null) => {
+  if (!path) return '';
+  const cleanPath = path.replace(/\\/g, '/');
+  const baseUrl = API_CONFIG.BASE_URL.replace(/\/api$/, '');
+  return `${baseUrl}${cleanPath.startsWith('/') ? '' : '/'}${cleanPath}`;
+};
 
 export function AdminVOC() {
   const [submissions, setSubmissions] = useState<VOCSubmissionResponse[]>([]);
@@ -284,7 +289,7 @@ export function AdminVOC() {
 
       {/* Details Dialog */}
       <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>VOC Submission Details</DialogTitle>
             <DialogDescription>
@@ -294,7 +299,7 @@ export function AdminVOC() {
 
           {selectedSubmission && (
             <div className="space-y-6">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <div className="text-xs font-bold uppercase text-slate-400">Student ID</div>
                   <div className="flex items-center gap-2">
@@ -308,7 +313,7 @@ export function AdminVOC() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-slate-50 rounded-xl border border-slate-100">
                 <div className="space-y-3">
                   <h4 className="font-bold text-slate-900 border-b pb-1">Contact Info</h4>
                   <div className="space-y-2">
@@ -390,7 +395,7 @@ export function AdminVOC() {
                     {selectedSubmission.paymentMethod || 'N/A'}
                   </Badge>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <p className="text-[10px] text-slate-400 uppercase font-bold">Total Amount</p>
                     <p className="text-xl font-black text-cyan-400">${selectedSubmission.totalAmount?.toFixed(2) || '0.00'}</p>
@@ -412,17 +417,17 @@ export function AdminVOC() {
                   </h4>
                   <div className="border border-slate-200 rounded-xl overflow-hidden group relative bg-slate-50">
                     <img
-                      src={API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath}
+                      src={getFullImageUrl(selectedSubmission.paymentProofPath)}
                       alt="Payment Proof"
                       className="w-full h-auto max-h-60 object-contain cursor-pointer transition-all group-hover:scale-[1.02]"
-                      onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath!, '_blank')}
+                      onClick={() => window.open(getFullImageUrl(selectedSubmission.paymentProofPath), '_blank')}
                     />
                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                        <Button
                          variant="secondary"
                          size="sm"
                          className="gap-2"
-                         onClick={() => window.open(API_CONFIG.BASE_URL.replace('/api', '') + selectedSubmission.paymentProofPath!, '_blank')}
+                         onClick={() => window.open(getFullImageUrl(selectedSubmission.paymentProofPath), '_blank')}
                        >
                          <Eye className="w-4 h-4" /> View Full Image
                        </Button>
@@ -431,11 +436,11 @@ export function AdminVOC() {
                 </div>
               )}
 
-              <div className="flex justify-between items-center pt-4 border-t">
-                <div className="flex gap-2">
+              <div className="flex flex-col-reverse sm:flex-row justify-between items-center pt-4 border-t gap-4">
+                <div className="flex flex-wrap justify-center sm:justify-start gap-2 w-full sm:w-auto">
                   <Button
                     size="sm"
-                    className="bg-green-600 hover:bg-green-700 text-white"
+                    className="bg-green-600 hover:bg-green-700 text-white flex-1 sm:flex-none"
                     onClick={() => handleUpdateStatus(selectedSubmission.submissionId, 'Verified')}
                   >
                     <CheckCircle className="w-4 h-4 mr-2" /> Mark Verified
@@ -443,6 +448,7 @@ export function AdminVOC() {
                   <Button
                     size="sm"
                     variant="outline"
+                    className="flex-1 sm:flex-none"
                     onClick={() => handleUpdateStatus(selectedSubmission.submissionId, 'Completed')}
                   >
                     Mark Completed
@@ -450,12 +456,13 @@ export function AdminVOC() {
                   <Button
                     size="sm"
                     variant="destructive"
+                    className="flex-1 sm:flex-none"
                     onClick={() => handleUpdateStatus(selectedSubmission.submissionId, 'Rejected')}
                   >
                     <XCircle className="w-4 h-4 mr-2" /> Reject
                   </Button>
                 </div>
-                <Button variant="ghost" onClick={() => setDetailsDialogOpen(false)}>Close</Button>
+                <Button variant="ghost" className="w-full sm:w-auto" onClick={() => setDetailsDialogOpen(false)}>Close</Button>
               </div>
             </div>
           )}
