@@ -136,7 +136,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     try {
       // Only show main loader if we have no courses yet
       setError(null);
-      
+
       const term = searchTerm?.trim() || "";
 
       const filter: { searchQuery?: string; pageSize: number; sortBy?: string; sortDescending?: boolean } = {
@@ -315,7 +315,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
           {/* Info Badges - Gen Z Style */}
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -330,7 +330,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -345,7 +345,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -377,11 +377,11 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 HOME
               </a>
               {/* Courses Dropdown */}
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => {
                   setCoursesDropdownOpen(true);
-                  const categoriesWithCourses = categories.filter(cat => 
+                  const categoriesWithCourses = categories.filter(cat =>
                     courses.some(course => course.categoryId === cat.categoryId)
                   );
                   if (categoriesWithCourses.length > 0 && !activeCategory) {
@@ -400,7 +400,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   COURSES
                   <ChevronDown className={`w-4 h-4 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
                 </a>
-                
+
                 {coursesDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -413,15 +413,15 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                         {categories
                           .filter(category => courses.some(course => course.categoryId === category.categoryId))
                           .map((category) => (
-                          <button
-                            key={category.categoryId}
-                            onMouseEnter={() => setActiveCategory(category.categoryId)}
-                            className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
-                          >
-                            <span>{category.categoryName}</span>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                          </button>
-                        ))}
+                            <button
+                              key={category.categoryId}
+                              onMouseEnter={() => setActiveCategory(category.categoryId)}
+                              className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
+                            >
+                              <span>{category.categoryName}</span>
+                              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                            </button>
+                          ))}
                       </div>
                       <div className="dropdown-courses-panel">
                         {activeCategory && (
@@ -500,8 +500,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               <div className="flex items-center ml-6">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
                   <Phone className="w-4 h-4 text-cyan-400" />
-                  <a 
-                    href="tel:1300976097" 
+                  <a
+                    href="tel:1300976097"
                     className="text-white phone-number-link hover:text-cyan-400 transition-colors"
                   >
                     1300 976 097
@@ -668,7 +668,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   >
                     ENROL NOW
                   </Button>
-                  <Button 
+                  <Button
                     onClick={onVOC}
                     className="w-full bg-blue-600 hover:bg-blue-700 text-white rounded-full h-12 text-base font-semibold shadow-md hover:shadow-lg transition-all"
                   >
@@ -699,9 +699,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all ${
-                  currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50"
-                }`}
+                className={`w-3 h-3 rounded-full transition-all ${currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50"
+                  }`}
               />
             ))}
           </div>
@@ -787,162 +786,162 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   .filter(course => course.hasComboOffer)
                   .slice(0, expandedCombo ? undefined : 3)
                   .map((course, index) => (
-                  <motion.div
-                    key={course.courseId}
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    onClick={() => handleCourseClick(course.courseId)}
-                    className="cursor-pointer"
-                  >
-                    <Card className="group hover:shadow-2xl transition-all duration-300 border-2 border-blue-100 hover:border-cyan-400 rounded-2xl overflow-hidden bg-white h-full flex flex-col transform hover:-translate-y-2">
-                      <div className="relative h-56 overflow-hidden">
-                        <ImageWithFallback
-                          src={course.imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080"}
-                          alt={course.courseName}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                        <div className="absolute top-4 right-4 flex gap-2">
-                          <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 text-sm font-bold shadow-lg">
-                            COMBO
-                          </Badge>
-                          {course.validityPeriod && (
-                            <Badge className="bg-cyan-500 text-white px-3 py-1 text-sm font-semibold shadow-lg">
-                              {course.validityPeriod}
+                    <motion.div
+                      key={course.courseId}
+                      initial={{ opacity: 0, y: 20 }}
+                      whileInView={{ opacity: 1, y: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ duration: 0.5, delay: index * 0.1 }}
+                      onClick={() => handleCourseClick(course.courseId)}
+                      className="cursor-pointer"
+                    >
+                      <Card className="group hover:shadow-2xl transition-all duration-300 border-2 border-blue-100 hover:border-cyan-400 rounded-2xl overflow-hidden bg-white h-full flex flex-col transform hover:-translate-y-2">
+                        <div className="relative h-56 overflow-hidden">
+                          <ImageWithFallback
+                            src={course.imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080"}
+                            alt={course.courseName}
+                            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                          />
+                          <div className="absolute top-4 right-4 flex gap-2">
+                            <Badge className="bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-3 py-1 text-sm font-bold shadow-lg">
+                              COMBO
                             </Badge>
-                          )}
-                        </div>
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                          <span className="text-white font-semibold text-lg">View Details</span>
-                        </div>
-                      </div>
-                      <CardHeader className="pb-3">
-                        <div className="flex items-center justify-between mb-2">
-                          <Badge
-                            variant="outline"
-                            className="border-blue-300 text-blue-700 font-semibold text-xs"
-                          >
-                            {course.categoryName}
-                          </Badge>
-                          <div className="text-2xl font-bold text-cyan-600">${course.price}</div>
-                        </div>
-                        <CardTitle className="text-lg text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-2">
-                          {course.courseCode} - {course.courseName}
-                        </CardTitle>
-                      </CardHeader>
-                      <CardContent className="space-y-3 flex-grow">
-                        <div className="space-y-2 text-sm text-gray-600">
-                          <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-cyan-500 flex-shrink-0" />
-                            <span className="line-clamp-1">Face to Face Training</span>
+                            {course.validityPeriod && (
+                              <Badge className="bg-cyan-500 text-white px-3 py-1 text-sm font-semibold shadow-lg">
+                                {course.validityPeriod}
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex items-center gap-2">
-                            <Building className="w-4 h-4 text-cyan-500 flex-shrink-0" />
-                            <span className="line-clamp-1">Delivery: On-site</span>
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <span className="text-white font-semibold text-lg">View Details</span>
                           </div>
                         </div>
-
-                        <div className="flex items-center gap-4 text-sm text-gray-600">
-                          {course.duration && (
-                            <div className="flex items-center gap-1">
-                              <Clock className="w-4 h-4 text-cyan-500" />
-                              <span>{course.duration}</span>
+                        <CardHeader className="pb-3">
+                          <div className="flex items-center justify-between mb-2">
+                            <Badge
+                              variant="outline"
+                              className="border-blue-300 text-blue-700 font-semibold text-xs"
+                            >
+                              {course.categoryName}
+                            </Badge>
+                            <div className="text-2xl font-bold text-cyan-600">${course.price}</div>
+                          </div>
+                          <CardTitle className="text-lg text-slate-900 group-hover:text-cyan-600 transition-colors line-clamp-2">
+                            {course.courseCode} - {course.courseName}
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3 flex-grow">
+                          <div className="space-y-2 text-sm text-gray-600">
+                            <div className="flex items-center gap-2">
+                              <MapPin className="w-4 h-4 text-cyan-500 flex-shrink-0" />
+                              <span className="line-clamp-1">Face to Face Training</span>
                             </div>
-                          )}
-                        </div>
+                            <div className="flex items-center gap-2">
+                              <Building className="w-4 h-4 text-cyan-500 flex-shrink-0" />
+                              <span className="line-clamp-1">Delivery: On-site</span>
+                            </div>
+                          </div>
 
-                        <div className="flex flex-wrap gap-2 pt-2">
-                          {course.hasTheory && (
-                            <Badge variant="outline" className="text-xs border-green-300 text-green-700">
-                              Theory
-                            </Badge>
-                          )}
-                          {course.hasPractical && (
-                            <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
-                              Practical
-                            </Badge>
-                          )}
-                          {course.hasExam && (
-                            <Badge variant="outline" className="text-xs border-purple-300 text-purple-700">
-                              Exam
-                            </Badge>
-                          )}
-                        </div>
-                      </CardContent>
-                      <CardFooter className="flex flex-col gap-2">
-                        {course.experienceBookingEnabled ? (
-                          <>
-                            <Button 
-                              className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.experiencePrice || course.price, 'with');
-                              }}
-                            >
-                              {course.experienceOriginalPrice && (
-                                <span className="price-strikethrough text-white/80 text-base mr-1">${course.experienceOriginalPrice}</span>
-                              )}
-                              <span className="price-current text-lg">${course.experiencePrice || course.price}</span>
-                              <span className="ml-1">Book With Experience</span>
-                            </Button>
-                            <Button 
-                              className="w-full bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.noExperiencePrice || course.price, 'without');
-                              }}
-                            >
-                              {course.noExperienceOriginalPrice && (
-                                <span className="price-strikethrough text-white/80 text-base mr-1">${course.noExperienceOriginalPrice}</span>
-                              )}
-                              <span className="price-current text-lg">${course.noExperiencePrice || course.price}</span>
-                              <span className="ml-1">Book Without Experience</span>
-                            </Button>
-                          </>
-                        ) : (
-                          <>
-                            <Button 
-                              className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.price);
-                              }}
-                            >
-                              {course.originalPrice && (
-                                <span className="price-strikethrough text-white/80 text-base mr-1">${course.originalPrice}</span>
-                              )}
-                              <span className="price-current text-lg">${course.price}</span>
-                              <span className="ml-1">Book Now</span>
-                            </Button>
-                            {course.promoPrice != null && course.promoPrice > 0 && (
-                              <Button 
-                                className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                          <div className="flex items-center gap-4 text-sm text-gray-600">
+                            {course.duration && (
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4 text-cyan-500" />
+                                <span>{course.duration}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2 pt-2">
+                            {course.hasTheory && (
+                              <Badge variant="outline" className="text-xs border-green-300 text-green-700">
+                                Theory
+                              </Badge>
+                            )}
+                            {course.hasPractical && (
+                              <Badge variant="outline" className="text-xs border-blue-300 text-blue-700">
+                                Practical
+                              </Badge>
+                            )}
+                            {course.hasExam && (
+                              <Badge variant="outline" className="text-xs border-purple-300 text-purple-700">
+                                Exam
+                              </Badge>
+                            )}
+                          </div>
+                        </CardContent>
+                        <CardFooter className="flex flex-col gap-2">
+                          {course.experienceBookingEnabled ? (
+                            <>
+                              <Button
+                                className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.promoPrice!);
+                                  if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.experiencePrice || course.price, 'with');
                                 }}
                               >
-                                {course.promoOriginalPrice != null && course.promoOriginalPrice > 0 && (
-                                  <span className="price-strikethrough text-white/80 text-base mr-1">${course.promoOriginalPrice}</span>
+                                {course.experienceOriginalPrice && (
+                                  <span className="price-strikethrough text-white/80 text-base mr-1">${course.experienceOriginalPrice}</span>
                                 )}
-                                <span className="price-current text-lg">${course.promoPrice}</span>
-                                <span className="ml-1">Book Now SL + BL</span>
+                                <span className="price-current text-lg">${course.experiencePrice || course.price}</span>
+                                <span className="ml-1">Book With Experience</span>
                               </Button>
-                            )}
-                          </>
-                        )}
-                        <Button 
-                          variant="outline"
-                          className="w-full border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-xl h-10 font-semibold"
-                          onClick={(e) => { e.stopPropagation(); handleCourseClick(course.courseId); }}
-                    >
-                      View Details
-                    </Button>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
-                ))
+                              <Button
+                                className="w-full bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.noExperiencePrice || course.price, 'without');
+                                }}
+                              >
+                                {course.noExperienceOriginalPrice && (
+                                  <span className="price-strikethrough text-white/80 text-base mr-1">${course.noExperienceOriginalPrice}</span>
+                                )}
+                                <span className="price-current text-lg">${course.noExperiencePrice || course.price}</span>
+                                <span className="ml-1">Book Without Experience</span>
+                              </Button>
+                            </>
+                          ) : (
+                            <>
+                              <Button
+                                className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.price);
+                                }}
+                              >
+                                {course.originalPrice && (
+                                  <span className="price-strikethrough text-white/80 text-base mr-1">${course.originalPrice}</span>
+                                )}
+                                <span className="price-current text-lg">${course.price}</span>
+                                <span className="ml-1">Book Now</span>
+                              </Button>
+                              {course.promoPrice != null && course.promoPrice > 0 && (
+                                <Button
+                                  className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (onBookCourse) onBookCourse(course.courseId, course.courseCode, course.courseName, course.promoPrice!);
+                                  }}
+                                >
+                                  {course.promoOriginalPrice != null && course.promoOriginalPrice > 0 && (
+                                    <span className="price-strikethrough text-white/80 text-base mr-1">${course.promoOriginalPrice}</span>
+                                  )}
+                                  <span className="price-current text-lg">${course.promoPrice}</span>
+                                  <span className="ml-1">Book Now SL + BL</span>
+                                </Button>
+                              )}
+                            </>
+                          )}
+                          <Button
+                            variant="outline"
+                            className="w-full border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-xl h-10 font-semibold"
+                            onClick={(e) => { e.stopPropagation(); handleCourseClick(course.courseId); }}
+                          >
+                            View Details
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </motion.div>
+                  ))
               )}
             </div>
 
@@ -1001,7 +1000,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           ) : (
             categories.map((category, catIndex) => {
               const categoryCourses = getCoursesByCategory(category.categoryId);
-              
+
               if (categoryCourses.length === 0) return null;
 
               const isExpanded = expandedCategories.has(category.categoryId);
@@ -1113,7 +1112,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                           <CardFooter className="flex flex-col gap-2">
                             {course.experienceBookingEnabled ? (
                               <>
-                                <Button 
+                                <Button
                                   className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1126,7 +1125,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                                   <span className="price-current text-lg">${course.experiencePrice || course.price}</span>
                                   <span className="ml-1">Book With Experience</span>
                                 </Button>
-                                <Button 
+                                <Button
                                   className="w-full bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1142,7 +1141,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                               </>
                             ) : (
                               <>
-                                <Button 
+                                <Button
                                   className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -1156,7 +1155,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                                   <span className="ml-1">Book Now</span>
                                 </Button>
                                 {course.promoPrice != null && course.promoPrice > 0 && (
-                                  <Button 
+                                  <Button
                                     className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
                                     onClick={(e) => {
                                       e.stopPropagation();
@@ -1172,16 +1171,16 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                                 )}
                               </>
                             )}
-                            <Button 
+                            <Button
                               variant="outline"
                               className="w-full border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-xl h-10 font-semibold"
                               onClick={(e) => { e.stopPropagation(); handleCourseClick(course.courseId); }}
-                    >
-                      View Details
-                    </Button>
-                      </CardFooter>
-                    </Card>
-                  </motion.div>
+                            >
+                              View Details
+                            </Button>
+                          </CardFooter>
+                        </Card>
+                      </motion.div>
                     ))}
                   </div>
 
@@ -1215,11 +1214,11 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               </div>
               <h3 className="text-2xl font-bold text-gray-700 mb-2">No courses found</h3>
               <p className="text-gray-600 max-w-md mx-auto">
-                We couldn't find any courses matching "{searchQuery}". 
+                We couldn't find any courses matching "{searchQuery}".
                 Try searching for something else or clear the search.
               </p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="mt-6 border-cyan-500 text-cyan-600 rounded-full"
                 onClick={() => setSearchQuery('')}
               >
@@ -1342,61 +1341,61 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               <div className="col-span-full text-center py-12 text-gray-500">No reviews to display</div>
             ) : (
               googleReviews.map((review, index) => (
-              <motion.div
-                key={review.googleReviewId}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                {review.isMainReview ? (
-                  <Card className="border-2 border-blue-200 rounded-2xl bg-white shadow-lg p-6 text-center">
-                    <div className="mb-4">
-                      <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 to-blue-500 bg-clip-text mb-2">
-                        G
-                      </div>
-                      <div className="text-sm text-gray-600 font-semibold">{review.author}</div>
-                    </div>
-                    <div className="text-5xl font-bold text-slate-900 mb-2">{review.rating}.0</div>
-                    <div className="flex justify-center gap-1 mb-3">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-600">{review.reviewText}</p>
-                    <Button
-                      variant="outline"
-                      className="mt-4 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-full w-full"
-                    >
-                      review us on
-                      <div className="w-5 h-5 ml-2 bg-white rounded shadow-sm flex items-center justify-center">
-                        <span className="text-xs font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
+                <motion.div
+                  key={review.googleReviewId}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                >
+                  {review.isMainReview ? (
+                    <Card className="border-2 border-blue-200 rounded-2xl bg-white shadow-lg p-6 text-center">
+                      <div className="mb-4">
+                        <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 to-blue-500 bg-clip-text mb-2">
                           G
-                        </span>
+                        </div>
+                        <div className="text-sm text-gray-600 font-semibold">{review.author}</div>
                       </div>
-                    </Button>
-                  </Card>
-                ) : (
-                  <Card className="border-2 border-blue-100 rounded-2xl bg-gradient-to-br from-white to-blue-50 shadow-lg p-6">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="font-bold text-slate-900 text-sm">{review.author}</div>
-                      <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center">
-                        <span className="text-xs font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
-                          G
-                        </span>
+                      <div className="text-5xl font-bold text-slate-900 mb-2">{review.rating}.0</div>
+                      <div className="flex justify-center gap-1 mb-3">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
+                        ))}
                       </div>
-                    </div>
-                    <div className="flex gap-1 mb-3">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-sm text-gray-700 leading-relaxed mb-3">{review.reviewText}</p>
-                    {review.timeText && <p className="text-xs text-gray-500">{review.timeText}</p>}
-                  </Card>
-                )}
-              </motion.div>
-            ))
+                      <p className="text-sm text-gray-600">{review.reviewText}</p>
+                      <Button
+                        variant="outline"
+                        className="mt-4 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-full w-full"
+                      >
+                        review us on
+                        <div className="w-5 h-5 ml-2 bg-white rounded shadow-sm flex items-center justify-center">
+                          <span className="text-xs font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
+                            G
+                          </span>
+                        </div>
+                      </Button>
+                    </Card>
+                  ) : (
+                    <Card className="border-2 border-blue-100 rounded-2xl bg-gradient-to-br from-white to-blue-50 shadow-lg p-6">
+                      <div className="flex items-center justify-between mb-3">
+                        <div className="font-bold text-slate-900 text-sm">{review.author}</div>
+                        <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center">
+                          <span className="text-xs font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
+                            G
+                          </span>
+                        </div>
+                      </div>
+                      <div className="flex gap-1 mb-3">
+                        {[...Array(review.rating)].map((_, i) => (
+                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                        ))}
+                      </div>
+                      <p className="text-sm text-gray-700 leading-relaxed mb-3">{review.reviewText}</p>
+                      {review.timeText && <p className="text-xs text-gray-500">{review.timeText}</p>}
+                    </Card>
+                  )}
+                </motion.div>
+              ))
             )}
           </div>
         </div>

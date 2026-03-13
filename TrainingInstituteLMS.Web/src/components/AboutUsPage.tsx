@@ -153,7 +153,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
 
           {/* Info Badges - Gen Z Style */}
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -168,7 +168,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -183,7 +183,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -212,11 +212,11 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                 HOME
               </a>
               {/* Courses Dropdown */}
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => {
                   setCoursesDropdownOpen(true);
-                  const categoriesWithCourses = categories.filter(cat => 
+                  const categoriesWithCourses = categories.filter(cat =>
                     allCourses.some(course => course.categoryId === cat.categoryId)
                   );
                   if (categoriesWithCourses.length > 0 && !activeCategory) {
@@ -239,7 +239,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                   COURSES
                   <ChevronDown className={`w-4 h-4 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
                 </a>
-                
+
                 {coursesDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -252,15 +252,15 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                         {categories
                           .filter(category => allCourses.some(course => course.categoryId === category.categoryId))
                           .map((category) => (
-                          <button
-                            key={category.categoryId}
-                            onMouseEnter={() => setActiveCategory(category.categoryId)}
-                            className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
-                          >
-                            <span>{category.categoryName}</span>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                          </button>
-                        ))}
+                            <button
+                              key={category.categoryId}
+                              onMouseEnter={() => setActiveCategory(category.categoryId)}
+                              className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
+                            >
+                              <span>{category.categoryName}</span>
+                              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                            </button>
+                          ))}
                       </div>
                       <div className="dropdown-courses-panel">
                         {activeCategory && (
@@ -288,7 +288,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                   </motion.div>
                 )}
               </div>
-              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery}/>
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
               <a href="#" className="text-cyan-400 border-b-2 border-cyan-400 transition-colors text-sm font-bold">
                 ABOUT
               </a>
@@ -303,19 +303,19 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                   COMBO COURSES
                 </button>
               </div>
-              <Button 
+              <Button
                 onClick={onBookNow}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6"
               >
                 Book now
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
               >
                 VOC
               </Button>
-              <Button 
+              <Button
                 onClick={onRegister}
                 variant="outline"
                 className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 rounded-full px-6 font-semibold"
@@ -327,8 +327,8 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               <div className="flex items-center ml-6">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
                   <Phone className="w-4 h-4 text-cyan-400" />
-                  <a 
-                    href="tel:1300976097" 
+                  <a
+                    href="tel:1300976097"
                     className="text-white phone-number-link hover:text-cyan-400 transition-colors"
                   >
                     1300 976 097
@@ -338,7 +338,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden p-2 rounded-lg text-white hover:bg-slate-700 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -348,7 +348,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <motion.div 
+            <motion.div
               className="md:hidden py-6 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -415,7 +415,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                 <br />
                 <span className="text-slate-900">specialises in the delivery of short courses</span>
               </h2>
-              
+
               <Card className="bg-white border-2 border-blue-100 shadow-xl rounded-3xl mb-6">
                 <CardContent className="p-6">
                   <p className="text-gray-700 text-lg leading-relaxed mb-4">
@@ -424,7 +424,7 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
                     <span className="font-bold text-blue-600">Vocational Education & Training (VET)</span> accredited courses by the{' '}
                     <span className="font-bold text-slate-900">Australian Skills Quality Authority (ASQA)</span>.
                   </p>
-                  
+
                   <div className="mt-6">
                     <h3 className="text-xl font-bold text-slate-900 mb-4">Our short courses are including but not limited to:</h3>
                     <div className="space-y-3">
@@ -716,13 +716,13 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
               Join thousands of students who have transformed their careers with our nationally recognized training programs
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
+              <Button
                 onClick={onRegister}
                 className="bg-white text-cyan-600 hover:bg-gray-100 rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
               >
                 Enrol Now
               </Button>
-              <Button 
+              <Button
                 onClick={onViewCourses || onBack}
                 className="bg-white text-cyan-600 hover:bg-gray-100 rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
               >

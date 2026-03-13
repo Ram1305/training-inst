@@ -282,7 +282,7 @@ Your course details:
 Course: {courseName}
 {(courseCode != null ? $"Course Code: {courseCode}\n" : "")}Date: {dateStr}
 Time: {timeStr}
-Location: {locationStr}
+Location: 3/14-16 Marjorie Street, Sefton NSW 2162
 
 You can log in to the student portal at {loginUrl} using this email address and the password you just set.
 
@@ -315,7 +315,7 @@ info@safetytrainingacademy.edu.au";
 {courseCodeRow}
 <tr><td style='font-size:13px;color:#64748b;'>Date</td><td style='font-size:14px;font-weight:600;color:#334155;'>{dateStr}</td></tr>
 <tr><td style='font-size:13px;color:#64748b;'>Time</td><td style='font-size:14px;font-weight:600;color:#334155;'>{timeStr}</td></tr>
-<tr><td style='font-size:13px;color:#64748b;'>Location</td><td style='font-size:14px;font-weight:600;color:#334155;'>{locationStr}</td></tr>
+<tr><td style='font-size:13px;color:#64748b;'>Location</td><td style='font-size:14px;font-weight:600;color:#334155;'>3/14-16 Marjorie Street, Sefton NSW 2162</td></tr>
 </table>
 <table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-top:20px;background-color:#eff6ff;border-radius:8px;border:1px solid #3b82f6;'>
 <tr><td style='padding:20px;'>
@@ -426,12 +426,12 @@ Course Name: {courseName}
 Course Code: {courseCode}
 Date: {dateStr}
 Time: {timeStr}
-Location: {locationStr}
+Location: 3/14-16 Marjorie Street, Sefton NSW 2162
 
 ------------------------------------------------------------
 IMPORTANT: COURSE PREPARATION CHECKLIST
 ------------------------------------------------------------
-Course Address: {locationStr}
+Course Address: 3/14-16 Marjorie Street, Sefton NSW 2162
 
 Prior to the commencement of your course, please ensure you bring the following items:
 
@@ -513,11 +513,11 @@ Best regards,
 <tr><td style='font-size:13px;color:#64748b;'>Course Code</td><td style='font-size:14px;font-weight:600;color:#334155;'>{courseCode}</td></tr>
 <tr><td style='font-size:13px;color:#64748b;'>Date</td><td style='font-size:14px;font-weight:600;color:#334155;'>{dateStr}</td></tr>
 <tr><td style='font-size:13px;color:#64748b;'>Time</td><td style='font-size:14px;font-weight:600;color:#334155;'>{timeStr}</td></tr>
-<tr><td style='font-size:13px;color:#64748b;'>Location</td><td style='font-size:14px;font-weight:600;color:#334155;'>{locationStr}</td></tr>
+<tr><td style='font-size:13px;color:#64748b;'>Location</td><td style='font-size:14px;font-weight:600;color:#334155;'>3/14-16 Marjorie Street, Sefton NSW 2162</td></tr>
 </table>
 <div style='margin-bottom:24px;padding:16px;background-color:#fef3c7;border-radius:6px;border-left:4px solid #f59e0b;'>
 <p style='margin:0 0 12px;font-size:13px;font-weight:700;color:#92400e;'>Important: Course Preparation Checklist</p>
-<p style='margin:0 0 8px;font-size:13px;color:#334155;'>Course Address: <strong>{locationStr}</strong></p>
+<p style='margin:0 0 8px;font-size:13px;color:#334155;'>Course Address: <strong>3/14-16 Marjorie Street, Sefton NSW 2162</strong></p>
 <p style='margin:0 0 8px;font-size:13px;color:#334155;'>Prior to the commencement of your course, please ensure you bring the following items:</p>
 <ul style='margin:0 0 12px;padding-left:20px;font-size:14px;color:#334155;'>
 <li>ID reflecting your name and address.</li>

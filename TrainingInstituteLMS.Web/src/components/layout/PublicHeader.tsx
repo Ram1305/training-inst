@@ -87,7 +87,7 @@ export function PublicHeader({
           </span>
           <span className="flex items-center gap-2 font-medium">
             <MapPin className="w-4 h-4" />
-            3/14-16 Marjorie Street, Sefton NSW 2162
+            3/14-16 Marjorie street sefton nsw 2162
           </span>
         </div>
       </div>

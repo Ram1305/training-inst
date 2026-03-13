@@ -129,7 +129,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
 
           {/* Info Badges - Gen Z Style */}
           <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -144,7 +144,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -159,7 +159,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -188,11 +188,11 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                 HOME
               </button>
               {/* Courses Dropdown */}
-              <div 
+              <div
                 className="relative"
                 onMouseEnter={() => {
                   setCoursesDropdownOpen(true);
-                  const categoriesWithCourses = categories.filter(cat => 
+                  const categoriesWithCourses = categories.filter(cat =>
                     allCourses.some(course => course.categoryId === cat.categoryId)
                   );
                   if (categoriesWithCourses.length > 0 && !activeCategory) {
@@ -215,7 +215,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                   COURSES
                   <ChevronDown className={`w-4 h-4 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
                 </a>
-                
+
                 {coursesDropdownOpen && (
                   <motion.div
                     initial={{ opacity: 0, y: 10 }}
@@ -228,15 +228,15 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         {categories
                           .filter(category => allCourses.some(course => course.categoryId === category.categoryId))
                           .map((category) => (
-                          <button
-                            key={category.categoryId}
-                            onMouseEnter={() => setActiveCategory(category.categoryId)}
-                            className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
-                          >
-                            <span>{category.categoryName}</span>
-                            <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                          </button>
-                        ))}
+                            <button
+                              key={category.categoryId}
+                              onMouseEnter={() => setActiveCategory(category.categoryId)}
+                              className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
+                            >
+                              <span>{category.categoryName}</span>
+                              <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                            </button>
+                          ))}
                       </div>
                       <div className="dropdown-courses-panel">
                         {activeCategory && (
@@ -264,7 +264,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                   </motion.div>
                 )}
               </div>
-              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery}/>
+              <ResourcesDropdown onForms={onForms} onFeesRefund={onFeesRefund} onGallery={onGallery} />
               <button onClick={onAbout} className="text-white hover:text-cyan-400 transition-colors text-sm font-medium">
                 ABOUT
               </button>
@@ -279,19 +279,19 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                   COMBO COURSES
                 </button>
               </div>
-              <Button 
+              <Button
                 onClick={onBookNow}
                 className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6"
               >
                 Book now
               </Button>
-              <Button 
+              <Button
                 variant="outline"
                 className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
               >
                 VOC
               </Button>
-              <Button 
+              <Button
                 onClick={onRegister}
                 variant="outline"
                 className="border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 rounded-full px-6 font-semibold"
@@ -303,8 +303,8 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               <div className="flex items-center ml-6">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
                   <Phone className="w-4 h-4 text-cyan-400" />
-                  <a 
-                    href="tel:1300976097" 
+                  <a
+                    href="tel:1300976097"
                     className="text-white phone-number-link hover:text-cyan-400 transition-colors"
                   >
                     1300 976 097
@@ -314,7 +314,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
             </div>
 
             {/* Mobile Menu Button */}
-            <button 
+            <button
               className="md:hidden p-2 rounded-lg text-white hover:bg-slate-700 transition-colors"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             >
@@ -324,7 +324,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
 
           {/* Mobile Navigation */}
           {mobileMenuOpen && (
-            <motion.div 
+            <motion.div
               className="md:hidden py-6 border-t border-slate-700"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -489,8 +489,8 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                   <div className="mt-8 pt-8 border-t border-slate-700">
                     <div className="mb-6">
                       <h3 className="text-white text-xl font-bold mb-2">Safety Training Academy | Sydney</h3>
-                      <a 
-                        href="https://share.google/on3U2K0R0QAidiEqg" 
+                      <a
+                        href="https://share.google/on3U2K0R0QAidiEqg"
                         target="_blank"
                         rel="noopener noreferrer"
                         className="text-cyan-400 hover:text-cyan-300 text-lg font-semibold transition-colors"
@@ -498,7 +498,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                         3/14-16 Marjorie Street, Sefton NSW 2162
                       </a>
                     </div>
-                    <Button 
+                    <Button
                       className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-xl h-14 text-lg font-semibold shadow-lg shadow-cyan-500/50"
                       onClick={() => window.open('https://share.google/on3U2K0R0QAidiEqg', '_blank')}
                     >
@@ -590,7 +590,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
                       />
                     </div>
 
-                    <Button 
+                    <Button
                       type="submit"
                       className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-14 text-lg font-semibold shadow-lg"
                     >
@@ -691,13 +691,13 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               Contact us today to discuss your training needs or enroll in one of our courses
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
+              <Button
                 onClick={onRegister}
                 className="bg-white text-cyan-600 hover:bg-gray-100 rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
               >
                 Enrol Now
               </Button>
-              <Button 
+              <Button
                 onClick={onViewCourses || onBack}
                 className="bg-white text-cyan-600 hover:bg-gray-100 rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
               >
