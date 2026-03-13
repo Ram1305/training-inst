@@ -454,19 +454,19 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                 </div>
                 <CardContent className="p-8 space-y-8">
                   {/* Add Course Row */}
-                  <div className="flex gap-4 items-end w-full">
-                    <div className="flex-grow min-w-0 space-y-2">
+                  <div className="space-y-3">
+                    <div className="space-y-2">
                       <Label className="text-xs font-bold text-slate-500 uppercase tracking-wider">Choose a Course</Label>
                       <Select value={currentSelectedCourseId} onValueChange={setCurrentSelectedCourseId}>
-                        <SelectTrigger className="h-12 border-slate-200 text-base w-full overflow-hidden">
-                          <SelectValue placeholder="Select a course to add..." className="truncate" />
+                        <SelectTrigger className="h-12 border-slate-200 text-base w-full [&>span]:truncate [&>span]:block [&>span]:max-w-full">
+                          <SelectValue placeholder="Select a course to add..." />
                         </SelectTrigger>
                         <SelectContent className="max-h-[300px]">
                           {groupedCourseItems.map(group => (
                             <SelectGroup key={group.category}>
                               <SelectLabel className="font-bold text-cyan-800 bg-cyan-50">{group.category}</SelectLabel>
                               {group.items.map(course => (
-                                <SelectItem key={course.courseId} value={course.courseId} className="max-w-full">
+                                <SelectItem key={course.courseId} value={course.courseId}>
                                   <div className="flex items-center justify-between w-full gap-2">
                                     <span className="truncate flex-1">{course.courseName}</span>
                                     <span className="font-bold text-cyan-600 shrink-0">${VOC_COURSE_PRICE}</span>
@@ -486,7 +486,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                     <Button
                       onClick={handleAddCourse}
                       disabled={!currentSelectedCourseId}
-                      className="h-12 px-5 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold flex items-center gap-2 shrink-0"
+                      className="w-full h-12 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold flex items-center justify-center gap-2"
                     >
                       <Plus className="w-5 h-5" /> Add Course
                     </Button>
