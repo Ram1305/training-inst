@@ -208,11 +208,38 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
     const dates = courseDates[courseId] || [];
     const date = dates.find(d => d.courseDateId === dateId);
     if (date) {
-      const display = `${new Date(date.startDate).toLocaleDateString('en-AU')} - ${new Date(date.endDate).toLocaleDateString('en-AU')}`;
+      const display = `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} – ${new Date(date.endDate).toLocaleDateString('en-AU')} ${new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`;
       setSelectedCourses(selectedCourses.map(c =>
         c.courseId === courseId ? { ...c, courseDateId: dateId, courseDateDisplay: display } : c
       ));
     }
+  };
+
+  /**
+   * Returns a Set of date strings (YYYY-MM-DD, local) for the next N non-Sunday
+   * calendar days starting from today (inclusive).
+   */
+  const getNext6NonSundayDates = (): Set<string> => {
+    const result = new Set<string>();
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    while (result.size < 6) {
+      if (d.getDay() !== 0) { // 0 = Sunday
+        result.add(d.toISOString().split('T')[0]);
+      }
+      d.setDate(d.getDate() + 1);
+    }
+    return result;
+  };
+
+  const allowedDates = useMemo(() => getNext6NonSundayDates(), []);
+
+  const getFilteredDates = (courseId: string) => {
+    const all = courseDates[courseId] || [];
+    return all.filter(d => {
+      const dateStr = (d.startDate || '').split('T')[0];
+      return allowedDates.has(dateStr);
+    });
   };
 
   const totalPrice = selectedCourses.length * VOC_COURSE_PRICE;
@@ -522,14 +549,17 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                                 <SelectValue placeholder="Choose an available date..." />
                               </SelectTrigger>
                               <SelectContent>
-                                {courseDates[course.courseId]?.map(date => (
-                                  <SelectItem key={date.courseDateId} value={date.courseDateId}>
-                                    {new Date(date.startDate).toLocaleDateString('en-AU')} — {new Date(date.endDate).toLocaleDateString('en-AU')} ({date.availableSlots} slots left)
-                                  </SelectItem>
-                                ))}
-                                {(!courseDates[course.courseId] || courseDates[course.courseId].length === 0) && (
-                                  <SelectItem value="NO_DATES" disabled>No dates available</SelectItem>
-                                )}
+                                {(() => {
+                                  const filtered = getFilteredDates(course.courseId);
+                                  if (filtered.length === 0) {
+                                    return <SelectItem value="NO_DATES" disabled>No dates available in the next 6 days</SelectItem>;
+                                  }
+                                  return filtered.map(date => (
+                                    <SelectItem key={date.courseDateId} value={date.courseDateId}>
+                                      {new Date(date.startDate).toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short' })} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} – {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} ({date.availableSlots} slots)
+                                    </SelectItem>
+                                  ));
+                                })()}
                               </SelectContent>
                             </Select>
                             {!course.courseDateId && <p className="text-amber-600 text-xs mt-1">⚠ Please select a date to continue</p>}
