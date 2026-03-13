@@ -1925,13 +1925,20 @@ export function PublicEnrollmentWizard({
                                                   </div>
                                                   <div className="min-w-0 flex-1">
                                                     <div className="min-h-8 flex items-center">
-                                                      <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                                        <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                        {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-                                                        {date.startDate !== date.endDate && (
-                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
+                                                      <div className="flex flex-col gap-0.5">
+                                                        {date.dateType && (
+                                                          <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 uppercase tracking-widest mb-0.5">
+                                                            {date.dateType}
+                                                          </span>
                                                         )}
-                                                      </p>
+                                                        <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                          <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                          {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                                                          {date.startDate !== date.endDate && (
+                                                            <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
+                                                          )}
+                                                        </p>
+                                                      </div>
                                                     </div>
                                                     {date.location && date.location.toLowerCase() !== 'face to face' && (
                                                       <div className="min-h-6 mt-1 flex items-center">
@@ -2104,13 +2111,20 @@ export function PublicEnrollmentWizard({
                                             </div>
                                             <div className="min-w-0 flex-1">
                                               <div className="min-h-8 flex items-center">
-                                                <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                                  <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                  {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
-                                                  {date.startDate !== date.endDate && (
-                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
+                                                <div className="flex flex-col gap-0.5">
+                                                  {date.dateType && (
+                                                    <span className="inline-flex max-w-max items-center px-2 py-0.5 rounded text-[10px] font-bold bg-violet-100 text-violet-700 uppercase tracking-widest mb-0.5">
+                                                      {date.dateType}
+                                                    </span>
                                                   )}
-                                                </p>
+                                                  <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                                                    {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                                                    {date.startDate !== date.endDate && (
+                                                      <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
+                                                    )}
+                                                  </p>
+                                                </div>
                                               </div>
                                               <div className="min-h-6 mt-1 flex items-center">
                                                 {date.location && date.location.toLowerCase() !== 'face to face' && (

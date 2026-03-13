@@ -15,6 +15,9 @@ export interface CourseDateDropdownItem {
   courseDateId: string;
   startDate: string;
   endDate: string;
+  startTime?: string;
+  endTime?: string;
+  dateType?: string;
   location?: string;
   availableSlots: number;
   maxCapacity: number;

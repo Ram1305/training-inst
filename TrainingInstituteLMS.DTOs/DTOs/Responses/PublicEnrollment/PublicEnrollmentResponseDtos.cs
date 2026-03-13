@@ -21,6 +21,9 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public Guid CourseDateId { get; set; }
         public DateTime StartDate { get; set; }
         public DateTime EndDate { get; set; }
+        public TimeSpan? StartTime { get; set; }
+        public TimeSpan? EndTime { get; set; }
+        public string? DateType { get; set; }
         public string? Location { get; set; }
         public int AvailableSlots { get; set; }
         public int MaxCapacity { get; set; }

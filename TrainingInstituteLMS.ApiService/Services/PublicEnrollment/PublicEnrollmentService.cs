@@ -99,8 +99,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 .Select(cd => new CourseDateDropdownItemDto
                 {
                     CourseDateId = cd.CourseDateId,
-                    StartDate = cd.ScheduledDate,
-                    EndDate = cd.ScheduledDate,
+                    StartDate = cd.StartTime.HasValue ? cd.ScheduledDate.Add(cd.StartTime.Value) : cd.ScheduledDate,
+                    EndDate = cd.EndTime.HasValue ? cd.ScheduledDate.Add(cd.EndTime.Value) : cd.ScheduledDate,
+                    StartTime = cd.StartTime,
+                    EndTime = cd.EndTime,
+                    DateType = cd.DateType,
                     Location = cd.Location,
                     AvailableSlots = (cd.MaxCapacity ?? 30) - cd.CurrentEnrollments,
                     MaxCapacity = cd.MaxCapacity ?? 30,
