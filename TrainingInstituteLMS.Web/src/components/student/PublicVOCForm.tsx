@@ -275,8 +275,8 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
     try {
       const res = await vocManagementService.submitVOC({
         ...formData,
-        selectedCourses: selectedCourses.map(c => ({ 
-          courseId: c.courseId, 
+        selectedCourses: selectedCourses.map(c => ({
+          courseId: c.courseId,
           courseDateId: c.courseDateId,
           courseName: c.courseName,
           courseDateDisplay: c.courseDateDisplay,
@@ -351,7 +351,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                   <h1 className="text-2xl font-bold">VOC Renewal Form</h1>
                   <p className="text-slate-400 text-sm mt-2">Personal & Contact Information</p>
                 </div>
-                <CardContent className="p-8 space-y-6">
+                <CardContent className="p-4 sm:p-8 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <Label className="text-xs font-bold uppercase tracking-wider text-slate-500">First Name</Label>
@@ -452,7 +452,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                   <h1 className="text-2xl font-bold">Course Selection</h1>
                   <p className="text-slate-400 text-sm mt-2">Select the courses you wish to renew — <span className="text-cyan-400 font-bold">${VOC_COURSE_PRICE} per course</span></p>
                 </div>
-                <CardContent className="p-8 space-y-8">
+                <CardContent className="p-4 sm:p-8 space-y-8">
                   {/* Add Course Row */}
                   <div className="space-y-3">
                     <div className="space-y-2">
@@ -575,22 +575,32 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                   <h1 className="text-2xl font-bold">Secure Payment</h1>
                   <p className="text-slate-400 text-sm mt-2">Choose your preferred payment method</p>
                 </div>
-                <CardContent className="p-8 space-y-8">
+                <CardContent className="p-4 sm:p-8 space-y-8">
                   {/* Method Tabs */}
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <button
                       onClick={() => setPaymentMethod('CreditCard')}
-                      className={`p-6 rounded-2xl border-2 transition-all text-left ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-50 ring-4 ring-cyan-500/10' : 'border-slate-100 hover:border-slate-200'}`}
+                      className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-50 ring-4 ring-cyan-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
                     >
-                      <CreditCard className={`w-8 h-8 mb-3 ${paymentMethod === 'CreditCard' ? 'text-cyan-500' : 'text-slate-400'}`} />
+                      <div className="flex justify-between items-start mb-4">
+                        <CreditCard className={`w-8 h-8 ${paymentMethod === 'CreditCard' ? 'text-cyan-500' : 'text-slate-400'}`} />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'CreditCard' ? 'border-cyan-500 bg-cyan-500' : 'border-slate-300'}`}>
+                          {paymentMethod === 'CreditCard' && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
                       <p className="font-bold text-slate-800">Credit / Debit Card</p>
                       <p className="text-xs text-slate-500 mt-1">Secure card payment</p>
                     </button>
                     <button
                       onClick={() => setPaymentMethod('BankTransfer')}
-                      className={`p-6 rounded-2xl border-2 transition-all text-left ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-500/10' : 'border-slate-100 hover:border-slate-200'}`}
+                      className={`p-6 rounded-2xl border-2 transition-all text-left relative overflow-hidden ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-50 ring-4 ring-indigo-500/20' : 'border-slate-200 hover:border-slate-300 bg-white'}`}
                     >
-                      <Building className={`w-8 h-8 mb-3 ${paymentMethod === 'BankTransfer' ? 'text-indigo-500' : 'text-slate-400'}`} />
+                      <div className="flex justify-between items-start mb-4">
+                        <Building className={`w-8 h-8 ${paymentMethod === 'BankTransfer' ? 'text-indigo-500' : 'text-slate-400'}`} />
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${paymentMethod === 'BankTransfer' ? 'border-indigo-500 bg-indigo-500' : 'border-slate-300'}`}>
+                          {paymentMethod === 'BankTransfer' && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                      </div>
                       <p className="font-bold text-slate-800">Bank Transfer</p>
                       <p className="text-xs text-slate-500 mt-1">Upload proof of payment</p>
                     </button>
@@ -606,7 +616,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
 
                         {/* Cardholder Name */}
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Name on Card *</Label>
+                          <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Name on Card *</Label>
                           <Input
                             placeholder="FULL NAME AS ON CARD"
                             className={`h-11 ${cardErrors.cardName ? 'border-red-400' : ''}`}
@@ -618,7 +628,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
 
                         {/* Card Number */}
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Card Number *</Label>
+                          <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Card Number *</Label>
                           <div className="relative">
                             <Input
                               placeholder="4111 1111 1111 1111"
@@ -637,9 +647,9 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                         </div>
 
                         {/* Expiry + CVV */}
-                        <div className="grid grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                           <div className="space-y-1">
-                            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Month *</Label>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Month *</Label>
                             <Select value={cardData.expiryMonth} onValueChange={v => setCardData({ ...cardData, expiryMonth: v })}>
                               <SelectTrigger className={`h-11 ${cardErrors.expiryMonth ? 'border-red-400' : ''}`}><SelectValue placeholder="MM" /></SelectTrigger>
                               <SelectContent>
@@ -651,7 +661,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                             {cardErrors.expiryMonth && <p className="text-red-500 text-xs">{cardErrors.expiryMonth}</p>}
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Year *</Label>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">Year *</Label>
                             <Select value={cardData.expiryYear} onValueChange={v => setCardData({ ...cardData, expiryYear: v })}>
                               <SelectTrigger className={`h-11 ${cardErrors.expiryYear ? 'border-red-400' : ''}`}><SelectValue placeholder="YY" /></SelectTrigger>
                               <SelectContent>
@@ -661,7 +671,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                             {cardErrors.expiryYear && <p className="text-red-500 text-xs">{cardErrors.expiryYear}</p>}
                           </div>
                           <div className="space-y-1">
-                            <Label className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">CVV *</Label>
+                            <Label className="text-xs font-bold text-slate-500 uppercase tracking-widest">CVV *</Label>
                             <div className="relative">
                               <Input
                                 type="password"
@@ -701,16 +711,20 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
                         <div className="bg-white p-4 rounded-xl border border-indigo-100 shadow-sm space-y-3">
                           <p className="text-xs font-bold text-indigo-700 uppercase tracking-widest mb-3">Transfer ${totalPrice}.00 to:</p>
                           <div className="flex justify-between border-b pb-2">
+                            <span className="text-slate-500 text-xs">Bank:</span>
+                            <span className="text-slate-800 font-bold text-xs">Commonwealth Bank</span>
+                          </div>
+                          <div className="flex justify-between border-b pb-2">
                             <span className="text-slate-500 text-xs">Account Name:</span>
-                            <span className="text-slate-800 font-bold text-xs">Safety Training Academy PTY LTD</span>
+                            <span className="text-slate-800 font-bold text-xs">AIET College</span>
                           </div>
                           <div className="flex justify-between border-b pb-2">
                             <span className="text-slate-500 text-xs">BSB:</span>
-                            <span className="text-slate-800 font-bold">123-456</span>
+                            <span className="text-slate-800 font-bold">062141</span>
                           </div>
                           <div className="flex justify-between">
                             <span className="text-slate-500 text-xs">Account Number:</span>
-                            <span className="text-slate-800 font-bold">987654321</span>
+                            <span className="text-slate-800 font-bold">10490235</span>
                           </div>
                         </div>
                         <p className="text-xs text-indigo-600">Use <strong>{formData.firstName} {formData.lastName} {formData.phone}</strong> as your payment reference.</p>
@@ -728,10 +742,10 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
 
                         {/* Transaction ID */}
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Transaction / Reference ID *</Label>
+                          <Label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Transaction / Reference ID *</Label>
                           <Input
-                            placeholder="e.g. TXN12345678"
-                            className="h-11 bg-white"
+                            placeholder="ENTER YOUR TRANSACTION / REFERENCE ID"
+                            className="h-12 bg-white border-2 border-slate-300 focus:border-indigo-600 focus:ring-4 focus:ring-indigo-600/10 shadow-sm text-sm font-semibold tracking-wide"
                             value={transactionId}
                             onChange={e => setTransactionId(e.target.value)}
                           />
@@ -740,7 +754,7 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
 
                         {/* File Upload */}
                         <div className="space-y-1">
-                          <Label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Payment Receipt / Proof *</Label>
+                          <Label className="text-xs font-bold text-slate-600 uppercase tracking-widest">Payment Receipt / Proof *</Label>
                           <div
                             onClick={() => fileInputRef.current?.click()}
                             className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-colors ${bankFile ? 'border-green-400 bg-green-50' : 'border-indigo-200 bg-white hover:border-indigo-400'}`}
