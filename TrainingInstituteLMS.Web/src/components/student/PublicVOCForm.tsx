@@ -201,14 +201,14 @@ export function PublicVOCForm({ onBack, onLogin, onAbout, onContact, onBookNow, 
   };
 
   /**
-   * Generates the next 6 non-Sunday calendar days starting from today (inclusive).
+   * Generates the next 30 non-Sunday calendar days starting from today (inclusive).
    * Returns array of { value: 'YYYY-MM-DD', label: 'Mon, 13 Mar 2026' }
    */
   const next6NonSundayDates = useMemo(() => {
     const result: { value: string; label: string }[] = [];
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    while (result.length < 6) {
+    while (result.length < 30) {
       if (d.getDay() !== 0) { // skip Sunday
         const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
         const label = d.toLocaleDateString('en-AU', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
