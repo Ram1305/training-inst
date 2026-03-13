@@ -93,9 +93,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         {
             var today = DateTime.UtcNow.Date;
             
-            return await _context.CourseDates
+            var dates = await _context.CourseDates
                 // Align with course dropdown visibility: show any upcoming scheduled dates.
                 .Where(cd => cd.CourseId == courseId && cd.ScheduledDate >= today)
+                .ToListAsync();
+
+            return dates
                 .Select(cd => new CourseDateDropdownItemDto
                 {
                     CourseDateId = cd.CourseDateId,
@@ -110,7 +113,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     IsAvailable = cd.CurrentEnrollments < (cd.MaxCapacity ?? 30)
                 })
                 .OrderBy(cd => cd.StartDate)
-                .ToListAsync();
+                .ToList();
         }
 
         public async Task<PublicRegistrationResponseDto> RegisterUserAsync(PublicRegistrationRequestDto request)
