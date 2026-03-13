@@ -327,46 +327,54 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                     return false;
                 }
 
-                // Check if student has any enrollments
-                if (student.Enrollments.Any())
+                // 1. Enrollments and their direct dependents
+                if (student.Enrollments != null && student.Enrollments.Any())
                 {
-                    _logger.LogWarning("Cannot delete student with existing enrollments: {StudentId}", studentId);
-                    return false;
+                    var enrollmentIds = student.Enrollments.Select(e => e.EnrollmentId).ToList();
+
+                    // ExternalExamLinks (linked to enrollment)
+                    var externalLinks = await _context.ExternalExamLinks
+                        .Where(eel => enrollmentIds.Contains(eel.EnrollmentId))
+                        .ToListAsync();
+                    _context.ExternalExamLinks.RemoveRange(externalLinks);
+
+                    // Enrollments themselves
+                    _context.Enrollments.RemoveRange(student.Enrollments);
                 }
 
-                // Delete all entities that reference Student (FK Restrict) before removing the student
-
-                // 1. AdminBypass (references StudentId and QuizAttemptId)
+                // Delete all other entities that reference Student (FK Restrict)
+                
+                // 2. AdminBypass (references StudentId)
                 var adminBypasses = await _context.AdminBypasses
                     .Where(ab => ab.StudentId == studentId)
                     .ToListAsync();
                 _context.AdminBypasses.RemoveRange(adminBypasses);
 
-                // 2. PaymentProof (references StudentId)
+                // 3. PaymentProof (references StudentId)
                 var paymentProofs = await _context.PaymentProofs
                     .Where(pp => pp.StudentId == studentId)
                     .ToListAsync();
                 _context.PaymentProofs.RemoveRange(paymentProofs);
 
-                // 3. ExamResult (references StudentId)
+                // 4. ExamResult (references StudentId)
                 var examResults = await _context.ExamResults
                     .Where(er => er.StudentId == studentId)
                     .ToListAsync();
                 _context.ExamResults.RemoveRange(examResults);
 
-                // 4. CertificateApproval (references StudentId)
+                // 5. CertificateApproval (references StudentId)
                 var certificateApprovals = await _context.CertificateApprovals
                     .Where(ca => ca.StudentId == studentId)
                     .ToListAsync();
                 _context.CertificateApprovals.RemoveRange(certificateApprovals);
 
-                // 5. Certificate (references StudentId)
+                // 6. Certificate (references StudentId)
                 var certificates = await _context.Certificates
                     .Where(c => c.StudentId == studentId)
                     .ToListAsync();
                 _context.Certificates.RemoveRange(certificates);
 
-                // 6. Quiz attempts chain: QuizSectionResults -> PreEnrollmentQuizAttempts (reference StudentId)
+                // 7. Quiz attempts chain: QuizSectionResults -> PreEnrollmentQuizAttempts (reference StudentId)
                 var quizAttemptIds = await _context.PreEnrollmentQuizAttempts
                     .Where(q => q.StudentId == studentId)
                     .Select(q => q.QuizAttemptId)
@@ -385,11 +393,21 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                     _context.PreEnrollmentQuizAttempts.RemoveRange(quizAttempts);
                 }
 
-                // 7. UserRoles (references UserId)
+                // 8. User metadata (references UserId)
                 var userRoles = await _context.UserRoles
                     .Where(ur => ur.UserId == student.UserId)
                     .ToListAsync();
                 _context.UserRoles.RemoveRange(userRoles);
+
+                var notifications = await _context.Notifications
+                    .Where(n => n.UserId == student.UserId)
+                    .ToListAsync();
+                _context.Notifications.RemoveRange(notifications);
+
+                var auditLogs = await _context.AuditLogs
+                    .Where(al => al.UserId == student.UserId)
+                    .ToListAsync();
+                _context.AuditLogs.RemoveRange(auditLogs);
 
                 _context.Students.Remove(student);
                 _context.Users.Remove(student.User);

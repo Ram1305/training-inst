@@ -171,7 +171,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Student
 
                 if (!result)
                 {
-                    return NotFound(ApiResponse<bool>.FailureResponse("Student not found or cannot be deleted (may have existing enrollments)"));
+                    return NotFound(ApiResponse<bool>.FailureResponse("Student not found"));
                 }
 
                 return Ok(ApiResponse<bool>.SuccessResponse(true, "Student deleted successfully"));
