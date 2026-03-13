@@ -317,7 +317,13 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     "Database update failed. Ensure all migrations have been applied. Details: " + inner, dbEx);
             }
 
-            return await MapToResponseDto(link, request.AllowPayLater);
+            // Reload with navigation properties so CourseName is populated in the response
+            var savedLink = await _context.EnrollmentLinks
+                .Include(l => l.Course)
+                .Include(l => l.CourseDate)
+                .FirstOrDefaultAsync(l => l.LinkId == link.LinkId) ?? link;
+
+            return await MapToResponseDto(savedLink, request.AllowPayLater);
         }
 
         public async Task<EnrollmentLinkListResponseDto> GetEnrollmentLinksAsync(int page, int pageSize)
