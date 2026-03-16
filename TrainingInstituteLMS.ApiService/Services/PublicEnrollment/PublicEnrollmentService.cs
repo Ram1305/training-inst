@@ -108,9 +108,10 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     EndTime = cd.EndTime,
                     DateType = cd.DateType,
                     Location = cd.Location,
-                    AvailableSlots = (cd.MaxCapacity ?? 30) - cd.CurrentEnrollments,
-                    MaxCapacity = cd.MaxCapacity ?? 30,
-                    IsAvailable = cd.CurrentEnrollments < (cd.MaxCapacity ?? 30)
+                    // Admin side must configure MaxCapacity; treat missing value as invalid configuration
+                    AvailableSlots = (cd.MaxCapacity ?? throw new InvalidOperationException("Maximum capacity is not configured for this course date.")) - cd.CurrentEnrollments,
+                    MaxCapacity = cd.MaxCapacity ?? throw new InvalidOperationException("Maximum capacity is not configured for this course date."),
+                    IsAvailable = cd.CurrentEnrollments < (cd.MaxCapacity ?? throw new InvalidOperationException("Maximum capacity is not configured for this course date."))
                 })
                 .OrderBy(cd => cd.StartDate)
                 .ToList();
@@ -206,7 +207,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 throw new InvalidOperationException("Course date not found");
             }
 
-            if (courseDate.CurrentEnrollments >= (courseDate.MaxCapacity ?? 30))
+            if (!courseDate.MaxCapacity.HasValue)
+            {
+                throw new InvalidOperationException("Maximum capacity is required for this course date.");
+            }
+
+            if (courseDate.CurrentEnrollments >= courseDate.MaxCapacity.Value)
             {
                 throw new InvalidOperationException("This course date is fully booked");
             }
@@ -388,6 +394,27 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 return null;
             }
 
+            string? courseDateRange = null;
+            if (link.CourseDate != null)
+            {
+                var dateStr = link.CourseDate.ScheduledDate.ToString("dd/MM/yyyy");
+                string? timeStr = null;
+
+                if (link.CourseDate.StartTime.HasValue && link.CourseDate.EndTime.HasValue)
+                {
+                    var start = DateTime.Today.Add(link.CourseDate.StartTime.Value).ToString("hh:mm tt");
+                    var end = DateTime.Today.Add(link.CourseDate.EndTime.Value).ToString("hh:mm tt");
+                    timeStr = $"{start} - {end}";
+                }
+                else if (link.CourseDate.StartTime.HasValue)
+                {
+                    var start = DateTime.Today.Add(link.CourseDate.StartTime.Value).ToString("hh:mm tt");
+                    timeStr = start;
+                }
+
+                courseDateRange = timeStr != null ? $"{dateStr} {timeStr}" : dateStr;
+            }
+
             var allowPayLater = await _siteSettingsService.GetEnrollmentLinkAllowPayLaterAsync(link.LinkId);
             return new EnrollmentLinkDataDto
             {
@@ -395,7 +422,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseId = link.CourseId?.ToString(),
                 CourseName = link.Course?.CourseName,
                 CourseDateId = link.CourseDateId?.ToString(),
-                CourseDateRange = link.CourseDate?.ScheduledDate.ToString("dd/MM/yyyy"),
+                CourseDateRange = courseDateRange,
                 IsOneTimeLink = link.CompanyOrderId.HasValue && link.CourseId.HasValue,
                 AllowPayLater = allowPayLater
             };
@@ -857,7 +884,10 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             if (courseDate == null)
                 throw new InvalidOperationException("Course date not found");
 
-            if (courseDate.CurrentEnrollments >= (courseDate.MaxCapacity ?? 30))
+            if (!courseDate.MaxCapacity.HasValue)
+                throw new InvalidOperationException("Maximum capacity is required for this course date.");
+
+            if (courseDate.CurrentEnrollments >= courseDate.MaxCapacity.Value)
                 throw new InvalidOperationException("This course date is fully booked");
 
             // Respect CompanyOrder.PaymentMethod: pay_later => Pending, otherwise => Paid
@@ -980,6 +1010,27 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var course = link.Course;
             var courseDate = link.CourseDate;
 
+            string? courseDateRange = null;
+            if (courseDate != null)
+            {
+                var dateStr = courseDate.ScheduledDate.ToString("dd/MM/yyyy");
+                string? timeStr = null;
+
+                if (courseDate.StartTime.HasValue && courseDate.EndTime.HasValue)
+                {
+                    var start = DateTime.Today.Add(courseDate.StartTime.Value).ToString("hh:mm tt");
+                    var end = DateTime.Today.Add(courseDate.EndTime.Value).ToString("hh:mm tt");
+                    timeStr = $"{start} - {end}";
+                }
+                else if (courseDate.StartTime.HasValue)
+                {
+                    var start = DateTime.Today.Add(courseDate.StartTime.Value).ToString("hh:mm tt");
+                    timeStr = start;
+                }
+
+                courseDateRange = timeStr != null ? $"{dateStr} {timeStr}" : dateStr;
+            }
+
             return new EnrollmentLinkResponseDto
             {
                 LinkId = link.LinkId.ToString(),
@@ -988,9 +1039,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseId = link.CourseId?.ToString(),
                 CourseName = course?.CourseName,
                 CourseDateId = link.CourseDateId?.ToString(),
-                CourseDateRange = courseDate != null
-                    ? $"{courseDate.ScheduledDate:dd/MM/yyyy}"
-                    : null,
+                CourseDateRange = courseDateRange,
                 UniqueCode = link.UniqueCode,
                 FullUrl = $"{baseUrl}/enroll/{link.UniqueCode}",
                 QrCodeDataUrl = link.QrCodeData ?? "",
