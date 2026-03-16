@@ -1233,6 +1233,18 @@ export function AdminCourses() {
       return;
     }
 
+    // Validate max capacity (now mandatory)
+    if (!selectedMaxCapacity || !selectedMaxCapacity.trim()) {
+      setDateError('Please enter a max capacity for this session');
+      return;
+    }
+
+    const parsedCapacity = parseInt(selectedMaxCapacity, 10);
+    if (isNaN(parsedCapacity) || parsedCapacity <= 0) {
+      setDateError('Max capacity must be a positive whole number');
+      return;
+    }
+
     // Handle bulk mode
     if (isBulkMode) {
       if (!bulkEndDate) {
@@ -1268,7 +1280,7 @@ export function AdminCourses() {
         location: selectedLocation,
         meetingLink: selectedLocation === 'Online' ? selectedMeetingLink : undefined,
         isNew: true,
-        availableSpots: selectedMaxCapacity ? parseInt(selectedMaxCapacity) : 999,
+        availableSpots: parsedCapacity,
         isAvailable: true,
         teacherId: selectedTeacherId && selectedTeacherId.trim() !== '' ? selectedTeacherId : undefined,
         teacherName: selectedTeacherName && selectedTeacherName.trim() !== '' ? selectedTeacherName : undefined
@@ -1313,7 +1325,7 @@ export function AdminCourses() {
       location: selectedLocation,
       meetingLink: selectedLocation === 'Online' ? selectedMeetingLink : undefined,
       isNew: true,
-      availableSpots: selectedMaxCapacity ? parseInt(selectedMaxCapacity) : 999,
+      availableSpots: parsedCapacity,
       isAvailable: true,
       // Only store teacherId if it's a valid non-empty string
       teacherId: selectedTeacherId && selectedTeacherId.trim() !== '' ? selectedTeacherId : undefined,
@@ -2982,7 +2994,7 @@ export function AdminCourses() {
 
                   {/* Max Capacity */}
                   <div className="space-y-2">
-                    <Label>Max Capacity (Optional)</Label>
+                    <Label>Max Capacity *</Label>
                     <Input
                       type="number"
                       placeholder="e.g., 20"

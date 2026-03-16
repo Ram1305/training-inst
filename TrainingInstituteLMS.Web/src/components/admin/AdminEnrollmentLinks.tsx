@@ -297,6 +297,19 @@ export function AdminEnrollmentLinks() {
     });
   };
 
+  const formatDateTime = (dateString?: string) => {
+    if (!dateString) return 'N/A';
+    const date = new Date(dateString);
+    return `${date.toLocaleDateString('en-AU', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    })} ${date.toLocaleTimeString('en-AU', {
+      hour: '2-digit',
+      minute: '2-digit',
+    })}`;
+  };
+
   const isLinkExpired = (link: EnrollmentLinkResponse) =>
     !!link.expiresAt && new Date(link.expiresAt) < new Date();
 
@@ -681,18 +694,23 @@ export function AdminEnrollmentLinks() {
                 )}
               </div>
 
-              {/* URL */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <Label className="text-sm text-gray-500">Enrollment URL</Label>
-                <div className="flex items-center gap-2 mt-1">
-                  <Input value={selectedLink.fullUrl} readOnly className="text-sm" />
-                  <Button size="sm" variant="outline" onClick={() => handleCopyUrl(selectedLink.fullUrl)}>
-                    <Copy className="w-4 h-4" />
-                  </Button>
-                  <Button size="sm" variant="outline" onClick={() => window.open(selectedLink.fullUrl, '_blank')}>
-                    <ExternalLink className="w-4 h-4" />
-                  </Button>
+              {/* URL + Created At */}
+              <div className="bg-gray-50 rounded-lg p-4 space-y-2">
+                <div>
+                  <Label className="text-sm text-gray-500">Enrollment URL</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input value={selectedLink.fullUrl} readOnly className="text-sm" />
+                    <Button size="sm" variant="outline" onClick={() => handleCopyUrl(selectedLink.fullUrl)}>
+                      <Copy className="w-4 h-4" />
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={() => window.open(selectedLink.fullUrl, '_blank')}>
+                      <ExternalLink className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </div>
+                <p className="text-xs text-gray-500">
+                  Created at: <span className="font-medium text-gray-700">{formatDateTime(selectedLink.createdAt)}</span>
+                </p>
               </div>
 
               {/* Details */}
