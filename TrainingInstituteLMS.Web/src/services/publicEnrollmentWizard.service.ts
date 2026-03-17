@@ -226,8 +226,17 @@ export const publicEnrollmentWizardService = {
   },
 
   // Admin: Get all enrollment links
-  async getEnrollmentLinks(page: number = 1, pageSize: number = 10): Promise<ApiResponse<EnrollmentLinkListResponse>> {
-    return apiService.get<ApiResponse<EnrollmentLinkListResponse>>(`/PublicEnrollment/admin/links?page=${page}&pageSize=${pageSize}`);
+  async getEnrollmentLinks(
+    page: number = 1,
+    pageSize: number = 10,
+    linkType?: 'created' | 'company'
+  ): Promise<ApiResponse<EnrollmentLinkListResponse>> {
+    const params = new URLSearchParams({
+      page: String(page),
+      pageSize: String(pageSize),
+    });
+    if (linkType) params.set('linkType', linkType);
+    return apiService.get<ApiResponse<EnrollmentLinkListResponse>>(`/PublicEnrollment/admin/links?${params.toString()}`);
   },
 
   // Admin: Get single enrollment link

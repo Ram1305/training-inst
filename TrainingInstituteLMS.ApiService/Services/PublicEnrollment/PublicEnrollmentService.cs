@@ -349,12 +349,31 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             return await MapToResponseDto(savedLink, request.AllowPayLater);
         }
 
-        public async Task<EnrollmentLinkListResponseDto> GetEnrollmentLinksAsync(int page, int pageSize)
+        public async Task<EnrollmentLinkListResponseDto> GetEnrollmentLinksAsync(int page, int pageSize, string? linkType = null)
         {
             var query = _context.EnrollmentLinks
                 .Include(l => l.Course)
                 .Include(l => l.CourseDate)
-                .OrderByDescending(l => l.CreatedAt);
+                .AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(linkType))
+            {
+                switch (linkType.Trim().ToLowerInvariant())
+                {
+                    case "created":
+                        // Manually created links (not associated with a company order)
+                        query = query.Where(l => l.CompanyOrderId == null);
+                        break;
+                    case "company":
+                        // Links that were created as part of a company order
+                        query = query.Where(l => l.CompanyOrderId != null);
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            query = query.OrderByDescending(l => l.CreatedAt);
 
             var totalCount = await query.CountAsync();
             var links = await query

@@ -324,13 +324,14 @@ const AUTO_PASS_ATTEMPT = 4;
 
 type EnrollmentType = 'individual' | 'company';
 
-/** Single course + date for company purchase (one course, quantity of seats). */
+/** One line in company order: course + date + quantity. */
 interface CompanyCourseItem {
   courseId: string;
   courseDateId?: string;
   courseDateLabel?: string;
   price: number;
   courseName?: string;
+  quantity: number;
 }
 
 export function PublicEnrollmentWizard({
@@ -350,10 +351,12 @@ export function PublicEnrollmentWizard({
 
   // Enrollment type: Individual (default) or Company
   const [enrollmentType, setEnrollmentType] = useState<EnrollmentType>('individual');
-  // Company: single course + date + quantity (one payment link for total = price × quantity)
-  const [selectedCompanyCourse, setSelectedCompanyCourse] = useState<CompanyCourseItem | null>(null);
+  // Company: multiple courses, each with date + quantity
+  const [selectedCompanyCourses, setSelectedCompanyCourses] = useState<CompanyCourseItem[]>([]);
   const [pendingCompanyCourse, setPendingCompanyCourse] = useState<{ courseId: string; courseName: string; price: number } | null>(null);
-  const [companyQuantity, setCompanyQuantity] = useState<number>(1);
+  // When user picked a date, we need quantity before "Add to list"; store pending line (course+date) and quantity
+  const [pendingCompanyDate, setPendingCompanyDate] = useState<{ courseDateId: string; courseDateLabel: string } | null>(null);
+  const [pendingCompanyQuantity, setPendingCompanyQuantity] = useState<number>(1);
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [companyMobile, setCompanyMobile] = useState('');
@@ -757,20 +760,17 @@ export function PublicEnrollmentWizard({
     // Step 1: Course Selection
     if (currentStep === 1) {
       if (enrollmentType === 'company') {
-        if (!selectedCompanyCourse?.courseId || !selectedCompanyCourse.courseDateId) {
-          toast.error('Please select a course and a date');
+        if (selectedCompanyCourses.length === 0) {
+          toast.error('Please add at least one course');
           return;
         }
-        const qty = Math.floor(Number(companyQuantity)) || 1;
-        if (qty < 1) {
-          toast.error('Please enter a quantity of at least 1');
-          return;
-        }
-        if (qty > 500) {
-          toast.error('Maximum quantity per course is 500');
+        const invalid = selectedCompanyCourses.some((item) => !item.courseDateId || (item.quantity ?? 1) < 1 || (item.quantity ?? 1) > 500);
+        if (invalid) {
+          toast.error('Each course must have a date and quantity between 1 and 500');
           return;
         }
         setPendingCompanyCourse(null);
+        setPendingCompanyDate(null);
       } else {
         if (!selectedCourseId) {
           toast.error('Please select a course');
@@ -814,19 +814,14 @@ export function PublicEnrollmentWizard({
         }
         if (effectiveCompanyPaymentMethod === 'card') {
           if (!validateCardPayment()) return;
-          if (!selectedCompanyCourse?.courseId || !selectedCompanyCourse.courseDateId) {
-            toast.error('Please select a course and date on Step 1');
-            return;
-          }
-          const qty = Math.floor(Number(companyQuantity)) || 1;
-          if (qty < 1 || qty > 500) {
-            toast.error('Quantity must be between 1 and 500');
+          if (selectedCompanyCourses.length === 0 || selectedCompanyCourses.some((i) => !i.courseId || !i.courseDateId || (i.quantity ?? 1) < 1 || (i.quantity ?? 1) > 500)) {
+            toast.error('Please add at least one course with date and quantity (1–500) on Step 1');
             return;
           }
           setPaymentError(null);
           setPaymentProcessing(true);
           try {
-            const totalAmount = selectedCompanyCourse.price * qty;
+            const totalAmount = selectedCompanyCourses.reduce((s, i) => s + i.price * (i.quantity ?? 1), 0);
             const totalCents = Math.round(totalAmount * 100);
             const cardResult = await publicEnrollmentWizardService.processCompanyCardPayment({
               companyName: companyName.trim(),
@@ -846,12 +841,12 @@ export function PublicEnrollmentWizard({
             }
             const txId = cardResult.data.transactionId;
             setIsSubmitting(true);
-            const items = [{
-              courseId: selectedCompanyCourse.courseId,
-              courseDateId: selectedCompanyCourse.courseDateId,
-              price: selectedCompanyCourse.price,
-              quantity: qty,
-            }];
+            const items = selectedCompanyCourses.map((item) => ({
+              courseId: item.courseId,
+              courseDateId: item.courseDateId!,
+              price: item.price,
+              quantity: item.quantity ?? 1,
+            }));
             const request = {
               companyEmail: companyEmail.trim(),
               companyName: companyName.trim(),
@@ -877,25 +872,20 @@ export function PublicEnrollmentWizard({
           return;
         }
         // Pay Later or Bank Transfer
-        if (!selectedCompanyCourse?.courseId || !selectedCompanyCourse.courseDateId) {
-          toast.error('Please select a course and date on Step 1');
-          return;
-        }
-        const qty = Math.floor(Number(companyQuantity)) || 1;
-        if (qty < 1 || qty > 500) {
-          toast.error('Quantity must be between 1 and 500');
+        if (selectedCompanyCourses.length === 0 || selectedCompanyCourses.some((i) => !i.courseId || !i.courseDateId || (i.quantity ?? 1) < 1 || (i.quantity ?? 1) > 500)) {
+          toast.error('Please add at least one course with date and quantity (1–500) on Step 1');
           return;
         }
         setIsSubmitting(true);
         setPaymentError(null);
         const companyPayMethod = allowPayLater ? 'pay_later' : paymentMethod;
         try {
-          const items = [{
-            courseId: selectedCompanyCourse.courseId,
-            courseDateId: selectedCompanyCourse.courseDateId,
-            price: selectedCompanyCourse.price,
-            quantity: qty,
-          }];
+          const items = selectedCompanyCourses.map((item) => ({
+            courseId: item.courseId,
+            courseDateId: item.courseDateId!,
+            price: item.price,
+            quantity: item.quantity ?? 1,
+          }));
           const request = {
             companyEmail: companyEmail.trim(),
             companyName: companyName.trim(),
@@ -1745,9 +1735,11 @@ export function PublicEnrollmentWizard({
                           ? courses.find((c) => c.courseId === pendingCompanyCourse.courseId)
                           : selectedCourseId
                             ? getSelectedCourse()
-                            : selectedCompanyCourse
-                              ? courses.find((c) => c.courseId === selectedCompanyCourse.courseId)
-                              : null;
+                            : selectedCompanyCourses.length > 0
+                              ? courses.find((c) => c.courseId === selectedCompanyCourses[0].courseId)
+                              : pendingCompanyCourse
+                                ? courses.find((c) => c.courseId === pendingCompanyCourse.courseId)
+                                : null;
                     const fallbackImage = 'https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=200';
                     return previewCourse ? (
                       <ImageWithFallback
@@ -1775,9 +1767,9 @@ export function PublicEnrollmentWizard({
                             const next = v as EnrollmentType;
                             setEnrollmentType(next);
                             if (next === 'individual') {
-                              setSelectedCompanyCourse(null);
+                              setSelectedCompanyCourses([]);
                               setPendingCompanyCourse(null);
-                              setCompanyQuantity(1);
+                              setPendingCompanyDate(null);
                             } else if (next === 'company' && preSelectedCourseId && typeof preSelectedCoursePrice === 'number') {
                               const c = courses.find((x) => x.courseId === preSelectedCourseId);
                               setPendingCompanyCourse({
@@ -1825,14 +1817,14 @@ export function PublicEnrollmentWizard({
                         ) : (
                           <div className="space-y-2">
                             <Select
-                              value={pendingCompanyCourse ? `${pendingCompanyCourse.courseId}|${pendingCompanyCourse.price}` : selectedCompanyCourse ? `${selectedCompanyCourse.courseId}|${selectedCompanyCourse.price}` : ''}
+                              value={pendingCompanyCourse ? `${pendingCompanyCourse.courseId}|${pendingCompanyCourse.price}` : ''}
                               onValueChange={(value) => {
                                 const [courseId, priceStr] = value.split('|');
                                 const price = parseFloat(priceStr);
                                 const c = courses.find((x) => x.courseId === courseId);
                                 if (c) {
                                   setPendingCompanyCourse({ courseId: c.courseId, courseName: c.courseName, price: price });
-                                  setSelectedCompanyCourse(null);
+                                  setPendingCompanyDate(null);
                                   setSelectedCourseId(c.courseId);
                                   setSelectedCourseDateId('');
                                 }
@@ -1863,63 +1855,53 @@ export function PublicEnrollmentWizard({
                                 )}
                               </SelectContent>
                             </Select>
-                            {selectedCompanyCourse && (
-                              <div className="mt-3 flex items-center justify-between rounded-lg border border-violet-200 bg-violet-50/50 p-3">
-                                <div className="text-sm min-w-0 flex-1 mr-3">
-                                  <span className="font-medium block truncate">
-                                    {selectedCompanyCourse.courseName || courses.find((c) => c.courseId === selectedCompanyCourse.courseId)?.courseName || selectedCompanyCourse.courseId} – ${selectedCompanyCourse.price} per seat
-                                  </span>
-                                  {selectedCompanyCourse.courseDateLabel && (
-                                    <p className="text-gray-500 text-xs mt-0.5 truncate">Date: {selectedCompanyCourse.courseDateLabel}</p>
-                                  )}
-                                </div>
-                                <Button
-                                  type="button"
-                                  variant="ghost"
-                                  size="sm"
-                                  className="text-red-600 hover:text-red-700 hover:bg-red-50 shrink-0"
-                                  onClick={() => {
-                                    setSelectedCompanyCourse(null);
-                                    setPendingCompanyCourse(null);
-                                    setSelectedCourseId('');
-                                    setSelectedCourseDateId('');
-                                  }}
-                                >
-                                  <X className="w-4 h-4" />
-                                </Button>
-                              </div>
+                            {selectedCompanyCourses.length > 0 && (
+                              <ul className="mt-3 space-y-2 rounded-lg border border-violet-200 bg-violet-50/50 p-3">
+                                {selectedCompanyCourses.map((item, idx) => (
+                                  <li
+                                    key={`${item.courseId}-${item.courseDateId}-${idx}`}
+                                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-white px-3 py-2 border border-violet-100"
+                                  >
+                                    <div className="text-sm min-w-0 flex-1">
+                                      <span className="font-medium block truncate">
+                                        {item.courseName || courses.find((c) => c.courseId === item.courseId)?.courseName || item.courseId} – ${item.price} × {item.quantity}
+                                      </span>
+                                      {item.courseDateLabel && (
+                                        <p className="text-gray-500 text-xs mt-0.5 truncate">Date: {item.courseDateLabel}</p>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        max={500}
+                                        value={item.quantity}
+                                        onChange={(e) => {
+                                          const v = parseInt(e.target.value, 10);
+                                          if (Number.isNaN(v)) return;
+                                          const q = v < 1 ? 1 : v > 500 ? 500 : v;
+                                          setSelectedCompanyCourses((prev) => prev.map((x, i) => (i === idx ? { ...x, quantity: q } : x)));
+                                        }}
+                                        className="w-16 h-8 rounded-lg border border-violet-200 text-sm"
+                                      />
+                                      <span className="text-xs font-medium text-violet-700">= ${(item.price * item.quantity).toFixed(2)}</span>
+                                      <Button
+                                        type="button"
+                                        variant="ghost"
+                                        size="sm"
+                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => setSelectedCompanyCourses((prev) => prev.filter((_, i) => i !== idx))}
+                                      >
+                                        <X className="w-4 h-4" />
+                                      </Button>
+                                    </div>
+                                  </li>
+                                ))}
+                              </ul>
                             )}
-                            {selectedCompanyCourse && (
-                              <div className="mt-3">
-                                <Label className="block text-sm font-medium text-gray-700 mb-2">
-                                  Number of seats <span className="text-red-500">*</span>
-                                </Label>
-                                <Input
-                                  type="number"
-                                  min={1}
-                                  max={500}
-                                  value={companyQuantity}
-                                  onChange={(e) => {
-                                    const raw = e.target.value;
-                                    if (raw === '') {
-                                      setCompanyQuantity(1);
-                                      return;
-                                    }
-                                    const v = parseInt(raw, 10);
-                                    if (!Number.isNaN(v)) setCompanyQuantity(v < 1 ? 1 : v > 500 ? 500 : v);
-                                  }}
-                                  onBlur={() => {
-                                    if (companyQuantity < 1) setCompanyQuantity(1);
-                                    if (companyQuantity > 500) setCompanyQuantity(500);
-                                  }}
-                                  className="w-24 rounded-xl border-2 border-violet-200"
-                                />
-                                <p className="text-xs text-gray-500 mt-1">Min 1, max 500. One payment link for total.</p>
-                              </div>
-                            )}
-                            {selectedCompanyCourse && (
+                            {selectedCompanyCourses.length > 0 && (
                               <p className="text-sm font-semibold text-violet-700 mt-2">
-                                Total: ${selectedCompanyCourse.price} × {companyQuantity} = ${(selectedCompanyCourse.price * companyQuantity).toFixed(2)}
+                                Order total: ${selectedCompanyCourses.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}
                               </p>
                             )}
                             {pendingCompanyCourse && (
@@ -1961,16 +1943,8 @@ export function PublicEnrollmentWizard({
                                                   const courseDateLabel = date.startDate !== date.endDate
                                                     ? `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} – ${new Date(date.endDate).toLocaleDateString('en-AU')} ${new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`
                                                     : `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`;
-                                                  setSelectedCompanyCourse({
-                                                    courseId: pendingCompanyCourse.courseId,
-                                                    courseName: pendingCompanyCourse.courseName,
-                                                    price: pendingCompanyCourse.price,
-                                                    courseDateId: date.courseDateId,
-                                                    courseDateLabel,
-                                                  });
-                                                  setPendingCompanyCourse(null);
-                                                  setSelectedCourseId('');
-                                                  setSelectedCourseDateId('');
+                                                  setPendingCompanyDate({ courseDateId: date.courseDateId, courseDateLabel });
+                                                  setPendingCompanyQuantity(1);
                                                 }}
                                                 className={`
                                               relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
@@ -2029,6 +2003,57 @@ export function PublicEnrollmentWizard({
                                         </button>
                                       </div>
                                     )}
+                                  </div>
+                                )}
+                                {pendingCompanyDate && pendingCompanyCourse && (
+                                  <div className="mt-4 p-4 rounded-xl border-2 border-violet-200 bg-white flex flex-wrap items-end gap-3">
+                                    <div>
+                                      <Label className="block text-sm font-medium text-gray-700 mb-1">Quantity for this course <span className="text-red-500">*</span></Label>
+                                      <Input
+                                        type="number"
+                                        min={1}
+                                        max={500}
+                                        value={pendingCompanyQuantity}
+                                        onChange={(e) => {
+                                          const v = parseInt(e.target.value, 10);
+                                          if (!Number.isNaN(v)) setPendingCompanyQuantity(v < 1 ? 1 : v > 500 ? 500 : v);
+                                        }}
+                                        className="w-24 rounded-xl border-2 border-violet-200"
+                                      />
+                                    </div>
+                                    <Button
+                                      type="button"
+                                      onClick={() => {
+                                        if (!pendingCompanyCourse || !pendingCompanyDate) return;
+                                        setSelectedCompanyCourses((prev) => [
+                                          ...prev,
+                                          {
+                                            courseId: pendingCompanyCourse.courseId,
+                                            courseName: pendingCompanyCourse.courseName,
+                                            price: pendingCompanyCourse.price,
+                                            courseDateId: pendingCompanyDate.courseDateId,
+                                            courseDateLabel: pendingCompanyDate.courseDateLabel,
+                                            quantity: pendingCompanyQuantity,
+                                          },
+                                        ]);
+                                        setPendingCompanyCourse(null);
+                                        setPendingCompanyDate(null);
+                                        setPendingCompanyQuantity(1);
+                                        setSelectedCourseId('');
+                                        setSelectedCourseDateId('');
+                                      }}
+                                      className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
+                                    >
+                                      Add to list
+                                    </Button>
+                                    <Button
+                                      type="button"
+                                      variant="outline"
+                                      onClick={() => setPendingCompanyDate(null)}
+                                      className="rounded-xl"
+                                    >
+                                      Cancel
+                                    </Button>
                                   </div>
                                 )}
                               </div>
@@ -2387,27 +2412,29 @@ export function PublicEnrollmentWizard({
                 <div className="space-y-2 text-sm">
                   {enrollmentType === 'company' ? (
                     <>
-                      {selectedCompanyCourse && (
-                        <>
+                      {selectedCompanyCourses.length > 0 && selectedCompanyCourses.map((item, i) => (
+                        <div key={`${item.courseId}-${item.courseDateId}-${i}`} className="space-y-1 pb-2 border-b border-blue-100 last:border-0 last:pb-0">
                           <div className="flex justify-between gap-2">
                             <span className="text-gray-600">Course:</span>
-                            <span className="font-medium">{selectedCompanyCourse.courseName || selectedCompanyCourse.courseId}</span>
+                            <span className="font-medium">{item.courseName || item.courseId}</span>
                           </div>
-                          {selectedCompanyCourse.courseDateLabel && (
+                          {item.courseDateLabel && (
                             <div className="flex justify-between gap-2">
                               <span className="text-gray-600">Date:</span>
-                              <span className="font-medium text-xs">{selectedCompanyCourse.courseDateLabel}</span>
+                              <span className="font-medium text-xs">{item.courseDateLabel}</span>
                             </div>
                           )}
                           <div className="flex justify-between gap-2">
-                            <span className="text-gray-600">Unit price × Quantity:</span>
-                            <span className="font-medium">${selectedCompanyCourse.price} × {companyQuantity}</span>
+                            <span className="text-gray-600">Unit price × Qty:</span>
+                            <span className="font-medium">${item.price} × {item.quantity} = ${(item.price * item.quantity).toFixed(2)}</span>
                           </div>
-                          <div className="flex justify-between pt-2 border-t border-blue-200">
-                            <span className="font-semibold text-blue-900">Total:</span>
-                            <span className="font-bold text-blue-900 text-lg">${(selectedCompanyCourse.price * companyQuantity).toFixed(2)}</span>
-                          </div>
-                        </>
+                        </div>
+                      ))}
+                      {selectedCompanyCourses.length > 0 && (
+                        <div className="flex justify-between pt-2 border-t border-blue-200">
+                          <span className="font-semibold text-blue-900">Total:</span>
+                          <span className="font-bold text-blue-900 text-lg">${selectedCompanyCourses.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}</span>
+                        </div>
                       )}
                     </>
                   ) : (

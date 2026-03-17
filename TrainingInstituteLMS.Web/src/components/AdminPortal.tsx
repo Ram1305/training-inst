@@ -57,6 +57,7 @@ type AdminPage =
   | 'lln-assessment'
   | 'enrollment-form'
   | 'enrollment-links'
+  | 'company-enrollment'
   | 'exam'
   | 'certificates'
   | 'payments'
@@ -76,6 +77,7 @@ const VALID_ADMIN_PAGES: AdminPage[] = [
   'lln-assessment',
   'enrollment-form',
   'enrollment-links',
+  'company-enrollment',
   'exam',
   'certificates',
   'payments',
@@ -157,6 +159,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'lln-assessment', name: 'LLN Assessment', icon: FileQuestion },
     { id: 'enrollment-form', name: 'Enrollment Form', icon: FileEdit },
     { id: 'enrollment-links', name: 'Enrollment Links', icon: Link2 },
+    { id: 'company-enrollment', name: 'Company Enrollment', icon: Building2 },
     { id: 'exam', name: 'Exam', icon: FileCheck },
     { id: 'certificates', name: 'Certificates', icon: Award },
     { id: 'payments', name: 'Payments', icon: CreditCard },
@@ -221,7 +224,9 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
           />
         );
       case 'enrollment-links':
-        return <AdminEnrollmentLinks />;
+        return <AdminEnrollmentLinks linkType="created" />;
+      case 'company-enrollment':
+        return <AdminEnrollmentLinks linkType="company" />;
       case 'exam':
         return <AdminExams />;
       case 'certificates':

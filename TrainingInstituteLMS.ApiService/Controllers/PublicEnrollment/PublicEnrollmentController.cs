@@ -258,11 +258,11 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         /// Get all enrollment links
         /// </summary>
         [HttpGet("admin/links")]
-        public async Task<IActionResult> GetEnrollmentLinks([FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        public async Task<IActionResult> GetEnrollmentLinks([FromQuery] int page = 1, [FromQuery] int pageSize = 10, [FromQuery] string? linkType = null)
         {
             try
             {
-                var result = await _publicEnrollmentService.GetEnrollmentLinksAsync(page, pageSize);
+                var result = await _publicEnrollmentService.GetEnrollmentLinksAsync(page, pageSize, linkType);
                 return Ok(ApiResponse<object>.SuccessResponse(result));
             }
             catch (Exception ex)

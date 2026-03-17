@@ -17,7 +17,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         
         // Enrollment Links (Admin)
         Task<EnrollmentLinkResponseDto> CreateEnrollmentLinkAsync(CreateEnrollmentLinkRequestDto request, Guid createdBy);
-        Task<EnrollmentLinkListResponseDto> GetEnrollmentLinksAsync(int page, int pageSize);
+        Task<EnrollmentLinkListResponseDto> GetEnrollmentLinksAsync(int page, int pageSize, string? linkType = null);
         Task<EnrollmentLinkResponseDto?> GetEnrollmentLinkAsync(Guid linkId);
         Task<EnrollmentLinkDataDto?> GetEnrollmentLinkByCodeAsync(string code);
         Task<bool> ToggleLinkStatusAsync(Guid linkId);

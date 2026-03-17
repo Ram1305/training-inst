@@ -36,7 +36,11 @@ import {
   type EnrollmentLinkStudentsResponse
 } from '../../services/publicEnrollmentWizard.service';
 
-export function AdminEnrollmentLinks() {
+interface AdminEnrollmentLinksProps {
+  linkType?: 'created' | 'company';
+}
+
+export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
   const [links, setLinks] = useState<EnrollmentLinkResponse[]>([]);
   const [courses, setCourses] = useState<CourseDropdownItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -84,7 +88,7 @@ export function AdminEnrollmentLinks() {
   const fetchLinks = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await publicEnrollmentWizardService.getEnrollmentLinks(currentPage, pageSize);
+      const response = await publicEnrollmentWizardService.getEnrollmentLinks(currentPage, pageSize, linkType);
       if (response.success && response.data) {
         setLinks(response.data.links);
         setTotalCount(response.data.totalCount);
@@ -94,7 +98,7 @@ export function AdminEnrollmentLinks() {
     } finally {
       setLoading(false);
     }
-  }, [currentPage, pageSize]);
+  }, [currentPage, pageSize, linkType]);
 
   // Fetch courses for dropdown
   const fetchCourses = async () => {
@@ -321,21 +325,31 @@ export function AdminEnrollmentLinks() {
 
   const totalPages = Math.ceil(totalCount / pageSize);
 
+  const isCompanyView = linkType === 'company';
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl text-gray-900 mb-2">Enrollment Links</h1>
-          <p className="text-gray-600">Generate and manage enrollment links with QR codes for bulk student enrollment</p>
+          <h1 className="text-3xl text-gray-900 mb-2">
+            {isCompanyView ? 'Company Enrollment Links' : 'Enrollment Links'}
+          </h1>
+          <p className="text-gray-600">
+            {isCompanyView
+              ? 'View and manage enrollment links that were created automatically from company orders.'
+              : 'Generate and manage enrollment links with QR codes for bulk student enrollment.'}
+          </p>
         </div>
-        <Button
-          onClick={() => setCreateDialogOpen(true)}
-          className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Create New Link
-        </Button>
+        {!isCompanyView && (
+          <Button
+            onClick={() => setCreateDialogOpen(true)}
+            className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Create New Link
+          </Button>
+        )}
       </div>
 
       {/* Stats Cards */}
@@ -386,8 +400,14 @@ export function AdminEnrollmentLinks() {
       {/* Links Table */}
       <Card className="border-violet-100">
         <CardHeader>
-          <CardTitle>Enrollment Links ({totalCount})</CardTitle>
-          <CardDescription>Manage your enrollment links and QR codes</CardDescription>
+          <CardTitle>
+            {isCompanyView ? 'Company Enrollment Links' : 'Enrollment Links'} ({totalCount})
+          </CardTitle>
+          <CardDescription>
+            {isCompanyView
+              ? 'These links are tied to company orders and inherit their payment settings.'
+              : 'Manage your enrollment links and QR codes.'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {loading ? (
@@ -398,11 +418,15 @@ export function AdminEnrollmentLinks() {
           ) : links.length === 0 ? (
             <div className="text-center py-12">
               <Link2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-500 mb-4">No enrollment links yet</p>
-              <Button onClick={() => setCreateDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Create First Link
-              </Button>
+              <p className="text-gray-500 mb-4">
+                {isCompanyView ? 'No company enrollment links yet' : 'No enrollment links yet'}
+              </p>
+              {!isCompanyView && (
+                <Button onClick={() => setCreateDialogOpen(true)}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Create First Link
+                </Button>
+              )}
             </div>
           ) : (
             <>
