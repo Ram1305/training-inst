@@ -159,7 +159,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'lln-assessment', name: 'LLN Assessment', icon: FileQuestion },
     { id: 'enrollment-form', name: 'Enrollment Form', icon: FileEdit },
     { id: 'enrollment-links', name: 'Enrollment Links', icon: Link2 },
-    { id: 'company-enrollment', name: 'Company Enrollment', icon: Building2 },
+    { id: 'company-enrollment', name: 'Company Enrollment', icon: Link2 },
     { id: 'exam', name: 'Exam', icon: FileCheck },
     { id: 'certificates', name: 'Certificates', icon: Award },
     { id: 'payments', name: 'Payments', icon: CreditCard },

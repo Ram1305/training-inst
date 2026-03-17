@@ -868,16 +868,19 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
 
           {/* Drag-drop questions - Status indicator */}
           {currentQuestion.type === 'drag-drop' && (
-            <div className="flex justify-center mt-6">
+            <div className="flex flex-col items-center mt-6 space-y-3">
               {answers[currentQuestion.id] === 'completed' ? (
-                <div className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold">
+                <div className="px-6 py-3 bg-green-500 text-white rounded-lg font-semibold text-center">
                   ✓ Marked Complete
                 </div>
               ) : (
-                <div className="px-6 py-3 bg-gray-100 text-gray-600 rounded-lg border">
+                <div className="px-6 py-3 bg-gray-100 text-gray-600 rounded-lg border text-center">
                   Complete the drag and drop activity above to continue
                 </div>
               )}
+              <p className="text-xs sm:text-sm text-gray-600 text-center md:hidden">
+                For mobile users: drag-and-drop works via long press. Press and hold an item, then drag it to the correct spot.
+              </p>
             </div>
           )}
 
