@@ -92,13 +92,27 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         public async Task<List<CourseDateDropdownItemDto>> GetCourseDatesAsync(Guid courseId)
         {
             var today = DateTime.UtcNow.Date;
-            
+
             var dates = await _context.CourseDates
                 // Align with course dropdown visibility: show any upcoming scheduled dates.
                 .Where(cd => cd.CourseId == courseId && cd.ScheduledDate >= today)
                 .ToListAsync();
 
-            return dates
+            // Filter out misconfigured dates that have no capacity set so they don't break the public flow
+            var validDates = dates
+                .Where(cd => cd.MaxCapacity.HasValue)
+                .ToList();
+
+            if (validDates.Count != dates.Count)
+            {
+                var missingCapacityCount = dates.Count - validDates.Count;
+                _logger.LogWarning(
+                    "GetCourseDatesAsync skipped {MissingCapacityCount} course date(s) for CourseId {CourseId} because MaxCapacity was not configured.",
+                    missingCapacityCount,
+                    courseId);
+            }
+
+            return validDates
                 .Select(cd => new CourseDateDropdownItemDto
                 {
                     CourseDateId = cd.CourseDateId,
@@ -108,10 +122,9 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     EndTime = cd.EndTime,
                     DateType = cd.DateType,
                     Location = cd.Location,
-                    // Admin side must configure MaxCapacity; treat missing value as invalid configuration
-                    AvailableSlots = (cd.MaxCapacity ?? throw new InvalidOperationException("Maximum capacity is not configured for this course date.")) - cd.CurrentEnrollments,
-                    MaxCapacity = cd.MaxCapacity ?? throw new InvalidOperationException("Maximum capacity is not configured for this course date."),
-                    IsAvailable = cd.CurrentEnrollments < (cd.MaxCapacity ?? throw new InvalidOperationException("Maximum capacity is not configured for this course date."))
+                    AvailableSlots = (cd.MaxCapacity ?? 0) - cd.CurrentEnrollments,
+                    MaxCapacity = cd.MaxCapacity ?? 0,
+                    IsAvailable = cd.CurrentEnrollments < (cd.MaxCapacity ?? 0)
                 })
                 .OrderBy(cd => cd.StartDate)
                 .ToList();
@@ -209,7 +222,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
             if (!courseDate.MaxCapacity.HasValue)
             {
-                throw new InvalidOperationException("Maximum capacity is required for this course date.");
+                _logger.LogError(
+                    "EnrollInCourseAsync: CourseDate {CourseDateId} for Course {CourseId} has no MaxCapacity configured.",
+                    courseDate.CourseDateId,
+                    courseDate.CourseId);
+                throw new InvalidOperationException("This course date is currently unavailable. Please contact the training provider.");
             }
 
             if (courseDate.CurrentEnrollments >= courseDate.MaxCapacity.Value)
@@ -885,7 +902,13 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 throw new InvalidOperationException("Course date not found");
 
             if (!courseDate.MaxCapacity.HasValue)
-                throw new InvalidOperationException("Maximum capacity is required for this course date.");
+            {
+                _logger.LogError(
+                    "CompleteEnrollmentViaLinkAsync: CourseDate {CourseDateId} for Course {CourseId} has no MaxCapacity configured.",
+                    courseDate.CourseDateId,
+                    courseDate.CourseId);
+                throw new InvalidOperationException("This course date is currently unavailable. Please contact the training provider.");
+            }
 
             if (courseDate.CurrentEnrollments >= courseDate.MaxCapacity.Value)
                 throw new InvalidOperationException("This course date is fully booked");

@@ -6,7 +6,7 @@ import { Input } from '../ui/input';
 import { Label } from '../ui/label';
 import { Textarea } from '../ui/textarea';
 import { Badge } from '../ui/badge';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from '../ui/alert-dialog';
@@ -446,6 +446,12 @@ export function AdminCourses() {
   const [courseDates, setCourseDates] = useState<LocalCourseDate[]>([]);
   const [isLoadingDates, setIsLoadingDates] = useState(false);
   const [isDeletingDate, setIsDeletingDate] = useState<string | null>(null);
+  // Inline edit for existing course dates (time & capacity)
+  const [editingDate, setEditingDate] = useState<LocalCourseDate | null>(null);
+  const [editStartTime, setEditStartTime] = useState('');
+  const [editEndTime, setEditEndTime] = useState('');
+  const [editMaxCapacity, setEditMaxCapacity] = useState('');
+  const [isSavingEditDate, setIsSavingEditDate] = useState(false);
   
   // Form data
   const [formData, setFormData] = useState<CourseFormData>(initialFormData);
@@ -1529,6 +1535,89 @@ export function AdminCourses() {
       }
     } catch (err) {
       console.error('Error toggling date status:', err);
+    }
+  };
+
+  // Open edit dialog for an existing date (time & capacity)
+  const handleOpenEditDate = (date: LocalCourseDate) => {
+    if (!date.courseDateId || date.isNew) return;
+    setEditingDate(date);
+    setEditStartTime(date.startTime ?? '');
+    setEditEndTime(date.endTime ?? '');
+    // Derive current max capacity from enrollments + available spots (when finite)
+    const currentEnrollments = date.currentEnrollments ?? 0;
+    const availableSpots = date.availableSpots ?? 0;
+    const derivedMax = availableSpots >= 999 ? '' : String(currentEnrollments + availableSpots);
+    setEditMaxCapacity(derivedMax);
+  };
+
+  const handleCloseEditDate = () => {
+    setEditingDate(null);
+    setEditStartTime('');
+    setEditEndTime('');
+    setEditMaxCapacity('');
+    setIsSavingEditDate(false);
+  };
+
+  const handleSaveEditDate = async () => {
+    if (!editingDate || !editingDate.courseDateId) return;
+
+    const trimmedStart = editStartTime.trim();
+    const trimmedEnd = editEndTime.trim();
+    const trimmedMax = editMaxCapacity.trim();
+
+    if (!trimmedStart || !trimmedEnd) {
+      setDateError('Please enter both start and end time for this session');
+      return;
+    }
+
+    let parsedCapacity: number | undefined = undefined;
+    if (trimmedMax) {
+      const parsed = parseInt(trimmedMax, 10);
+      if (isNaN(parsed) || parsed <= 0) {
+        setDateError('Max capacity must be a positive whole number');
+        return;
+      }
+      parsedCapacity = parsed;
+    }
+
+    setIsSavingEditDate(true);
+    setDateError(null);
+    try {
+      await courseDateService.updateCourseDate(editingDate.courseDateId, {
+        startTime: trimmedStart,
+        endTime: trimmedEnd,
+        maxCapacity: parsedCapacity,
+      });
+
+      // Refresh dates (only today and future), preserving any unsaved new ones
+      if (managingDatesForCourse) {
+        const today = new Date();
+        const fromDate = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const refreshResponse = await courseDateService.getCourseDatesForCourse(managingDatesForCourse.id, false, fromDate);
+        if (refreshResponse.success && refreshResponse.data) {
+          const filtered = refreshResponse.data.filter((d) => {
+            const dStr = typeof d.scheduledDate === 'string'
+              ? (d.scheduledDate.includes('T') ? d.scheduledDate.split('T')[0] : d.scheduledDate)
+              : (d.scheduledDate as unknown as Date)?.toISOString?.()?.split('T')[0] ?? '';
+            return dStr >= fromDate;
+          });
+          const existingDates: LocalCourseDate[] = filtered.map(d => ({
+            ...d,
+            isNew: false
+          }));
+          const newDates = courseDates.filter(d => d.isNew);
+          setCourseDates([...existingDates, ...newDates].sort((a, b) =>
+            new Date(a.scheduledDate).getTime() - new Date(b.scheduledDate).getTime()
+          ));
+        }
+      }
+
+      handleCloseEditDate();
+    } catch (err) {
+      console.error('Error updating course date:', err);
+      setDateError('Failed to update course date. Please try again.');
+      setIsSavingEditDate(false);
     }
   };
 
@@ -3236,6 +3325,18 @@ export function AdminCourses() {
                                   </span>
                                 )}
 
+                                {/* Edit time & capacity (only for saved dates) */}
+                                {!date.isNew && date.courseDateId && (
+                                  <Button
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() => handleOpenEditDate(date)}
+                                    className="text-violet-600 hover:text-violet-700"
+                                  >
+                                    Edit
+                                  </Button>
+                                )}
+
                                 {/* Toggle Status Button (only for saved dates) */}
                                 {!date.isNew && date.courseDateId && (
                                   <Button
@@ -3312,6 +3413,87 @@ export function AdminCourses() {
               Close
             </Button>
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Course Date Dialog */}
+      <Dialog open={!!editingDate} onOpenChange={(open) => !open && handleCloseEditDate()}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Edit Session</DialogTitle>
+            <DialogDescription>
+              Update the start/end time and capacity for this scheduled session.
+            </DialogDescription>
+          </DialogHeader>
+
+          {editingDate && (
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm text-gray-600">Date</Label>
+                <p className="text-sm font-medium">
+                  {formatDateForDisplay(editingDate.scheduledDate)}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label htmlFor="editStartTime">Start Time</Label>
+                  <Input
+                    id="editStartTime"
+                    type="time"
+                    value={editStartTime}
+                    onChange={(e) => setEditStartTime(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="editEndTime">End Time</Label>
+                  <Input
+                    id="editEndTime"
+                    type="time"
+                    value={editEndTime}
+                    onChange={(e) => setEditEndTime(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="editMaxCapacity">Max Capacity (spots)</Label>
+                <Input
+                  id="editMaxCapacity"
+                  type="number"
+                  min={1}
+                  placeholder="e.g. 20"
+                  value={editMaxCapacity}
+                  onChange={(e) => setEditMaxCapacity(e.target.value)}
+                />
+                {editingDate.currentEnrollments !== undefined && editingDate.currentEnrollments > 0 && (
+                  <p className="mt-1 text-xs text-gray-500">
+                    Currently {editingDate.currentEnrollments} student{editingDate.currentEnrollments !== 1 ? 's' : ''} enrolled.
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={handleCloseEditDate} disabled={isSavingEditDate}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSaveEditDate}
+              disabled={isSavingEditDate || !editingDate}
+              className="bg-gradient-to-r from-violet-600 to-fuchsia-600"
+            >
+              {isSavingEditDate ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 
