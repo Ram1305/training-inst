@@ -354,9 +354,6 @@ export function PublicEnrollmentWizard({
   // Company: multiple courses, each with date + quantity
   const [selectedCompanyCourses, setSelectedCompanyCourses] = useState<CompanyCourseItem[]>([]);
   const [pendingCompanyCourse, setPendingCompanyCourse] = useState<{ courseId: string; courseName: string; price: number } | null>(null);
-  // When user picked a date, we need quantity before "Add to list"; store pending line (course+date) and quantity
-  const [pendingCompanyDate, setPendingCompanyDate] = useState<{ courseDateId: string; courseDateLabel: string } | null>(null);
-  const [pendingCompanyQuantity, setPendingCompanyQuantity] = useState<number>(1);
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [companyMobile, setCompanyMobile] = useState('');
@@ -770,7 +767,6 @@ export function PublicEnrollmentWizard({
           return;
         }
         setPendingCompanyCourse(null);
-        setPendingCompanyDate(null);
       } else {
         if (!selectedCourseId) {
           toast.error('Please select a course');
@@ -1769,7 +1765,6 @@ export function PublicEnrollmentWizard({
                             if (next === 'individual') {
                               setSelectedCompanyCourses([]);
                               setPendingCompanyCourse(null);
-                              setPendingCompanyDate(null);
                             } else if (next === 'company' && preSelectedCourseId && typeof preSelectedCoursePrice === 'number') {
                               const c = courses.find((x) => x.courseId === preSelectedCourseId);
                               setPendingCompanyCourse({
@@ -1824,7 +1819,6 @@ export function PublicEnrollmentWizard({
                                 const c = courses.find((x) => x.courseId === courseId);
                                 if (c) {
                                   setPendingCompanyCourse({ courseId: c.courseId, courseName: c.courseName, price: price });
-                                  setPendingCompanyDate(null);
                                   setSelectedCourseId(c.courseId);
                                   setSelectedCourseDateId('');
                                 }
@@ -1943,8 +1937,22 @@ export function PublicEnrollmentWizard({
                                                   const courseDateLabel = date.startDate !== date.endDate
                                                     ? `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} – ${new Date(date.endDate).toLocaleDateString('en-AU')} ${new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`
                                                     : `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`;
-                                                  setPendingCompanyDate({ courseDateId: date.courseDateId, courseDateLabel });
-                                                  setPendingCompanyQuantity(1);
+                                                  // Auto-add this course/date with default quantity 1
+                                                  setSelectedCompanyCourses((prev) => [
+                                                    ...prev,
+                                                    {
+                                                      courseId: pendingCompanyCourse.courseId,
+                                                      courseName: pendingCompanyCourse.courseName,
+                                                      price: pendingCompanyCourse.price,
+                                                      courseDateId: date.courseDateId,
+                                                      courseDateLabel,
+                                                      quantity: 1,
+                                                    },
+                                                  ]);
+                                                  // Clear pending course so the date grid hides; user can pick another course
+                                                  setPendingCompanyCourse(null);
+                                                  setSelectedCourseId('');
+                                                  setSelectedCourseDateId('');
                                                 }}
                                                 className={`
                                               relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
@@ -2003,57 +2011,6 @@ export function PublicEnrollmentWizard({
                                         </button>
                                       </div>
                                     )}
-                                  </div>
-                                )}
-                                {pendingCompanyDate && pendingCompanyCourse && (
-                                  <div className="mt-4 p-4 rounded-xl border-2 border-violet-200 bg-white flex flex-wrap items-end gap-3">
-                                    <div>
-                                      <Label className="block text-sm font-medium text-gray-700 mb-1">Quantity for this course <span className="text-red-500">*</span></Label>
-                                      <Input
-                                        type="number"
-                                        min={1}
-                                        max={500}
-                                        value={pendingCompanyQuantity}
-                                        onChange={(e) => {
-                                          const v = parseInt(e.target.value, 10);
-                                          if (!Number.isNaN(v)) setPendingCompanyQuantity(v < 1 ? 1 : v > 500 ? 500 : v);
-                                        }}
-                                        className="w-24 rounded-xl border-2 border-violet-200"
-                                      />
-                                    </div>
-                                    <Button
-                                      type="button"
-                                      onClick={() => {
-                                        if (!pendingCompanyCourse || !pendingCompanyDate) return;
-                                        setSelectedCompanyCourses((prev) => [
-                                          ...prev,
-                                          {
-                                            courseId: pendingCompanyCourse.courseId,
-                                            courseName: pendingCompanyCourse.courseName,
-                                            price: pendingCompanyCourse.price,
-                                            courseDateId: pendingCompanyDate.courseDateId,
-                                            courseDateLabel: pendingCompanyDate.courseDateLabel,
-                                            quantity: pendingCompanyQuantity,
-                                          },
-                                        ]);
-                                        setPendingCompanyCourse(null);
-                                        setPendingCompanyDate(null);
-                                        setPendingCompanyQuantity(1);
-                                        setSelectedCourseId('');
-                                        setSelectedCourseDateId('');
-                                      }}
-                                      className="bg-violet-600 hover:bg-violet-700 text-white rounded-xl"
-                                    >
-                                      Add to list
-                                    </Button>
-                                    <Button
-                                      type="button"
-                                      variant="outline"
-                                      onClick={() => setPendingCompanyDate(null)}
-                                      className="rounded-xl"
-                                    >
-                                      Cancel
-                                    </Button>
                                   </div>
                                 )}
                               </div>
