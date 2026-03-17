@@ -8,6 +8,7 @@ import { AlertCircle, Loader2, CreditCard, Building2, Lock, Shield } from 'lucid
 import { PaymentUpload } from './PaymentUpload';
 import { paymentService, type ProcessCardPaymentExistingStudentRequest } from '../../services/payment.service';
 import type { StudentBrowseCourse } from '../../services/enrollment.service';
+import { gtagEvent } from '../../lib/gtag';
 import {
   Select,
   SelectContent,
@@ -136,6 +137,14 @@ export function EnrollmentPaymentModal({
       const result = await paymentService.processCardPaymentExistingStudent(request);
 
       if (result.success && result.data) {
+        gtagEvent('ads_conversion_purchase_New_web', {
+          method: 'card',
+          course_id: course.courseId,
+          course_name: course.courseName,
+          value: course.price ?? 0,
+          currency: 'AUD',
+          transaction_id: result.data.transactionId,
+        });
         onCreditCardSuccess();
       } else {
         const errorMsg =

@@ -32,6 +32,7 @@ import { PaymentFailureCard } from "./PaymentFailureCard";
 import { courseDateService } from "../services/courseDate.service";
 import { enrollmentService } from "../services/enrollment.service";
 import { paymentService } from "../services/payment.service";
+import { gtagEvent } from "../lib/gtag";
 import type { CourseDateSimple } from "../services/courseDate.service";
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 
@@ -286,6 +287,14 @@ export function CourseBooking({
           setSuccess("Payment successful! Course booked. Redirecting to your student portal...");
           
           const bookingData = result.data;
+
+          gtagEvent("ads_conversion_purchase_New_web", {
+            method: "card",
+            course_id: courseId,
+            value: coursePrice,
+            currency: "AUD",
+            transaction_id: bookingData.transactionId,
+          });
           
           // Store full name temporarily for the auth context
           const tempUserData = {

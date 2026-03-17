@@ -3,8 +3,11 @@ import { Toaster } from "sonner";
 import App from "./App.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { PublicSiteUrlProvider } from "./contexts/PublicSiteUrlContext.tsx";
+import { initGtag } from "./lib/gtag";
 import "./index.css";
 import "react-day-picker/dist/style.css";
+
+initGtag();
 
 createRoot(document.getElementById("root")!).render(
   <AuthProvider>

@@ -26,6 +26,7 @@ import { useQuizStatus } from '../../hooks/useQuizStatus';
 import { useAuth } from '../../contexts/AuthContext';
 import { enrollmentService, type StudentBrowseCourse, type StudentEnrolledCourse } from '../../services/enrollment.service';
 import { studentEnrollmentFormService, type EnrollmentFormResponse } from '../../services/studentEnrollmentForm.service';
+import { gtagEvent } from '../../lib/gtag';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { Label } from '../ui/label';
 
@@ -220,6 +221,14 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
       );
 
       if (paymentResponse.success) {
+        gtagEvent('ads_conversion_purchase_New_web', {
+          method: 'bank_transfer',
+          course_id: selectedCourseForPayment.courseId,
+          course_name: selectedCourseForPayment.courseName,
+          value: selectedCourseForPayment.price ?? 0,
+          currency: 'AUD',
+          transaction_ref: transactionId,
+        });
         // Refresh courses and enrollments
         await Promise.all([fetchAvailableCourses(), fetchEnrolledCourses()]);
         setShowPaymentUpload(false);

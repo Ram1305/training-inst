@@ -72,6 +72,7 @@ import {
 import { paymentService } from '../../services/payment.service';
 import { PaymentSuccessCard } from '../PaymentSuccessCard';
 import { PaymentFailureCard } from '../PaymentFailureCard';
+import { gtagEvent } from '../../lib/gtag';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { API_CONFIG } from '../../config/api.config';
 import { usePublicSiteUrl } from '../../contexts/PublicSiteUrlContext';
@@ -702,6 +703,14 @@ export function PublicEnrollmentWizard({
         // Store user/student IDs for later
         if (result.data.userId) setUserId(result.data.userId);
         if (result.data.studentId) setStudentId(result.data.studentId);
+
+        gtagEvent('ads_conversion_purchase_New_web', {
+          method: 'card',
+          course_id: selectedCourseId,
+          value: coursePrice,
+          currency: 'AUD',
+          transaction_id: result.data.transactionId,
+        });
 
         toast.success('Payment successful!');
         return true;
