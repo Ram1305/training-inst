@@ -52,7 +52,10 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
     {
         public required Guid CourseId { get; set; }
         public Guid? CourseDateId { get; set; }
+        /// <summary>Unit price per seat.</summary>
         public decimal Price { get; set; }
+        /// <summary>Number of seats/licenses. Default 1. Total for this line = Price * Quantity.</summary>
+        public int Quantity { get; set; } = 1;
     }
 
     /// <summary>

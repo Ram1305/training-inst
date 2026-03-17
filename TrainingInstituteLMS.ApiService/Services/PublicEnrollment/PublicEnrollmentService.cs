@@ -563,6 +563,15 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     accountCreated = true;
                 }
 
+                // Total = sum of (unit price × quantity) per item. Quantity clamped 1–500.
+                const int maxQuantityPerItem = 500;
+                decimal totalAmount = 0;
+                foreach (var i in request.Items)
+                {
+                    var qty = i.Quantity <= 0 ? 1 : (i.Quantity > maxQuantityPerItem ? maxQuantityPerItem : i.Quantity);
+                    totalAmount += i.Price * qty;
+                }
+
                 var order = new CompanyOrderEntity
                 {
                     OrderId = Guid.NewGuid(),
@@ -570,7 +579,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     CompanyEmail = request.CompanyEmail.Trim(),
                     CompanyName = request.CompanyName.Trim(),
                     CompanyMobile = request.CompanyMobile?.Trim(),
-                    TotalAmount = request.Items.Sum(i => i.Price),
+                    TotalAmount = totalAmount,
                     PaymentMethod = request.PaymentMethod ?? "pay_later",
                     Status = "Completed",
                     CreatedAt = DateTime.UtcNow
@@ -582,6 +591,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
                 foreach (var item in request.Items)
                 {
+                    var quantity = item.Quantity <= 0 ? 1 : (item.Quantity > maxQuantityPerItem ? maxQuantityPerItem : item.Quantity);
                     var uniqueCode = GenerateUniqueCode();
                     var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
 
@@ -607,16 +617,19 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     if (string.IsNullOrEmpty(courseDateDisplay))
                         courseDateDisplay = "Date to be confirmed";
 
+                    // One link per item: MaxUses = quantity so one payment link covers all seats
                     var link = new EnrollmentLinkEntity
                     {
                         LinkId = Guid.NewGuid(),
                         Name = $"Company order {order.OrderId:N} - {courseName}",
-                        Description = $"One-time link for {request.CompanyName.Trim()}",
+                        Description = quantity > 1
+                            ? $"{request.CompanyName.Trim()} – {quantity} seat(s)"
+                            : $"One-time link for {request.CompanyName.Trim()}",
                         UniqueCode = uniqueCode,
                         CourseId = item.CourseId,
                         CourseDateId = item.CourseDateId,
                         CompanyOrderId = order.OrderId,
-                        MaxUses = 1,
+                        MaxUses = quantity,
                         UsedCount = 0,
                         QrCodeData = GenerateQRCode(fullUrl),
                         IsActive = true,

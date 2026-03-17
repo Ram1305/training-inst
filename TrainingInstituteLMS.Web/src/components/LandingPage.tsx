@@ -637,7 +637,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                                 <span className="price-current text-lg">${course.price}</span>
                                 <span className="ml-1">Book Now</span>
                               </Button>
-                              {course.promoPrice != null && course.promoPrice > 0 && (
+                              {course.promoPrice != null && course.promoPrice > 0 && course.courseCode === 'RIIHAN301E' && (
                                 <Button
                                   className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-xl h-11 font-semibold shadow-lg flex items-center justify-center gap-2"
                                   onClick={(e) => {

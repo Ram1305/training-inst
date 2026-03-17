@@ -121,15 +121,19 @@ export function CourseDetailsPage({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
 
+  // SL + BL (State Levy + Booking Levy) pricing
+  // Restrict this special pricing to the elevating work platform course only.
+  const isSlBlCourse = course?.code === 'RIIHAN301E';
+
   const slBlPrice =
-    course?.promoPrice != null && course.promoPrice > 0
+    isSlBlCourse && course?.promoPrice != null && course.promoPrice > 0
       ? course.promoPrice
-      : course?.comboOffer?.price != null && course.comboOffer.price > 0
+      : isSlBlCourse && course?.comboOffer?.price != null && course.comboOffer.price > 0
         ? course.comboOffer.price
         : null;
 
   const slBlOriginalPrice =
-    course?.promoOriginalPrice != null && course.promoOriginalPrice > 0
+    isSlBlCourse && course?.promoOriginalPrice != null && course.promoOriginalPrice > 0
       ? course.promoOriginalPrice
       : null;
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
