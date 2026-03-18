@@ -423,6 +423,13 @@ export function AdminStudentEnrollments({ initialSearchQuery, initialEmailToView
                             const payments = studentPayments.get(form.studentId) ?? [];
                             const first = enrollments[0];
                             const payment = first ? payments.find(p => p.enrollmentId === first.enrollmentId) : undefined;
+                            
+                            const isCompany = first?.enrollmentType === 'Company' || payment?.accountType === 'Company';
+                            const companyName = payment?.companyName ?? first?.companyName;
+
+                            if (isCompany) {
+                              return companyName ? `Company - ${companyName}` : 'Company';
+                            }
                             return first?.enrollmentType ?? payment?.accountType ?? '—';
                           })()}
                         </TableCell>

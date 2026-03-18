@@ -354,7 +354,11 @@ export function AdminPayments() {
                         <TableCell>
                           {formatDate(receipt.selectedCourseDate ?? receipt.enrolledAt ?? receipt.paymentDate)}
                         </TableCell>
-                        <TableCell>{receipt.accountType ?? '—'}</TableCell>
+                        <TableCell>
+                          {receipt.accountType === 'Company' 
+                            ? (receipt.companyName ? `Company - ${receipt.companyName}` : 'Company') 
+                            : (receipt.accountType ?? '—')}
+                        </TableCell>
                         <TableCell className="font-semibold bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
                           ${receipt.amountPaid.toLocaleString()}
                         </TableCell>

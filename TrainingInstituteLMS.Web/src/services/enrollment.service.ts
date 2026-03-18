@@ -49,6 +49,7 @@ export interface BookingDetailsEnrollmentDto {
   sessionType?: string;
   location?: string;
   paymentStatus: string;
+  status: string;
   /** Individual or Company - how the student enrolled */
   enrollmentType?: string;
   /** Name of the company if enrolled via company order */

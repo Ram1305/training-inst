@@ -35,5 +35,10 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Enrollment
 
         /// <summary>Individual or Company - how the student enrolled.</summary>
         public string? EnrollmentType { get; set; }
+
+        /// <summary>
+        /// Name of the company if enrolled via company order.
+        /// </summary>
+        public string? CompanyName { get; set; }
     }
 }

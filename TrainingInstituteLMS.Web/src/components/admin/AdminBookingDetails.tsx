@@ -238,7 +238,7 @@ export function AdminBookingDetails({ selectedDate, onBack }: AdminBookingDetail
                           </TableCell>
                           <TableCell>
                             {e.enrollmentType === 'Company' 
-                              ? (e.companyName || 'Company') 
+                              ? (e.companyName ? `Company - ${e.companyName}` : 'Company') 
                               : (e.enrollmentType ?? '—')}
                           </TableCell>
                           <TableCell>

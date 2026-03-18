@@ -138,6 +138,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                 .Include(e => e.Course)
                     .ThenInclude(c => c.CourseRule)
                 .Include(e => e.CourseDate)
+                .Include(e => e.EnrollmentLink)
+                    .ThenInclude(l => l.CompanyOrder)
                 .Where(e => e.StudentId == studentId && e.Status != "Cancelled")
                 .OrderByDescending(e => e.EnrolledAt)
                 .ToListAsync();
@@ -173,7 +175,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     SelectedCourseDate = selectedCourseDate,
                     SelectedExamDate = selectedExam,
                     SelectedTheoryDate = selectedTheory,
-                    EnrollmentType = e.EnrollmentType ?? "Individual"
+                    EnrollmentType = e.EnrollmentType ?? "Individual",
+                    CompanyName = e.EnrollmentLink?.CompanyOrder?.CompanyName
                 };
             }).ToList();
         }
