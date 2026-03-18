@@ -5,7 +5,7 @@ import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
 import { Button } from '../../ui/button';
 import { ScrollArea } from '../../ui/scroll-area';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, Eraser, PenTool, Check, X } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -439,7 +439,11 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
                 </p>
                 <div className="flex items-center gap-2">
                   <DialogTrigger asChild>
-                    <Button type="button" className="flex-1">
+                    <Button 
+                      type="button" 
+                      className="flex-1 bg-white hover:bg-slate-50 text-blue-600 border-2 border-blue-100 hover:border-blue-200 shadow-sm hover:shadow-md transition-all duration-300 rounded-xl font-semibold h-12 flex items-center justify-center gap-2"
+                    >
+                      <PenTool className="w-5 h-5" />
                       Open Signature Pad
                     </Button>
                   </DialogTrigger>
@@ -462,54 +466,69 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
                 )}
               </div>
 
-              <DialogContent className="max-w-md w-[calc(100%-2rem)]">
-                <DialogHeader>
-                  <DialogTitle>Sign with your finger</DialogTitle>
-                  <DialogDescription>
-                    Place your finger inside the box and move it slowly to draw your signature. Tap &quot;Save signature&quot; when you&apos;re done.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white mt-2">
-                  <canvas
-                    ref={dialogCanvasRef}
-                    className="w-full h-[260px] border border-gray-200 rounded-lg bg-white cursor-crosshair touch-none"
-                    onMouseDown={(e) => startDrawing(e, dialogCanvasRef.current)}
-                    onMouseMove={(e) => draw(e, dialogCanvasRef.current)}
-                    onMouseUp={stopDrawing}
-                    onMouseLeave={stopDrawing}
-                    onTouchStart={(e) => startDrawing(e, dialogCanvasRef.current)}
-                    onTouchMove={(e) => draw(e, dialogCanvasRef.current)}
-                    onTouchEnd={stopDrawing}
-                  />
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
+              <DialogContent className="max-w-[95vw] w-full md:max-w-2xl p-0 overflow-hidden border-none bg-slate-50 rounded-3xl shadow-2xl">
+                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-6 text-white text-center relative">
+                  <DialogHeader className="space-y-1">
+                    <DialogTitle className="text-2xl font-bold flex items-center justify-center gap-2">
+                      <PenTool className="w-6 h-6" />
+                      Digital Signature
+                    </DialogTitle>
+                    <DialogDescription className="text-blue-100 text-sm">
+                      Please use your finger or a stylus to sign inside the white area below.
+                    </DialogDescription>
+                  </DialogHeader>
+                </div>
+
+                <div className="p-4 md:p-8">
+                  <div className="relative group">
+                    <div className="absolute -inset-0.5 bg-gradient-to-r from-blue-500 to-indigo-500 rounded-2xl blur opacity-20 group-hover:opacity-30 transition duration-300"></div>
+                    <div className="relative border-2 border-dashed border-blue-200 rounded-2xl p-2 bg-white shadow-inner">
+                      <canvas
+                        ref={dialogCanvasRef}
+                        className="w-full h-[320px] md:h-[400px] rounded-xl bg-white cursor-crosshair touch-none"
+                        onMouseDown={(e) => startDrawing(e, dialogCanvasRef.current)}
+                        onMouseMove={(e) => draw(e, dialogCanvasRef.current)}
+                        onMouseUp={stopDrawing}
+                        onMouseLeave={stopDrawing}
+                        onTouchStart={(e) => startDrawing(e, dialogCanvasRef.current)}
+                        onTouchMove={(e) => draw(e, dialogCanvasRef.current)}
+                        onTouchEnd={stopDrawing}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col sm:flex-row items-center gap-4 mt-8">
                     <Button
                       type="button"
                       variant="outline"
-                      size="sm"
+                      className="w-full sm:w-auto flex items-center justify-center gap-2 border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl h-12 px-6 transition-all duration-200"
                       onClick={clearSignature}
                     >
-                      Clear
+                      <Eraser className="w-4 h-4" />
+                      Clear Signature
                     </Button>
-                    <span className="text-xs text-gray-500">
-                      Use one finger to draw. The page will not scroll while you are signing.
-                    </span>
+                    
+                    <Button
+                      type="button"
+                      className="w-full flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl h-12 shadow-lg shadow-blue-200 hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200"
+                      onClick={() => {
+                        const canvas = dialogCanvasRef.current;
+                        if (canvas && hasInk) {
+                          onChange({ signatureData: canvas.toDataURL('image/png') });
+                        }
+                        setIsDialogOpen(false);
+                      }}
+                    >
+                      <Check className="w-5 h-5 mr-1" />
+                      Confirm & Save
+                    </Button>
                   </div>
+                  
+                  <p className="text-center text-xs text-slate-400 mt-6 flex items-center justify-center gap-1.5 leading-relaxed">
+                    <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse"></span>
+                    Your signature will be securely encrypted and saved to your profile.
+                  </p>
                 </div>
-                <DialogFooter className="mt-4">
-                  <Button
-                    type="button"
-                    className="w-full"
-                    onClick={() => {
-                      const canvas = dialogCanvasRef.current;
-                      if (canvas && hasInk) {
-                        onChange({ signatureData: canvas.toDataURL('image/png') });
-                      }
-                      setIsDialogOpen(false);
-                    }}
-                  >
-                    Save signature
-                  </Button>
-                </DialogFooter>
               </DialogContent>
             </Dialog>
           </div>

@@ -517,7 +517,7 @@ export function PublicEnrollmentWizard({
   // Step 5: Enrollment Form (was step 4)
   const [currentFormSection, setCurrentFormSection] = useState(1);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [submitValidationErrors, setSubmitValidationErrors] = useState<string[]>([]);
+  const [submitValidationErrors, setSubmitValidationErrors] = useState<{ label: string; section: number }[]>([]);
   const formContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState<StudentEnrolmentFormData>({
     applicant: { ...initialApplicantDetails },
@@ -1209,7 +1209,7 @@ export function PublicEnrollmentWizard({
     5: 'Section 5 (Declaration & documents)',
   };
 
-  const validateAllSections = (): { valid: boolean; firstInvalidSection: number; missingFields: string[] } => {
+  const validateAllSections = (): { valid: boolean; firstInvalidSection: number; missingFields: { label: string; section: number }[] } => {
     const allErrors: Record<string, string> = {};
     let firstInvalidSection = 1;
 
@@ -1286,13 +1286,22 @@ export function PublicEnrollmentWizard({
   const handleFormNext = () => {
     const result = validateFormSection(currentFormSection);
     if (result.valid) {
+      // Clear errors for the current section when moving forward
+      setSubmitValidationErrors(prev => prev.filter(err => err.section !== currentFormSection));
       setCurrentFormSection(prev => Math.min(prev + 1, 5));
       return;
     }
     if (result.errors && Object.keys(result.errors).length > 0) {
       const { missingFields } = collectMissingFields(formData, result.errors);
-      const labels = missingFields.length > 0 ? missingFields : Object.keys(result.errors);
+      
+      // Update overall validation errors state with newly found missing fields for this section
+      setSubmitValidationErrors(prev => {
+        const otherSections = prev.filter(err => err.section !== currentFormSection);
+        return [...otherSections, ...missingFields];
+      });
+
       const sectionLabel = SECTION_NAMES[currentFormSection] ?? `Section ${currentFormSection}`;
+      const labels = missingFields.map(mf => mf.label);
       const message = labels.length === 1
         ? `${sectionLabel} — Please fill in: ${labels[0]}`
         : `${sectionLabel} — Please fill in: ${labels.join(', ')}`;
@@ -2853,21 +2862,23 @@ export function PublicEnrollmentWizard({
             </Card>
 
             <div ref={formContainerRef}>
-              {submitValidationErrors.length > 0 && (
+              {submitValidationErrors.some(err => err.section === currentFormSection) && (
                 <div className="mb-6 rounded-xl border-2 border-red-200 bg-red-50 p-4 shadow-sm">
                   <div className="flex items-start gap-3">
                     <AlertCircle className="h-6 w-6 flex-shrink-0 text-red-600 mt-0.5" />
                     <div className="flex-1">
                       <h3 className="font-semibold text-red-800">
-                        Please complete the following required fields:
+                        Please complete the following required fields in this section:
                       </h3>
                       <ul className="mt-2 list-inside list-disc space-y-1 text-sm text-red-700">
-                        {submitValidationErrors.map((field, idx) => (
-                          <li key={idx}>{field}</li>
-                        ))}
+                        {submitValidationErrors
+                          .filter(err => err.section === currentFormSection)
+                          .map((err, idx) => (
+                            <li key={idx}>{err.label}</li>
+                          ))}
                       </ul>
                       <p className="mt-3 text-xs text-red-600">
-                        Click the section above to jump directly to the missing field(s).
+                        All fields marked with * are required to proceed.
                       </p>
                     </div>
                   </div>

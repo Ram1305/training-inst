@@ -417,7 +417,7 @@ export function CourseDetailsPage({
                       <p className="text-white/90 mb-4 text-lg">
                         {course.comboOffer.description}
                       </p>
-                      <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6">
                         <div className="bg-white/20 backdrop-blur-sm rounded-2xl px-6 py-3 flex-1 sm:flex-none">
                           <div className="text-sm text-white/80">Combo Price</div>
                           <div className="text-3xl font-bold text-white">${course.comboOffer.price}</div>
@@ -434,12 +434,12 @@ export function CourseDetailsPage({
                             courseCode: course.code,
                             coursePrice: course.comboOffer?.price || course.price
                           })}
-                          className="group w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-500 hover:to-amber-600 text-slate-900 rounded-full px-10 h-14 text-lg font-extrabold shadow-[0_18px_35px_rgba(15,23,42,0.45)] hover:shadow-[0_22px_45px_rgba(15,23,42,0.65)] transform hover:-translate-y-0.5 transition-all duration-200 border border-amber-200"
+                          className="group w-full sm:w-auto mt-3 sm:mt-0 sm:ml-auto bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 hover:from-blue-600 hover:via-cyan-600 hover:to-blue-700 text-white rounded-full px-10 sm:px-12 h-14 sm:h-16 text-base sm:text-xl font-extrabold shadow-[0_18px_35px_rgba(15,23,42,0.45)] hover:shadow-[0_22px_45px_rgba(15,23,42,0.85)] transform hover:-translate-y-1 transition-all duration-200 border border-blue-300"
                         >
-                          <span className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-amber-700 group-hover:scale-110 transition-transform" />
-                            <span>Book Combo Now</span>
-                            <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
+                          <span className="flex items-center justify-center gap-2 sm:gap-3">
+                            <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-white drop-shadow-sm group-hover:scale-110 transition-transform" />
+                            <span className="tracking-wide">Book Combo Now</span>
+                            <span className="hidden sm:inline text-xs font-semibold uppercase tracking-[0.15em] bg-white/15 px-3 py-1 rounded-full">
                               Best Value
                             </span>
                           </span>

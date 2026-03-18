@@ -2,53 +2,54 @@ import type { StudentEnrolmentFormData } from '../../../types/studentEnrolment';
 
 export interface EnrolmentValidationResult {
   errors: Record<string, string>;
-  missingFields: string[];
+  missingFields: { label: string; section: number }[];
 }
 
 interface RequiredFieldDefinition {
   key: string;
   label: string;
+  section: number;
 }
 
 export const REQUIRED_FIELD_DEFINITIONS: RequiredFieldDefinition[] = [
-  // Applicant section
-  { key: 'title', label: 'Title' },
-  { key: 'surname', label: 'Surname' },
-  { key: 'givenName', label: 'Given Name' },
-  { key: 'dob', label: 'Date of Birth' },
-  { key: 'gender', label: 'Gender' },
-  { key: 'mobile', label: 'Mobile Phone' },
-  { key: 'email', label: 'Email' },
-  { key: 'resAddress', label: 'Residential Address' },
-  { key: 'resSuburb', label: 'Residential Suburb' },
-  { key: 'resState', label: 'Residential State' },
-  { key: 'resPostcode', label: 'Residential Postcode' },
-  { key: 'emergencyName', label: 'Emergency Contact Name' },
-  { key: 'emergencyRelationship', label: 'Emergency Contact Relationship' },
-  { key: 'emergencyContactNumber', label: 'Emergency Contact Number' },
-  { key: 'emergencyPermission', label: 'Emergency Contact Permission' },
+  // Applicant section (Section 1)
+  { key: 'title', label: 'Title', section: 1 },
+  { key: 'surname', label: 'Surname', section: 1 },
+  { key: 'givenName', label: 'Given Name', section: 1 },
+  { key: 'dob', label: 'Date of Birth', section: 1 },
+  { key: 'gender', label: 'Gender', section: 1 },
+  { key: 'mobile', label: 'Mobile Phone', section: 1 },
+  { key: 'email', label: 'Email', section: 1 },
+  { key: 'resAddress', label: 'Residential Address', section: 1 },
+  { key: 'resSuburb', label: 'Residential Suburb', section: 1 },
+  { key: 'resState', label: 'Residential State', section: 1 },
+  { key: 'resPostcode', label: 'Residential Postcode', section: 1 },
+  { key: 'emergencyName', label: 'Emergency Contact Name', section: 1 },
+  { key: 'emergencyRelationship', label: 'Emergency Contact Relationship', section: 1 },
+  { key: 'emergencyContactNumber', label: 'Emergency Contact Number', section: 1 },
+  { key: 'emergencyPermission', label: 'Emergency Contact Permission', section: 1 },
 
-  // USI section (high-level required fields; detailed logic still lives in per-form validation)
-  { key: 'usiApply', label: 'USI Application Option' },
+  // USI section (Section 2)
+  { key: 'usiApply', label: 'USI Application Option', section: 2 },
 
-  // Education section
-  { key: 'schoolLevel', label: 'Highest School Level Completed' },
-  { key: 'hasPostQual', label: 'Post-school Qualification' },
-  { key: 'employmentStatus', label: 'Employment Status' },
-  { key: 'trainingReason', label: 'Reason for Training' },
+  // Education section (Section 3)
+  { key: 'schoolLevel', label: 'Highest School Level Completed', section: 3 },
+  { key: 'hasPostQual', label: 'Post-school Qualification', section: 3 },
+  { key: 'employmentStatus', label: 'Employment Status', section: 3 },
+  { key: 'trainingReason', label: 'Reason for Training', section: 3 },
 
-  // Additional info section
-  { key: 'countryOfBirth', label: 'Country of Birth' },
-  { key: 'langOther', label: 'Other Language at Home' },
-  { key: 'indigenousStatus', label: 'Indigenous Status' },
-  { key: 'hasDisability', label: 'Disability' },
+  // Additional info section (Section 4)
+  { key: 'countryOfBirth', label: 'Country of Birth', section: 4 },
+  { key: 'langOther', label: 'Other Language at Home', section: 4 },
+  { key: 'indigenousStatus', label: 'Indigenous Status', section: 4 },
+  { key: 'hasDisability', label: 'Disability', section: 4 },
 
-  // Privacy / terms section
-  { key: 'acceptPrivacy', label: 'Privacy Notice Acceptance' },
-  { key: 'acceptTerms', label: 'Terms & Conditions Acceptance' },
-  { key: 'declareName', label: 'Declaration Name' },
-  { key: 'declareDate', label: 'Declaration Date' },
-  { key: 'signatureData', label: 'Online Signature' },
+  // Privacy / terms section (Section 5)
+  { key: 'acceptPrivacy', label: 'Privacy Notice Acceptance', section: 5 },
+  { key: 'acceptTerms', label: 'Terms & Conditions Acceptance', section: 5 },
+  { key: 'declareName', label: 'Declaration Name', section: 5 },
+  { key: 'declareDate', label: 'Declaration Date', section: 5 },
+  { key: 'signatureData', label: 'Online Signature', section: 5 },
 ];
 
 const FIELD_LABEL_LOOKUP: Record<string, string> = REQUIRED_FIELD_DEFINITIONS.reduce(
@@ -63,91 +64,96 @@ export function collectMissingFields(
   data: StudentEnrolmentFormData,
   flatErrors: Record<string, string>
 ): EnrolmentValidationResult {
-  const missingFields: string[] = [];
+  const missingFields: { label: string; section: number }[] = [];
 
   for (const def of REQUIRED_FIELD_DEFINITIONS) {
+    let isMissing = false;
     if (flatErrors[def.key]) {
-      missingFields.push(def.label);
-      continue;
+      isMissing = true;
+    } else {
+      const { applicant, usi, education, additionalInfo, privacyTerms } = data;
+
+      switch (def.key) {
+        case 'title':
+        case 'surname':
+        case 'givenName':
+        case 'dob':
+        case 'gender':
+        case 'mobile':
+        case 'email':
+        case 'resAddress':
+        case 'resSuburb':
+        case 'resState':
+        case 'resPostcode':
+        case 'emergencyName':
+        case 'emergencyRelationship':
+        case 'emergencyContactNumber':
+        case 'emergencyPermission': {
+          const value = (applicant as any)[def.key];
+          if (!value || (typeof value === 'string' && !value.trim())) {
+            isMissing = true;
+          }
+          break;
+        }
+        case 'usiApply': {
+          const value = usi.usiApply;
+          if (!value) {
+            isMissing = true;
+          }
+          break;
+        }
+        case 'schoolLevel':
+        case 'hasPostQual':
+        case 'employmentStatus':
+        case 'trainingReason': {
+          const value = (education as any)[def.key];
+          if (!value || (typeof value === 'string' && !value.trim())) {
+            isMissing = true;
+          }
+          break;
+        }
+        case 'countryOfBirth':
+        case 'langOther':
+        case 'indigenousStatus':
+        case 'hasDisability': {
+          const value = (additionalInfo as any)[def.key];
+          if (!value || (typeof value === 'string' && !value.trim())) {
+            isMissing = true;
+          }
+          break;
+        }
+        case 'acceptPrivacy':
+        case 'acceptTerms': {
+          const value = (privacyTerms as any)[def.key];
+          if (!value) {
+            isMissing = true;
+          }
+          break;
+        }
+        case 'declareName':
+        case 'declareDate':
+        case 'signatureData': {
+          const value = (privacyTerms as any)[def.key];
+          if (!value || (typeof value === 'string' && !value.trim())) {
+            isMissing = true;
+          }
+          break;
+        }
+        default:
+          break;
+      }
     }
 
-    const { applicant, usi, education, additionalInfo, privacyTerms } = data;
-
-    switch (def.key) {
-      case 'title':
-      case 'surname':
-      case 'givenName':
-      case 'dob':
-      case 'gender':
-      case 'mobile':
-      case 'email':
-      case 'resAddress':
-      case 'resSuburb':
-      case 'resState':
-      case 'resPostcode':
-      case 'emergencyName':
-      case 'emergencyRelationship':
-      case 'emergencyContactNumber':
-      case 'emergencyPermission': {
-        const value = (applicant as any)[def.key];
-        if (!value || (typeof value === 'string' && !value.trim())) {
-          missingFields.push(def.label);
-        }
-        break;
-      }
-      case 'usiApply': {
-        const value = usi.usiApply;
-        if (!value) {
-          missingFields.push(def.label);
-        }
-        break;
-      }
-      case 'schoolLevel':
-      case 'hasPostQual':
-      case 'employmentStatus':
-      case 'trainingReason': {
-        const value = (education as any)[def.key];
-        if (!value || (typeof value === 'string' && !value.trim())) {
-          missingFields.push(def.label);
-        }
-        break;
-      }
-      case 'countryOfBirth':
-      case 'langOther':
-      case 'indigenousStatus':
-      case 'hasDisability': {
-        const value = (additionalInfo as any)[def.key];
-        if (!value || (typeof value === 'string' && !value.trim())) {
-          missingFields.push(def.label);
-        }
-        break;
-      }
-      case 'acceptPrivacy':
-      case 'acceptTerms': {
-        const value = (privacyTerms as any)[def.key];
-        if (!value) {
-          missingFields.push(def.label);
-        }
-        break;
-      }
-      case 'declareName':
-      case 'declareDate':
-      case 'signatureData': {
-        const value = (privacyTerms as any)[def.key];
-        if (!value || (typeof value === 'string' && !value.trim())) {
-          missingFields.push(def.label);
-        }
-        break;
-      }
-      default:
-        break;
+    if (isMissing) {
+      missingFields.push({ label: def.label, section: def.section });
     }
   }
 
   const errors = { ...flatErrors };
 
   for (const def of REQUIRED_FIELD_DEFINITIONS) {
-    if (!errors[def.key] && missingFields.includes(def.label)) {
+    const isFieldMissing = missingFields.some(mf => mf.label === def.label && mf.section === def.section);
+    if (!errors[def.key] && isFieldMissing) {
       errors[def.key] = `${FIELD_LABEL_LOOKUP[def.key]} is required.`;
     }
   }
