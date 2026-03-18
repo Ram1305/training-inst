@@ -336,7 +336,7 @@ export function AdminCompanyPayments() {
       </Card>
 
       <Dialog open={!!detailOrderId} onOpenChange={(open) => !open && closeDetails()}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-600" />

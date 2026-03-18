@@ -570,9 +570,17 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {firstEnr?.enrollmentType === 'Company' || paymentForFirst?.accountType === 'Company' 
-                            ? (paymentForFirst?.companyName || 'Company') 
-                            : (firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—')}
+                          {(() => {
+                            const isCompany =
+                              firstEnr?.enrollmentType === 'Company' ||
+                              paymentForFirst?.accountType === 'Company';
+                            const companyName =
+                              paymentForFirst?.companyName ?? firstEnr?.companyName;
+                            if (isCompany) {
+                              return companyName ? `Company - ${companyName}` : 'Company';
+                            }
+                            return firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—';
+                          })()}
                         </TableCell>
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phoneNumber || 'N/A'}</TableCell>
