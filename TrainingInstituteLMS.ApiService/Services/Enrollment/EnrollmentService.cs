@@ -749,6 +749,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                 .Include(e => e.Course)
                     .ThenInclude(c => c.Category)
                 .Include(e => e.CourseDate)
+                .Include(e => e.EnrollmentLink)
+                    .ThenInclude(l => l.CompanyOrder)
                 .Where(e => e.CourseDateId != null &&
                             e.Status != "Cancelled" &&
                             e.CourseDate != null &&
@@ -820,7 +822,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     PaymentStatus = e.PaymentStatus,
                     Status = e.Status,
                     EnrolledAt = e.EnrolledAt,
-                    EnrollmentType = e.EnrollmentType ?? "Individual"
+                    EnrollmentType = e.EnrollmentType ?? "Individual",
+                    CompanyName = e.EnrollmentLink?.CompanyOrder?.CompanyName
                 };
             }).ToList();
 

@@ -548,190 +548,226 @@ export function AdminCompanies() {
 
       {/* Company View Detail Dialog */}
       <Dialog open={!!viewCompany} onOpenChange={(open) => { if (!open) setViewCompany(null); }}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-blue-600" />
-              {viewCompany?.companyName} — Order & Enrollment Details
-            </DialogTitle>
-            <DialogDescription>
-              All courses purchased and students enrolled via this company's enrollment links
-            </DialogDescription>
-          </DialogHeader>
-
-          {viewLoading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-              <span className="ml-3 text-gray-500">Loading orders and students…</span>
+        <DialogContent className="w-[96vw] max-w-7xl h-[92vh] max-h-[92vh] overflow-hidden p-0">
+          <div className="flex h-full flex-col">
+            <div className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
+              <DialogHeader className="px-6 py-5">
+                <DialogTitle className="flex items-start gap-3 pr-10">
+                  <span className="mt-0.5 w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <Building2 className="w-5 h-5 text-white" />
+                  </span>
+                  <span className="min-w-0">
+                    <span className="block text-xl font-bold text-gray-900 truncate">
+                      {viewCompany?.companyName}
+                    </span>
+                    <span className="block text-sm text-gray-600 mt-0.5">
+                      Order & enrollment details (links + students)
+                    </span>
+                  </span>
+                </DialogTitle>
+                <DialogDescription className="px-0">
+                  Review purchases, enrollment links, and enrolled students for this company.
+                </DialogDescription>
+              </DialogHeader>
             </div>
-          ) : (
-            <div className="space-y-6">
 
-              {/* Company info banner */}
-              <div className="flex flex-wrap items-center gap-4 p-4 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-xl">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                  <Building2 className="w-6 h-6 text-white" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="font-bold text-gray-900 text-lg">{viewCompany?.companyName}</p>
-                  <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600">
-                    <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{viewCompany?.email}</span>
-                    {viewCompany?.mobileNumber && (
-                      <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{viewCompany.mobileNumber}</span>
-                    )}
-                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />Joined {formatDate(viewCompany?.createdAt)}</span>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1">
-                  <Badge className={viewCompany?.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
-                    {viewCompany?.isActive ? 'Active' : 'Inactive'}
-                  </Badge>
-                  <span className="text-xs text-gray-400">Last login: {formatDate(viewCompany?.lastLoginAt)}</span>
-                </div>
-              </div>
-
-              {/* Summary */}
-              <div className="grid grid-cols-3 gap-3">
-                <div className="text-center p-3 bg-violet-50 rounded-lg border border-violet-100">
-                  <p className="text-2xl font-bold text-violet-700">{viewOrders.length}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Orders</p>
-                </div>
-                <div className="text-center p-3 bg-blue-50 rounded-lg border border-blue-100">
-                  <p className="text-2xl font-bold text-blue-700">
-                    {viewOrders.reduce((s, o) => s + (o.links?.length ?? 0), 0)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Courses Purchased</p>
-                </div>
-                <div className="text-center p-3 bg-green-50 rounded-lg border border-green-100">
-                  <p className="text-2xl font-bold text-green-700">
-                    {Object.values(viewStudentsMap).reduce((s, arr) => s + arr.length, 0)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">Students Enrolled</p>
-                </div>
-              </div>
-
-              {viewOrders.length === 0 ? (
-                <div className="flex flex-col items-center py-10 text-gray-400">
-                  <BookOpen className="w-10 h-10 mb-2 text-gray-300" />
-                  <p className="font-medium">No orders found for this company</p>
-                  <p className="text-sm mt-1">Orders created via the company enrollment flow will appear here</p>
+            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+              {viewLoading ? (
+                <div className="flex items-center justify-center py-16">
+                  <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
+                  <span className="ml-3 text-gray-500">Loading orders and students…</span>
                 </div>
               ) : (
-                <div className="space-y-4">
-                  {viewOrders.map((order, oi) => (
-                    <div key={order.orderId} className="border border-gray-200 rounded-xl overflow-hidden">
-                      {/* Order header */}
-                      <button
-                        className="w-full flex items-center gap-3 px-4 py-3 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 transition-colors"
-                        onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
-                      >
-                        <div className="w-6 h-6 bg-slate-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                          {oi + 1}
-                        </div>
-                        <div className="flex-1 text-left">
-                          <span className="font-semibold text-gray-800 text-sm">
-                            Order — {formatDate(order.createdAt)}
+                <div className="space-y-6">
+                  {/* Company info banner */}
+                  <div className="flex flex-wrap items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-700">
+                        <span className="inline-flex items-center gap-1.5">
+                          <Mail className="w-4 h-4 text-gray-500" />
+                          <span className="font-medium text-gray-800">{viewCompany?.email}</span>
+                        </span>
+                        {viewCompany?.mobileNumber && (
+                          <span className="inline-flex items-center gap-1.5">
+                            <Phone className="w-4 h-4 text-gray-500" />
+                            <span className="font-medium text-gray-800">{viewCompany.mobileNumber}</span>
                           </span>
-                          <span className="ml-3 text-xs text-gray-500 capitalize">{(order.paymentMethod || '').replace('_', ' ')}</span>
-                        </div>
-                        <span className="font-bold text-blue-700 text-sm">{formatCurrency(order.totalAmount)}</span>
-                        <Badge variant="outline" className={
-                          order.status === 'Completed' ? 'border-green-200 bg-green-50 text-green-700 text-xs'
-                          : order.status === 'Pending' ? 'border-amber-200 bg-amber-50 text-amber-700 text-xs'
-                          : 'border-red-200 bg-red-50 text-red-700 text-xs'
-                        }>{order.status}</Badge>
-                        {expandedOrderId === order.orderId
-                          ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
-                      </button>
+                        )}
+                        <span className="inline-flex items-center gap-1.5">
+                          <Calendar className="w-4 h-4 text-gray-500" />
+                          <span>Joined <span className="font-medium text-gray-800">{formatDate(viewCompany?.createdAt)}</span></span>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex items-end gap-3">
+                      <div className="flex flex-col items-end gap-1">
+                        <Badge className={viewCompany?.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
+                          {viewCompany?.isActive ? 'Active' : 'Inactive'}
+                        </Badge>
+                        <span className="text-xs text-gray-500">Last login: {formatDate(viewCompany?.lastLoginAt)}</span>
+                      </div>
+                    </div>
+                  </div>
 
-                      {/* Courses + students inside order */}
-                      {expandedOrderId === order.orderId && (
-                        <div className="divide-y divide-gray-100">
-                          {(order.links ?? []).length === 0 ? (
-                            <p className="text-center text-gray-400 py-6 text-sm">No course links in this order</p>
-                          ) : (
-                            (order.links ?? []).map((link, li) => {
-                              const students = viewStudentsMap[link.linkId] ?? [];
-                              const isLoaded = link.linkId in viewStudentsMap;
-                              return (
-                                <div key={link.linkId}>
-                                  {/* Course header */}
-                                  <div className="flex items-center gap-3 px-4 py-2.5 bg-violet-50 border-b border-violet-100">
-                                    <div className="w-6 h-6 bg-violet-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
-                                      {li + 1}
-                                    </div>
-                                    <span className="flex-1 font-medium text-gray-900 text-sm">{link.courseName}</span>
-                                    <Badge className={`text-xs ${students.length > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                      <Users className="w-3 h-3 mr-1" />{students.length} enrolled
-                                    </Badge>
-                                    {link.fullUrl && (
-                                      <>
-                                        <button
-                                          onClick={() => navigator.clipboard.writeText(link.fullUrl).then(() => toast.success('Link copied!'))}
-                                          className="p-1 rounded hover:bg-violet-100 text-violet-500" title="Copy link"
-                                        >
-                                          <Copy className="w-3.5 h-3.5" />
-                                        </button>
-                                        <a href={link.fullUrl} target="_blank" rel="noopener noreferrer"
-                                          className="p-1 rounded hover:bg-violet-100 text-violet-500" title="Open link"
-                                        >
-                                          <ExternalLink className="w-3.5 h-3.5" />
-                                        </a>
-                                      </>
-                                    )}
-                                  </div>
+                  {/* Summary */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="p-4 bg-violet-50 rounded-xl border border-violet-100">
+                      <p className="text-3xl font-bold text-violet-700">{viewOrders.length}</p>
+                      <p className="text-xs text-gray-500 mt-1">Orders</p>
+                    </div>
+                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                      <p className="text-3xl font-bold text-blue-700">
+                        {viewOrders.reduce((s, o) => s + (o.links?.length ?? 0), 0)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Courses purchased</p>
+                    </div>
+                    <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                      <p className="text-3xl font-bold text-green-700">
+                        {Object.values(viewStudentsMap).reduce((s, arr) => s + arr.length, 0)}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">Students enrolled</p>
+                    </div>
+                  </div>
 
-                                  {/* Students table */}
-                                  {!isLoaded || viewStudentsLoading ? (
-                                    <div className="flex justify-center py-5">
-                                      <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+                  {viewOrders.length === 0 ? (
+                    <div className="flex flex-col items-center py-14 text-gray-400">
+                      <BookOpen className="w-12 h-12 mb-3 text-gray-300" />
+                      <p className="font-semibold text-gray-700">No orders found</p>
+                      <p className="text-sm mt-1 text-gray-500">Orders created via the company enrollment flow will appear here.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {viewOrders.map((order, oi) => (
+                        <div key={order.orderId} className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                          {/* Order header */}
+                          <button
+                            className="w-full flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 transition-colors"
+                            onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
+                          >
+                            <div className="w-7 h-7 bg-slate-700 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                              {oi + 1}
+                            </div>
+                            <div className="flex-1 text-left min-w-0">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+                                <span className="font-semibold text-gray-900 text-sm">
+                                  Order — {formatDate(order.createdAt)}
+                                </span>
+                                <span className="text-xs text-gray-500 capitalize">{(order.paymentMethod || '').replace('_', ' ')}</span>
+                              </div>
+                              <div className="text-xs text-gray-500 mt-0.5 truncate">
+                                {order.orderId}
+                              </div>
+                            </div>
+                            <span className="font-bold text-blue-700 text-sm whitespace-nowrap">{formatCurrency(order.totalAmount)}</span>
+                            <Badge
+                              variant="outline"
+                              className={
+                                order.status === 'Completed' ? 'border-green-200 bg-green-50 text-green-700 text-xs'
+                                  : order.status === 'Pending' ? 'border-amber-200 bg-amber-50 text-amber-700 text-xs'
+                                    : 'border-red-200 bg-red-50 text-red-700 text-xs'
+                              }
+                            >
+                              {order.status}
+                            </Badge>
+                            {expandedOrderId === order.orderId
+                              ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                          </button>
+
+                          {/* Courses + students inside order */}
+                          {expandedOrderId === order.orderId && (
+                            <div className="divide-y divide-gray-100">
+                              {(order.links ?? []).length === 0 ? (
+                                <p className="text-center text-gray-400 py-8 text-sm">No course links in this order</p>
+                              ) : (
+                                (order.links ?? []).map((link, li) => {
+                                  const students = viewStudentsMap[link.linkId] ?? [];
+                                  const isLoaded = link.linkId in viewStudentsMap;
+                                  return (
+                                    <div key={link.linkId}>
+                                      {/* Course header */}
+                                      <div className="flex items-center gap-3 px-5 py-3 bg-violet-50 border-b border-violet-100">
+                                        <div className="w-7 h-7 bg-violet-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                          {li + 1}
+                                        </div>
+                                        <span className="flex-1 font-semibold text-gray-900 text-sm min-w-0 truncate">{link.courseName}</span>
+                                        <Badge className={`text-xs ${students.length > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                                          <Users className="w-3 h-3 mr-1" />{students.length} enrolled
+                                        </Badge>
+                                        {link.fullUrl && (
+                                          <>
+                                            <button
+                                              onClick={() => navigator.clipboard.writeText(link.fullUrl).then(() => toast.success('Link copied!'))}
+                                              className="p-2 rounded-md hover:bg-violet-100 text-violet-600"
+                                              title="Copy link"
+                                            >
+                                              <Copy className="w-4 h-4" />
+                                            </button>
+                                            <a
+                                              href={link.fullUrl}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="p-2 rounded-md hover:bg-violet-100 text-violet-600"
+                                              title="Open link"
+                                            >
+                                              <ExternalLink className="w-4 h-4" />
+                                            </a>
+                                          </>
+                                        )}
+                                      </div>
+
+                                      {/* Students table */}
+                                      {!isLoaded || viewStudentsLoading ? (
+                                        <div className="flex justify-center py-6">
+                                          <Loader2 className="w-5 h-5 animate-spin text-violet-400" />
+                                        </div>
+                                      ) : students.length === 0 ? (
+                                        <div className="flex flex-col items-center py-8 text-gray-400">
+                                          <Users className="w-7 h-7 mb-2 text-gray-300" />
+                                          <p className="text-sm">No students enrolled yet</p>
+                                        </div>
+                                      ) : (
+                                        <div className="overflow-x-auto">
+                                          <table className="w-full text-sm">
+                                            <thead className="bg-gray-50 border-b">
+                                              <tr>
+                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
+                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Name</th>
+                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Email</th>
+                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Phone</th>
+                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Enrolled on</th>
+                                              </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-gray-100">
+                                              {students.map((s, si) => (
+                                                <tr key={s.studentId} className="hover:bg-gray-50">
+                                                  <td className="px-5 py-3 text-gray-400 text-xs">{si + 1}</td>
+                                                  <td className="px-5 py-3 font-medium text-gray-900">{s.fullName}</td>
+                                                  <td className="px-5 py-3 text-gray-600">{s.email}</td>
+                                                  <td className="px-5 py-3 text-gray-600">{s.phone || '—'}</td>
+                                                  <td className="px-5 py-3 text-gray-500 text-xs">
+                                                    {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                  </td>
+                                                </tr>
+                                              ))}
+                                            </tbody>
+                                          </table>
+                                        </div>
+                                      )}
                                     </div>
-                                  ) : students.length === 0 ? (
-                                    <div className="flex flex-col items-center py-5 text-gray-400">
-                                      <Users className="w-7 h-7 mb-1 text-gray-300" />
-                                      <p className="text-sm">No students enrolled yet</p>
-                                    </div>
-                                  ) : (
-                                    <div className="overflow-x-auto">
-                                      <table className="w-full text-sm">
-                                        <thead className="bg-gray-50 border-b">
-                                          <tr>
-                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
-                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Name</th>
-                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Email</th>
-                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Phone</th>
-                                            <th className="text-left px-4 py-2 text-xs font-semibold text-gray-500">Enrolled On</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-gray-100">
-                                          {students.map((s, si) => (
-                                            <tr key={s.studentId} className="hover:bg-gray-50">
-                                              <td className="px-4 py-2.5 text-gray-400 text-xs">{si + 1}</td>
-                                              <td className="px-4 py-2.5 font-medium text-gray-900">{s.fullName}</td>
-                                              <td className="px-4 py-2.5 text-gray-600">{s.email}</td>
-                                              <td className="px-4 py-2.5 text-gray-600">{s.phone || '—'}</td>
-                                              <td className="px-4 py-2.5 text-gray-500 text-xs">
-                                                {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
-                                              </td>
-                                            </tr>
-                                          ))}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  )}
-                                </div>
-                              );
-                            })
+                                  );
+                                })
+                              )}
+                            </div>
                           )}
                         </div>
-                      )}
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
-          )}
+          </div>
         </DialogContent>
       </Dialog>
 

@@ -236,7 +236,11 @@ export function AdminBookingDetails({ selectedDate, onBack }: AdminBookingDetail
                               )}
                             </div>
                           </TableCell>
-                          <TableCell>{e.enrollmentType ?? '—'}</TableCell>
+                          <TableCell>
+                            {e.enrollmentType === 'Company' 
+                              ? (e.companyName || 'Company') 
+                              : (e.enrollmentType ?? '—')}
+                          </TableCell>
                           <TableCell>
                             <Badge
                               variant={
