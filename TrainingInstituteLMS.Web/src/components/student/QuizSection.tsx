@@ -40,6 +40,9 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const [multiPartAnswers, setMultiPartAnswers] = useState<Record<string, Record<number, string>>>({});
   const [showValidation, setShowValidation] = useState(false);
+  // Tap-to-place support (mobile-friendly) for drag-drop
+  const [selectedFileForTap, setSelectedFileForTap] = useState<string | null>(null);
+  const [selectedLabelForTap, setSelectedLabelForTap] = useState<string | null>(null);
 
   // State for drag and drop - Desktop Files
   const [filesDragState, setFilesDragState] = useState<{
@@ -157,6 +160,8 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     setAnswers({});
     setMultiPartAnswers({});
     setShowValidation(false);
+    setSelectedFileForTap(null);
+    setSelectedLabelForTap(null);
     // Reset drag-drop states
     setFilesDragState({
       pdf1: 'available',
@@ -514,8 +519,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'pdf1')}
               onPointerDown={(e) => handlePointerDownForDrag(e, 'file', 'pdf1')}
-              className="quiz-draggable-file"
+              className={`quiz-draggable-file ${selectedFileForTap === 'pdf1' ? 'ring-2 ring-violet-500' : ''}`}
               style={{ cursor: 'grab', touchAction: 'none' }}
+              onClick={() =>
+                setSelectedFileForTap((prev) => (prev === 'pdf1' ? null : 'pdf1'))
+              }
             >
               <img src="/assets/pngimage.png" alt="PDF" className="quiz-pdf-icon" />
             </div>
@@ -525,8 +533,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'pdf2')}
               onPointerDown={(e) => handlePointerDownForDrag(e, 'file', 'pdf2')}
-              className="quiz-draggable-file"
+              className={`quiz-draggable-file ${selectedFileForTap === 'pdf2' ? 'ring-2 ring-violet-500' : ''}`}
               style={{ cursor: 'grab', touchAction: 'none' }}
+              onClick={() =>
+                setSelectedFileForTap((prev) => (prev === 'pdf2' ? null : 'pdf2'))
+              }
             >
               <img src="/assets/pngimage.png" alt="PDF" className="quiz-pdf-icon" />
             </div>
@@ -536,8 +547,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
               draggable="true"
               onDragStart={(e) => handleFileDragStart(e, 'image')}
               onPointerDown={(e) => handlePointerDownForDrag(e, 'file', 'image')}
-              className="quiz-draggable-file"
+              className={`quiz-draggable-file ${selectedFileForTap === 'image' ? 'ring-2 ring-violet-500' : ''}`}
               style={{ cursor: 'grab', touchAction: 'none' }}
+              onClick={() =>
+                setSelectedFileForTap((prev) => (prev === 'image' ? null : 'image'))
+              }
             >
               <img src="/assets/imagefordraganddrop.png" alt="Image" className="quiz-image-icon" />
             </div>
@@ -565,6 +579,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   ? 'quiz-drop-zone-complete' 
                   : 'quiz-drop-zone-active'
               }`}
+              onClick={() => {
+                if (selectedFileForTap) {
+                  applyFileDrop(selectedFileForTap as 'pdf1' | 'pdf2' | 'image', 'checklistBook');
+                  setSelectedFileForTap(null);
+                }
+              }}
             >
               <span className="text-xl">📁</span>
               <span className="font-semibold text-gray-800">Checklist Book</span>
@@ -584,6 +604,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                   ? 'quiz-drop-zone-complete' 
                   : 'quiz-drop-zone-active'
               }`}
+              onClick={() => {
+                if (selectedFileForTap) {
+                  applyFileDrop(selectedFileForTap as 'pdf1' | 'pdf2' | 'image', 'imagesFolder');
+                  setSelectedFileForTap(null);
+                }
+              }}
             >
               <span className="text-xl">📁</span>
               <span className="font-semibold text-gray-800">Images</span>
@@ -619,8 +645,11 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                 draggable="true"
                 onDragStart={(e) => handleLabelDragStart(e, label.id)}
                 onPointerDown={(e) => handlePointerDownForDrag(e, 'device', label.id)}
-                className="quiz-device-label"
+                className={`quiz-device-label ${selectedLabelForTap === label.id ? 'ring-2 ring-emerald-500' : ''}`}
                 style={{ cursor: 'grab', touchAction: 'none' }}
+                onClick={() =>
+                  setSelectedLabelForTap((prev) => (prev === label.id ? null : label.id))
+                }
               >
                 {label.text}
               </div>
@@ -655,6 +684,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                     ? 'quiz-device-drop-zone-filled' 
                     : ''
                 }`}
+                onClick={() => {
+                  if (selectedLabelForTap) {
+                    applyDeviceDrop(selectedLabelForTap, 'device1');
+                    setSelectedLabelForTap(null);
+                  }
+                }}
               >
                 {devicesDragState.devices[0].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[0].matchedLabel)?.text
@@ -681,6 +716,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                     ? 'quiz-device-drop-zone-filled' 
                     : ''
                 }`}
+                onClick={() => {
+                  if (selectedLabelForTap) {
+                    applyDeviceDrop(selectedLabelForTap, 'device2');
+                    setSelectedLabelForTap(null);
+                  }
+                }}
               >
                 {devicesDragState.devices[1].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[1].matchedLabel)?.text
@@ -707,6 +748,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                     ? 'quiz-device-drop-zone-filled' 
                     : ''
                 }`}
+                onClick={() => {
+                  if (selectedLabelForTap) {
+                    applyDeviceDrop(selectedLabelForTap, 'device3');
+                    setSelectedLabelForTap(null);
+                  }
+                }}
               >
                 {devicesDragState.devices[2].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[2].matchedLabel)?.text
@@ -733,6 +780,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                     ? 'quiz-device-drop-zone-filled' 
                     : ''
                 }`}
+                onClick={() => {
+                  if (selectedLabelForTap) {
+                    applyDeviceDrop(selectedLabelForTap, 'device4');
+                    setSelectedLabelForTap(null);
+                  }
+                }}
               >
                 {devicesDragState.devices[3].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[3].matchedLabel)?.text
@@ -759,6 +812,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
                     ? 'quiz-device-drop-zone-filled' 
                     : ''
                 }`}
+                onClick={() => {
+                  if (selectedLabelForTap) {
+                    applyDeviceDrop(selectedLabelForTap, 'device5');
+                    setSelectedLabelForTap(null);
+                  }
+                }}
               >
                 {devicesDragState.devices[4].matchedLabel 
                   ? devicesDragState.labels.find(l => l.id === devicesDragState.devices[4].matchedLabel)?.text
