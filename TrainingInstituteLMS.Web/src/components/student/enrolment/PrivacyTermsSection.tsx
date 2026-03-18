@@ -6,6 +6,15 @@ import { Checkbox } from '../../ui/checkbox';
 import { Button } from '../../ui/button';
 import { ScrollArea } from '../../ui/scroll-area';
 import { AlertTriangle } from 'lucide-react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+  DialogTrigger,
+} from '../../ui/dialog';
 import type { PrivacyTerms } from '../../../types/studentEnrolment';
 
 interface PrivacyTermsSectionProps {
@@ -16,13 +25,16 @@ interface PrivacyTermsSectionProps {
 
 export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSectionProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const dialogCanvasRef = useRef<HTMLCanvasElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [hasInk, setHasInk] = useState(false);
   const lastPos = useRef<{ x: number; y: number } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Fit canvas to CSS size
-  const fitCanvasToSize = useCallback(() => {
-    const canvas = canvasRef.current;
+  const fitCanvasToSize = useCallback((targetCanvas?: HTMLCanvasElement | null) => {
+    const canvas = targetCanvas ?? canvasRef.current;
     if (!canvas) return;
 
     const ctx = canvas.getContext('2d');
@@ -43,32 +55,54 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
   }, []);
 
   useEffect(() => {
+    // Basic mobile detection by viewport width
+    const mq = window.matchMedia('(max-width: 768px)');
+    const handleMediaChange = () => setIsMobile(mq.matches);
+    handleMediaChange();
+    mq.addEventListener('change', handleMediaChange);
+
+    const handleResize = () => {
+      fitCanvasToSize();
+      fitCanvasToSize(dialogCanvasRef.current);
+    };
+
     fitCanvasToSize();
-    window.addEventListener('resize', fitCanvasToSize);
-    return () => window.removeEventListener('resize', fitCanvasToSize);
+    fitCanvasToSize(dialogCanvasRef.current);
+    window.addEventListener('resize', handleResize);
+
+    return () => {
+      mq.removeEventListener('change', handleMediaChange);
+      window.removeEventListener('resize', handleResize);
+    };
   }, [fitCanvasToSize]);
 
   // Restore signature from data when component mounts or user navigates back
   useEffect(() => {
     if (!data.signatureData) return;
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-
     const img = new Image();
     img.onload = () => {
-      fitCanvasToSize();
-      const ctx = canvas.getContext('2d');
-      if (!ctx) return;
-      const rect = canvas.getBoundingClientRect();
-      ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      const canvases: (HTMLCanvasElement | null)[] = [
+        canvasRef.current,
+        dialogCanvasRef.current,
+      ];
+
+      canvases.forEach((canvas) => {
+        if (!canvas) return;
+        fitCanvasToSize(canvas);
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        const rect = canvas.getBoundingClientRect();
+        ctx.drawImage(img, 0, 0, rect.width, rect.height);
+      });
+
       setHasInk(true);
     };
     img.src = data.signatureData;
   }, [data.signatureData, fitCanvasToSize]);
 
-  const getPos = (e: React.MouseEvent | React.TouchEvent) => {
-    const canvas = canvasRef.current;
+  const getPos = (e: React.MouseEvent | React.TouchEvent, targetCanvas?: HTMLCanvasElement | null) => {
+    const canvas = targetCanvas ?? canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
 
     const rect = canvas.getBoundingClientRect();
@@ -84,20 +118,32 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
     };
   };
 
-  const startDrawing = (e: React.MouseEvent | React.TouchEvent) => {
+  const startDrawing = (e: React.MouseEvent | React.TouchEvent, targetCanvas?: HTMLCanvasElement | null) => {
+    // Prevent the page from scrolling while starting a signature stroke on touch devices
+    if ('touches' in e) {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    }
     setIsDrawing(true);
-    lastPos.current = getPos(e);
-    e.preventDefault();
+    lastPos.current = getPos(e, targetCanvas);
   };
 
-  const draw = (e: React.MouseEvent | React.TouchEvent) => {
+  const draw = (e: React.MouseEvent | React.TouchEvent, targetCanvas?: HTMLCanvasElement | null) => {
     if (!isDrawing || !lastPos.current) return;
 
-    const canvas = canvasRef.current;
+    const canvas = targetCanvas ?? canvasRef.current;
     const ctx = canvas?.getContext('2d');
     if (!canvas || !ctx) return;
 
-    const pos = getPos(e);
+    // Prevent the page from scrolling while drawing on touch devices
+    if ('touches' in e) {
+      if (e.cancelable) {
+        e.preventDefault();
+      }
+    }
+
+    const pos = getPos(e, targetCanvas);
 
     ctx.beginPath();
     ctx.moveTo(lastPos.current.x, lastPos.current.y);
@@ -106,7 +152,6 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
 
     lastPos.current = pos;
     setHasInk(true);
-    e.preventDefault();
   };
 
   const stopDrawing = () => {
@@ -120,13 +165,19 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
   };
 
   const clearSignature = () => {
-    const canvas = canvasRef.current;
-    const ctx = canvas?.getContext('2d');
-    if (!canvas || !ctx) return;
+    const canvases: (HTMLCanvasElement | null)[] = [
+      canvasRef.current,
+      dialogCanvasRef.current,
+    ];
 
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    fitCanvasToSize();
+    canvases.forEach((canvas) => {
+      const ctx = canvas?.getContext('2d');
+      if (!canvas || !ctx) return;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      fitCanvasToSize(canvas);
+    });
+
     setHasInk(false);
     lastPos.current = null;
     onChange({ signatureData: '' });
@@ -354,17 +405,15 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
             <span className="text-red-500 font-bold">*</span>
           </Label>
 
-          <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white">
+          {/* Desktop / tablet inline pad */}
+          <div className="hidden md:block border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white">
             <canvas
               ref={canvasRef}
-              className="w-full h-[180px] border border-gray-200 rounded-lg bg-white cursor-crosshair touch-none"
-              onMouseDown={startDrawing}
-              onMouseMove={draw}
+              className="w-full h-[220px] border border-gray-200 rounded-lg bg-white cursor-crosshair touch-none"
+              onMouseDown={(e) => startDrawing(e)}
+              onMouseMove={(e) => draw(e)}
               onMouseUp={stopDrawing}
               onMouseLeave={stopDrawing}
-              onTouchStart={startDrawing}
-              onTouchMove={draw}
-              onTouchEnd={stopDrawing}
             />
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <Button
@@ -375,11 +424,94 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
               >
                 Clear
               </Button>
-              <span className="text-sm text-gray-500">Draw with mouse or finger.</span>
+              <span className="text-sm text-gray-500">
+                Draw with your mouse or trackpad inside the box.
+              </span>
             </div>
-            {errors.signatureData && (
-              <p className="text-sm text-red-500 mt-2">{errors.signatureData}</p>
-            )}
+          </div>
+
+          {/* Mobile: dialog-based signature pad */}
+          <div className="md:hidden">
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <div className="border border-dashed border-gray-300 rounded-xl p-4 bg-white">
+                <p className="text-sm text-gray-600 mb-2">
+                  On mobile, sign using the full-screen pad.
+                </p>
+                <div className="flex items-center gap-2">
+                  <DialogTrigger asChild>
+                    <Button type="button" className="flex-1">
+                      Open Signature Pad
+                    </Button>
+                  </DialogTrigger>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={clearSignature}
+                  >
+                    Clear
+                  </Button>
+                </div>
+                {data.signatureData && (
+                  <p className="text-xs text-green-600 mt-2">
+                    A signature has been captured. You can reopen the pad to update it.
+                  </p>
+                )}
+                {errors.signatureData && (
+                  <p className="text-sm text-red-500 mt-2">{errors.signatureData}</p>
+                )}
+              </div>
+
+              <DialogContent className="max-w-md w-[calc(100%-2rem)]">
+                <DialogHeader>
+                  <DialogTitle>Sign with your finger</DialogTitle>
+                  <DialogDescription>
+                    Place your finger inside the box and move it slowly to draw your signature. Tap &quot;Save signature&quot; when you&apos;re done.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-4 bg-white mt-2">
+                  <canvas
+                    ref={dialogCanvasRef}
+                    className="w-full h-[260px] border border-gray-200 rounded-lg bg-white cursor-crosshair touch-none"
+                    onMouseDown={(e) => startDrawing(e, dialogCanvasRef.current)}
+                    onMouseMove={(e) => draw(e, dialogCanvasRef.current)}
+                    onMouseUp={stopDrawing}
+                    onMouseLeave={stopDrawing}
+                    onTouchStart={(e) => startDrawing(e, dialogCanvasRef.current)}
+                    onTouchMove={(e) => draw(e, dialogCanvasRef.current)}
+                    onTouchEnd={stopDrawing}
+                  />
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={clearSignature}
+                    >
+                      Clear
+                    </Button>
+                    <span className="text-xs text-gray-500">
+                      Use one finger to draw. The page will not scroll while you are signing.
+                    </span>
+                  </div>
+                </div>
+                <DialogFooter className="mt-4">
+                  <Button
+                    type="button"
+                    className="w-full"
+                    onClick={() => {
+                      const canvas = dialogCanvasRef.current;
+                      if (canvas && hasInk) {
+                        onChange({ signatureData: canvas.toDataURL('image/png') });
+                      }
+                      setIsDialogOpen(false);
+                    }}
+                  >
+                    Save signature
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
           </div>
         </CardContent>
       </Card>

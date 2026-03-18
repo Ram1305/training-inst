@@ -54,6 +54,7 @@ import {
   PrivacyTermsSection,
   PhotoIdSection,
 } from './enrolment';
+import { collectMissingFields } from './enrolment/enrolmentValidation';
 import type {
   ApplicantDetails,
   USIDetails,
@@ -1208,47 +1209,6 @@ export function PublicEnrollmentWizard({
     5: 'Section 5 (Declaration & documents)',
   };
 
-  // Human-readable labels for validation errors
-  const ERROR_LABELS: Record<string, string> = {
-    title: 'Title',
-    surname: 'Surname',
-    givenName: 'Given name',
-    dob: 'Date of birth',
-    gender: 'Gender',
-    mobile: 'Mobile phone',
-    email: 'Email',
-    resAddress: 'Residential address',
-    resSuburb: 'Suburb',
-    resState: 'State',
-    resPostcode: 'Postcode',
-    emergencyPermission: 'Emergency contact permission',
-    usiApply: 'USI application option',
-    usi: 'USI number',
-    usiAuthoriseName: 'Authorised name',
-    usiConsent: 'USI consent',
-    townCityBirth: 'Town/City of birth',
-    overseasCityBirth: 'Overseas city',
-    usiIdType: 'ID type',
-    usiIdUpload: 'ID document upload',
-    schoolCompleteYear: 'Year completed',
-    employmentStatus: 'Employment status',
-    hasPostQual: 'Post-secondary qualification',
-    trainingReason: 'Reason for undertaking',
-    trainingReasonOther: 'Other reason details',
-    countryOfBirth: 'Country of birth',
-    langOther: 'Language other than English',
-    homeLanguage: 'Home language',
-    indigenousStatus: 'Indigenous status',
-    hasDisability: 'Disability status',
-    docPrimaryId: 'Primary Photo ID',
-    docSecondaryId: 'Photo document',
-    acceptPrivacy: 'Privacy notice acceptance',
-    acceptTerms: 'Terms acceptance',
-    declareName: 'Declaration name',
-    declareDate: 'Declaration date',
-    signatureData: 'Signature',
-  };
-
   const validateAllSections = (): { valid: boolean; firstInvalidSection: number; missingFields: string[] } => {
     const allErrors: Record<string, string> = {};
     let firstInvalidSection = 1;
@@ -1313,11 +1273,11 @@ export function PublicEnrollmentWizard({
       }
     }
 
-    setFormErrors(allErrors);
-    const missingFields = Object.keys(allErrors).map((key) => ERROR_LABELS[key] || key);
+    const { errors: enrichedErrors, missingFields } = collectMissingFields(formData, allErrors);
+    setFormErrors(enrichedErrors);
     setSubmitValidationErrors(missingFields);
     return {
-      valid: Object.keys(allErrors).length === 0,
+      valid: Object.keys(enrichedErrors).length === 0,
       firstInvalidSection,
       missingFields,
     };
@@ -1330,7 +1290,8 @@ export function PublicEnrollmentWizard({
       return;
     }
     if (result.errors && Object.keys(result.errors).length > 0) {
-      const labels = Object.keys(result.errors).map((key) => ERROR_LABELS[key] || key);
+      const { missingFields } = collectMissingFields(formData, result.errors);
+      const labels = missingFields.length > 0 ? missingFields : Object.keys(result.errors);
       const sectionLabel = SECTION_NAMES[currentFormSection] ?? `Section ${currentFormSection}`;
       const message = labels.length === 1
         ? `${sectionLabel} — Please fill in: ${labels[0]}`

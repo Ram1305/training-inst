@@ -384,7 +384,7 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
 
             <div className="rounded-3xl overflow-hidden shadow-2xl border-4 border-cyan-100">
               <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3315.4428574939586!2d151.00970731521!3d-33.789429180678!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12a31c7b93e85d%3A0x5017d681632c850!2s14-16%20Marjorie%20St%2C%20Sefton%20NSW%202162%2C%20Australia!5e0!3m2!1sen!2sus!4v1234567890123!5m2!1sen!2sus"
+                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d13249.109127334175!2d150.99548220634458!3d-33.88251196727094!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x6b12bdf5dd2add47%3A0x4d647836796bda87!2sSTA!5e0!3m2!1sen!2sin!4v1773743939611!5m2!1sen!2sin"
                 width="100%"
                 height="500"
                 style={{ border: 0 }}
