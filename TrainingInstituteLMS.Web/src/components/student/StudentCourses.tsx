@@ -534,8 +534,20 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
             </Card>
           ) : (
             <>
-              {enrolledCourses.map((course) => (
-                <Card key={course.enrollmentId} className="border-violet-100 overflow-hidden">
+              {enrolledCourses.map((course) => {
+                const progress =
+                  course.status === 'Completed'
+                    ? 100
+                    : course.paymentStatus !== 'Verified'
+                      ? 10
+                      : !course.quizCompleted
+                        ? 40
+                        : course.status === 'Active'
+                          ? 80
+                          : 60;
+
+                return (
+                  <Card key={course.enrollmentId} className="border-violet-100 overflow-hidden">
                   <div className="flex flex-col md:flex-row">
                     <div className="w-full md:w-48 h-48 flex-shrink-0">
                       <ImageWithFallback
@@ -605,10 +617,10 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                             <div className="flex items-center justify-between mb-2">
                               <span className="text-gray-600">Overall Progress</span>
                               <span className="bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-                                {course.progress}%
+                                {progress}%
                               </span>
                             </div>
-                            <Progress value={course.progress} className="h-2" />
+                            <Progress value={progress} className="h-2" />
                           </div>
                         </div>
                       </CardContent>
@@ -638,7 +650,8 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                     </div>
                   </div>
                 </Card>
-              ))}
+                );
+              })}
             </>
           )}
         </TabsContent>
