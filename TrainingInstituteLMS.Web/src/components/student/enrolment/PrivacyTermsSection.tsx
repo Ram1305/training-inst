@@ -31,6 +31,16 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
   const lastPos = useRef<{ x: number; y: number } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const hasInkRef = useRef(false);
+  const isDrawingRef = useRef(false);
+
+  useEffect(() => {
+    hasInkRef.current = hasInk;
+  }, [hasInk]);
+
+  useEffect(() => {
+    isDrawingRef.current = isDrawing;
+  }, [isDrawing]);
 
   // Fit canvas to CSS size
   const fitCanvasToSize = useCallback((targetCanvas?: HTMLCanvasElement | null) => {
@@ -41,6 +51,7 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
     if (!ctx) return;
 
     const rect = canvas.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
     const ratio = window.devicePixelRatio || 1;
 
     canvas.width = Math.max(1, Math.round(rect.width * ratio));
@@ -61,9 +72,40 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
     handleMediaChange();
     mq.addEventListener('change', handleMediaChange);
 
+    let rafId: number | null = null;
+
+    const preserveAndFit = (canvas: HTMLCanvasElement | null) => {
+      if (!canvas) return;
+
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      const rect = canvas.getBoundingClientRect();
+      if (rect.width <= 0 || rect.height <= 0) return;
+
+      // Resizing canvas clears it; keep current ink if we have any.
+      const shouldPreserve = hasInkRef.current || isDrawingRef.current;
+      const snap = shouldPreserve ? canvas.toDataURL('image/png') : null;
+
+      fitCanvasToSize(canvas);
+
+      if (!snap) return;
+      const img = new Image();
+      img.onload = () => {
+        const nextCtx = canvas.getContext('2d');
+        if (!nextCtx) return;
+        const nextRect = canvas.getBoundingClientRect();
+        nextCtx.drawImage(img, 0, 0, nextRect.width, nextRect.height);
+      };
+      img.src = snap;
+    };
+
     const handleResize = () => {
-      fitCanvasToSize();
-      fitCanvasToSize(dialogCanvasRef.current);
+      if (rafId) window.cancelAnimationFrame(rafId);
+      rafId = window.requestAnimationFrame(() => {
+        preserveAndFit(canvasRef.current);
+        preserveAndFit(dialogCanvasRef.current);
+      });
     };
 
     fitCanvasToSize();
@@ -154,11 +196,11 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
     setHasInk(true);
   };
 
-  const stopDrawing = () => {
+  const stopDrawing = (targetCanvas?: HTMLCanvasElement | null) => {
     if (!isDrawing) return;
     setIsDrawing(false);
 
-    const canvas = canvasRef.current;
+    const canvas = targetCanvas ?? canvasRef.current;
     if (canvas && hasInk) {
       onChange({ signatureData: canvas.toDataURL('image/png') });
     }
@@ -412,8 +454,8 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
               className="w-full h-[220px] border border-gray-200 rounded-lg bg-white cursor-crosshair touch-none"
               onMouseDown={(e) => startDrawing(e)}
               onMouseMove={(e) => draw(e)}
-              onMouseUp={stopDrawing}
-              onMouseLeave={stopDrawing}
+              onMouseUp={() => stopDrawing()}
+              onMouseLeave={() => stopDrawing()}
             />
             <div className="flex flex-wrap items-center gap-2 mt-3">
               <Button
@@ -488,11 +530,11 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
                         className="w-full h-[320px] md:h-[400px] rounded-xl bg-white cursor-crosshair touch-none"
                         onMouseDown={(e) => startDrawing(e, dialogCanvasRef.current)}
                         onMouseMove={(e) => draw(e, dialogCanvasRef.current)}
-                        onMouseUp={stopDrawing}
-                        onMouseLeave={stopDrawing}
+                        onMouseUp={() => stopDrawing(dialogCanvasRef.current)}
+                        onMouseLeave={() => stopDrawing(dialogCanvasRef.current)}
                         onTouchStart={(e) => startDrawing(e, dialogCanvasRef.current)}
                         onTouchMove={(e) => draw(e, dialogCanvasRef.current)}
-                        onTouchEnd={stopDrawing}
+                        onTouchEnd={() => stopDrawing(dialogCanvasRef.current)}
                       />
                     </div>
                   </div>

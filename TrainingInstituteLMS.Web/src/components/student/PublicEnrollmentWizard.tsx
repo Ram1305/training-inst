@@ -55,6 +55,7 @@ import {
   PhotoIdSection,
 } from './enrolment';
 import { collectMissingFields } from './enrolment/enrolmentValidation';
+import { REQUIRED_FIELD_DEFINITIONS } from './enrolment/enrolmentValidation';
 import type {
   ApplicantDetails,
   USIDetails,
@@ -1140,9 +1141,21 @@ export function PublicEnrollmentWizard({
       if (!a.resAddress) newErrors.resAddress = 'Residential address is required';
       if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
       if (!a.resState) newErrors.resState = 'State is required';
-      // Postcode is optional
+      if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
       if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select Yes or No';
-      // Emergency contact name/relationship/number are optional when permission is No
+      // Emergency contact name/relationship/number are required when permission is Yes
+      if (a.emergencyPermission === 'Yes') {
+        if (!a.emergencyName?.trim()) newErrors.emergencyName = 'Emergency contact name is required';
+        if (!a.emergencyRelationship?.trim()) newErrors.emergencyRelationship = 'Emergency contact relationship is required';
+        if (!a.emergencyContactNumber?.trim()) newErrors.emergencyContactNumber = 'Emergency contact number is required';
+      }
+      // Postal address fields are required when Postal Address is different
+      if (a.postalDifferent) {
+        if (!a.postAddress?.trim()) newErrors.postAddress = 'Postal address is required';
+        if (!a.postSuburb?.trim()) newErrors.postSuburb = 'Postal suburb is required';
+        if (!a.postState?.trim()) newErrors.postState = 'Postal state is required';
+        if (!a.postPostcode?.trim()) newErrors.postPostcode = 'Postal postcode is required';
+      }
     }
 
     if (section === 2) {
@@ -1227,8 +1240,19 @@ export function PublicEnrollmentWizard({
         if (!a.resAddress) newErrors.resAddress = 'Residential address is required';
         if (!a.resSuburb) newErrors.resSuburb = 'Suburb is required';
         if (!a.resState) newErrors.resState = 'State is required';
-        // Postcode is optional
+        if (!a.resPostcode) newErrors.resPostcode = 'Postcode is required';
         if (!a.emergencyPermission) newErrors.emergencyPermission = 'Please select Yes or No';
+        if (a.emergencyPermission === 'Yes') {
+          if (!a.emergencyName?.trim()) newErrors.emergencyName = 'Emergency contact name is required';
+          if (!a.emergencyRelationship?.trim()) newErrors.emergencyRelationship = 'Emergency contact relationship is required';
+          if (!a.emergencyContactNumber?.trim()) newErrors.emergencyContactNumber = 'Emergency contact number is required';
+        }
+        if (a.postalDifferent) {
+          if (!a.postAddress?.trim()) newErrors.postAddress = 'Postal address is required';
+          if (!a.postSuburb?.trim()) newErrors.postSuburb = 'Postal suburb is required';
+          if (!a.postState?.trim()) newErrors.postState = 'Postal state is required';
+          if (!a.postPostcode?.trim()) newErrors.postPostcode = 'Postal postcode is required';
+        }
       } else if (i === 2) {
         const u = formData.usi;
         if (!u.usiApply) newErrors.usiApply = 'Please select an option';
@@ -1292,16 +1316,18 @@ export function PublicEnrollmentWizard({
       return;
     }
     if (result.errors && Object.keys(result.errors).length > 0) {
-      const { missingFields } = collectMissingFields(formData, result.errors);
-      
-      // Update overall validation errors state with newly found missing fields for this section
-      setSubmitValidationErrors(prev => {
-        const otherSections = prev.filter(err => err.section !== currentFormSection);
+      // Only show missing fields for the CURRENT section when clicking Next
+      const missingFields = REQUIRED_FIELD_DEFINITIONS
+        .filter((d) => d.section === currentFormSection && !!result.errors?.[d.key])
+        .map((d) => ({ label: d.label, section: d.section }));
+
+      setSubmitValidationErrors((prev) => {
+        const otherSections = prev.filter((err) => err.section !== currentFormSection);
         return [...otherSections, ...missingFields];
       });
 
       const sectionLabel = SECTION_NAMES[currentFormSection] ?? `Section ${currentFormSection}`;
-      const labels = missingFields.map(mf => mf.label);
+      const labels = missingFields.map((mf) => mf.label);
       const message = labels.length === 1
         ? `${sectionLabel} — Please fill in: ${labels[0]}`
         : `${sectionLabel} — Please fill in: ${labels.join(', ')}`;
@@ -2431,7 +2457,7 @@ export function PublicEnrollmentWizard({
                             <Building2 className="w-4 h-4" />
                             <span className="font-medium">Bank Transfer</span>
                           </div>
-                          <div className="text-sm text-gray-500">Transfer to our bank account - pay later</div>
+                          <div className="text-sm text-gray-500">Transfer to our bank account </div>
                         </Label>
                       </div>
 

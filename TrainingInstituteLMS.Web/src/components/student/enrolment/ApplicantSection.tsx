@@ -257,7 +257,8 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
 
               <div className="space-y-2">
                 <Label htmlFor="resPostcode" className="flex items-center gap-1">
-                  Postcode (optional)
+                  Postcode
+                  <span className="text-red-500 font-bold">*</span>
                 </Label>
                 <Input
                   id="resPostcode"
@@ -344,7 +345,8 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
 
                       <div className="space-y-2">
                         <Label htmlFor="postPostcode" className="flex items-center gap-1">
-                          Postcode (optional)
+                          Postcode
+                          <span className="text-red-500 font-bold">*</span>
                         </Label>
                         <Input
                           id="postPostcode"
