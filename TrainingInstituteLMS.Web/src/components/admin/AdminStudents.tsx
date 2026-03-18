@@ -569,7 +569,11 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>{firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—'}</TableCell>
+                        <TableCell>
+                          {firstEnr?.enrollmentType === 'Company' || paymentForFirst?.accountType === 'Company' 
+                            ? (paymentForFirst?.companyName || 'Company') 
+                            : (firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—')}
+                        </TableCell>
                         <TableCell>{student.email}</TableCell>
                         <TableCell>{student.phoneNumber || 'N/A'}</TableCell>
                         <TableCell>{courseLabel}</TableCell>

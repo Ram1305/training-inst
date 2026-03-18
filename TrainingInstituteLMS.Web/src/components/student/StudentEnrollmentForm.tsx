@@ -232,7 +232,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
     }));
   };
 
-  const validateSection = (section: number): boolean => {
+  const getSectionErrors = (section: number): Record<string, string> => {
     const newErrors: Record<string, string> = {};
 
     if (section === 1) {
@@ -317,12 +317,19 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
     }
 
+    return newErrors;
+  };
+
+  const validateSection = (section: number): boolean => {
+    const newErrors = getSectionErrors(section);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleNext = () => {
     if (validateSection(currentSection)) {
+      setErrors({});
+      setAllErrors({});
       setCurrentSection((prev) => Math.min(prev + 1, 5));
       window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
@@ -331,6 +338,8 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
   };
 
   const handlePrevious = () => {
+    setErrors({});
+    setAllErrors({});
     setCurrentSection((prev) => Math.max(prev - 1, 1));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -342,18 +351,27 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       return;
     }
 
-    // Validate all sections and collect errors
-    const collectedErrors: Record<string, string[]> = {};
+    // Validate all sections (without mutating state while looping)
+    const allSectionErrors: Record<number, Record<string, string>> = {};
     for (let i = 1; i <= 5; i++) {
-      if (!validateSection(i)) {
-        const sectionName = SECTIONS[i - 1].title;
-        collectedErrors[sectionName] = Object.values(errors);
+      const sectionErrors = getSectionErrors(i);
+      if (Object.keys(sectionErrors).length > 0) {
+        allSectionErrors[i] = sectionErrors;
       }
     }
 
-    // If there are errors, display them and return
-    if (Object.keys(collectedErrors).length > 0) {
-      setAllErrors(collectedErrors);
+    // If there are errors, jump to the first invalid section and show only that section's errors
+    const invalidSections = Object.keys(allSectionErrors)
+      .map((k) => Number(k))
+      .sort((a, b) => a - b);
+    if (invalidSections.length > 0) {
+      const firstInvalidSection = invalidSections[0];
+      const sectionTitle = SECTIONS[firstInvalidSection - 1]?.title ?? `Section ${firstInvalidSection}`;
+      const sectionErrors = allSectionErrors[firstInvalidSection];
+
+      setCurrentSection(firstInvalidSection);
+      setErrors(sectionErrors);
+      setAllErrors({ [sectionTitle]: Object.values(sectionErrors) });
       window.scrollTo({ top: 0, behavior: 'smooth' });
       toast.error('Please fill in all required fields');
       return;
@@ -361,6 +379,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
 
     // Clear errors if validation passed
     setAllErrors({});
+    setErrors({});
 
     setIsSaving(true);
     try {
@@ -578,7 +597,11 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
             {SECTIONS.map((section) => (
               <button
                 key={section.id}
-                onClick={() => setCurrentSection(section.id)}
+                onClick={() => {
+                  setErrors({});
+                  setAllErrors({});
+                  setCurrentSection(section.id);
+                }}
                 className={`flex flex-col items-center text-xs ${
                   currentSection === section.id
                     ? 'text-violet-600 font-semibold'
