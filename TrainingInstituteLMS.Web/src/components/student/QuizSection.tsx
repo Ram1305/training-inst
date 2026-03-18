@@ -86,6 +86,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   // Touch/pointer drag: 'file' | 'device' | null
   const pointerDragModeRef = useRef<'file' | 'device' | null>(null);
   const lastPointerRef = useRef<{ clientX: number; clientY: number } | null>(null);
+  const [pointerPreview, setPointerPreview] = useState<{
+    id: string;
+    type: 'file' | 'device';
+    x: number;
+    y: number;
+  } | null>(null);
 
   // Shared drop logic for both HTML5 drag and pointer/touch
   const applyFileDrop = useCallback((draggedId: string, folder: 'checklistBook' | 'imagesFolder') => {
@@ -117,6 +123,17 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     }));
   }, []);
 
+  const handlePointerMoveForTouchDrag = useCallback((e: PointerEvent) => {
+    if (!pointerDragModeRef.current || !draggedItemRef.current) return;
+    lastPointerRef.current = { clientX: e.clientX, clientY: e.clientY };
+    setPointerPreview({
+      id: draggedItemRef.current,
+      type: pointerDragModeRef.current,
+      x: e.clientX,
+      y: e.clientY
+    });
+  }, []);
+
   // Handle pointer up for touch drag (resolve drop zone from element under pointer)
   const handlePointerUpForTouchDrag = useCallback((e: PointerEvent) => {
     const mode = pointerDragModeRef.current;
@@ -124,8 +141,10 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     pointerDragModeRef.current = null;
     draggedItemRef.current = null;
     lastPointerRef.current = null;
+    setPointerPreview(null);
     document.removeEventListener('pointerup', handlePointerUpForTouchDrag);
     document.removeEventListener('pointercancel', handlePointerUpForTouchDrag);
+    document.removeEventListener('pointermove', handlePointerMoveForTouchDrag);
 
     if (!draggedId || !mode) return;
 
@@ -140,7 +159,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     } else if (mode === 'device' && deviceId) {
       applyDeviceDrop(draggedId, deviceId);
     }
-  }, [applyFileDrop, applyDeviceDrop]);
+  }, [applyFileDrop, applyDeviceDrop, handlePointerMoveForTouchDrag]);
 
   // Start pointer/touch drag (used when HTML5 drag doesn't fire)
   const handlePointerDownForDrag = useCallback((e: React.PointerEvent, dragType: 'file' | 'device', id: string) => {
@@ -150,9 +169,16 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     draggedItemRef.current = id;
     pointerDragModeRef.current = dragType;
     lastPointerRef.current = { clientX: e.clientX, clientY: e.clientY };
+    setPointerPreview({
+      id,
+      type: dragType,
+      x: e.clientX,
+      y: e.clientY
+    });
+    document.addEventListener('pointermove', handlePointerMoveForTouchDrag);
     document.addEventListener('pointerup', handlePointerUpForTouchDrag);
     document.addEventListener('pointercancel', handlePointerUpForTouchDrag);
-  }, [handlePointerUpForTouchDrag]);
+  }, [handlePointerMoveForTouchDrag, handlePointerUpForTouchDrag]);
 
   // Reset state when section changes
   useEffect(() => {
@@ -190,6 +216,7 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
     pointerDragModeRef.current = null;
     lastPointerRef.current = null;
     setDraggedItem(null);
+    setPointerPreview(null);
   }, [section.id]);
 
   const currentQuestion = section.questions[currentQuestionIndex];
@@ -839,11 +866,41 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
   );
 
   return (
-    <Card className="border-violet-100">
+    <Card className="border-violet-100 relative">
       <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white">
         <CardTitle>{section.title}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6 pt-6">
+        {pointerPreview && (
+          <div
+            className="pointer-events-none fixed z-50"
+            style={{
+              left: pointerPreview.x,
+              top: pointerPreview.y,
+              transform: 'translate(-50%, -50%)'
+            }}
+          >
+            {pointerPreview.type === 'file' ? (
+              pointerPreview.id === 'image' ? (
+                <img
+                  src="/assets/imagefordraganddrop.png"
+                  alt="Dragging image file"
+                  className="w-16 h-16 rounded-md shadow-lg border-2 border-violet-400 bg-white object-contain"
+                />
+              ) : (
+                <img
+                  src="/assets/pngimage.png"
+                  alt="Dragging PDF file"
+                  className="w-12 h-12 rounded-md shadow-lg border-2 border-violet-400 bg-white object-contain"
+                />
+              )
+            ) : (
+              <div className="max-w-xs px-3 py-2 rounded-lg shadow-lg border-2 border-emerald-400 bg-white text-xs font-semibold text-gray-800">
+                {devicesDragState.labels.find(l => l.id === pointerPreview.id)?.text || 'Label'}
+              </div>
+            )}
+          </div>
+        )}
         <div className={`px-4 py-2 rounded-lg uppercase tracking-wide font-semibold quiz-section-header ${
           section.id === 'numeracy' 
             ? 'bg-green-500' 

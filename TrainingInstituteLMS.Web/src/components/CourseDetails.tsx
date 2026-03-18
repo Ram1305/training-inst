@@ -434,9 +434,15 @@ export function CourseDetailsPage({
                             courseCode: course.code,
                             coursePrice: course.comboOffer?.price || course.price
                           })}
-                          className="w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto bg-white text-violet-600 hover:bg-white/90 rounded-full px-8 h-12 font-bold shadow-xl"
+                          className="group w-full sm:w-auto mt-2 sm:mt-0 sm:ml-auto bg-gradient-to-r from-amber-300 via-yellow-400 to-amber-500 hover:from-amber-400 hover:via-yellow-500 hover:to-amber-600 text-slate-900 rounded-full px-10 h-14 text-lg font-extrabold shadow-[0_18px_35px_rgba(15,23,42,0.45)] hover:shadow-[0_22px_45px_rgba(15,23,42,0.65)] transform hover:-translate-y-0.5 transition-all duration-200 border border-amber-200"
                         >
-                          Book Combo Now
+                          <span className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-amber-700 group-hover:scale-110 transition-transform" />
+                            <span>Book Combo Now</span>
+                            <span className="hidden sm:inline text-xs font-semibold uppercase tracking-wide bg-white/20 px-2 py-0.5 rounded-full">
+                              Best Value
+                            </span>
+                          </span>
                         </Button>
                       </div>
                     </div>
@@ -655,8 +661,8 @@ export function CourseDetailsPage({
               <Card className="border-2 border-yellow-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-yellow-50">
                 <CardHeader>
                   <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
-                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg text-white [&_svg]:text-white [&_svg]:stroke-white">
-                      <DollarSign className="w-6 h-6 text-white stroke-white" />
+                    <div className="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <DollarSign className="w-6 h-6 text-white" />
                     </div>
                     Fees and Charges
                   </CardTitle>
