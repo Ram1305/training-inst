@@ -13,6 +13,9 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.Company
         [StringLength(255, ErrorMessage = "Email cannot exceed 255 characters")]
         public string Email { get; set; } = string.Empty;
 
+        [StringLength(20, ErrorMessage = "Mobile number cannot exceed 20 characters")]
+        public string? MobileNumber { get; set; }
+
         [StringLength(100, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters when provided")]
         public string? Password { get; set; }
     }

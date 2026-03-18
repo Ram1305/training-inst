@@ -151,6 +151,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                     CompanyId = Guid.NewGuid(),
                     UserId = user.UserId,
                     CompanyName = request.CompanyName,
+                    MobileNumber = string.IsNullOrWhiteSpace(request.MobileNumber) ? null : request.MobileNumber.Trim(),
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -198,6 +199,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 company.CompanyName = request.CompanyName;
                 company.User.FullName = request.CompanyName;
                 company.User.Email = request.Email;
+                company.MobileNumber = string.IsNullOrWhiteSpace(request.MobileNumber) ? null : request.MobileNumber.Trim();
 
                 if (!string.IsNullOrWhiteSpace(request.Password))
                 {
@@ -287,6 +289,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 UserId = company.UserId,
                 CompanyName = company.CompanyName,
                 Email = company.User?.Email ?? string.Empty,
+                MobileNumber = company.MobileNumber,
                 IsActive = company.IsActive,
                 CreatedAt = company.CreatedAt,
                 LastLoginAt = company.User?.LastLoginAt
