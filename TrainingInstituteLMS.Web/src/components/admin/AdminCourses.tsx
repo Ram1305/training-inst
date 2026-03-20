@@ -2229,7 +2229,7 @@ export function AdminCourses() {
                             <div className="rounded-md border border-gray-200 bg-gray-50 p-3 text-sm">
                               <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Preview</span>
                               <div
-                                className="mt-1 prose prose-sm max-w-none [&_.course-desc-h2]:text-base [&_.course-desc-h2]:font-semibold [&_.course-desc-h3]:text-sm [&_.course-desc-h3]:font-medium [&_.course-desc-ul]:list-disc [&_.course-desc-ol]:list-decimal [&_.course-desc-li]:my-0.5"
+                                className="mt-1 prose prose-sm max-w-none [&_.course-desc-kv-label]:text-blue-600 [&_.course-desc-kv-label]:font-semibold [&_.course-desc-kv-value]:text-blue-700 [&_.course-desc-kv-value]:font-bold [&_.course-desc-h2]:text-base [&_.course-desc-h2]:font-semibold [&_.course-desc-h3]:text-sm [&_.course-desc-h3]:font-medium [&_.course-desc-ul]:list-disc [&_.course-desc-ol]:list-decimal [&_.course-desc-li]:my-0.5"
                                 dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(item) }}
                               />
                             </div>

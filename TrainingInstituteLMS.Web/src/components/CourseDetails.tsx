@@ -468,7 +468,7 @@ export function CourseDetailsPage({
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 overflow-x-auto">
                   <div
-                    className="course-description-content text-gray-700 text-base sm:text-lg leading-relaxed [&_.course-desc-h2]:text-lg sm:[&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-base sm:[&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-4 sm:[&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-4 sm:[&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic [&_table]:w-full [&_table]:overflow-hidden [&_table]:block sm:[&_table]:table [&_table]:overflow-x-auto"
+                    className="course-description-content text-gray-700 text-base sm:text-lg leading-relaxed [&_.course-desc-kv-label]:text-blue-600 [&_.course-desc-kv-label]:font-semibold [&_.course-desc-kv-value]:text-blue-700 [&_.course-desc-kv-value]:font-bold [&_.course-desc-h2]:text-lg sm:[&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-base sm:[&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-4 sm:[&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-4 sm:[&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic [&_table]:w-full [&_table]:overflow-hidden [&_table]:block sm:[&_table]:table [&_table]:overflow-x-auto"
                     dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(course.courseDescription) }}
                   />
                   
@@ -758,11 +758,11 @@ export function CourseDetailsPage({
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-4">Course Details</h3>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 gap-1 sm:gap-4">
-                      <span className="text-gray-700 flex items-center gap-2 font-semibold">
-                        <Clock className="w-5 h-5 text-cyan-600" />
+                      <span className="text-blue-700 flex items-center gap-2 font-semibold">
+                        <Clock className="w-5 h-5 text-blue-600" />
                         Duration
                       </span>
-                      <span className="font-bold text-slate-900">{course.duration || '—'}</span>
+                      <span className="font-bold text-blue-700">{course.duration || '—'}</span>
                     </div>
 
                     {course.resourcePdf && (
