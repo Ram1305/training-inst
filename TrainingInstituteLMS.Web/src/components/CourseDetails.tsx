@@ -460,8 +460,8 @@ export function CourseDetailsPage({
               <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-white overflow-hidden">
                 <CardHeader className="p-4 sm:p-6">
                   <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                      <BookOpen className="w-5 h-5 sm:w-6 sm:h-6" />
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center shadow-lg border border-blue-200">
+                      <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
                     Course Overview
                   </CardTitle>
