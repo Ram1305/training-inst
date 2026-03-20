@@ -1225,6 +1225,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 </Button>
                 <Button
                   variant="outline"
+                  onClick={onVOC}
                   className="bg-blue-600 hover:bg-blue-700 border-0 text-white rounded-full px-8 h-14 text-lg font-semibold shadow-xl"
                 >
                   VOC

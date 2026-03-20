@@ -29,14 +29,13 @@ function ensureDataLayerAndGtag(): void {
 
 /**
  * Initialize Google tag (gtag.js) globally.
- *
- * Configure via Vite env:
- * - VITE_GTAG_ID: GA4 Measurement ID (G-XXXX) OR Ads ID (AW-XXXX)
+ * `measurementId` should be the resolved id from main (analytics.config → VITE_GTAG_ID → API).
  */
-export function initGtag(): void {
+export function initGtag(measurementId?: string): void {
   if (!isBrowser()) return;
 
-  const id = (import.meta as any).env?.VITE_GTAG_ID as string | undefined;
+  const envId = import.meta.env.VITE_GTAG_ID as string | undefined;
+  const id = measurementId?.trim() || envId?.trim() || undefined;
   if (!id) return;
 
   // Avoid double-initializing

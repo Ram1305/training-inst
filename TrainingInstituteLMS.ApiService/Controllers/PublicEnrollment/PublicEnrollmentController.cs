@@ -126,6 +126,24 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         }
 
         /// <summary>
+        /// GA4 measurement id for gtag.js (from SiteSettings GtagMeasurementId, then Analytics:GtagMeasurementId in configuration / Azure App Settings).
+        /// </summary>
+        [HttpGet("gtag-config")]
+        public async Task<IActionResult> GetGtagConfig()
+        {
+            try
+            {
+                var id = await _siteSettingsService.GetGtagMeasurementIdAsync();
+                return Ok(ApiResponse<object>.SuccessResponse(new GtagConfigResponseDto { GtagMeasurementId = id }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting gtag config");
+                return StatusCode(500, ApiResponse<object>.FailureResponse("Failed to get analytics config"));
+            }
+        }
+
+        /// <summary>
         /// Get enrollment link data by unique code
         /// </summary>
         [HttpGet("link/{code}")]

@@ -9,6 +9,12 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
         Task<string> GetEnrollmentBaseUrlAsync();
 
         /// <summary>
+        /// GA4 measurement id (G-XXXX): SiteSettings key GtagMeasurementId, then configuration Analytics:GtagMeasurementId.
+        /// Null or empty if not configured.
+        /// </summary>
+        Task<string?> GetGtagMeasurementIdAsync();
+
+        /// <summary>
         /// Gets AllowPayLater for an enrollment link from SiteSettings key-value store.
         /// </summary>
         Task<bool> GetEnrollmentLinkAllowPayLaterAsync(Guid linkId);

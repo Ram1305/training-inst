@@ -5,6 +5,14 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string EnrollmentBaseUrl { get; set; } = string.Empty;
     }
 
+    /// <summary>
+    /// Public GA4 / gtag measurement id for the SPA (from SiteSettings, then Analytics:GtagMeasurementId config).
+    /// </summary>
+    public class GtagConfigResponseDto
+    {
+        public string? GtagMeasurementId { get; set; }
+    }
+
     public class CourseDropdownItemDto
     {
         public Guid CourseId { get; set; }

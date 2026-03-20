@@ -81,6 +81,26 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
             return setting?.Value;
         }
 
+        public async Task<string?> GetGtagMeasurementIdAsync()
+        {
+            try
+            {
+                var setting = await _context.SiteSettings
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(s => s.Key == "GtagMeasurementId");
+                var fromDb = setting?.Value?.Trim();
+                if (!string.IsNullOrEmpty(fromDb))
+                    return fromDb;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Could not load GtagMeasurementId from database.");
+            }
+
+            var fromConfig = _configuration["Analytics:GtagMeasurementId"]?.Trim();
+            return string.IsNullOrEmpty(fromConfig) ? null : fromConfig;
+        }
+
         private const string AllowPayLaterPrefix = "EnrollmentLink_AllowPayLater_";
         private static string AllowPayLaterKey(Guid linkId) => $"{AllowPayLaterPrefix}{linkId:N}";
 
