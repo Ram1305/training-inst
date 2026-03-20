@@ -1113,11 +1113,14 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           <div className="text-center py-12 text-gray-500 px-4">No reviews to display</div>
         ) : (
           <div
-            className="w-full overflow-x-auto py-3"
+            className="w-full overflow-hidden py-3"
             aria-label="Google reviews row"
           >
-            <div className="flex flex-nowrap w-max">
-              {googleReviews.map((review, index) => (
+            <div
+              className="reviews-marquee__track"
+              style={{ animationDuration: '1900s' }}
+            >
+              {[...googleReviews, ...googleReviews].map((review, index) => (
                 <div
                   key={`${review.googleReviewId}-${index}`}
                   className="reviews-marquee__item w-[min(23rem,calc(100vw-2.5rem))] sm:w-[24rem] px-3 md:px-4"
