@@ -1,0 +1,35 @@
+/* Infinite horizontal marquee (content moves right → left) */
+@keyframes reviews-marquee-rtl {
+  from {
+    transform: translate3d(0, 0, 0);
+  }
+  to {
+    transform: translate3d(-50%, 0, 0);
+  }
+}
+
+.reviews-marquee__track {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  width: max-content;
+  animation-name: reviews-marquee-rtl;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+
+.reviews-marquee__track:hover {
+  animation-play-state: paused;
+}
+
+.reviews-marquee__item {
+  flex-shrink: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reviews-marquee__track {
+    animation: none;
+    transform: none;
+  }
+}

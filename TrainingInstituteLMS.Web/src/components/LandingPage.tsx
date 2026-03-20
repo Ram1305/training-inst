@@ -46,9 +46,10 @@ import { courseService } from '../services/course.service';
 import type { CourseListItem } from '../services/course.service';
 import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
-import { reviewService } from '../services/review.service';
 import { WhatsAppButton } from "./ui/WhatsAppButton";
 import { PublicHeader } from "./layout/PublicHeader";
+import googleReviewsJson from '../../assets/googlereviews.json';
+import '../reviews-marquee.css';
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -90,6 +91,22 @@ const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
 ];
 
+type LandingReview = {
+  googleReviewId: string;
+  author: string;
+  rating: number;
+  reviewText: string;
+  timeText?: string | null;
+  isMainReview: boolean;
+};
+
+type RawGoogleReview = {
+  stars?: unknown;
+  name?: unknown;
+  reviewUrl?: unknown;
+  text?: unknown;
+};
+
 export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC, onViewCourses }: LandingPageProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -101,7 +118,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   // Data states
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
-  const [googleReviews, setGoogleReviews] = useState<{ googleReviewId: string; author: string; rating: number; reviewText: string; timeText?: string | null; isMainReview: boolean }[]>([]);
+  const [googleReviews, setGoogleReviews] = useState<LandingReview[]>([]);
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -193,10 +210,42 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   const fetchReviews = useCallback(async () => {
     try {
       setIsReviewsLoading(true);
-      const response = await reviewService.getPublicReviews();
-      if (response.success && response.data) {
-        setGoogleReviews(response.data);
+
+      const parsedReviews = (Array.isArray(googleReviewsJson) ? googleReviewsJson : [])
+        .map((review, index): LandingReview | null => {
+          const rawReview = review as RawGoogleReview;
+
+          const author = typeof rawReview.name === 'string' ? rawReview.name.trim() : '';
+          const reviewText = typeof rawReview.text === 'string' ? rawReview.text.trim() : '';
+          const ratingNumber = Number(rawReview.stars);
+          const rating = Number.isFinite(ratingNumber)
+            ? Math.min(5, Math.max(1, Math.round(ratingNumber)))
+            : 5;
+          const reviewUrl = typeof rawReview.reviewUrl === 'string' ? rawReview.reviewUrl.trim() : '';
+
+          if (!author || !reviewText) {
+            return null;
+          }
+
+          return {
+            googleReviewId: reviewUrl || `asset-review-${index}`,
+            author,
+            rating,
+            reviewText,
+            timeText: null,
+            isMainReview: false,
+          };
+        })
+        .filter((review): review is LandingReview => review !== null);
+
+      if (parsedReviews.length > 0) {
+        parsedReviews[0] = {
+          ...parsedReviews[0],
+          isMainReview: true,
+        };
       }
+
+      setGoogleReviews(parsedReviews);
     } catch (err) {
       console.error('Error fetching reviews:', err);
       setGoogleReviews([]);
@@ -1042,8 +1091,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section className="py-20 bg-white">
+      {/* Reviews Section — single row, continuous right-to-left scroll */}
+      <section className="py-20 bg-gradient-to-b from-cyan-50/40 via-white to-blue-50/40 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1054,74 +1103,51 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           >
             <h2 className="text-3xl md:text-4xl font-bold text-cyan-500 mb-8">Reviews</h2>
           </motion.div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {isReviewsLoading ? (
-              <div className="col-span-full flex justify-center py-12">
-                <Loader2 className="w-10 h-10 animate-spin text-cyan-500" />
-              </div>
-            ) : googleReviews.length === 0 ? (
-              <div className="col-span-full text-center py-12 text-gray-500">No reviews to display</div>
-            ) : (
-              googleReviews.map((review, index) => (
-                <motion.div
-                  key={review.googleReviewId}
-                  initial={{ opacity: 0, y: 20 }}
-                  whileInView={{ opacity: 1, y: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ duration: 0.5, delay: index * 0.1 }}
-                >
-                  {review.isMainReview ? (
-                    <Card className="border-2 border-blue-200 rounded-2xl bg-white shadow-lg p-6 text-center">
-                      <div className="mb-4">
-                        <div className="text-5xl font-bold text-transparent bg-gradient-to-r from-red-500 via-yellow-500 via-green-500 to-blue-500 bg-clip-text mb-2">
-                          G
-                        </div>
-                        <div className="text-sm text-gray-600 font-semibold">{review.author}</div>
-                      </div>
-                      <div className="text-5xl font-bold text-slate-900 mb-2">{review.rating}.0</div>
-                      <div className="flex justify-center gap-1 mb-3">
-                        {[...Array(review.rating)].map((_, i) => (
-                          <Star key={i} className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-600">{review.reviewText}</p>
-                      <Button
-                        variant="outline"
-                        className="mt-4 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-full w-full"
-                      >
-                        review us on
-                        <div className="w-5 h-5 ml-2 bg-white rounded shadow-sm flex items-center justify-center">
-                          <span className="text-xs font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
-                            G
-                          </span>
-                        </div>
-                      </Button>
-                    </Card>
-                  ) : (
-                    <Card className="border-2 border-blue-100 rounded-2xl bg-gradient-to-br from-white to-blue-50 shadow-lg p-6">
-                      <div className="flex items-center justify-between mb-3">
-                        <div className="font-bold text-slate-900 text-sm">{review.author}</div>
-                        <div className="w-6 h-6 bg-white rounded shadow-sm flex items-center justify-center">
-                          <span className="text-xs font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
-                            G
-                          </span>
-                        </div>
-                      </div>
-                      <div className="flex gap-1 mb-3">
-                        {[...Array(review.rating)].map((_, i) => (
-                          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                        ))}
-                      </div>
-                      <p className="text-sm text-gray-700 leading-relaxed mb-3">{review.reviewText}</p>
-                      {review.timeText && <p className="text-xs text-gray-500">{review.timeText}</p>}
-                    </Card>
-                  )}
-                </motion.div>
-              ))
-            )}
-          </div>
         </div>
+
+        {isReviewsLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-10 h-10 animate-spin text-cyan-500" />
+          </div>
+        ) : googleReviews.length === 0 ? (
+          <div className="text-center py-12 text-gray-500 px-4">No reviews to display</div>
+        ) : (
+          <div
+            className="w-full overflow-x-auto py-3"
+            aria-label="Google reviews row"
+          >
+            <div className="flex flex-nowrap w-max">
+              {googleReviews.map((review, index) => (
+                <div
+                  key={`${review.googleReviewId}-${index}`}
+                  className="reviews-marquee__item w-[min(23rem,calc(100vw-2.5rem))] sm:w-[24rem] px-3 md:px-4"
+                >
+                  <Card className="border border-cyan-100 rounded-3xl bg-white/95 shadow-lg hover:shadow-xl transition-shadow p-6 md:p-7 h-full backdrop-blur-sm">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="font-semibold text-slate-900 text-base truncate pr-2">{review.author}</div>
+                      <div className="w-7 h-7 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center flex-shrink-0">
+                        <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
+                          G
+                        </span>
+                      </div>
+                    </div>
+                    <div className="flex gap-1.5 mb-3">
+                      {[...Array(review.rating)].map((_, i) => (
+                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      ))}
+                    </div>
+                    <p className="text-sm md:text-[15px] text-gray-700 leading-relaxed line-clamp-4 min-h-[5.5rem]">
+                      {review.reviewText}
+                    </p>
+                    {review.timeText && (
+                      <p className="text-xs text-gray-500 mt-3">{review.timeText}</p>
+                    )}
+                  </Card>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </section>
 
       {/* Our Clients Section */}
