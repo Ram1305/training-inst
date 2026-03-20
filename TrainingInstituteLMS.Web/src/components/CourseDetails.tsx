@@ -362,9 +362,9 @@ export function CourseDetailsPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-green-100 shadow-lg rounded-2xl bg-gradient-to-br from-green-50 to-white">
+              <Card className="border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
                     <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-blue-600 mb-1">Price</div>
@@ -372,19 +372,19 @@ export function CourseDetailsPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-purple-100 shadow-lg rounded-2xl bg-gradient-to-br from-purple-50 to-white">
+              <Card className="border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-purple-500 rounded-xl flex items-center justify-center mx-auto mb-2 [&_svg]:text-amber-200 [&_svg]:stroke-amber-200">
-                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-amber-200 stroke-amber-200" />
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                    <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-blue-600 mb-1">Duration</div>
                   <div className="text-sm font-bold text-blue-700 line-clamp-2 sm:line-clamp-1 h-10 sm:h-auto flex items-center justify-center">{course.duration || '—'}</div>
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-orange-100 shadow-lg rounded-2xl bg-gradient-to-br from-orange-50 to-white">
+              <Card className="border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
                 <CardContent className="p-3 sm:p-4 text-center">
-                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-orange-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
+                  <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-500 rounded-xl flex items-center justify-center mx-auto mb-2 text-white [&_svg]:text-white [&_svg]:stroke-white">
                     <MapPin className="w-5 h-5 sm:w-6 sm:h-6 text-white stroke-white" />
                   </div>
                   <div className="text-xs text-blue-600 mb-1">Location</div>
