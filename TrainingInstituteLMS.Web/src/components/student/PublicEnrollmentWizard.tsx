@@ -78,6 +78,12 @@ import { gtagEvent } from '../../lib/gtag';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { API_CONFIG } from '../../config/api.config';
 import { usePublicSiteUrl } from '../../contexts/PublicSiteUrlContext';
+import {
+  AU_LOCALE_DATE_SHORT,
+  AU_LOCALE_TIME,
+  formatAustraliaCivilDateHeading,
+  getCalendarDateKeyInAustralia,
+} from '../../utils/australiaTime';
 
 interface PublicEnrollmentWizardProps {
   onComplete: (result: { userId: string; studentId: string; email: string; fullName: string }) => void;
@@ -92,18 +98,6 @@ interface PublicEnrollmentWizardProps {
   allowPayLater?: boolean;
   /** Link code for one-time link completion API. */
   enrollCode?: string;
-}
-
-function toLocalDateKey(d: Date) {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  return `${y}-${m}-${day}`;
-}
-
-function getIsoDateKey(isoLike: string | null | undefined) {
-  const key = (isoLike || '').split('T')[0];
-  return /^\d{4}-\d{2}-\d{2}$/.test(key) ? key : '';
 }
 
 // Full quiz sections data (same as in PublicQuiz.tsx)
@@ -400,7 +394,7 @@ export function PublicEnrollmentWizard({
   // Group course dates by calendar date for grid layout (same as Booking Form)
   const courseDatesByDate = useMemo(() => {
     const byDate = courseDates.reduce<Record<string, CourseDateDropdownItem[]>>((acc, d) => {
-      const datePart = (d.startDate || '').split('T')[0];
+      const datePart = getCalendarDateKeyInAustralia(d.startDate);
       if (!datePart) return acc;
       // Group by date + dateType so different session types on the same day get separate boxes
       const key = `${datePart}__${d.dateType || 'General'}`;
@@ -597,12 +591,17 @@ export function PublicEnrollmentWizard({
     try {
       const response = await publicEnrollmentWizardService.getCourseDates(courseId);
       if (response.success && response.data) {
-        const todayKey = toLocalDateKey(new Date());
+        const todayKey = getCalendarDateKeyInAustralia(new Date());
+        const now = Date.now();
         const all = Array.isArray(response.data) ? response.data : [];
         const filtered = all.filter((d) => {
-          const startKey = getIsoDateKey(d.startDate);
-          if (!startKey) return true; // if malformed, don't unexpectedly hide it
-          return startKey >= todayKey;
+          const start = new Date(d.startDate);
+          if (Number.isNaN(start.getTime())) return true;
+          const startKey = getCalendarDateKeyInAustralia(d.startDate);
+          if (!startKey) return true;
+          if (startKey < todayKey) return false;
+          if (start.getTime() <= now) return false;
+          return true;
         });
         setCourseDates(filtered);
       } else {
@@ -1688,7 +1687,7 @@ export function PublicEnrollmentWizard({
             </div>
             <div className="flex items-center gap-2">
               <span className="font-semibold text-gray-700 text-sm">Date:</span>
-              <span className="border-b-2 border-gray-300 px-2 py-1 text-sm">{new Date().toLocaleDateString('en-AU')}</span>
+              <span className="border-b-2 border-gray-300 px-2 py-1 text-sm">{new Date().toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)}</span>
             </div>
           </div>
 
@@ -1922,12 +1921,7 @@ export function PublicEnrollmentWizard({
                                     {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
                                       <div key={`${dateKey}-${dates[0]?.dateType}`} className="flex flex-col items-center w-full">
                                         <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
-                                          {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
-                                            weekday: 'short',
-                                            day: 'numeric',
-                                            month: 'short',
-                                            year: 'numeric',
-                                          })}
+                                          {formatAustraliaCivilDateHeading(dateKey)}
                                         </p>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
                                           {dates.map((date) => {
@@ -1940,8 +1934,8 @@ export function PublicEnrollmentWizard({
                                                 onClick={() => {
                                                   if (isDisabled || !pendingCompanyCourse) return;
                                                   const courseDateLabel = date.startDate !== date.endDate
-                                                    ? `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })} – ${new Date(date.endDate).toLocaleDateString('en-AU')} ${new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`
-                                                    : `${new Date(date.startDate).toLocaleDateString('en-AU')} ${new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}`;
+                                                    ? `${new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} ${new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)} – ${new Date(date.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} ${new Date(date.endDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}`
+                                                    : `${new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} ${new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}`;
                                                   // Auto-add this course/date with default quantity 1
                                                   setSelectedCompanyCourses((prev) => [
                                                     ...prev,
@@ -1974,9 +1968,9 @@ export function PublicEnrollmentWizard({
                                                     <div className="min-h-8 flex items-center">
                                                       <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                                         <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                        {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                                                        {new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}
                                                         {date.startDate !== date.endDate && (
-                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
+                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.endDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}</>
                                                         )}
                                                       </p>
                                                     </div>
@@ -2110,12 +2104,7 @@ export function PublicEnrollmentWizard({
                               {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
                                 <div key={`${dateKey}-${dates[0]?.dateType}`} className="flex flex-col items-center w-full">
                                   <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
-                                    {new Date(dateKey + 'T12:00:00').toLocaleDateString('en-AU', {
-                                      weekday: 'short',
-                                      day: 'numeric',
-                                      month: 'short',
-                                      year: 'numeric',
-                                    })}
+                                    {formatAustraliaCivilDateHeading(dateKey)}
                                   </p>
                                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
                                     {dates.map((date) => {
@@ -2153,9 +2142,9 @@ export function PublicEnrollmentWizard({
                                               <div className="min-h-8 flex items-center">
                                                 <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                                   <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                  {new Date(date.startDate).toLocaleDateString('en-AU')} {new Date(date.startDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}
+                                                  {new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}
                                                   {date.startDate !== date.endDate && (
-                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU')} {new Date(date.endDate).toLocaleTimeString('en-AU', { hour: 'numeric', minute: '2-digit' })}</>
+                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.endDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}</>
                                                   )}
                                                 </p>
                                               </div>
@@ -2408,7 +2397,8 @@ export function PublicEnrollmentWizard({
                       <div className="flex justify-between">
                         <span className="text-gray-600">Date:</span>
                         <span className="font-medium">
-                          {getSelectedDate() && `${new Date(getSelectedDate()!.startDate).toLocaleDateString()} - ${new Date(getSelectedDate()!.endDate).toLocaleDateString()}`}
+                          {getSelectedDate() &&
+                            `${new Date(getSelectedDate()!.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} – ${new Date(getSelectedDate()!.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)}`}
                         </span>
                       </div>
                       <div className="flex justify-between pt-2 border-t border-blue-200">
