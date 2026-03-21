@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.CompanyManagement;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.Company;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Common;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Company;
+using TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling;
 
 namespace TrainingInstituteLMS.ApiService.Controllers.Company
 {
@@ -11,14 +13,39 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
     public class CompanyManagementController : ControllerBase
     {
         private readonly ICompanyManagementService _companyManagementService;
+        private readonly ICompanyBillingService _companyBillingService;
         private readonly ILogger<CompanyManagementController> _logger;
 
         public CompanyManagementController(
             ICompanyManagementService companyManagementService,
+            ICompanyBillingService companyBillingService,
             ILogger<CompanyManagementController> logger)
         {
             _companyManagementService = companyManagementService;
+            _companyBillingService = companyBillingService;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Billing statements for a company (portal enrolments by Sydney calendar day).
+        /// </summary>
+        [HttpGet("{companyId:guid}/billing-statements")]
+        [ProducesResponseType(typeof(ApiResponse<CompanyBillingStatementListResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<CompanyBillingStatementListResponseDto>>> GetCompanyBillingStatements(
+            Guid companyId,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 20)
+        {
+            try
+            {
+                var result = await _companyBillingService.GetStatementsForCompanyAsync(companyId, page, pageSize);
+                return Ok(ApiResponse<CompanyBillingStatementListResponseDto>.SuccessResponse(result, "OK"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving billing statements for company {CompanyId}", companyId);
+                return StatusCode(500, ApiResponse<CompanyBillingStatementListResponseDto>.FailureResponse("An error occurred"));
+            }
         }
 
         [HttpGet]

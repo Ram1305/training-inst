@@ -98,6 +98,11 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         /// When true, users complete full flow without payment (name, email, mobile, LLN, enrollment form only).
         /// </summary>
         public bool AllowPayLater { get; set; }
+
+        /// <summary>Permanent company portal link (course/date chosen in wizard).</summary>
+        public bool IsCompanyPortalLink { get; set; }
+
+        public string? CompanyName { get; set; }
     }
 
     public class CompanyOrderResponseDto

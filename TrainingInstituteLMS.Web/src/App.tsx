@@ -166,6 +166,8 @@ export default function App() {
     linkId?: string;
     isOneTimeLink?: boolean;
     allowPayLater?: boolean;
+    isCompanyPortalLink?: boolean;
+    companyName?: string;
   } | null>(null);
   const [enrollCode, setEnrollCode] = useState<string | null>(null);
   const [isLoadingEnrollmentLink, setIsLoadingEnrollmentLink] = useState(false);
@@ -194,6 +196,8 @@ export default function App() {
               linkId: response.data.linkId,
               isOneTimeLink: response.data.isOneTimeLink,
               allowPayLater: response.data.allowPayLater,
+              isCompanyPortalLink: response.data.isCompanyPortalLink,
+              companyName: response.data.companyName,
             });
             setCurrentPage('publicEnrollmentWizard');
             // Update URL to clean state (optional)
@@ -617,6 +621,7 @@ export default function App() {
             isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
             allowPayLater={enrollmentLinkData?.allowPayLater}
             enrollCode={enrollCode ?? ''}
+            isCompanyPortalLink={enrollmentLinkData?.isCompanyPortalLink}
           />
         )}
         {currentPage === 'publicVOCForm' && (

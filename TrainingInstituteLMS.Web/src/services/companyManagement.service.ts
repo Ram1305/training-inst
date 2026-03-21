@@ -1,5 +1,6 @@
 import { apiService } from './api.service';
 import { API_CONFIG } from '../config/api.config';
+import type { CompanyBillingListResponse } from './adminCompanyBilling.service';
 
 export interface CreateCompanyRequest {
   companyName: string;
@@ -24,6 +25,7 @@ export interface CompanyResponse {
   createdAt: string;
   lastLoginAt?: string;
   mobileNumber?: string;
+  portalEnrollmentUrl?: string;
 }
 
 export interface CompanyListResponse {
@@ -101,6 +103,19 @@ class CompanyManagementService {
     return apiService.patch<ApiResponse<boolean>>(
       API_CONFIG.ENDPOINTS.COMPANY_MANAGEMENT.TOGGLE_STATUS(companyId)
     );
+  }
+
+  async getBillingStatements(
+    companyId: string,
+    params: { page?: number; pageSize?: number } = {}
+  ): Promise<ApiResponse<CompanyBillingListResponse>> {
+    const searchParams = new URLSearchParams();
+    if (params.page != null) searchParams.set('page', String(params.page));
+    if (params.pageSize != null) searchParams.set('pageSize', String(params.pageSize));
+    const q = searchParams.toString();
+    const base = API_CONFIG.ENDPOINTS.COMPANY_MANAGEMENT.BILLING_STATEMENTS(companyId);
+    const url = q ? `${base}?${q}` : base;
+    return apiService.get<ApiResponse<CompanyBillingListResponse>>(url);
   }
 }
 

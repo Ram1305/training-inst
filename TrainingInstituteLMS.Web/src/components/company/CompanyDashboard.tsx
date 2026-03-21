@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
-import { BookOpen, DollarSign, Users } from 'lucide-react';
+import { Button } from '../ui/button';
+import { BookOpen, DollarSign, Users, Link2, Check } from 'lucide-react';
+import { toast } from 'sonner';
 import type { CompanyResponse } from '../../services/companyManagement.service';
 
 interface CompanyDashboardProps {
@@ -8,6 +11,24 @@ interface CompanyDashboardProps {
 }
 
 export function CompanyDashboard({ company, userName }: CompanyDashboardProps) {
+  const [copied, setCopied] = useState(false);
+  const portalUrl = company?.portalEnrollmentUrl?.trim();
+
+  const copyPortalLink = async () => {
+    if (!portalUrl) {
+      toast.error('Enrolment link is not available yet.');
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(portalUrl);
+      setCopied(true);
+      toast.success('Link copied');
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      toast.error('Could not copy');
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -59,6 +80,47 @@ export function CompanyDashboard({ company, userName }: CompanyDashboardProps) {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="border-violet-100">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Link2 className="h-5 w-5" />
+            Employee enrolment link
+          </CardTitle>
+          <CardDescription>
+            Share this link with staff. They choose a course and session; training fees are billed to your company (no
+            card payment on this link).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {portalUrl ? (
+            <>
+              <div className="rounded-lg border border-violet-100 bg-violet-50/40 p-3 text-sm break-all font-mono text-gray-800">
+                {portalUrl}
+              </div>
+              <Button type="button" variant="secondary" size="sm" onClick={copyPortalLink}>
+                {copied ? (
+                  <>
+                    <Check className="h-4 w-4 mr-2" />
+                    Copied
+                  </>
+                ) : (
+                  <>
+                    <Link2 className="h-4 w-4 mr-2" />
+                    Copy link
+                  </>
+                )}
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm text-gray-600">
+              {company
+                ? 'Your permanent link will appear here after the account is fully provisioned. Refresh the page or contact support if it is missing.'
+                : 'Loading…'}
+            </p>
+          )}
+        </CardContent>
+      </Card>
 
       <Card className="border-violet-100">
         <CardHeader>

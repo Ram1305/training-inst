@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.Data.Data;
@@ -18,19 +19,25 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
         private readonly TrainingLMSDbContext _context;
         private readonly IFileStorageService _fileStorageService;
         private readonly IEmailService _emailService;
+        private readonly ICompanyBillingService _companyBillingService;
         private readonly ILogger<StudentEnrollmentFormService> _logger;
 
         public StudentEnrollmentFormService(
             TrainingLMSDbContext context,
             IFileStorageService fileStorageService,
             IEmailService emailService,
+            ICompanyBillingService companyBillingService,
             ILogger<StudentEnrollmentFormService> logger)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _emailService = emailService;
+            _companyBillingService = companyBillingService;
             _logger = logger;
         }
+
+        private static bool IsCompanyPortalLink(EnrollmentLink? link) =>
+            link != null && link.CompanyId.HasValue && !link.CompanyOrderId.HasValue;
 
         #region Public Operations
 
@@ -140,6 +147,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             student.EnrollmentFormSubmittedAt = DateTime.UtcNow;
             student.EnrollmentFormStatus = "Pending";
 
+            Guid? quizAttemptIdForEnrollment = null;
             // Create Quiz Attempt if quiz data is provided
             if (request.TotalQuestions.HasValue && request.SectionResults != null && request.SectionResults.Any())
             {
@@ -156,6 +164,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                     CompletedAt = DateTime.UtcNow
                 };
 
+                quizAttemptIdForEnrollment = quizAttempt.QuizAttemptId;
                 _context.PreEnrollmentQuizAttempts.Add(quizAttempt);
 
                 // Create Section Results
@@ -179,6 +188,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             // Create Enrollment if course is selected
             Data.Entities.Enrollments.Enrollment? enrollment = null;
             string? directPayBookingId = null;
+            Guid? portalCompanyIdForBilling = null;
             if (request.CourseId.HasValue && request.CourseDateId.HasValue)
             {
                 // Get course price
@@ -201,6 +211,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
 
                 // Handle Enrollment Link if provided
                 EnrollmentLink? link = null;
+                var isPortalLink = false;
                 if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
                 {
                     link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
@@ -209,15 +220,45 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                         if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
                             throw new InvalidOperationException("Enrollment link has expired");
 
-                        if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
-                            throw new InvalidOperationException("This enrollment link has already been used");
+                        isPortalLink = IsCompanyPortalLink(link);
+                        if (isPortalLink)
+                            portalCompanyIdForBilling = link.CompanyId;
+                        else
+                        {
+                            if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                                throw new InvalidOperationException("This enrollment link has already been used");
 
-                        link.UsedCount++;
-                        link.UpdatedAt = DateTime.UtcNow;
-                        if (link.MaxUses == 1)
-                            link.IsActive = false;
+                            var trackedLink = await _context.EnrollmentLinks.FindAsync(link.LinkId);
+                            if (trackedLink != null)
+                            {
+                                trackedLink.UsedCount++;
+                                trackedLink.UpdatedAt = DateTime.UtcNow;
+                                if (trackedLink.MaxUses == 1)
+                                    trackedLink.IsActive = false;
+                                link = trackedLink;
+                            }
+                        }
                     }
                 }
+
+                string enrollmentType;
+                decimal enrollmentAmountPaid = 0;
+                if (isPortalLink)
+                {
+                    enrollmentType = "Company";
+                    paymentStatus = "Pending";
+                    enrollmentAmountPaid = coursePrice;
+                }
+                else if (link?.CompanyOrderId.HasValue == true)
+                {
+                    enrollmentType = "Company";
+                    var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
+                    paymentStatus = order != null && string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase)
+                        ? "Pending"
+                        : paymentStatus;
+                }
+                else
+                    enrollmentType = "Individual";
 
                 enrollment = new Data.Entities.Enrollments.Enrollment
                 {
@@ -228,8 +269,11 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                     EnrolledAt = DateTime.UtcNow,
                     Status = "Active",
                     PaymentStatus = paymentStatus,
-                    EnrollmentType = link?.CompanyOrderId.HasValue == true ? "Company" : "Individual",
-                    EnrollmentLinkId = link?.LinkId
+                    AmountPaid = enrollmentAmountPaid,
+                    EnrollmentType = enrollmentType,
+                    EnrollmentLinkId = link?.LinkId,
+                    QuizAttemptId = quizAttemptIdForEnrollment,
+                    QuizCompleted = quizAttemptIdForEnrollment.HasValue && (request.IsPassed ?? false)
                 };
 
                 _context.Enrollments.Add(enrollment);
@@ -295,6 +339,26 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             {
                 _logger.LogError(ex, "SubmitPublicEnrollmentForm: SaveChangesAsync failed. UserId={UserId}, StudentId={StudentId}", user.UserId, student.StudentId);
                 throw;
+            }
+
+            if (enrollment != null && portalCompanyIdForBilling.HasValue)
+            {
+                try
+                {
+                    var courseForBill = await _context.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.CourseId == enrollment.CourseId);
+                    var billAmount = courseForBill?.Price ?? 0;
+                    await _companyBillingService.AddLineForPortalEnrollmentAsync(
+                        portalCompanyIdForBilling.Value,
+                        enrollment.EnrollmentId,
+                        billAmount,
+                        courseForBill?.CourseName,
+                        student.FullName,
+                        enrollment.EnrolledAt);
+                }
+                catch (Exception billEx)
+                {
+                    _logger.LogError(billEx, "Portal billing line failed for enrollment {EnrollmentId}", enrollment.EnrollmentId);
+                }
             }
 
             // Send enrollment confirmation email to both student and academy (when course is selected)

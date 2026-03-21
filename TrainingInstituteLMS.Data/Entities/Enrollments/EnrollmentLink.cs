@@ -1,5 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using TrainingInstituteLMS.Data.Entities.Companies;
 
 namespace TrainingInstituteLMS.Data.Entities.Enrollments
 {
@@ -59,6 +60,11 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         /// </summary>
         public Guid? CompanyOrderId { get; set; }
 
+        /// <summary>
+        /// Permanent company portal link: students pick course/date; billed to company. Mutually exclusive style with CompanyOrderId.
+        /// </summary>
+        public Guid? CompanyId { get; set; }
+
         // Navigation properties
         [ForeignKey(nameof(CourseId))]
         public virtual Courses.Course? Course { get; set; }
@@ -68,5 +74,8 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
 
         [ForeignKey(nameof(CompanyOrderId))]
         public virtual CompanyOrder? CompanyOrder { get; set; }
+
+        [ForeignKey(nameof(CompanyId))]
+        public virtual Company? Company { get; set; }
     }
 }

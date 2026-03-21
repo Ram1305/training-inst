@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using TrainingInstituteLMS.ApiService.Common;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
@@ -24,20 +25,26 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         private readonly ISiteSettingsService _siteSettingsService;
         private readonly IEmailService _emailService;
         private readonly IFileStorageService _fileStorageService;
+        private readonly ICompanyBillingService _companyBillingService;
 
         public PublicEnrollmentService(
             TrainingLMSDbContext context,
             ILogger<PublicEnrollmentService> logger,
             ISiteSettingsService siteSettingsService,
             IEmailService emailService,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            ICompanyBillingService companyBillingService)
         {
             _context = context;
             _logger = logger;
             _siteSettingsService = siteSettingsService;
             _emailService = emailService;
             _fileStorageService = fileStorageService;
+            _companyBillingService = companyBillingService;
         }
+
+        private static bool IsCompanyPortalLink(EnrollmentLinkEntity? link) =>
+            link != null && link.CompanyId.HasValue && !link.CompanyOrderId.HasValue;
 
         /// <summary>
         /// Gets the frontend base URL for enrollment links and QR codes (from SiteSettings collection, then config, then default).
@@ -133,11 +140,41 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<PublicRegistrationResponseDto> RegisterUserAsync(PublicRegistrationRequestDto request)
         {
-            // Check if email already exists
-            var existingUser = await _context.Users.FirstOrDefaultAsync(u => u.Email == request.Email);
+            EnrollmentLinkEntity? portalLink = null;
+            if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
+            {
+                var code = request.EnrollmentCode.Trim();
+                portalLink = await _context.EnrollmentLinks
+                    .FirstOrDefaultAsync(l => l.UniqueCode == code && l.IsActive);
+                if (portalLink != null && (!portalLink.CompanyId.HasValue || portalLink.CompanyOrderId.HasValue))
+                    portalLink = null;
+            }
+
+            var existingUser = await _context.Users
+                .Include(u => u.Student)
+                .FirstOrDefaultAsync(u => u.Email == request.Email.Trim());
             if (existingUser != null)
             {
-                throw new InvalidOperationException("An account with this email already exists");
+                if (portalLink == null || !string.Equals(existingUser.UserType, "Student", StringComparison.OrdinalIgnoreCase) || existingUser.Student == null)
+                    throw new InvalidOperationException("An account with this email already exists");
+                if (!BCrypt.Net.BCrypt.Verify(request.Password, existingUser.PasswordHash))
+                    throw new InvalidOperationException("Invalid email or password for this account");
+
+                var st = existingUser.Student;
+                if (!string.IsNullOrWhiteSpace(request.Phone))
+                    st.PhoneNumber = request.Phone.Trim();
+                if (!string.IsNullOrWhiteSpace(request.FullName))
+                    st.FullName = request.FullName.Trim();
+                await _context.SaveChangesAsync();
+
+                return new PublicRegistrationResponseDto
+                {
+                    UserId = existingUser.UserId.ToString(),
+                    StudentId = st.StudentId.ToString(),
+                    Email = existingUser.Email,
+                    FullName = st.FullName,
+                    Token = ""
+                };
             }
 
             // Create user
@@ -239,20 +276,62 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             EnrollmentLinkEntity? link = null;
             if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
             {
-                link = await _context.EnrollmentLinks.FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
+                link = await _context.EnrollmentLinks
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
                 if (link != null)
                 {
                     if (link.ExpiresAt.HasValue && link.ExpiresAt.Value < DateTime.UtcNow)
                         throw new InvalidOperationException("Enrollment link has expired");
 
-                    if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
-                        throw new InvalidOperationException("This enrollment link has already been used");
+                    if (link.CourseId.HasValue && link.CourseId.Value != request.CourseId)
+                        throw new InvalidOperationException("This link is not valid for the selected course");
 
-                    link.UsedCount++;
-                    link.UpdatedAt = DateTime.UtcNow;
-                    if (link.MaxUses == 1)
-                        link.IsActive = false;
+                    var portalLink = IsCompanyPortalLink(link);
+                    if (!portalLink)
+                    {
+                        if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
+                            throw new InvalidOperationException("This enrollment link has already been used");
+                    }
+
+                    // Track usage for non-portal links (portal links are unlimited)
+                    if (!portalLink)
+                    {
+                        var tracked = await _context.EnrollmentLinks.FirstAsync(l => l.LinkId == link.LinkId);
+                        tracked.UsedCount++;
+                        tracked.UpdatedAt = DateTime.UtcNow;
+                        if (tracked.MaxUses == 1)
+                            tracked.IsActive = false;
+                        link = tracked;
+                    }
                 }
+            }
+
+            var course = courseDate.Course ?? await _context.Courses.FindAsync(request.CourseId);
+            var coursePrice = course?.Price ?? 0;
+
+            string enrollmentType;
+            string paymentStatus;
+            decimal amountPaid = 0;
+
+            if (IsCompanyPortalLink(link))
+            {
+                enrollmentType = "Company";
+                paymentStatus = "Pending";
+                amountPaid = coursePrice;
+            }
+            else if (link?.CompanyOrderId.HasValue == true)
+            {
+                enrollmentType = "Company";
+                var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
+                paymentStatus = order != null && string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase)
+                    ? "Pending"
+                    : "Paid";
+            }
+            else
+            {
+                enrollmentType = "Individual";
+                paymentStatus = request.PaymentMethod == "cash" ? "Pending" : "Awaiting";
             }
 
             // Create enrollment
@@ -263,9 +342,10 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseId = request.CourseId,
                 CourseDateId = request.CourseDateId,
                 Status = "Active",
-                PaymentStatus = request.PaymentMethod == "cash" ? "Pending" : "Awaiting",
+                PaymentStatus = paymentStatus,
+                AmountPaid = amountPaid,
                 EnrolledAt = DateTime.UtcNow,
-                EnrollmentType = link?.CompanyOrderId.HasValue == true ? "Company" : "Individual",
+                EnrollmentType = enrollmentType,
                 EnrollmentLinkId = link?.LinkId
             };
 
@@ -279,6 +359,17 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             }
 
             await _context.SaveChangesAsync();
+
+            if (IsCompanyPortalLink(link) && link!.CompanyId.HasValue)
+            {
+                await _companyBillingService.AddLineForPortalEnrollmentAsync(
+                    link.CompanyId.Value,
+                    enrollment.EnrollmentId,
+                    coursePrice,
+                    course?.CourseName,
+                    student.FullName,
+                    enrollment.EnrolledAt);
+            }
 
             return new PublicCourseEnrollmentResponseDto
             {
@@ -415,6 +506,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var link = await _context.EnrollmentLinks
                 .Include(l => l.Course)
                 .Include(l => l.CourseDate)
+                .Include(l => l.Company)
                 .FirstOrDefaultAsync(l => l.UniqueCode == code && l.IsActive);
 
             if (link == null) return null;
@@ -453,6 +545,10 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             }
 
             var allowPayLater = await _siteSettingsService.GetEnrollmentLinkAllowPayLaterAsync(link.LinkId);
+            var isCompanyPortalLink = IsCompanyPortalLink(link);
+            if (isCompanyPortalLink)
+                allowPayLater = true;
+
             return new EnrollmentLinkDataDto
             {
                 LinkId = link.LinkId.ToString(),
@@ -461,7 +557,104 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 CourseDateId = link.CourseDateId?.ToString(),
                 CourseDateRange = courseDateRange,
                 IsOneTimeLink = link.CompanyOrderId.HasValue && link.CourseId.HasValue,
-                AllowPayLater = allowPayLater
+                AllowPayLater = allowPayLater,
+                IsCompanyPortalLink = isCompanyPortalLink,
+                CompanyName = link.Company?.CompanyName
+            };
+        }
+
+        public async Task<string> EnsureCompanyPortalEnrollmentLinkAsync(Guid companyId)
+        {
+            var existing = await _context.EnrollmentLinks
+                .FirstOrDefaultAsync(l =>
+                    l.CompanyId == companyId &&
+                    l.CompanyOrderId == null &&
+                    l.CourseId == null);
+
+            if (existing != null)
+                return existing.UniqueCode;
+
+            var company = await _context.Companies.FirstOrDefaultAsync(c => c.CompanyId == companyId);
+            if (company == null)
+                throw new InvalidOperationException("Company not found");
+
+            var uniqueCode = GenerateUniqueCode();
+            var baseUrl = await GetFrontendBaseUrlAsync();
+            var fullUrl = $"{baseUrl}/enroll/{uniqueCode}";
+
+            var link = new EnrollmentLinkEntity
+            {
+                LinkId = Guid.NewGuid(),
+                Name = $"Company portal — {company.CompanyName}",
+                Description = "Permanent link for employees to enrol; fees billed to the company.",
+                UniqueCode = uniqueCode,
+                CourseId = null,
+                CourseDateId = null,
+                CompanyOrderId = null,
+                CompanyId = companyId,
+                MaxUses = null,
+                UsedCount = 0,
+                QrCodeData = GenerateQRCode(fullUrl),
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
+            };
+            await _context.EnrollmentLinks.AddAsync(link);
+            await _context.SaveChangesAsync();
+            await _siteSettingsService.SetEnrollmentLinkAllowPayLaterAsync(link.LinkId, true);
+            return uniqueCode;
+        }
+
+        public async Task<string?> GetCompanyPortalEnrollmentFullUrlAsync(Guid companyId)
+        {
+            if (!await _context.Companies.AnyAsync(c => c.CompanyId == companyId))
+                return null;
+            var code = await EnsureCompanyPortalEnrollmentLinkAsync(companyId);
+            var baseUrl = await GetFrontendBaseUrlAsync();
+            return $"{baseUrl}/enroll/{code}";
+        }
+
+        public async Task<PortalPrerequisitesResponseDto?> GetPortalPrerequisitesAsync(string code, string email)
+        {
+            if (string.IsNullOrWhiteSpace(code) || string.IsNullOrWhiteSpace(email))
+                return null;
+
+            var link = await _context.EnrollmentLinks
+                .AsNoTracking()
+                .FirstOrDefaultAsync(l => l.UniqueCode == code.Trim() && l.IsActive);
+
+            if (link == null || !IsCompanyPortalLink(link))
+                return null;
+
+            var student = await _context.Students
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Email.ToLower() == email.Trim().ToLower());
+
+            if (student == null)
+            {
+                return new PortalPrerequisitesResponseDto
+                {
+                    IsCompanyPortalLink = true,
+                    HasCompletedLln = false,
+                    HasCompletedEnrolmentForm = false
+                };
+            }
+
+            var hasLln = await _context.Enrollments.AnyAsync(e =>
+                e.StudentId == student.StudentId && e.QuizCompleted);
+            if (!hasLln)
+            {
+                hasLln = await _context.PreEnrollmentQuizAttempts.AnyAsync(q =>
+                    q.StudentId == student.StudentId && q.IsPassed);
+            }
+
+            var hasForm = student.EnrollmentFormCompleted ||
+                          string.Equals(student.EnrollmentFormStatus, "Approved", StringComparison.OrdinalIgnoreCase);
+
+            return new PortalPrerequisitesResponseDto
+            {
+                IsCompanyPortalLink = true,
+                HasCompletedLln = hasLln,
+                HasCompletedEnrolmentForm = hasForm
             };
         }
 

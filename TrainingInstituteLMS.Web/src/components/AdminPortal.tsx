@@ -35,6 +35,7 @@ import { AdminExams } from './admin/AdminExams';
 import { AdminCertificates } from './admin/AdminCertificates';
 import { AdminPayments } from './admin/AdminPayments';
 import { AdminCompanyPayments } from './admin/AdminCompanyPayments';
+import { AdminCompanyBilling } from './admin/AdminCompanyBilling';
 import { AdminReports } from './admin/AdminReports';
 import { AdminReviews } from './admin/AdminReviews';
 import { AdminGallery } from './admin/AdminGallery';
@@ -62,6 +63,7 @@ type AdminPage =
   | 'certificates'
   | 'payments'
   | 'company-payments'
+  | 'company-billing'
   | 'reports'
   | 'google-reviews'
   | 'gallery'
@@ -82,6 +84,7 @@ const VALID_ADMIN_PAGES: AdminPage[] = [
   'certificates',
   'payments',
   'company-payments',
+  'company-billing',
   'reports',
   'google-reviews',
   'gallery',
@@ -169,7 +172,10 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'voc', name: 'VOC Submissions', icon: ClipboardCheck },
   ];
 
-  const companyPaymentNav = [{ id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign }];
+  const companyPaymentNav = [
+    { id: 'company-payments' as const, name: 'Company Payment', icon: DollarSign },
+    { id: 'company-billing' as const, name: 'Company daily billing', icon: DollarSign },
+  ];
 
   const navigation = [
     ...baseNavigation.slice(0, baseNavigation.findIndex((n) => n.id === 'reports')),
@@ -235,6 +241,8 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
         return <AdminPayments />;
       case 'company-payments':
         return <AdminCompanyPayments />;
+      case 'company-billing':
+        return <AdminCompanyBilling />;
       case 'reports':
         return <AdminReports />;
       case 'google-reviews':

@@ -42,6 +42,7 @@ export const API_CONFIG = {
       BY_ID: (companyId: string) => `/CompanyManagement/${companyId}`,
       BY_USER_ID: (userId: string) => `/CompanyManagement/user/${userId}`,
       TOGGLE_STATUS: (companyId: string) => `/CompanyManagement/${companyId}/toggle-status`,
+      BILLING_STATEMENTS: (companyId: string) => `/CompanyManagement/${companyId}/billing-statements`,
     },
     QUIZ: {
       SUBMIT: '/quiz/submit',
@@ -181,6 +182,9 @@ export const API_CONFIG = {
       ADMIN_COMPANY_ORDER_BY_ID: (orderId: string) => `/PublicEnrollment/admin/company-orders/${orderId}`,
       ADMIN_COMPANY_ORDER_STATUS: (orderId: string) => `/PublicEnrollment/admin/company-orders/${orderId}/status`,
       ADMIN_COMPANY_ORDERS_COUNT: '/PublicEnrollment/admin/company-orders/count',
+      ADMIN_COMPANY_BILLING: '/PublicEnrollment/admin/company-billing',
+      ADMIN_COMPANY_BILLING_BY_ID: (statementId: string) =>
+        `/PublicEnrollment/admin/company-billing/${statementId}`,
     },
     VOC: {
       SUBMIT: '/VOC/submit',

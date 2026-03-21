@@ -6,6 +6,9 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public required string Email { get; set; }
         public required string Phone { get; set; }
         public required string Password { get; set; }
+
+        /// <summary>When set to a company portal enrollment link code, an existing student may sign in with this password to continue.</summary>
+        public string? EnrollmentCode { get; set; }
     }
       
     public class PublicCourseEnrollmentRequestDto

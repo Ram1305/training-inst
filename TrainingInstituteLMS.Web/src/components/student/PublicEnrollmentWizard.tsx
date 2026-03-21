@@ -101,6 +101,8 @@ interface PublicEnrollmentWizardProps {
   allowPayLater?: boolean;
   /** Link code for one-time link completion API. */
   enrollCode?: string;
+  /** Company portal link: employees enrol; fees billed to company. */
+  isCompanyPortalLink?: boolean;
 }
 
 // Full quiz sections data (same as in PublicQuiz.tsx)
@@ -342,7 +344,8 @@ export function PublicEnrollmentWizard({
   preSelectedCoursePrice,
   isOneTimeLink = false,
   allowPayLater = false,
-  enrollCode = ''
+  enrollCode = '',
+  isCompanyPortalLink = false
 }: PublicEnrollmentWizardProps) {
   const { publicSiteUrl } = usePublicSiteUrl();
   // Wizard step state
@@ -366,6 +369,10 @@ export function PublicEnrollmentWizard({
   const [oneTimeLinkSubmitting, setOneTimeLinkSubmitting] = useState(false);
   const [oneTimeLinkSuccess, setOneTimeLinkSuccess] = useState(false);
   const [oneTimeLinkError, setOneTimeLinkError] = useState<string | null>(null);
+
+  const [portalSkipLln, setPortalSkipLln] = useState(false);
+  const [portalSkipForm, setPortalSkipForm] = useState(false);
+  const [portalPrereqLoading, setPortalPrereqLoading] = useState(false);
 
   // Personal details (collected on Payment step)
   const [registrationData, setRegistrationData] = useState({
@@ -547,6 +554,39 @@ export function PublicEnrollmentWizard({
   useEffect(() => {
     quizSectionResultsRef.current = quizSectionResults;
   }, [quizSectionResults]);
+
+  useEffect(() => {
+    if (!isCompanyPortalLink || !enrollCode.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registrationData.email.trim())) {
+      setPortalSkipLln(false);
+      setPortalSkipForm(false);
+      return;
+    }
+    let cancelled = false;
+    const timer = window.setTimeout(async () => {
+      setPortalPrereqLoading(true);
+      try {
+        const res = await publicEnrollmentWizardService.getPortalPrerequisites(
+          enrollCode,
+          registrationData.email.trim()
+        );
+        if (!cancelled && res.success && res.data) {
+          setPortalSkipLln(!!res.data.hasCompletedLln);
+          setPortalSkipForm(!!res.data.hasCompletedEnrolmentForm);
+        }
+      } catch {
+        if (!cancelled) {
+          setPortalSkipLln(false);
+          setPortalSkipForm(false);
+        }
+      } finally {
+        if (!cancelled) setPortalPrereqLoading(false);
+      }
+    }, 450);
+    return () => {
+      cancelled = true;
+      window.clearTimeout(timer);
+    };
+  }, [isCompanyPortalLink, enrollCode, registrationData.email]);
 
   // Fetch courses on mount
   useEffect(() => {
@@ -950,18 +990,19 @@ export function PublicEnrollmentWizard({
       // Individual flow
       if (!validateRegistration()) return;
 
-      // Check if email is already registered
-      try {
-        const emailCheckResponse = await authService.checkEmail(registrationData.email);
-        if (emailCheckResponse.success && emailCheckResponse.data === true) {
-          toast.error('This email is already registered. Please use a different email or login to your account.');
-          setRegistrationErrors(prev => ({ ...prev, email: 'Email already registered' }));
+      if (!isCompanyPortalLink) {
+        try {
+          const emailCheckResponse = await authService.checkEmail(registrationData.email);
+          if (emailCheckResponse.success && emailCheckResponse.data === true) {
+            toast.error('This email is already registered. Please use a different email or login to your account.');
+            setRegistrationErrors(prev => ({ ...prev, email: 'Email already registered' }));
+            return;
+          }
+        } catch (error) {
+          console.error('Error checking email:', error);
+          toast.error('Failed to verify email. Please try again.');
           return;
         }
-      } catch (error) {
-        console.error('Error checking email:', error);
-        toast.error('Failed to verify email. Please try again.');
-        return;
       }
 
       if (!allowPayLater && !paymentMethod) {
@@ -988,8 +1029,60 @@ export function PublicEnrollmentWizard({
         return;
       }
 
+      if (
+        isCompanyPortalLink &&
+        portalSkipLln &&
+        portalSkipForm &&
+        enrollCode.trim() &&
+        selectedCourseId &&
+        selectedCourseDateId
+      ) {
+        setIsSubmitting(true);
+        try {
+          const regRes = await publicEnrollmentWizardService.registerUser({
+            fullName: registrationData.fullName.trim(),
+            email: registrationData.email.trim(),
+            phone: registrationData.phone.trim(),
+            password: registrationData.password?.trim() || '123456',
+            enrollmentCode: enrollCode.trim(),
+          });
+          if (!regRes.success || !regRes.data?.studentId) {
+            toast.error(regRes.message || 'Registration failed');
+            return;
+          }
+          const enrRes = await publicEnrollmentWizardService.enrollInCourse({
+            studentId: regRes.data.studentId,
+            courseId: selectedCourseId,
+            courseDateId: selectedCourseDateId,
+            enrollmentCode: enrollCode.trim(),
+            paymentMethod: 'pay_later',
+          });
+          if (!enrRes.success) {
+            toast.error(enrRes.message || 'Enrolment failed');
+            return;
+          }
+          toast.success('Enrolment completed!');
+          setIndividualEnrollmentSuccess(true);
+          setIndividualEnrollmentResult({
+            userId: regRes.data.userId,
+            studentId: regRes.data.studentId,
+            email: regRes.data.email,
+            fullName: regRes.data.fullName,
+          });
+        } catch (e) {
+          toast.error(e instanceof Error ? e.message : 'Failed to complete enrolment');
+        } finally {
+          setIsSubmitting(false);
+        }
+        return;
+      }
+
       prefillFormFromRegistration();
-      setCurrentStep(3);
+      if (isCompanyPortalLink && portalSkipLln && !portalSkipForm) {
+        setCurrentStep(4);
+      } else {
+        setCurrentStep(3);
+      }
       return;
     }
 
@@ -3328,7 +3421,12 @@ export function PublicEnrollmentWizard({
     );
   }
 
-  const visibleSteps = enrollmentType === 'company' ? WIZARD_STEPS.slice(0, 2) : WIZARD_STEPS;
+  const visibleSteps =
+    enrollmentType === 'company'
+      ? WIZARD_STEPS.slice(0, 2)
+      : isCompanyPortalLink && portalSkipLln && portalSkipForm
+        ? WIZARD_STEPS.slice(0, 2)
+        : WIZARD_STEPS;
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-6">

@@ -62,5 +62,10 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             string selectedCoursesJson);
 
         Task SendEmailOTPAsync(string toEmail, string otp);
+
+        /// <summary>
+        /// Welcome email for a new company account with the permanent employee enrolment link.
+        /// </summary>
+        Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl);
     }
 }

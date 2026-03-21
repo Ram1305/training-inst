@@ -33,4 +33,12 @@ public static class AustraliaSydneyTime
             return sydney.Date;
         }
     }
+
+    /// <summary>Maps an instant in UTC to the Sydney civil calendar date.</summary>
+    public static DateOnly UtcInstantToSydneyDateOnly(DateTime utc)
+    {
+        var utcKind = utc.Kind == DateTimeKind.Utc ? utc : DateTime.SpecifyKind(utc.ToUniversalTime(), DateTimeKind.Utc);
+        var sydney = TimeZoneInfo.ConvertTimeFromUtc(utcKind, SydneyTz);
+        return DateOnly.FromDateTime(sydney.Date);
+    }
 }

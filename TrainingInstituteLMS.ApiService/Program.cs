@@ -13,6 +13,7 @@ using TrainingInstituteLMS.ApiService.Services.StudentEnrollment;
 using TrainingInstituteLMS.ApiService.Services.CompanyManagement;
 using TrainingInstituteLMS.ApiService.Services.StudentManagement;
 using TrainingInstituteLMS.ApiService.Services.SuperAdmin;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.ApiService.Services.Payment;
@@ -125,6 +126,7 @@ builder.Services.AddMemoryCache();
 builder.Services.AddScoped<ISiteSettingsService, SiteSettingsService>();
 
 // Public Enrollment Service (for enrollment links and wizard)
+builder.Services.AddScoped<ICompanyBillingService, CompanyBillingService>();
 builder.Services.AddScoped<IPublicEnrollmentService, PublicEnrollmentService>();
 
 // File Storage Service - Choose based on configuration

@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Services.Email;
+using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Companies;
@@ -11,11 +14,22 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
     {
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<CompanyManagementService> _logger;
+        private readonly IPublicEnrollmentService _publicEnrollmentService;
+        private readonly IEmailService _emailService;
+        private readonly ISiteSettingsService _siteSettingsService;
 
-        public CompanyManagementService(TrainingLMSDbContext context, ILogger<CompanyManagementService> logger)
+        public CompanyManagementService(
+            TrainingLMSDbContext context,
+            ILogger<CompanyManagementService> logger,
+            IPublicEnrollmentService publicEnrollmentService,
+            IEmailService emailService,
+            ISiteSettingsService siteSettingsService)
         {
             _context = context;
             _logger = logger;
+            _publicEnrollmentService = publicEnrollmentService;
+            _emailService = emailService;
+            _siteSettingsService = siteSettingsService;
         }
 
         public async Task<CompanyListResponseDto> GetAllCompaniesAsync(CompanyFilterRequestDto filter)
@@ -43,17 +57,19 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 var totalCount = await query.CountAsync();
 
                 var companies = await query
+                    .Include(c => c.User)
                     .OrderByDescending(c => c.CreatedAt)
                     .Skip((filter.PageNumber - 1) * filter.PageSize)
                     .Take(filter.PageSize)
-                    .Select(c => MapToCompanyResponse(c))
                     .ToListAsync();
+
+                var companyDtos = companies.Select(c => MapToCompanyResponse(c, null)).ToList();
 
                 var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
 
                 return new CompanyListResponseDto
                 {
-                    Companies = companies,
+                    Companies = companyDtos,
                     TotalCount = totalCount,
                     PageNumber = filter.PageNumber,
                     PageSize = filter.PageSize,
@@ -76,7 +92,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 
-                return company == null ? null : MapToCompanyResponse(company);
+                if (company == null) return null;
+                var portalUrl = await _publicEnrollmentService.GetCompanyPortalEnrollmentFullUrlAsync(company.CompanyId);
+                return MapToCompanyResponse(company, portalUrl);
             }
             catch (Exception ex)
             {
@@ -94,7 +112,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.UserId == userId);
 
-                return company == null ? null : MapToCompanyResponse(company);
+                if (company == null) return null;
+                var portalUrl = await _publicEnrollmentService.GetCompanyPortalEnrollmentFullUrlAsync(company.CompanyId);
+                return MapToCompanyResponse(company, portalUrl);
             }
             catch (Exception ex)
             {
@@ -161,12 +181,30 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
 
                 _logger.LogInformation("Company created successfully: {Email}", request.Email);
 
+                try
+                {
+                    await _publicEnrollmentService.EnsureCompanyPortalEnrollmentLinkAsync(company.CompanyId);
+                    var portalUrl = await _publicEnrollmentService.GetCompanyPortalEnrollmentFullUrlAsync(company.CompanyId);
+                    var siteBase = await _siteSettingsService.GetEnrollmentBaseUrlAsync();
+                    await _emailService.SendCompanyPortalWelcomeAsync(
+                        request.Email.Trim(),
+                        company.CompanyName,
+                        portalUrl ?? string.Empty,
+                        siteBase);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Company create: portal link or welcome email failed for {CompanyId}", company.CompanyId);
+                }
+
                 var createdCompany = await _context.Companies
                     .Include(c => c.User)
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CompanyId == company.CompanyId);
 
-                return createdCompany == null ? null : MapToCompanyResponse(createdCompany);
+                if (createdCompany == null) return null;
+                var url = await _publicEnrollmentService.GetCompanyPortalEnrollmentFullUrlAsync(createdCompany.CompanyId);
+                return MapToCompanyResponse(createdCompany, url);
             }
             catch (Exception ex)
             {
@@ -215,7 +253,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                     .AsNoTracking()
                     .FirstOrDefaultAsync(c => c.CompanyId == companyId);
 
-                return updatedCompany == null ? null : MapToCompanyResponse(updatedCompany);
+                if (updatedCompany == null) return null;
+                var portalAfterUpdate = await _publicEnrollmentService.GetCompanyPortalEnrollmentFullUrlAsync(updatedCompany.CompanyId);
+                return MapToCompanyResponse(updatedCompany, portalAfterUpdate);
             }
             catch (Exception ex)
             {
@@ -281,7 +321,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
             }
         }
 
-        private static CompanyResponseDto MapToCompanyResponse(Company company)
+        private static CompanyResponseDto MapToCompanyResponse(Company company, string? portalEnrollmentUrl = null)
         {
             return new CompanyResponseDto
             {
@@ -292,7 +332,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 MobileNumber = company.MobileNumber,
                 IsActive = company.IsActive,
                 CreatedAt = company.CreatedAt,
-                LastLoginAt = company.User?.LastLoginAt
+                LastLoginAt = company.User?.LastLoginAt,
+                PortalEnrollmentUrl = portalEnrollmentUrl
             };
         }
     }

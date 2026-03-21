@@ -29,6 +29,7 @@ export interface PublicRegistrationRequest {
   email: string;
   phone: string;
   password: string;
+  enrollmentCode?: string;
 }
 
 export interface PublicRegistrationResponse {
@@ -183,6 +184,8 @@ export const publicEnrollmentWizardService = {
     courseDateRange?: string;
     isOneTimeLink?: boolean;
     allowPayLater?: boolean;
+    isCompanyPortalLink?: boolean;
+    companyName?: string;
   }>> {
     return apiService.get<ApiResponse<{
       linkId: string;
@@ -192,7 +195,29 @@ export const publicEnrollmentWizardService = {
       courseDateRange?: string;
       isOneTimeLink?: boolean;
       allowPayLater?: boolean;
+      isCompanyPortalLink?: boolean;
+      companyName?: string;
     }>>(`/PublicEnrollment/link/${code}`);
+  },
+
+  async getPortalPrerequisites(
+    code: string,
+    email: string
+  ): Promise<
+    ApiResponse<{
+      isCompanyPortalLink: boolean;
+      hasCompletedLln: boolean;
+      hasCompletedEnrolmentForm: boolean;
+    }>
+  > {
+    const params = new URLSearchParams({ code, email });
+    return apiService.get<
+      ApiResponse<{
+        isCompanyPortalLink: boolean;
+        hasCompletedLln: boolean;
+        hasCompletedEnrolmentForm: boolean;
+      }>
+    >(`/PublicEnrollment/portal-prerequisites?${params.toString()}`);
   },
 
   // Process company card payment (returns transactionId to use with createCompanyOrder)

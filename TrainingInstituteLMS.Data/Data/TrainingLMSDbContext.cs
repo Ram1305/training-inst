@@ -68,6 +68,9 @@ namespace TrainingInstituteLMS.Data.Data
         // Company orders (bulk course purchase, one-time links)
         public DbSet<CompanyOrder> CompanyOrders { get; set; }
 
+        public DbSet<CompanyBillingStatement> CompanyBillingStatements { get; set; }
+        public DbSet<CompanyBillingLine> CompanyBillingLines { get; set; }
+
         // Google Reviews (for landing page)
         public DbSet<GoogleReview> GoogleReviews { get; set; }
 
@@ -312,6 +315,42 @@ namespace TrainingInstituteLMS.Data.Data
                 .WithMany()
                 .HasForeignKey(el => el.CompanyOrderId)
                 .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<EnrollmentLink>()
+                .HasOne(el => el.Company)
+                .WithMany()
+                .HasForeignKey(el => el.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<EnrollmentLink>()
+                .HasIndex(el => el.CompanyId)
+                .IsUnique()
+                .HasFilter("[CompanyId] IS NOT NULL AND [CompanyOrderId] IS NULL AND [CourseId] IS NULL");
+
+            modelBuilder.Entity<CompanyBillingStatement>()
+                .HasOne(s => s.Company)
+                .WithMany()
+                .HasForeignKey(s => s.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CompanyBillingStatement>()
+                .HasIndex(s => new { s.CompanyId, s.SydneyBillingDate, s.Status });
+
+            modelBuilder.Entity<CompanyBillingLine>()
+                .HasOne(l => l.Statement)
+                .WithMany(s => s.Lines)
+                .HasForeignKey(l => l.StatementId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<CompanyBillingLine>()
+                .HasOne(l => l.Enrollment)
+                .WithMany()
+                .HasForeignKey(l => l.EnrollmentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<CompanyBillingLine>()
+                .HasIndex(l => l.EnrollmentId)
+                .IsUnique();
 
             // SiteSettings: unique key for key-value store
             modelBuilder.Entity<SiteSetting>()

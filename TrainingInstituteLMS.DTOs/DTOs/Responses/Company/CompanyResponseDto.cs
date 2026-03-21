@@ -10,5 +10,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Company
         public bool IsActive { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
+
+        /// <summary>Full URL for employees to enroll (company portal link).</summary>
+        public string? PortalEnrollmentUrl { get; set; }
     }
 }

@@ -39,5 +39,13 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         // Admin: students who joined via a specific enrollment link
         Task<EnrollmentLinkStudentsResponseDto?> GetStudentsByLinkIdAsync(Guid linkId);
+
+        /// <summary>Creates the permanent portal enrollment link for a company if missing; returns the unique code.</summary>
+        Task<string> EnsureCompanyPortalEnrollmentLinkAsync(Guid companyId);
+
+        /// <summary>Full public URL for the company portal enrollment link.</summary>
+        Task<string?> GetCompanyPortalEnrollmentFullUrlAsync(Guid companyId);
+
+        Task<PortalPrerequisitesResponseDto?> GetPortalPrerequisitesAsync(string code, string email);
     }
 }

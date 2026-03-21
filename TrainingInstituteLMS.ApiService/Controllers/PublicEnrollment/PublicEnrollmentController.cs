@@ -1,9 +1,11 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Common;
+using TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment;
 
 namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
@@ -14,12 +16,18 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
     {
         private readonly IPublicEnrollmentService _publicEnrollmentService;
         private readonly ISiteSettingsService _siteSettingsService;
+        private readonly ICompanyBillingService _companyBillingService;
         private readonly ILogger<PublicEnrollmentController> _logger;
 
-        public PublicEnrollmentController(IPublicEnrollmentService publicEnrollmentService, ISiteSettingsService siteSettingsService, ILogger<PublicEnrollmentController> logger)
+        public PublicEnrollmentController(
+            IPublicEnrollmentService publicEnrollmentService,
+            ISiteSettingsService siteSettingsService,
+            ICompanyBillingService companyBillingService,
+            ILogger<PublicEnrollmentController> logger)
         {
             _publicEnrollmentService = publicEnrollmentService;
             _siteSettingsService = siteSettingsService;
+            _companyBillingService = companyBillingService;
             _logger = logger;
         }
 
@@ -157,6 +165,25 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
                     return NotFound(ApiResponse<object>.FailureResponse("Enrollment link not found or expired"));
                 }
                 return Ok(ApiResponse<object>.SuccessResponse(linkData));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// For company portal links: whether the student (by email) has already completed LLN and enrolment form.
+        /// </summary>
+        [HttpGet("portal-prerequisites")]
+        public async Task<IActionResult> GetPortalPrerequisites([FromQuery] string code, [FromQuery] string email)
+        {
+            try
+            {
+                var result = await _publicEnrollmentService.GetPortalPrerequisitesAsync(code, email);
+                if (result == null)
+                    return NotFound(ApiResponse<object>.FailureResponse("Invalid link or not a company portal link"));
+                return Ok(ApiResponse<object>.SuccessResponse(result));
             }
             catch (Exception ex)
             {
@@ -440,6 +467,68 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             {
                 var count = await _publicEnrollmentService.GetCompanyOrderCountAsync();
                 return Ok(ApiResponse<object>.SuccessResponse(new { companyOrderCount = count }));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Admin: list company billing statements (Sydney calendar day aggregates).
+        /// </summary>
+        [HttpGet("admin/company-billing")]
+        public async Task<IActionResult> GetAdminCompanyBilling(
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 50,
+            [FromQuery] string? status = null,
+            [FromQuery] string? search = null,
+            [FromQuery] Guid? companyId = null)
+        {
+            try
+            {
+                var result = await _companyBillingService.GetAdminStatementsAsync(page, pageSize, status, search, companyId);
+                return Ok(ApiResponse<object>.SuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        [HttpGet("admin/company-billing/{statementId:guid}")]
+        public async Task<IActionResult> GetAdminCompanyBillingDetail(Guid statementId)
+        {
+            try
+            {
+                var result = await _companyBillingService.GetStatementDetailAsync(statementId);
+                if (result == null)
+                    return NotFound(ApiResponse<object>.FailureResponse("Statement not found"));
+                return Ok(ApiResponse<object>.SuccessResponse(result));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        [HttpPatch("admin/company-billing/{statementId:guid}")]
+        public async Task<IActionResult> UpdateAdminCompanyBilling(Guid statementId, [FromBody] UpdateCompanyBillingStatementRequestDto? request)
+        {
+            try
+            {
+                if (request == null || string.IsNullOrWhiteSpace(request.Status))
+                    return BadRequest(ApiResponse<object>.FailureResponse("Status is required (Approved or Paid)"));
+                var userId = GetCurrentUserId();
+                var ok = await _companyBillingService.UpdateStatementAsync(
+                    statementId,
+                    request.Status.Trim(),
+                    userId,
+                    request.PaymentMethod,
+                    request.PaymentReference);
+                if (!ok)
+                    return NotFound(ApiResponse<object>.FailureResponse("Statement not found or invalid status transition"));
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Statement updated"));
             }
             catch (Exception ex)
             {

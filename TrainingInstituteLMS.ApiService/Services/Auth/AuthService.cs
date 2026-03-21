@@ -1,4 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Services.Email;
+using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Companies;
@@ -12,11 +15,22 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
     {
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<AuthService> _logger;
+        private readonly IPublicEnrollmentService _publicEnrollmentService;
+        private readonly IEmailService _emailService;
+        private readonly ISiteSettingsService _siteSettingsService;
 
-        public AuthService(TrainingLMSDbContext context, ILogger<AuthService> logger)
+        public AuthService(
+            TrainingLMSDbContext context,
+            ILogger<AuthService> logger,
+            IPublicEnrollmentService publicEnrollmentService,
+            IEmailService emailService,
+            ISiteSettingsService siteSettingsService)
         {
             _context = context;
             _logger = logger;
+            _publicEnrollmentService = publicEnrollmentService;
+            _emailService = emailService;
+            _siteSettingsService = siteSettingsService;
         }
 
         public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
@@ -116,6 +130,25 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
 
             user.Student = student;
             user.Company = company;
+
+            if (isCompany && company != null)
+            {
+                try
+                {
+                    await _publicEnrollmentService.EnsureCompanyPortalEnrollmentLinkAsync(company.CompanyId);
+                    var portalUrl = await _publicEnrollmentService.GetCompanyPortalEnrollmentFullUrlAsync(company.CompanyId);
+                    var siteBase = await _siteSettingsService.GetEnrollmentBaseUrlAsync();
+                    await _emailService.SendCompanyPortalWelcomeAsync(
+                        user.Email,
+                        company.CompanyName,
+                        portalUrl ?? string.Empty,
+                        siteBase);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "AuthRegister: portal link or welcome email failed for company {CompanyId}", company.CompanyId);
+                }
+            }
 
             return MapToAuthResponse(user);
         }

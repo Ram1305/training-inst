@@ -892,6 +892,63 @@ Safety Training Academy";
             }
         }
 
+        public async Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl)
+        {
+            if (!_settings.IsConfigured)
+            {
+                _logger.LogWarning("Email not configured - skipping company portal welcome to {Email}", toEmail);
+                return;
+            }
+            if (string.IsNullOrWhiteSpace(toEmail))
+                return;
+
+            var subject = $"Your company account — employee enrolment link";
+            var plain = $@"Hello {companyName},
+
+Your company account is ready. Share this link with employees so they can select a course and session. Training fees are billed to your company (no student card payment on this link).
+
+Enrolment link:
+{portalEnrollmentUrl}
+";
+            if (!string.IsNullOrWhiteSpace(loginBaseUrl))
+                plain += $"\nCompany portal login: {loginBaseUrl.TrimEnd('/')}\n";
+
+            var loginHtml = string.IsNullOrWhiteSpace(loginBaseUrl)
+                ? ""
+                : $@"<p style=""margin:16px 0 0;font-size:14px;color:#334155;"">Log in to your company portal: <a href=""{loginBaseUrl.TrimEnd('/')}"">{loginBaseUrl.TrimEnd('/')}</a></p>";
+
+            var html = $@"<!DOCTYPE html><html><body style=""font-family:Arial,sans-serif;font-size:14px;color:#333;"">
+<p>Hello <strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong>,</p>
+<p>Your company account is ready. Share the link below with employees so they can select a course and session. Training fees are billed to your company.</p>
+<p><a href=""{portalEnrollmentUrl}"" style=""color:#3b82f6;word-break:break-all;"">{System.Net.WebUtility.HtmlEncode(portalEnrollmentUrl)}</a></p>
+{loginHtml}
+</body></html>";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                await client.AuthenticateAsync(user, smtpPassword);
+
+                var message = new MimeMessage();
+                message.From.Add(new MailboxAddress(_settings.FromName, user));
+                message.To.Add(MailboxAddress.Parse(toEmail));
+                message.Subject = subject;
+                message.Body = new BodyBuilder { TextBody = plain, HtmlBody = html }.ToMessageBody();
+                await client.SendAsync(message);
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Company portal welcome email sent to {Email}", toEmail);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send company portal welcome to {Email}", toEmail);
+            }
+        }
+
         private static string FormatBookingIdForEmail(string bookingId)
         {
             if (string.IsNullOrWhiteSpace(bookingId)) return "00000000";
