@@ -80,8 +80,8 @@ import { API_CONFIG } from '../../config/api.config';
 import { usePublicSiteUrl } from '../../contexts/PublicSiteUrlContext';
 import {
   AU_LOCALE_DATE_SHORT,
-  AU_LOCALE_TIME,
   formatAustraliaCivilDateHeading,
+  formatEnrollmentSlotScheduleText,
   getCalendarDateKeyInAustralia,
   getTodayCalendarDateKeyInAustralia,
 } from '../../utils/australiaTime';
@@ -1953,9 +1953,13 @@ export function PublicEnrollmentWizard({
                                                 disabled={isDisabled}
                                                 onClick={() => {
                                                   if (isDisabled || !pendingCompanyCourse) return;
-                                                  const courseDateLabel = date.startDate !== date.endDate
-                                                    ? `${new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} ${new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)} – ${new Date(date.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} ${new Date(date.endDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}`
-                                                    : `${new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} ${new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}`;
+                                                  const courseDateLabel = formatEnrollmentSlotScheduleText({
+                                                    dateKey,
+                                                    startDateIso: date.startDate,
+                                                    endDateIso: date.endDate,
+                                                    startTime: date.startTime,
+                                                    endTime: date.endTime,
+                                                  });
                                                   // Auto-add this course/date with default quantity 1
                                                   setSelectedCompanyCourses((prev) => [
                                                     ...prev,
@@ -1988,10 +1992,13 @@ export function PublicEnrollmentWizard({
                                                     <div className="min-h-8 flex items-center">
                                                       <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                                         <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                        {new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}
-                                                        {date.startDate !== date.endDate && (
-                                                          <> – {new Date(date.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.endDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}</>
-                                                        )}
+                                                        {formatEnrollmentSlotScheduleText({
+                                                          dateKey,
+                                                          startDateIso: date.startDate,
+                                                          endDateIso: date.endDate,
+                                                          startTime: date.startTime,
+                                                          endTime: date.endTime,
+                                                        })}
                                                       </p>
                                                     </div>
                                                     {date.location && date.location.toLowerCase() !== 'face to face' && (
@@ -2162,10 +2169,13 @@ export function PublicEnrollmentWizard({
                                               <div className="min-h-8 flex items-center">
                                                 <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                                   <Clock className="h-3.5 w-3.5 shrink-0" />
-                                                  {new Date(date.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.startDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}
-                                                  {date.startDate !== date.endDate && (
-                                                    <> – {new Date(date.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} {new Date(date.endDate).toLocaleTimeString('en-AU', AU_LOCALE_TIME)}</>
-                                                  )}
+                                                  {formatEnrollmentSlotScheduleText({
+                                                    dateKey,
+                                                    startDateIso: date.startDate,
+                                                    endDateIso: date.endDate,
+                                                    startTime: date.startTime,
+                                                    endTime: date.endTime,
+                                                  })}
                                                 </p>
                                               </div>
                                               <div className="min-h-6 mt-1 flex items-center">
@@ -2418,7 +2428,13 @@ export function PublicEnrollmentWizard({
                         <span className="text-gray-600">Date:</span>
                         <span className="font-medium">
                           {getSelectedDate() &&
-                            `${new Date(getSelectedDate()!.startDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)} – ${new Date(getSelectedDate()!.endDate).toLocaleDateString('en-AU', AU_LOCALE_DATE_SHORT)}`}
+                            formatEnrollmentSlotScheduleText({
+                              dateKey: getCalendarDateKeyInAustralia(getSelectedDate()!.startDate) || '',
+                              startDateIso: getSelectedDate()!.startDate,
+                              endDateIso: getSelectedDate()!.endDate,
+                              startTime: getSelectedDate()!.startTime,
+                              endTime: getSelectedDate()!.endTime,
+                            })}
                         </span>
                       </div>
                       <div className="flex justify-between pt-2 border-t border-blue-200">
