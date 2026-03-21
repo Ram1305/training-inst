@@ -570,9 +570,9 @@ export function AdminCompanies() {
         </CardContent>
       </Card>
 
-      {/* Company View Detail Dialog — top-aligned + dvh so Safari/macOS doesn’t clip; inner panel scrolls */}
+      {/* Company View Detail Dialog — sizes via .admin-company-detail-dialog in index.css (prebuilt CSS omits arbitrary h/w). */}
       <Dialog open={!!viewCompany} onOpenChange={(open) => { if (!open) setViewCompany(null); }}>
-        <DialogContent className="flex h-[min(900px,calc(100dvh-1.5rem))] max-h-[min(900px,calc(100dvh-1.5rem))] w-[calc(100vw-1.5rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border border-violet-100/80 p-0 shadow-2xl left-1/2 top-3 -translate-x-1/2 translate-y-0 sm:top-5 sm:h-[min(900px,calc(100dvh-2rem))] sm:max-h-[min(900px,calc(100dvh-2rem))] sm:max-w-6xl lg:max-w-7xl">
+        <DialogContent className="admin-company-detail-dialog flex flex-col gap-0 overflow-hidden rounded-2xl border border-violet-100/80 p-0 shadow-2xl">
           <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <div className="relative z-10 flex-shrink-0 border-b border-violet-100/90 bg-gradient-to-br from-slate-50 via-white to-violet-50/40 px-6 pb-5 pt-6 pr-14">
               <DialogHeader className="space-y-2 text-left">
@@ -595,7 +595,7 @@ export function AdminCompanies() {
               </DialogHeader>
             </div>
 
-            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-gray-50/80 to-white px-4 py-5 pb-8 sm:px-6 sm:py-6 [-webkit-overflow-scrolling:touch]">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-gray-50/80 to-white px-4 py-5 pb-8 sm:px-6 sm:py-6 [-webkit-overflow-scrolling:touch]">
               {viewLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
