@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Building2, Plus, Search, Edit, Trash2, Mail, Lock, Eye, EyeOff, X, Phone, Loader2, BookOpen, ExternalLink, Users, Copy, Calendar, ChevronDown, ChevronUp } from 'lucide-react';
+import { Building2, Plus, Search, Edit, Trash2, Mail, Lock, Eye, EyeOff, X, Phone, Loader2, BookOpen, ExternalLink, Users, Copy, Calendar, ChevronDown, ChevronUp, Package } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -203,7 +203,12 @@ export function AdminCompanies() {
     setViewLoading(true);
     try {
       const res = await adminCompanyOrdersService.getCompanyOrders({ search: company.email, pageSize: 200 });
-      const items = res.data?.items ?? [];
+      const emailKey = company.email.trim().toLowerCase();
+      const rawItems = res.data?.items ?? [];
+      const itemsHaveEmail = rawItems.some((i) => Boolean(i.companyEmail?.trim()));
+      const items = itemsHaveEmail
+        ? rawItems.filter((item) => (item.companyEmail?.trim().toLowerCase() ?? '') === emailKey)
+        : rawItems;
       // Fetch full detail (links) for each order in parallel
       const details = await Promise.all(
         items.map(async (item) => {
@@ -546,32 +551,32 @@ export function AdminCompanies() {
         </CardContent>
       </Card>
 
-      {/* Company View Detail Dialog */}
+      {/* Company View Detail Dialog — flex + min-h-0 so the body scrolls inside the dialog (not clipped) */}
       <Dialog open={!!viewCompany} onOpenChange={(open) => { if (!open) setViewCompany(null); }}>
-        <DialogContent className="w-[96vw] max-w-7xl h-[92vh] max-h-[92vh] overflow-hidden p-0">
-          <div className="flex h-full flex-col">
-            <div className="sticky top-0 z-10 border-b bg-white/90 backdrop-blur supports-[backdrop-filter]:bg-white/70">
-              <DialogHeader className="px-6 py-5">
-                <DialogTitle className="flex items-start gap-3 pr-10">
-                  <span className="mt-0.5 w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0">
-                    <Building2 className="w-5 h-5 text-white" />
+        <DialogContent className="flex h-[92vh] max-h-[900px] w-[calc(100vw-1.5rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border border-violet-100/80 p-0 shadow-2xl sm:max-w-6xl lg:max-w-7xl">
+          <div className="flex min-h-0 flex-1 flex-col">
+            <div className="relative z-10 flex-shrink-0 border-b border-violet-100/90 bg-gradient-to-br from-slate-50 via-white to-violet-50/40 px-6 pb-5 pt-6 pr-14">
+              <DialogHeader className="space-y-2 text-left">
+                <DialogTitle className="flex items-start gap-4 pr-0 sm:pr-2">
+                  <span className="mt-0.5 flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-md shadow-violet-500/25">
+                    <Building2 className="h-6 w-6 text-white" />
                   </span>
-                  <span className="min-w-0">
-                    <span className="block text-xl font-bold text-gray-900 truncate">
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-xl font-bold tracking-tight text-gray-900 sm:text-2xl">
                       {viewCompany?.companyName}
                     </span>
-                    <span className="block text-sm text-gray-600 mt-0.5">
-                      Order & enrollment details (links + students)
+                    <span className="mt-1 block text-sm text-gray-600">
+                      Orders, enrollment links, and students for this company
                     </span>
                   </span>
                 </DialogTitle>
-                <DialogDescription className="px-0">
-                  Review purchases, enrollment links, and enrolled students for this company.
+                <DialogDescription className="max-w-2xl text-left text-gray-600">
+                  Review purchases and who enrolled through each course link. Scroll the panel below if the list is long.
                 </DialogDescription>
               </DialogHeader>
             </div>
 
-            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-5">
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-gray-50/80 to-white px-4 py-5 sm:px-6 sm:py-6">
               {viewLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
@@ -580,52 +585,80 @@ export function AdminCompanies() {
               ) : (
                 <div className="space-y-6">
                   {/* Company info banner */}
-                  <div className="flex flex-wrap items-center gap-4 p-5 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-gray-700">
-                        <span className="inline-flex items-center gap-1.5">
-                          <Mail className="w-4 h-4 text-gray-500" />
-                          <span className="font-medium text-gray-800">{viewCompany?.email}</span>
+                  <div className="flex flex-wrap items-start justify-between gap-4 rounded-2xl border border-violet-200/60 bg-white p-5 shadow-sm ring-1 ring-violet-100/80">
+                    <div className="min-w-0 flex-1 space-y-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-violet-600">Company profile</p>
+                      <div className="flex flex-col gap-3 text-sm text-gray-700 sm:flex-row sm:flex-wrap sm:items-center sm:gap-x-6 sm:gap-y-2">
+                        <span className="inline-flex min-w-0 items-center gap-2">
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700">
+                            <Mail className="h-4 w-4" />
+                          </span>
+                          <span className="min-w-0 break-all font-medium text-gray-900">{viewCompany?.email}</span>
                         </span>
                         {viewCompany?.mobileNumber && (
-                          <span className="inline-flex items-center gap-1.5">
-                            <Phone className="w-4 h-4 text-gray-500" />
-                            <span className="font-medium text-gray-800">{viewCompany.mobileNumber}</span>
+                          <span className="inline-flex items-center gap-2">
+                            <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700">
+                              <Phone className="h-4 w-4" />
+                            </span>
+                            <span className="font-medium text-gray-900">{viewCompany.mobileNumber}</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-1.5">
-                          <Calendar className="w-4 h-4 text-gray-500" />
-                          <span>Joined <span className="font-medium text-gray-800">{formatDate(viewCompany?.createdAt)}</span></span>
+                        <span className="inline-flex items-center gap-2">
+                          <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
+                            <Calendar className="h-4 w-4" />
+                          </span>
+                          <span>
+                            Joined <span className="font-medium text-gray-900">{formatDate(viewCompany?.createdAt)}</span>
+                          </span>
                         </span>
                       </div>
                     </div>
-                    <div className="flex items-end gap-3">
-                      <div className="flex flex-col items-end gap-1">
-                        <Badge className={viewCompany?.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'}>
-                          {viewCompany?.isActive ? 'Active' : 'Inactive'}
-                        </Badge>
-                        <span className="text-xs text-gray-500">Last login: {formatDate(viewCompany?.lastLoginAt)}</span>
-                      </div>
+                    <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                      <Badge
+                        className={
+                          viewCompany?.isActive
+                            ? 'border border-green-200 bg-green-50 px-3 py-1 text-green-800 hover:bg-green-50'
+                            : 'border border-gray-200 bg-gray-50 px-3 py-1 text-gray-700 hover:bg-gray-50'
+                        }
+                      >
+                        {viewCompany?.isActive ? 'Active account' : 'Inactive account'}
+                      </Badge>
+                      <span className="text-right text-xs text-gray-500">Last login: {formatDate(viewCompany?.lastLoginAt)}</span>
                     </div>
                   </div>
 
                   {/* Summary */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="p-4 bg-violet-50 rounded-xl border border-violet-100">
-                      <p className="text-3xl font-bold text-violet-700">{viewOrders.length}</p>
-                      <p className="text-xs text-gray-500 mt-1">Orders</p>
+                  <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                    <div className="flex items-center gap-4 rounded-xl border border-violet-100 bg-gradient-to-br from-violet-50 to-white p-4 shadow-sm">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-violet-600 text-white shadow-md shadow-violet-500/30">
+                        <Package className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold tabular-nums text-violet-800">{viewOrders.length}</p>
+                        <p className="text-xs font-medium text-gray-600">Orders</p>
+                      </div>
                     </div>
-                    <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
-                      <p className="text-3xl font-bold text-blue-700">
-                        {viewOrders.reduce((s, o) => s + (o.links?.length ?? 0), 0)}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">Courses purchased</p>
+                    <div className="flex items-center gap-4 rounded-xl border border-blue-100 bg-gradient-to-br from-blue-50 to-white p-4 shadow-sm">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-600 text-white shadow-md shadow-blue-500/30">
+                        <BookOpen className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold tabular-nums text-blue-800">
+                          {viewOrders.reduce((s, o) => s + (o.links?.length ?? 0), 0)}
+                        </p>
+                        <p className="text-xs font-medium text-gray-600">Course links</p>
+                      </div>
                     </div>
-                    <div className="p-4 bg-green-50 rounded-xl border border-green-100">
-                      <p className="text-3xl font-bold text-green-700">
-                        {Object.values(viewStudentsMap).reduce((s, arr) => s + arr.length, 0)}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">Students enrolled</p>
+                    <div className="flex items-center gap-4 rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
+                      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/30">
+                        <Users className="h-6 w-6" />
+                      </div>
+                      <div>
+                        <p className="text-3xl font-bold tabular-nums text-emerald-800">
+                          {Object.values(viewStudentsMap).reduce((s, arr) => s + arr.length, 0)}
+                        </p>
+                        <p className="text-xs font-medium text-gray-600">Students enrolled</p>
+                      </div>
                     </div>
                   </div>
 
@@ -638,10 +671,11 @@ export function AdminCompanies() {
                   ) : (
                     <div className="space-y-4">
                       {viewOrders.map((order, oi) => (
-                        <div key={order.orderId} className="border border-gray-200 rounded-2xl overflow-hidden shadow-sm">
+                        <div key={order.orderId} className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-md shadow-gray-200/50 ring-1 ring-gray-100">
                           {/* Order header */}
                           <button
-                            className="w-full flex items-center gap-3 px-5 py-4 bg-gradient-to-r from-gray-50 to-slate-50 hover:from-gray-100 hover:to-slate-100 transition-colors"
+                            type="button"
+                            className="flex w-full flex-wrap items-center gap-3 px-4 py-4 text-left transition-colors sm:flex-nowrap sm:px-5 bg-gradient-to-r from-slate-50 to-gray-50 hover:from-violet-50/80 hover:to-slate-50"
                             onClick={() => setExpandedOrderId(expandedOrderId === order.orderId ? null : order.orderId)}
                           >
                             <div className="w-7 h-7 bg-slate-700 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
@@ -686,34 +720,40 @@ export function AdminCompanies() {
                                   return (
                                     <div key={link.linkId}>
                                       {/* Course header */}
-                                      <div className="flex items-center gap-3 px-5 py-3 bg-violet-50 border-b border-violet-100">
-                                        <div className="w-7 h-7 bg-violet-600 text-white rounded-full flex items-center justify-center text-xs font-bold flex-shrink-0">
+                                      <div className="flex flex-wrap items-center gap-3 border-b border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50/40 px-4 py-3 sm:px-5">
+                                        <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-violet-600 text-xs font-bold text-white">
                                           {li + 1}
                                         </div>
-                                        <span className="flex-1 font-semibold text-gray-900 text-sm min-w-0 truncate">{link.courseName}</span>
-                                        <Badge className={`text-xs ${students.length > 0 ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
-                                          <Users className="w-3 h-3 mr-1" />{students.length} enrolled
-                                        </Badge>
-                                        {link.fullUrl && (
-                                          <>
-                                            <button
-                                              onClick={() => navigator.clipboard.writeText(link.fullUrl).then(() => toast.success('Link copied!'))}
-                                              className="p-2 rounded-md hover:bg-violet-100 text-violet-600"
-                                              title="Copy link"
-                                            >
-                                              <Copy className="w-4 h-4" />
-                                            </button>
-                                            <a
-                                              href={link.fullUrl}
-                                              target="_blank"
-                                              rel="noopener noreferrer"
-                                              className="p-2 rounded-md hover:bg-violet-100 text-violet-600"
-                                              title="Open link"
-                                            >
-                                              <ExternalLink className="w-4 h-4" />
-                                            </a>
-                                          </>
-                                        )}
+                                        <span className="min-w-0 flex-1 text-sm font-semibold text-gray-900 sm:truncate">{link.courseName}</span>
+                                        <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto sm:justify-end">
+                                          <Badge
+                                            className={`text-xs ${students.length > 0 ? 'border border-emerald-200 bg-emerald-50 text-emerald-800' : 'border border-gray-200 bg-gray-50 text-gray-600'}`}
+                                          >
+                                            <Users className="mr-1 h-3 w-3" />
+                                            {students.length} enrolled
+                                          </Badge>
+                                          {link.fullUrl && (
+                                            <>
+                                              <button
+                                                type="button"
+                                                onClick={() => navigator.clipboard.writeText(link.fullUrl).then(() => toast.success('Link copied!'))}
+                                                className="rounded-lg p-2 text-violet-600 transition-colors hover:bg-white/80"
+                                                title="Copy link"
+                                              >
+                                                <Copy className="h-4 w-4" />
+                                              </button>
+                                              <a
+                                                href={link.fullUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="rounded-lg p-2 text-violet-600 transition-colors hover:bg-white/80"
+                                                title="Open link"
+                                              >
+                                                <ExternalLink className="h-4 w-4" />
+                                              </a>
+                                            </>
+                                          )}
+                                        </div>
                                       </div>
 
                                       {/* Students table */}
@@ -727,25 +767,27 @@ export function AdminCompanies() {
                                           <p className="text-sm">No students enrolled yet</p>
                                         </div>
                                       ) : (
-                                        <div className="overflow-x-auto">
-                                          <table className="w-full text-sm">
-                                            <thead className="bg-gray-50 border-b">
+                                        <div className="overflow-x-auto rounded-b-xl bg-white">
+                                          <table className="w-full min-w-[640px] text-sm">
+                                            <thead className="border-b border-gray-200 bg-gray-50/90">
                                               <tr>
-                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500 w-8">#</th>
-                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Name</th>
-                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Email</th>
-                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Phone</th>
-                                                <th className="text-left px-5 py-2 text-xs font-semibold text-gray-500">Enrolled on</th>
+                                                <th className="w-10 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">#</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Name</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Email</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Phone</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Enrolled</th>
                                               </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
                                               {students.map((s, si) => (
-                                                <tr key={s.studentId} className="hover:bg-gray-50">
-                                                  <td className="px-5 py-3 text-gray-400 text-xs">{si + 1}</td>
-                                                  <td className="px-5 py-3 font-medium text-gray-900">{s.fullName}</td>
-                                                  <td className="px-5 py-3 text-gray-600">{s.email}</td>
-                                                  <td className="px-5 py-3 text-gray-600">{s.phone || '—'}</td>
-                                                  <td className="px-5 py-3 text-gray-500 text-xs">
+                                                <tr key={s.studentId} className="transition-colors hover:bg-violet-50/40">
+                                                  <td className="px-4 py-3 text-xs text-gray-400">{si + 1}</td>
+                                                  <td className="px-4 py-3 font-medium text-gray-900">{s.fullName}</td>
+                                                  <td className="max-w-[200px] truncate px-4 py-3 text-gray-600" title={s.email}>
+                                                    {s.email}
+                                                  </td>
+                                                  <td className="px-4 py-3 text-gray-600">{s.phone || '—'}</td>
+                                                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-600">
                                                     {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
                                                   </td>
                                                 </tr>

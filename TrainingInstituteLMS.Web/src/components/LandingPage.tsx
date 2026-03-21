@@ -151,16 +151,16 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
 
-  /** Marquee is heavy on mobile GPUs; use horizontal scroll instead (md+ only). */
-  const [reviewsMarqueeEnabled, setReviewsMarqueeEnabled] = useState(true);
+  /** Slightly slower marquee on narrow screens so text is easier to read while auto-scrolling. */
+  const [reviewsMarqueeDurationSec, setReviewsMarqueeDurationSec] = useState(2400);
 
   useEffect(() => {
     coursesRef.current = courses;
   }, [courses]);
 
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 768px)");
-    const apply = () => setReviewsMarqueeEnabled(mq.matches);
+    const mq = window.matchMedia("(max-width: 767px)");
+    const apply = () => setReviewsMarqueeDurationSec(mq.matches ? 2880 : 2400);
     apply();
     mq.addEventListener("change", apply);
     return () => mq.removeEventListener("change", apply);
@@ -1126,7 +1126,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         </div>
       </section>
 
-      {/* Reviews: marquee on md+; stacked list on small screens (avoids touch/scroll fighting with page below) */}
+      {/* Reviews — auto marquee right → left on all screen sizes */}
       <section
         id="reviews"
         className="py-20 bg-gradient-to-b from-cyan-50/40 via-white to-blue-50/40 overflow-x-hidden isolate"
@@ -1140,9 +1140,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             className="mb-12"
           >
             <h2 className="text-3xl md:text-4xl font-bold text-cyan-500 mb-2">Reviews</h2>
-            <p className="text-sm text-gray-600 max-w-2xl md:hidden">
-              What students say about us. Scroll down for clients and contact.
-            </p>
+            <p className="text-sm text-gray-600 max-w-2xl">What students say about us.</p>
           </motion.div>
         </div>
 
@@ -1152,9 +1150,12 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           </div>
         ) : googleReviews.length === 0 ? (
           <div className="text-center py-12 text-gray-500 px-4">No reviews to display</div>
-        ) : reviewsMarqueeEnabled ? (
+        ) : (
           <div className="w-full overflow-hidden py-3 [contain:layout]" aria-label="Google reviews row">
-            <div className="reviews-marquee__track" style={{ animationDuration: "600s" }}>
+            <div
+              className="reviews-marquee__track"
+              style={{ animationDuration: `${reviewsMarqueeDurationSec}s` }}
+            >
               {[...googleReviews, ...googleReviews].map((review, index) => (
                 <div
                   key={`${review.googleReviewId}-${index}`}
@@ -1164,15 +1165,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 </div>
               ))}
             </div>
-          </div>
-        ) : (
-          <div
-            className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 pb-2"
-            aria-label="Google reviews list"
-          >
-            {googleReviews.map((review, index) => (
-              <LandingReviewCard key={`${review.googleReviewId}-stack-${index}`} review={review} />
-            ))}
           </div>
         )}
       </section>
