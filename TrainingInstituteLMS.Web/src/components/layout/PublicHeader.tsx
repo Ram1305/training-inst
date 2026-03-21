@@ -19,6 +19,7 @@ import { courseService, type CourseListItem } from '../../services/course.servic
 import { categoryService, type CategoryDropdownItem } from '../../services/category.service';
 import { ResourcesDropdown } from "../ui/ResourcesDropdown";
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
+import { SAFETY_TRAINING_ACADEMY_LOGO } from '../../constants/safetyTrainingAcademyLogo';
 
 interface PublicHeaderProps {
   onBack?: () => void;
@@ -103,19 +104,22 @@ export function PublicHeader({
 
   return (
     <header className="w-full">
-      {/* Top Bar with Contact Info - Light Blue Stripe */}
-      <div className="bg-cyan-400 text-white py-2.5 px-4">
+      {/* Top Bar with Contact Info — dark cyan for WCAG contrast with white text */}
+      <div className="bg-cyan-950 text-white py-2.5 px-4">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
-          <a href="tel:1300976097" className="flex items-center gap-2 font-semibold phone-number-link hover:text-slate-900 transition-colors">
-            <Phone className="w-4 h-4" />
+          <a
+            href="tel:1300976097"
+            className="flex items-center gap-2 font-semibold text-white phone-number-link underline-offset-2 hover:text-cyan-100 hover:underline transition-colors"
+          >
+            <Phone className="w-4 h-4 shrink-0 text-cyan-200" aria-hidden />
             1300 976 097
           </a>
-          <span className="flex items-center gap-2 font-medium">
-            <Mail className="w-4 h-4" />
+          <span className="flex items-center gap-2 font-medium text-white">
+            <Mail className="w-4 h-4 shrink-0 text-cyan-200" aria-hidden />
             info@safetytrainingacademy.edu.au
           </span>
-          <span className="flex items-center gap-2 font-medium">
-            <MapPin className="w-4 h-4" />
+          <span className="flex items-center gap-2 font-medium text-white">
+            <MapPin className="w-4 h-4 shrink-0 text-cyan-200" aria-hidden />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -138,9 +142,9 @@ export function PublicHeader({
             <img
               src={logoImage}
               alt="Safety Training Academy"
-              width={200}
-              height={64}
-              className="h-14 md:h-16 w-auto"
+              width={SAFETY_TRAINING_ACADEMY_LOGO.width}
+              height={SAFETY_TRAINING_ACADEMY_LOGO.height}
+              className="h-14 md:h-16 w-auto max-w-full object-contain object-left"
             />
           </motion.div>
 
@@ -302,21 +306,21 @@ export function PublicHeader({
               <div className="relative">
                 <button
                   onClick={onBack}
-                  className="text-white hover:text-cyan-400 transition-colors text-sm font-bold px-4 py-2 rounded-full bg-gradient-to-r from-cyan-500 to-blue-600 shadow-lg shadow-cyan-500/50 animate-pulse"
+                  className="text-white hover:text-cyan-100 transition-colors text-sm font-bold px-4 py-2 rounded-full bg-gradient-to-r from-cyan-800 to-blue-800 shadow-lg shadow-cyan-900/40 animate-pulse"
                 >
                   COMBO COURSES
                 </button>
               </div>
               <Button
                 onClick={onBookNow}
-                className="bg-cyan-500 hover:bg-cyan-600 text-white rounded-full px-6"
+                className="bg-cyan-700 hover:bg-cyan-800 text-white rounded-full px-6 shadow-sm"
               >
                 Book now
               </Button>
               <Button
                 variant="outline"
                 onClick={onVOC}
-                className="border-2 border-cyan-400 bg-cyan-400/10 text-cyan-400 hover:bg-cyan-400 hover:text-slate-900 rounded-full px-6 font-semibold"
+                className="border-2 border-cyan-200/90 bg-white/5 text-cyan-100 hover:bg-white/15 hover:text-white rounded-full px-6 font-semibold"
               >
                 VOC
               </Button>
@@ -331,10 +335,10 @@ export function PublicHeader({
               {/* Contact Number - Desktop Inline */}
               <div className="flex items-center ml-6">
                 <div className="flex items-center gap-2 bg-white/10 backdrop-blur-sm px-4 py-2 rounded-full border border-white/20 hover:bg-white/20 transition-all duration-300">
-                  <Phone className="w-4 h-4 text-cyan-400" />
+                  <Phone className="w-4 h-4 text-cyan-200 shrink-0" aria-hidden />
                   <a
                     href="tel:1300976097"
-                    className="text-white phone-number-link hover:text-cyan-400 transition-colors"
+                    className="text-white phone-number-link underline-offset-2 hover:text-cyan-100 hover:underline transition-colors"
                   >
                     1300 976 097
                   </a>
@@ -445,7 +449,7 @@ export function PublicHeader({
                       closeMobileMenu();
                       (onBookNow || onLogin)?.();
                     }}
-                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+                    className="w-full bg-cyan-700 hover:bg-cyan-800 text-white"
                   >
                     Book now
                   </Button>
@@ -456,7 +460,7 @@ export function PublicHeader({
                       closeMobileMenu();
                       onVOC?.();
                     }}
-                    className="w-full border-2 border-cyan-400 text-cyan-400"
+                    className="w-full border-2 border-cyan-200 text-cyan-100 hover:bg-slate-800 hover:text-white"
                   >
                     VOC
                   </Button>

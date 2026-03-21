@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import type { QuizSectionData } from './Quiz';
 import { Alert, AlertDescription } from '../ui/alert';
 import { AlertCircle, ArrowLeft, ArrowRight } from 'lucide-react';
+import { SAFETY_TRAINING_ACADEMY_LOGO } from '../../constants/safetyTrainingAcademyLogo';
 
 interface QuizSectionProps {
   section: QuizSectionData;
@@ -974,10 +975,12 @@ export function QuizSection({ section, onComplete, onCancel }: QuizSectionProps)
           {/* URL Search Question */}
           {currentQuestion.image === 'url-search' && (
             <div className="my-6 flex items-center gap-4">
-              <img 
-                src="/assets/SafetyTrainingAcademylogo.png" 
-                alt="Safety Training Academy Logo" 
-                className="w-14 h-14 object-contain"
+              <img
+                src="/assets/SafetyTrainingAcademylogo.png"
+                alt="Safety Training Academy Logo"
+                width={SAFETY_TRAINING_ACADEMY_LOGO.width}
+                height={SAFETY_TRAINING_ACADEMY_LOGO.height}
+                className="h-14 w-auto max-w-[min(100%,280px)] object-contain object-left"
               />
             </div>
           )}

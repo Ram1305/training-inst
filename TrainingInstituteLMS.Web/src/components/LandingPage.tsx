@@ -43,6 +43,7 @@ import {
 import { ImageWithFallback } from "./figma/ImageWithFallback";
 import { motion, AnimatePresence } from "motion/react";
 import { courseService } from '../services/course.service';
+import { SAFETY_TRAINING_ACADEMY_LOGO } from '../constants/safetyTrainingAcademyLogo';
 import type { CourseListItem } from '../services/course.service';
 import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
@@ -451,7 +452,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   )}
                 </div>
                 <Button
-                  className="bg-cyan-500 hover:bg-cyan-600 text-white h-14 px-8 rounded-full text-lg font-semibold shadow-lg shadow-cyan-500/50"
+                  className="bg-cyan-700 hover:bg-cyan-800 text-white h-14 px-8 rounded-full text-lg font-semibold shadow-lg shadow-cyan-900/35"
                   onClick={() => {
                     fetchCourses(searchQuery);
                     document.getElementById("courses")?.scrollIntoView({ behavior: "smooth" });
@@ -471,7 +472,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             >
               <Card className="bg-slate-800/70 backdrop-blur-lg border-2 border-cyan-400/40 shadow-xl rounded-2xl p-6 w-[340px]">
                 <CardHeader className="p-0 mb-4">
-                  <CardTitle className="text-2xl font-bold text-cyan-400 mb-2">
+                  <CardTitle className="text-2xl font-bold text-cyan-200 mb-2">
                     Course Enrolment
                   </CardTitle>
                   <CardDescription className="text-white/70 text-sm leading-relaxed">
@@ -775,7 +776,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <Button
                   onClick={() => setExpandedCombo(!expandedCombo)}
                   variant="outline"
-                  className="border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-full px-8 h-12 text-lg font-semibold"
+                  className="border-2 border-cyan-900 text-cyan-950 bg-white/80 hover:bg-cyan-50 rounded-full px-8 h-12 text-lg font-semibold"
                 >
                   {expandedCombo ? "Show Less" : "See More Combo Courses"}
                   <ArrowRight className={`w-5 h-5 ml-2 transition-transform ${expandedCombo ? "rotate-180" : ""}`} />
@@ -1334,9 +1335,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <img
                   src="/assets/SafetyTrainingAcademylogo.png"
                   alt="Safety Training Academy"
-                  width={200}
-                  height={64}
-                  className="h-16 w-auto brightness-0 invert"
+                  width={SAFETY_TRAINING_ACADEMY_LOGO.width}
+                  height={SAFETY_TRAINING_ACADEMY_LOGO.height}
+                  className="h-16 w-auto max-w-full object-contain object-left brightness-0 invert"
                 />
               </div>
               <p className="text-white/90 text-sm mb-4">Professional certification programs for your career growth.</p>

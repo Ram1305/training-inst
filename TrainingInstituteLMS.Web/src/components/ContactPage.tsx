@@ -13,6 +13,7 @@ import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from './ui/WhatsAppButton';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
+import { SAFETY_TRAINING_ACADEMY_LOGO } from '../constants/safetyTrainingAcademyLogo';
 import contactPersonImage from '/assets/Contact-Us.jpg.bv.jpg';
 import { PublicHeader } from './layout/PublicHeader';
 import { ResourcesDropdown } from './ui/ResourcesDropdown';
@@ -469,7 +470,13 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="flex items-center gap-3 mb-4">
-                <img src={logoImage} alt="Safety Training Academy" className="h-12" />
+                <img
+                  src={logoImage}
+                  alt="Safety Training Academy"
+                  width={SAFETY_TRAINING_ACADEMY_LOGO.width}
+                  height={SAFETY_TRAINING_ACADEMY_LOGO.height}
+                  className="h-12 w-auto max-w-full object-contain object-left"
+                />
               </div>
               <p className="text-white/90 text-sm mb-4">
                 Professional certification programs for your career growth.

@@ -1,5 +1,6 @@
 import { Facebook, Linkedin, Instagram, MapPin, Phone, Mail, Shield } from "lucide-react";
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
+import { SAFETY_TRAINING_ACADEMY_LOGO } from '../../constants/safetyTrainingAcademyLogo';
 
 interface PublicFooterProps {
   onBack?: () => void;
@@ -22,7 +23,9 @@ export function PublicFooter({ onBack, onAbout, onContact, onForms, onFeesRefund
               <img
                 src={logoImage}
                 alt="Safety Training Academy"
-                className="h-16 w-auto brightness-0 invert"
+                width={SAFETY_TRAINING_ACADEMY_LOGO.width}
+                height={SAFETY_TRAINING_ACADEMY_LOGO.height}
+                className="h-16 w-auto max-w-full object-contain object-left brightness-0 invert"
               />
             </div>
             <p className="text-white/90 text-sm mb-4">

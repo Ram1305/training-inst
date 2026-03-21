@@ -10,6 +10,7 @@ import { WhatsAppButton } from './ui/WhatsAppButton';
 import { ResourcesDropdown } from './ui/ResourcesDropdown';
 import { PublicHeader } from './layout/PublicHeader';
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
+import { SAFETY_TRAINING_ACADEMY_LOGO } from '../constants/safetyTrainingAcademyLogo';
 
 interface FormsPageProps {
   onBack: () => void;
@@ -86,7 +87,9 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
                 <img
                   src={logoImage}
                   alt="Safety Training Academy"
-                  className="h-16"
+                  width={SAFETY_TRAINING_ACADEMY_LOGO.width}
+                  height={SAFETY_TRAINING_ACADEMY_LOGO.height}
+                  className="h-16 w-auto max-w-full object-contain object-left"
                 />
               </div>
             </div>

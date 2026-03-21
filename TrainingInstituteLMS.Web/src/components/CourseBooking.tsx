@@ -473,7 +473,7 @@ export function CourseBooking({
                 className="pl-12 h-14 rounded-full text-lg border-0 shadow-xl"
               />
             </div>
-            <Button className="bg-cyan-500 hover:bg-cyan-600 text-white h-14 px-8 rounded-full shadow-xl font-semibold">
+            <Button className="bg-cyan-700 hover:bg-cyan-800 text-white h-14 px-8 rounded-full shadow-xl font-semibold">
               Search Courses
             </Button>
           </div>
@@ -1116,7 +1116,7 @@ export function CourseBooking({
             <div className="pt-6">
               <Button
                 type="submit"
-                className="w-full md:w-auto bg-cyan-500 hover:bg-cyan-600 text-white h-14 px-12 rounded-full text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-full md:w-auto bg-cyan-700 hover:bg-cyan-800 text-white h-14 px-12 rounded-full text-lg font-semibold shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
                 disabled={isSubmitting || (courseDates.length === 0 && !loadingDates)}
               >
                 {isSubmitting ? (
