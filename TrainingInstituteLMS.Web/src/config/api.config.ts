@@ -1,16 +1,20 @@
-// Resolve API base URL: VITE_API_URL > VITE_API_BASE_URL + '/api' > default
-// Set VITE_USE_HTTP=true to use http://localhost:5576/api (avoids SSL cert issues)
+// API base URL resolution:
+// - VITE_USE_HTTP=true → local Aspire HTTP API
+// - VITE_API_URL → use as-is (e.g. https://....azurewebsites.net/api OR /api when SWA proxies /api to App Service)
+// - VITE_API_BASE_URL → that host + /api
+// - default → local HTTPS API
 //
-// Production (Azure Static Web App + linked App Service): set VITE_API_URL=/api so the browser calls
-// the same origin as the SPA; in Azure Portal link the App Service API to the SWA first so /api/* is proxied.
-// Direct calls to *.azurewebsites.net keep the auth cookie on another site and often get 401 in the browser.
+// Production: use full App Service URL unless Azure Static Web App is linked to that API and you set VITE_API_URL=/api.
+// See TrainingInstituteLMS.Web/DEPLOYMENT.md (405 on POST /api/* = no proxy on the SPA host).
 function getBaseUrl(): string {
   const useHttp = import.meta.env.VITE_USE_HTTP === 'true';
   if (useHttp) {
     return 'http://localhost:5576/api';
   }
-  const explicit = import.meta.env.VITE_API_URL;
-  if (explicit) return explicit;
+  const explicit = import.meta.env.VITE_API_URL as string | undefined;
+  if (explicit != null && explicit !== '') {
+    return explicit;
+  }
   const base = import.meta.env.VITE_API_BASE_URL;
   if (base) return base.endsWith('/api') ? base : `${base}/api`;
   return 'https://localhost:7419/api';

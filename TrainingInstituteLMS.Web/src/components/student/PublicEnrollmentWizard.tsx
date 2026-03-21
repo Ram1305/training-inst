@@ -44,7 +44,6 @@ import {
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest } from '../../services/studentEnrollmentForm.service';
 import { quizService, type SubmitGuestQuizRequest, type SubmitQuizSectionResult } from '../../services/quiz.service';
 import { authService } from '../../services/auth.service';
-import { BankTransferDetailsCard } from '../payment/BankTransferDetailsCard';
 import { QuizSection } from './QuizSection';
 import type { QuizSectionData } from './Quiz';
 import {
@@ -2609,9 +2608,24 @@ export function PublicEnrollmentWizard({
               {!allowPayLater && paymentMethod === 'bank_transfer' && (
                 <div className="bg-gray-50 rounded-lg p-4 border">
                   <h4 className="font-semibold mb-3">Bank Details</h4>
-                  <BankTransferDetailsCard showTitle={false} className="border-0 bg-transparent p-0" />
-                  <div className="space-y-3 pt-3 mt-3 border-t border-gray-200 text-sm">
-                    <div>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bank:</span>
+                      <span className="font-medium">Commonwealth Bank</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account Name:</span>
+                      <span className="font-medium">AIET College</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">BSB:</span>
+                      <span className="font-medium">062 141</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Account No:</span>
+                      <span className="font-medium">10490235</span>
+                    </div>
+                    <div className="pt-3 mt-3 border-t border-gray-200">
                       <Label htmlFor="transactionId" className="text-sm font-medium text-gray-700">
                         Transaction ID / Reference <span className="text-red-500">*</span>
                       </Label>
@@ -2626,7 +2640,7 @@ export function PublicEnrollmentWizard({
                       />
                     </div>
 
-                    <div>
+                    <div className="pt-3">
                       <Label htmlFor="paymentProof" className="text-sm font-medium text-gray-700">
                         Payment slip upload <span className="text-red-500">*</span>
                       </Label>
@@ -2650,7 +2664,7 @@ export function PublicEnrollmentWizard({
                         </p>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 pt-2 border-t border-gray-200">
+                    <p className="text-xs text-gray-500 mt-3 pt-2 border-t">
                       Please use your name and course code as the payment reference.
                     </p>
                   </div>

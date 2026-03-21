@@ -18,8 +18,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '.
 import { companyManagementService } from '../../services/companyManagement.service';
 import { paymentService } from '../../services/payment.service';
 import type { CompanyBillingStatementListItem } from '../../services/adminCompanyBilling.service';
-import { toast } from 'sonner';
 import { BankTransferDetailsCard } from '../payment/BankTransferDetailsCard';
+import { toast } from 'sonner';
 
 function toastPaymentAuthError(err: unknown, fallback: string) {
   const msg = err instanceof Error ? err.message : '';
@@ -381,13 +381,11 @@ export function CompanyBillingPaymentsPanel({
             {payTab === 'bank' && (
               <div className="space-y-3 text-sm text-gray-600">
                 <p>
-                  Transfer the exact amount below using your bank&apos;s app, then upload the receipt. We will verify your
-                  deposit and mark these lines paid from the admin side; you will receive email confirmation.
+                  Transfer <strong>{formatCurrency(payAmount)}</strong> using your bank&apos;s app (exact amount), then upload
+                  your receipt. We will verify your deposit and mark these lines paid from the admin side; you will receive
+                  email confirmation.
                 </p>
-                <BankTransferDetailsCard
-                  amountHint={`Transfer ${formatCurrency(payAmount)} to:`}
-                  className="border-violet-100 bg-violet-50/50"
-                />
+                <BankTransferDetailsCard />
                 <div>
                   <Label htmlFor="cbp-bank-ref">Transaction ID / reference (optional)</Label>
                   <Input
@@ -395,7 +393,7 @@ export function CompanyBillingPaymentsPanel({
                     value={bankRef}
                     onChange={(e) => setBankRef(e.target.value)}
                     className="mt-1"
-                    placeholder="e.g. bank receipt reference"
+                    placeholder="Enter your bank transaction ID or reference"
                   />
                 </div>
                 <div>
