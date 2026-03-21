@@ -295,12 +295,16 @@ export default function App() {
     setCurrentPage('landing');
     setSelectedCourseId(null);
     updateUrl(PATHS.landing);
-    setTimeout(() => {
-      const coursesSection = document.getElementById('courses');
-      if (coursesSection) {
-        coursesSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-    }, 100);
+    const scrollToCourses = () => {
+      document.getElementById('courses')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    // Mobile: wait for layout after state update so scroll target isn't wrong or "stuck"
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToCourses();
+        setTimeout(scrollToCourses, 280);
+      });
+    });
   };
 
   const handleGoToAbout = () => {

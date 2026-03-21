@@ -1,5 +1,5 @@
 // src/components/LandingPage.tsx
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Award,
   Clock,
@@ -107,6 +107,30 @@ type RawGoogleReview = {
   text?: unknown;
 };
 
+function LandingReviewCard({ review }: { review: LandingReview }) {
+  return (
+    <Card className="border border-cyan-100 rounded-3xl bg-white/95 shadow-lg hover:shadow-xl transition-shadow p-6 md:p-7 h-full backdrop-blur-sm">
+      <div className="flex items-center justify-between mb-3">
+        <div className="font-semibold text-slate-900 text-base truncate pr-2">{review.author}</div>
+        <div className="w-7 h-7 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center flex-shrink-0">
+          <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
+            G
+          </span>
+        </div>
+      </div>
+      <div className="flex gap-1.5 mb-3">
+        {[...Array(review.rating)].map((_, i) => (
+          <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+        ))}
+      </div>
+      <p className="text-sm md:text-[15px] text-gray-700 leading-relaxed line-clamp-4 min-h-[5.5rem]">
+        {review.reviewText}
+      </p>
+      {review.timeText && <p className="text-xs text-gray-500 mt-3">{review.timeText}</p>}
+    </Card>
+  );
+}
+
 export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC, onViewCourses }: LandingPageProps) {
   // State
   const [searchQuery, setSearchQuery] = useState("");
@@ -122,9 +146,25 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   const [isReviewsLoading, setIsReviewsLoading] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const coursesRef = useRef<CourseListItem[]>([]);
 
   // Debounced search
   const debouncedSearch = useDebounce(searchQuery, 300);
+
+  /** Marquee is heavy on mobile GPUs; use horizontal scroll instead (md+ only). */
+  const [reviewsMarqueeEnabled, setReviewsMarqueeEnabled] = useState(true);
+
+  useEffect(() => {
+    coursesRef.current = courses;
+  }, [courses]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const apply = () => setReviewsMarqueeEnabled(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
 
   const heroSlides = [
     {
@@ -164,11 +204,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         filter.searchQuery = term;
       }
 
-      // Check if we already have courses to avoid blink
-      setCourses(prev => {
-        if (prev.length === 0) setIsLoading(true);
-        return prev;
-      });
+      if (coursesRef.current.length === 0) {
+        setIsLoading(true);
+      }
 
       const response = await courseService.getActiveCourses(filter);
 
@@ -264,13 +302,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     fetchReviews();
   }, [fetchReviews]);
 
-  // Fetch courses on mount and when search changes (debounced)
+  // Fetch courses on mount and when search changes (debounced via useDebounce)
   useEffect(() => {
-    const timer = setTimeout(() => {
-      fetchCourses(searchQuery);
-    }, searchQuery ? 300 : 0);
-    return () => clearTimeout(timer);
-  }, [searchQuery, fetchCourses]);
+    fetchCourses(debouncedSearch);
+  }, [debouncedSearch, fetchCourses]);
 
   // Auto-play slider
   useEffect(() => {
@@ -324,7 +359,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   };
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen bg-white overflow-x-hidden">
       <PublicHeader
         onBack={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
         onLogin={onLogin}
@@ -341,8 +376,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
       />
 
       {/* Hero Slider Section with Search */}
-      <section id="home" className="relative">
-        <div className="relative h-[600px] md:h-[700px]">
+      <section id="home" className="relative overflow-x-hidden">
+        <div className="relative min-h-[420px] h-[70svh] max-h-[640px] md:max-h-none md:h-[700px]">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentSlide}
@@ -361,15 +396,15 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             </motion.div>
           </AnimatePresence>
 
-          <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between">
+          <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center justify-between min-w-0">
             {/* Left Side - Title and Search */}
             <motion.div
-              className="max-w-3xl flex-1"
+              className="max-w-3xl flex-1 min-w-0 pr-2 md:pr-0"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <h1 className="text-4xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-6 leading-tight break-words">
                 {heroSlides[currentSlide].title}
               </h1>
               <p className="text-lg md:text-xl text-blue-100 mb-8">
@@ -1091,8 +1126,11 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         </div>
       </section>
 
-      {/* Reviews Section — single row, continuous right-to-left scroll */}
-      <section className="py-20 bg-gradient-to-b from-cyan-50/40 via-white to-blue-50/40 overflow-hidden">
+      {/* Reviews: marquee on md+; stacked list on small screens (avoids touch/scroll fighting with page below) */}
+      <section
+        id="reviews"
+        className="py-20 bg-gradient-to-b from-cyan-50/40 via-white to-blue-50/40 overflow-x-hidden isolate"
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1101,7 +1139,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             transition={{ duration: 0.6 }}
             className="mb-12"
           >
-            <h2 className="text-3xl md:text-4xl font-bold text-cyan-500 mb-8">Reviews</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-cyan-500 mb-2">Reviews</h2>
+            <p className="text-sm text-gray-600 max-w-2xl md:hidden">
+              What students say about us. Scroll down for clients and contact.
+            </p>
           </motion.div>
         </div>
 
@@ -1111,50 +1152,33 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           </div>
         ) : googleReviews.length === 0 ? (
           <div className="text-center py-12 text-gray-500 px-4">No reviews to display</div>
-        ) : (
-          <div
-            className="w-full overflow-hidden py-3"
-            aria-label="Google reviews row"
-          >
-            <div
-              className="reviews-marquee__track"
-              style={{ animationDuration: '1900s' }}
-            >
+        ) : reviewsMarqueeEnabled ? (
+          <div className="w-full overflow-hidden py-3 [contain:layout]" aria-label="Google reviews row">
+            <div className="reviews-marquee__track" style={{ animationDuration: "600s" }}>
               {[...googleReviews, ...googleReviews].map((review, index) => (
                 <div
                   key={`${review.googleReviewId}-${index}`}
-                  className="reviews-marquee__item w-[min(23rem,calc(100vw-2.5rem))] sm:w-[24rem] px-3 md:px-4"
+                  className="reviews-marquee__item shrink-0 w-[min(23rem,calc(100vw-2.5rem))] sm:w-[24rem] px-3 md:px-4"
                 >
-                  <Card className="border border-cyan-100 rounded-3xl bg-white/95 shadow-lg hover:shadow-xl transition-shadow p-6 md:p-7 h-full backdrop-blur-sm">
-                    <div className="flex items-center justify-between mb-3">
-                      <div className="font-semibold text-slate-900 text-base truncate pr-2">{review.author}</div>
-                      <div className="w-7 h-7 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center flex-shrink-0">
-                        <span className="text-sm font-bold text-transparent bg-gradient-to-r from-red-500 to-blue-500 bg-clip-text">
-                          G
-                        </span>
-                      </div>
-                    </div>
-                    <div className="flex gap-1.5 mb-3">
-                      {[...Array(review.rating)].map((_, i) => (
-                        <Star key={i} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      ))}
-                    </div>
-                    <p className="text-sm md:text-[15px] text-gray-700 leading-relaxed line-clamp-4 min-h-[5.5rem]">
-                      {review.reviewText}
-                    </p>
-                    {review.timeText && (
-                      <p className="text-xs text-gray-500 mt-3">{review.timeText}</p>
-                    )}
-                  </Card>
+                  <LandingReviewCard review={review} />
                 </div>
               ))}
             </div>
+          </div>
+        ) : (
+          <div
+            className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 space-y-4 pb-2"
+            aria-label="Google reviews list"
+          >
+            {googleReviews.map((review, index) => (
+              <LandingReviewCard key={`${review.googleReviewId}-stack-${index}`} review={review} />
+            ))}
           </div>
         )}
       </section>
 
       {/* Our Clients Section */}
-      <section className="py-16 bg-gradient-to-br from-cyan-50 to-blue-50">
+      <section className="relative z-10 py-16 border-t border-cyan-200/70 bg-gradient-to-br from-white via-cyan-50/80 to-blue-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -1190,7 +1214,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
       {/* Bottom Section - Contact Form & Enrollment */}
       <section
         id="contact"
-        className="relative py-20 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 overflow-hidden"
+        className="relative z-10 scroll-mt-24 py-20 bg-gradient-to-br from-slate-800 via-blue-900 to-slate-900 overflow-hidden"
       >
         <div className="absolute inset-0">
           <ImageWithFallback
@@ -1214,7 +1238,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                   <CardTitle className="text-3xl font-bold text-white">Send Us A Message!</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <Input placeholder="Name*" className="bg-white border-0 rounded-xl h-12" />
                     <Input placeholder="Phone*" className="bg-white border-0 rounded-xl h-12" />
                   </div>
@@ -1240,10 +1264,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               transition={{ duration: 0.7 }}
               className="flex flex-col justify-center"
             >
+              <p className="text-cyan-200/90 text-sm font-semibold uppercase tracking-wide mb-2">
+                After reviews — contact &amp; enrolment
+              </p>
               <h2 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-6">Course Enrolment</h2>
               <p className="text-white text-lg mb-8">
-                To enrol for a Course with Safety Training Academy, please complete our online Enrolment form via the
-                button below:
+                Browse and book courses from the <span className="font-semibold text-cyan-200">Courses</span> section
+                higher on this page. This area is for messages and completing the official <span className="font-semibold text-cyan-200">enrolment form</span>.
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button

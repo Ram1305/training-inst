@@ -16,7 +16,7 @@
   animation-name: reviews-marquee-rtl;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  will-change: transform;
+  /* Avoid extra compositor layers bleeding over the section below on some mobile GPUs */
 }
 
 .reviews-marquee__track:hover {

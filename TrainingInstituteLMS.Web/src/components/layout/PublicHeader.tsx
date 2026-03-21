@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Menu,
   X,
@@ -54,12 +54,12 @@ export function PublicHeader({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
+  const headerDataLoadingRef = useRef(false);
+  const headerDataLoadedRef = useRef(false);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
+    if (headerDataLoadingRef.current || headerDataLoadedRef.current) return;
+    headerDataLoadingRef.current = true;
     try {
       const [coursesRes, categoriesRes] = await Promise.all([
         courseService.getActiveCourses({ pageSize: 1000 }),
@@ -71,10 +71,35 @@ export function PublicHeader({
       if (categoriesRes.success && categoriesRes.data) {
         setCategories(categoriesRes.data.categories);
       }
+      headerDataLoadedRef.current = true;
     } catch (error) {
       console.error('Error fetching header data:', error);
+    } finally {
+      headerDataLoadingRef.current = false;
     }
-  };
+  }, []);
+
+  // Desktop: load dropdown data on mount. Mobile: defer until menu opens (less work on first paint).
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 768px)");
+    const runIfDesktop = () => {
+      if (mq.matches) void fetchData();
+    };
+    runIfDesktop();
+    mq.addEventListener("change", runIfDesktop);
+    return () => mq.removeEventListener("change", runIfDesktop);
+  }, [fetchData]);
+
+  const closeMobileMenu = () => setMobileMenuOpen(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [mobileMenuOpen]);
 
   return (
     <>
@@ -105,7 +130,10 @@ export function PublicHeader({
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.5 }}
-            onClick={onBack}
+            onClick={() => {
+              closeMobileMenu();
+              onBack?.();
+            }}
           >
             <img
               src={logoImage}
@@ -313,7 +341,19 @@ export function PublicHeader({
             </div>
 
             {/* Mobile Menu */}
-            <button className="md:hidden text-white" onClick={() => setMobileMenuOpen(!mobileMenuOpen)}>
+            <button
+              type="button"
+              className="md:hidden text-white"
+              aria-expanded={mobileMenuOpen}
+              aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
+              onClick={() => {
+                setMobileMenuOpen((open) => {
+                  const next = !open;
+                  if (next) void fetchData();
+                  return next;
+                });
+              }}
+            >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
@@ -327,21 +367,103 @@ export function PublicHeader({
                 className="md:hidden pb-6 border-t border-slate-700"
               >
                 <div className="flex flex-col mt-4 space-y-2">
-                  <button onClick={onBack} className="text-white text-left p-2 hover:bg-slate-800 rounded">HOME</button>
-                  <button onClick={onViewCourses || onBack} className="text-white text-left p-2 hover:bg-slate-800 rounded">COURSES</button>
-                  <button onClick={onForms} className="text-white text-left p-2 hover:bg-slate-800 rounded">FORMS</button>
-                  <button onClick={onFeesRefund} className="text-white text-left p-2 hover:bg-slate-800 rounded">FEES & REFUND</button>
-                  <button onClick={onGallery} className="text-white text-left p-2 hover:bg-slate-800 rounded">GALLERY</button>
-                  <button onClick={onAbout} className="text-white text-left p-2 hover:bg-slate-800 rounded">ABOUT</button>
-                  <button onClick={onContact} className="text-white text-left p-2 hover:bg-slate-800 rounded">CONTACT</button>
-                  <Button onClick={onBookNow || onLogin} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onBack?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    HOME
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      (onViewCourses || onBack)?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    COURSES
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onForms?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    FORMS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onFeesRefund?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    FEES & REFUND
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onGallery?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    GALLERY
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onAbout?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    ABOUT
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onContact?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    CONTACT
+                  </button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      (onBookNow || onLogin)?.();
+                    }}
+                    className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+                  >
                     Book now
                   </Button>
-                  <Button variant="outline" onClick={onVOC} className="w-full border-2 border-cyan-400 text-cyan-400">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onVOC?.();
+                    }}
+                    className="w-full border-2 border-cyan-400 text-cyan-400"
+                  >
                     VOC
                   </Button>
                   <Button
-                    onClick={onLogin}
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onLogin?.();
+                    }}
                     className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 font-semibold"
                   >
                     Login / Register
