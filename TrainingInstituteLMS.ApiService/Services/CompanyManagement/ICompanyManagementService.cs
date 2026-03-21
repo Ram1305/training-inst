@@ -12,5 +12,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
         Task<CompanyResponseDto?> UpdateCompanyAsync(Guid companyId, UpdateCompanyRequestDto request);
         Task<bool> DeleteCompanyAsync(Guid companyId);
         Task<bool> ToggleCompanyStatusAsync(Guid companyId);
+
+        Task<CompanyPortalEnrollmentsResponseDto> GetCompanyPortalEnrollmentsAsync(Guid companyId);
     }
 }

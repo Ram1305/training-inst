@@ -43,6 +43,24 @@ export interface CompanyFilterRequest {
   pageSize?: number;
 }
 
+export interface CompanyPortalEnrollmentRow {
+  enrollmentId: string;
+  studentName: string;
+  studentEmail?: string;
+  courseName: string;
+  courseId: string;
+  enrolledAt: string;
+  completedAt?: string;
+  status: string;
+  paymentStatus: string;
+  hasCompanyBill: boolean;
+  companyBillStatus?: string;
+}
+
+export interface CompanyPortalEnrollmentsResponse {
+  items: CompanyPortalEnrollmentRow[];
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -102,6 +120,14 @@ class CompanyManagementService {
   async toggleCompanyStatus(companyId: string): Promise<ApiResponse<boolean>> {
     return apiService.patch<ApiResponse<boolean>>(
       API_CONFIG.ENDPOINTS.COMPANY_MANAGEMENT.TOGGLE_STATUS(companyId)
+    );
+  }
+
+  async getPortalEnrollments(
+    companyId: string
+  ): Promise<ApiResponse<CompanyPortalEnrollmentsResponse>> {
+    return apiService.get<ApiResponse<CompanyPortalEnrollmentsResponse>>(
+      API_CONFIG.ENDPOINTS.COMPANY_MANAGEMENT.PORTAL_ENROLLMENTS(companyId)
     );
   }
 

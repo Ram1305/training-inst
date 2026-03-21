@@ -18,18 +18,23 @@ import {
   type CompanyBillingStatementListItem,
   type CompanyBillingStatementDetail,
 } from '../../services/adminCompanyBilling.service';
+import { companyManagementService, type CompanyResponse } from '../../services/companyManagement.service';
 
 export function AdminCompanyBilling() {
   const [items, setItems] = useState<CompanyBillingStatementListItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [companyIdFilter, setCompanyIdFilter] = useState('');
+  const [companies, setCompanies] = useState<CompanyResponse[]>([]);
   const [totalCount, setTotalCount] = useState(0);
   const [detailId, setDetailId] = useState<string | null>(null);
   const [detail, setDetail] = useState<CompanyBillingStatementDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [payRef, setPayRef] = useState('');
+  const [enrollmentIdToComplete, setEnrollmentIdToComplete] = useState('');
+  const [recordingComplete, setRecordingComplete] = useState(false);
 
   const formatCurrency = (n: number) =>
     new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(n);
@@ -42,6 +47,7 @@ export function AdminCompanyBilling() {
         pageSize: 100,
         status: statusFilter || undefined,
         search: searchQuery.trim() || undefined,
+        companyId: companyIdFilter || undefined,
       });
       if (res.success && res.data) {
         setItems(res.data.items);
@@ -57,8 +63,23 @@ export function AdminCompanyBilling() {
   };
 
   useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await companyManagementService.getAllCompanies({ pageNumber: 1, pageSize: 500 });
+        if (!cancelled && res.success && res.data?.companies) setCompanies(res.data.companies);
+      } catch {
+        /* dropdown optional */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
     load();
-  }, [statusFilter]);
+  }, [statusFilter, companyIdFilter]);
 
   useEffect(() => {
     if (!detailId) {
@@ -105,15 +126,41 @@ export function AdminCompanyBilling() {
     }
   };
 
+  const canMarkPaid = (status: string) =>
+    status === 'Draft' || status === 'Approved' || status === 'Unpaid';
+
+  const recordTrainingComplete = async () => {
+    const id = enrollmentIdToComplete.trim();
+    if (!id) {
+      toast.error('Paste an enrollment ID (from enrolment records or the company enrolments list).');
+      return;
+    }
+    setRecordingComplete(true);
+    try {
+      const res = await adminCompanyBillingService.recordPortalTrainingComplete(id);
+      if (res.success) {
+        toast.success(res.message || 'Recorded complete; bill created if not already present.');
+        setEnrollmentIdToComplete('');
+        await load();
+      } else {
+        toast.error(res.message || 'Could not record completion');
+      }
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Could not record completion');
+    } finally {
+      setRecordingComplete(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
         <h1 className="mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
-          Company daily billing
+          Company billing
         </h1>
         <p className="text-gray-600">
-          Sydney calendar day statements for company portal enrolments. Approve, then mark paid when the company has
-          paid.
+          Bills are raised when training is marked complete for a company portal enrolment. Companies can pay each item
+          without an approval step. Use the company filter to see one account at a time.
         </p>
       </div>
 
@@ -123,10 +170,25 @@ export function AdminCompanyBilling() {
             <Building2 className="h-5 w-5" />
             Statements ({totalCount})
           </CardTitle>
-          <CardDescription>Draft → Approve → Paid</CardDescription>
+          <CardDescription>Unpaid → Mark paid when received (legacy Draft / Approved still supported).</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap gap-2 items-end">
+            <div className="flex flex-col gap-1 min-w-[200px] flex-1">
+              <label className="text-xs text-gray-500">Company</label>
+              <select
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={companyIdFilter}
+                onChange={(e) => setCompanyIdFilter(e.target.value)}
+              >
+                <option value="">All companies</option>
+                {companies.map((c) => (
+                  <option key={c.companyId} value={c.companyId}>
+                    {c.companyName}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div className="relative flex-1 min-w-[200px]">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
@@ -143,6 +205,7 @@ export function AdminCompanyBilling() {
               onChange={(e) => setStatusFilter(e.target.value)}
             >
               <option value="">All statuses</option>
+              <option value="Unpaid">Unpaid</option>
               <option value="Draft">Draft</option>
               <option value="Approved">Approved</option>
               <option value="Paid">Paid</option>
@@ -168,6 +231,8 @@ export function AdminCompanyBilling() {
                 <TableRow>
                   <TableHead>Date (Sydney)</TableHead>
                   <TableHead>Company</TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Course</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Lines</TableHead>
                   <TableHead className="text-right">Total</TableHead>
@@ -180,6 +245,12 @@ export function AdminCompanyBilling() {
                     <TableCell>{row.sydneyBillingDate}</TableCell>
                     <TableCell>
                       <div className="font-medium">{row.companyName}</div>
+                    </TableCell>
+                    <TableCell>
+                      {row.lineCount === 1 && row.primaryStudentName ? row.primaryStudentName : '—'}
+                    </TableCell>
+                    <TableCell>
+                      {row.lineCount === 1 && row.primaryCourseName ? row.primaryCourseName : '—'}
                     </TableCell>
                     <TableCell>
                       <Badge variant={row.status === 'Paid' ? 'default' : 'secondary'}>{row.status}</Badge>
@@ -201,7 +272,7 @@ export function AdminCompanyBilling() {
                           Approve
                         </Button>
                       )}
-                      {(row.status === 'Draft' || row.status === 'Approved') && (
+                      {canMarkPaid(row.status) && (
                         <Button
                           type="button"
                           size="sm"
@@ -225,6 +296,27 @@ export function AdminCompanyBilling() {
         </CardContent>
       </Card>
 
+      <Card className="border-violet-100">
+        <CardHeader>
+          <CardTitle className="text-base">Record training complete (portal)</CardTitle>
+          <CardDescription>
+            When a staff member finishes training, paste their enrollment ID here to mark the course complete and
+            create an Unpaid per-course bill (permanent company portal link only).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-wrap gap-2 items-center">
+          <Input
+            placeholder="Enrollment GUID"
+            value={enrollmentIdToComplete}
+            onChange={(e) => setEnrollmentIdToComplete(e.target.value)}
+            className="max-w-xl font-mono text-sm"
+          />
+          <Button type="button" disabled={recordingComplete} onClick={() => recordTrainingComplete()}>
+            {recordingComplete ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Record complete and bill'}
+          </Button>
+        </CardContent>
+      </Card>
+
       <Dialog open={!!detailId} onOpenChange={(o) => !o && setDetailId(null)}>
         <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -242,6 +334,10 @@ export function AdminCompanyBilling() {
           ) : (
             <div className="space-y-4">
               <p className="text-lg font-semibold">{formatCurrency(detail.totalAmount)}</p>
+              <p className="text-sm text-gray-600">
+                Use &quot;Record training complete&quot; above with the enrollment GUID when a course is finished so an
+                Unpaid line appears here.
+              </p>
               <Table>
                 <TableHeader>
                   <TableRow>

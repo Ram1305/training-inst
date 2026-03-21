@@ -292,6 +292,59 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
             }
         }
 
+        public async Task<CompanyPortalEnrollmentsResponseDto> GetCompanyPortalEnrollmentsAsync(Guid companyId)
+        {
+            var enrollments = await _context.Enrollments
+                .AsNoTracking()
+                .Include(e => e.Student)
+                .Include(e => e.Course)
+                .Include(e => e.EnrollmentLink!)
+                    .ThenInclude(l => l.CompanyOrder)
+                .Where(e =>
+                    e.EnrollmentType == "Company" &&
+                    e.EnrollmentLink != null &&
+                    (
+                        e.EnrollmentLink.CompanyId == companyId ||
+                        (e.EnrollmentLink.CompanyOrderId != null &&
+                         e.EnrollmentLink.CompanyOrder != null &&
+                         e.EnrollmentLink.CompanyOrder.CompanyId == companyId)
+                    ))
+                .OrderByDescending(e => e.EnrolledAt)
+                .ToListAsync();
+
+            var enrollmentIds = enrollments.Select(e => e.EnrollmentId).ToList();
+            var billRows = await _context.CompanyBillingLines
+                .AsNoTracking()
+                .Where(l => enrollmentIds.Contains(l.EnrollmentId))
+                .Join(
+                    _context.CompanyBillingStatements.AsNoTracking(),
+                    l => l.StatementId,
+                    s => s.StatementId,
+                    (l, s) => new { l.EnrollmentId, s.Status })
+                .ToListAsync();
+
+            var billByEnrollment = billRows
+                .GroupBy(x => x.EnrollmentId)
+                .ToDictionary(g => g.Key, g => g.First().Status);
+
+            var items = enrollments.Select(e => new CompanyPortalEnrollmentRowDto
+            {
+                EnrollmentId = e.EnrollmentId.ToString(),
+                StudentName = e.Student?.FullName ?? string.Empty,
+                StudentEmail = e.Student?.Email,
+                CourseName = e.Course?.CourseName ?? string.Empty,
+                CourseId = e.CourseId.ToString(),
+                EnrolledAt = e.EnrolledAt,
+                CompletedAt = e.CompletedAt,
+                Status = e.Status,
+                PaymentStatus = e.PaymentStatus,
+                HasCompanyBill = billByEnrollment.ContainsKey(e.EnrollmentId),
+                CompanyBillStatus = billByEnrollment.TryGetValue(e.EnrollmentId, out var st) ? st : null
+            }).ToList();
+
+            return new CompanyPortalEnrollmentsResponseDto { Items = items };
+        }
+
         public async Task<bool> ToggleCompanyStatusAsync(Guid companyId)
         {
             try

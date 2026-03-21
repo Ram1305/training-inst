@@ -41,7 +41,8 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
           Payments
         </h1>
         <p className="text-gray-600">
-          Daily billing statements (Australia/Sydney calendar day) for enrolments via your company portal link.
+          Each row is usually one completed course for your company. Unpaid items can be settled as soon as you pay —
+          no separate approval step.
         </p>
       </div>
 
@@ -49,10 +50,11 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <DollarSign className="h-5 w-5" />
-            Billing statements
+            Company bills
           </CardTitle>
           <CardDescription>
-            Status updates when the training provider approves your statement and records payment.
+            Status shows whether the training provider has recorded payment (Paid) or it is still outstanding (Unpaid, or
+            older Draft / Approved).
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -63,25 +65,31 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
               <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
             </div>
           ) : items.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">No statements yet.</p>
+            <p className="text-gray-600 text-center py-8">No bills yet. Charges appear after training is completed.</p>
           ) : (
             <Table>
               <TableHeader>
                 <TableRow>
                   <TableHead>Date (Sydney)</TableHead>
+                  <TableHead>Student</TableHead>
+                  <TableHead>Course</TableHead>
                   <TableHead>Status</TableHead>
-                  <TableHead>Lines</TableHead>
-                  <TableHead className="text-right">Total</TableHead>
+                  <TableHead className="text-right">Amount</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {items.map((row) => (
                   <TableRow key={row.statementId}>
-                    <TableCell>{row.sydneyBillingDate}</TableCell>
+                    <TableCell className="whitespace-nowrap">{row.sydneyBillingDate}</TableCell>
+                    <TableCell>
+                      {row.lineCount === 1 && row.primaryStudentName ? row.primaryStudentName : `— (${row.lineCount} lines)`}
+                    </TableCell>
+                    <TableCell>
+                      {row.lineCount === 1 && row.primaryCourseName ? row.primaryCourseName : '—'}
+                    </TableCell>
                     <TableCell>
                       <Badge variant={row.status === 'Paid' ? 'default' : 'secondary'}>{row.status}</Badge>
                     </TableCell>
-                    <TableCell>{row.lineCount}</TableCell>
                     <TableCell className="text-right font-semibold">{formatCurrency(row.totalAmount)}</TableCell>
                   </TableRow>
                 ))}

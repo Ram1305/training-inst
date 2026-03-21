@@ -21,6 +21,11 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling
         public string? PaymentReference { get; set; }
         public DateTime? ApprovedAt { get; set; }
         public int LineCount { get; set; }
+
+        /// <summary>Set when the statement has a single line (typical per-course bill).</summary>
+        public string? PrimaryCourseName { get; set; }
+
+        public string? PrimaryStudentName { get; set; }
     }
 
     public class CompanyBillingStatementDetailDto : CompanyBillingStatementListItemDto

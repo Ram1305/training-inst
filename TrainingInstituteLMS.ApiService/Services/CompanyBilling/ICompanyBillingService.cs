@@ -4,13 +4,10 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
 {
     public interface ICompanyBillingService
     {
-        Task AddLineForPortalEnrollmentAsync(
-            Guid companyId,
-            Guid enrollmentId,
-            decimal amount,
-            string? courseName,
-            string? studentName,
-            DateTime enrolledAtUtc);
+        /// <summary>
+        /// Marks the enrollment completed and creates a per-course company bill (portal links only), if not already billed.
+        /// </summary>
+        Task<bool> RecordPortalEnrollmentTrainingCompletedAsync(Guid enrollmentId);
 
         Task<CompanyBillingStatementListResponseDto> GetAdminStatementsAsync(
             int page,

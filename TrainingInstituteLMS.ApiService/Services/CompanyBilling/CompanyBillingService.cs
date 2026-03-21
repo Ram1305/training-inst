@@ -17,55 +17,83 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             _logger = logger;
         }
 
-        public async Task AddLineForPortalEnrollmentAsync(
-            Guid companyId,
-            Guid enrollmentId,
-            decimal amount,
-            string? courseName,
-            string? studentName,
-            DateTime enrolledAtUtc)
+        private static bool IsPermanentCompanyPortalLink(EnrollmentLink? link) =>
+            link != null && link.CompanyId.HasValue && !link.CompanyOrderId.HasValue;
+
+        /// <inheritdoc />
+        public async Task<bool> RecordPortalEnrollmentTrainingCompletedAsync(Guid enrollmentId)
         {
-            var sydneyDate = AustraliaSydneyTime.UtcInstantToSydneyDateOnly(enrolledAtUtc);
+            var enrollment = await _context.Enrollments
+                .Include(e => e.EnrollmentLink)
+                .Include(e => e.Course)
+                .Include(e => e.Student)
+                .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
+
+            if (enrollment == null)
+                return false;
+
+            if (!string.Equals(enrollment.EnrollmentType, "Company", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (!IsPermanentCompanyPortalLink(enrollment.EnrollmentLink))
+                return false;
+
+            var companyId = enrollment.EnrollmentLink!.CompanyId!.Value;
 
             if (await _context.CompanyBillingLines.AnyAsync(l => l.EnrollmentId == enrollmentId))
             {
-                _logger.LogWarning("Billing line already exists for enrollment {EnrollmentId}", enrollmentId);
-                return;
-            }
-
-            var draft = await _context.CompanyBillingStatements
-                .Where(s => s.CompanyId == companyId && s.SydneyBillingDate == sydneyDate && s.Status == "Draft")
-                .OrderByDescending(s => s.CreatedAt)
-                .FirstOrDefaultAsync();
-
-            if (draft == null)
-            {
-                draft = new CompanyBillingStatement
+                if (enrollment.Status != "Completed")
                 {
-                    StatementId = Guid.NewGuid(),
-                    CompanyId = companyId,
-                    SydneyBillingDate = sydneyDate,
-                    Status = "Draft",
-                    TotalAmount = 0,
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.CompanyBillingStatements.Add(draft);
+                    enrollment.Status = "Completed";
+                    enrollment.CompletedAt ??= DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+                else if (!enrollment.CompletedAt.HasValue)
+                {
+                    enrollment.CompletedAt = DateTime.UtcNow;
+                    await _context.SaveChangesAsync();
+                }
+
+                return true;
             }
+
+            var completedAt = DateTime.UtcNow;
+            enrollment.Status = "Completed";
+            enrollment.CompletedAt = completedAt;
+
+            var amount = enrollment.Course?.Price ?? 0;
+            var sydneyDate = AustraliaSydneyTime.UtcInstantToSydneyDateOnly(completedAt);
+            var courseName = enrollment.Course?.CourseName;
+            var studentName = enrollment.Student?.FullName;
+
+            var statement = new CompanyBillingStatement
+            {
+                StatementId = Guid.NewGuid(),
+                CompanyId = companyId,
+                SydneyBillingDate = sydneyDate,
+                Status = "Unpaid",
+                TotalAmount = amount,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.CompanyBillingStatements.Add(statement);
 
             var line = new CompanyBillingLine
             {
                 LineId = Guid.NewGuid(),
-                StatementId = draft.StatementId,
+                StatementId = statement.StatementId,
                 EnrollmentId = enrollmentId,
                 Amount = amount,
                 CourseNameSnapshot = courseName,
                 StudentNameSnapshot = studentName
             };
             _context.CompanyBillingLines.Add(line);
-            draft.TotalAmount += amount;
-            draft.UpdatedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
+            _logger.LogInformation(
+                "Company portal billing: created Unpaid statement {StatementId} for enrollment {EnrollmentId}",
+                statement.StatementId,
+                enrollmentId);
+            return true;
         }
 
         public async Task<CompanyBillingStatementListResponseDto> GetAdminStatementsAsync(
@@ -114,7 +142,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                     s.PaidAt,
                     s.PaymentReference,
                     s.ApprovedAt,
-                    LineCount = s.Lines.Count
+                    LineCount = s.Lines.Count,
+                    FirstCourse = s.Lines.OrderBy(l => l.LineId).Select(l => l.CourseNameSnapshot).FirstOrDefault(),
+                    FirstStudent = s.Lines.OrderBy(l => l.LineId).Select(l => l.StudentNameSnapshot).FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -130,7 +160,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 PaidAt = s.PaidAt,
                 PaymentReference = s.PaymentReference,
                 ApprovedAt = s.ApprovedAt,
-                LineCount = s.LineCount
+                LineCount = s.LineCount,
+                PrimaryCourseName = s.LineCount == 1 ? s.FirstCourse : null,
+                PrimaryStudentName = s.LineCount == 1 ? s.FirstStudent : null
             }).ToList();
 
             return new CompanyBillingStatementListResponseDto
@@ -209,7 +241,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             }
             else if (newStatus == "Paid")
             {
-                if (s.Status != "Draft" && s.Status != "Approved")
+                if (s.Status != "Draft" && s.Status != "Approved" && s.Status != "Unpaid")
                     return false;
                 s.PaidAt = DateTime.UtcNow;
                 if (!string.IsNullOrWhiteSpace(paymentMethod))
@@ -250,7 +282,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                     s.PaidAt,
                     s.PaymentReference,
                     s.ApprovedAt,
-                    LineCount = s.Lines.Count
+                    LineCount = s.Lines.Count,
+                    FirstCourse = s.Lines.OrderBy(l => l.LineId).Select(l => l.CourseNameSnapshot).FirstOrDefault(),
+                    FirstStudent = s.Lines.OrderBy(l => l.LineId).Select(l => l.StudentNameSnapshot).FirstOrDefault()
                 })
                 .ToListAsync();
 
@@ -266,7 +300,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 PaidAt = s.PaidAt,
                 PaymentReference = s.PaymentReference,
                 ApprovedAt = s.ApprovedAt,
-                LineCount = s.LineCount
+                LineCount = s.LineCount,
+                PrimaryCourseName = s.LineCount == 1 ? s.FirstCourse : null,
+                PrimaryStudentName = s.LineCount == 1 ? s.FirstStudent : null
             }).ToList();
 
             return new CompanyBillingStatementListResponseDto

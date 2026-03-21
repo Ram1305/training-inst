@@ -13,6 +13,8 @@ export interface CompanyBillingStatementListItem {
   paymentReference?: string;
   approvedAt?: string;
   lineCount: number;
+  primaryCourseName?: string;
+  primaryStudentName?: string;
 }
 
 export interface CompanyBillingLineItem {
@@ -79,6 +81,13 @@ class AdminCompanyBillingService {
     return apiService.patch<ApiResponse<null>>(
       PUBLIC_ENROLLMENT.ADMIN_COMPANY_BILLING_BY_ID(statementId),
       body
+    );
+  }
+
+  async recordPortalTrainingComplete(enrollmentId: string): Promise<ApiResponse<null>> {
+    return apiService.post<ApiResponse<null>>(
+      PUBLIC_ENROLLMENT.ADMIN_COMPANY_PORTAL_COMPLETE_TRAINING(enrollmentId),
+      {}
     );
   }
 }

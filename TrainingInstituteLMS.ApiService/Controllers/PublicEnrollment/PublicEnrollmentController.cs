@@ -475,7 +475,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         }
 
         /// <summary>
-        /// Admin: list company billing statements (Sydney calendar day aggregates).
+        /// Admin: list company billing statements (per-course or legacy daily batches).
         /// </summary>
         [HttpGet("admin/company-billing")]
         public async Task<IActionResult> GetAdminCompanyBilling(
@@ -518,7 +518,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             try
             {
                 if (request == null || string.IsNullOrWhiteSpace(request.Status))
-                    return BadRequest(ApiResponse<object>.FailureResponse("Status is required (Approved or Paid)"));
+                    return BadRequest(ApiResponse<object>.FailureResponse("Status is required (Approved or Paid). Unpaid statements can be marked Paid directly."));
                 var userId = GetCurrentUserId();
                 var ok = await _companyBillingService.UpdateStatementAsync(
                     statementId,
@@ -529,6 +529,29 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
                 if (!ok)
                     return NotFound(ApiResponse<object>.FailureResponse("Statement not found or invalid status transition"));
                 return Ok(ApiResponse<object>.SuccessResponse(null, "Statement updated"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
+        /// Admin: when training is finished, mark enrollment complete and create a per-course company bill (permanent portal link enrollments only).
+        /// </summary>
+        [HttpPost("admin/company-billing/complete-training/{enrollmentId:guid}")]
+        public async Task<IActionResult> RecordCompanyPortalTrainingComplete(Guid enrollmentId)
+        {
+            try
+            {
+                var ok = await _companyBillingService.RecordPortalEnrollmentTrainingCompletedAsync(enrollmentId);
+                if (!ok)
+                {
+                    return BadRequest(ApiResponse<object>.FailureResponse(
+                        "Enrollment not found, or not a company portal enrollment (permanent portal link only)."));
+                }
+
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Training marked complete; company bill created when not already billed."));
             }
             catch (Exception ex)
             {

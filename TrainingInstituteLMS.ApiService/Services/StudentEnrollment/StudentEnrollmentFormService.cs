@@ -1,7 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
-using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.Data.Data;
@@ -19,20 +18,17 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
         private readonly TrainingLMSDbContext _context;
         private readonly IFileStorageService _fileStorageService;
         private readonly IEmailService _emailService;
-        private readonly ICompanyBillingService _companyBillingService;
         private readonly ILogger<StudentEnrollmentFormService> _logger;
 
         public StudentEnrollmentFormService(
             TrainingLMSDbContext context,
             IFileStorageService fileStorageService,
             IEmailService emailService,
-            ICompanyBillingService companyBillingService,
             ILogger<StudentEnrollmentFormService> logger)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _emailService = emailService;
-            _companyBillingService = companyBillingService;
             _logger = logger;
         }
 
@@ -188,7 +184,6 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             // Create Enrollment if course is selected
             Data.Entities.Enrollments.Enrollment? enrollment = null;
             string? directPayBookingId = null;
-            Guid? portalCompanyIdForBilling = null;
             if (request.CourseId.HasValue && request.CourseDateId.HasValue)
             {
                 // Get course price
@@ -221,9 +216,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                             throw new InvalidOperationException("Enrollment link has expired");
 
                         isPortalLink = IsCompanyPortalLink(link);
-                        if (isPortalLink)
-                            portalCompanyIdForBilling = link.CompanyId;
-                        else
+                        if (!isPortalLink)
                         {
                             if (link.MaxUses.HasValue && link.UsedCount >= link.MaxUses.Value)
                                 throw new InvalidOperationException("This enrollment link has already been used");
@@ -339,26 +332,6 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             {
                 _logger.LogError(ex, "SubmitPublicEnrollmentForm: SaveChangesAsync failed. UserId={UserId}, StudentId={StudentId}", user.UserId, student.StudentId);
                 throw;
-            }
-
-            if (enrollment != null && portalCompanyIdForBilling.HasValue)
-            {
-                try
-                {
-                    var courseForBill = await _context.Courses.AsNoTracking().FirstOrDefaultAsync(c => c.CourseId == enrollment.CourseId);
-                    var billAmount = courseForBill?.Price ?? 0;
-                    await _companyBillingService.AddLineForPortalEnrollmentAsync(
-                        portalCompanyIdForBilling.Value,
-                        enrollment.EnrollmentId,
-                        billAmount,
-                        courseForBill?.CourseName,
-                        student.FullName,
-                        enrollment.EnrolledAt);
-                }
-                catch (Exception billEx)
-                {
-                    _logger.LogError(billEx, "Portal billing line failed for enrollment {EnrollmentId}", enrollment.EnrollmentId);
-                }
             }
 
             // Send enrollment confirmation email to both student and academy (when course is selected)

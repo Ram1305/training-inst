@@ -5,7 +5,7 @@ using TrainingInstituteLMS.Data.Entities.Companies;
 namespace TrainingInstituteLMS.Data.Entities.Enrollments
 {
     /// <summary>
-    /// Daily (Australia/Sydney calendar) billing aggregate for company portal enrollments.
+    /// Company billing statement: legacy daily (Sydney) batches or per-course rows after training is marked complete.
     /// </summary>
     public class CompanyBillingStatement
     {
@@ -18,7 +18,7 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         /// <summary>Sydney civil date for which enrollments are grouped.</summary>
         public DateOnly SydneyBillingDate { get; set; }
 
-        /// <summary>Draft (accumulating), Approved (admin verified), Paid.</summary>
+        /// <summary>Unpaid (per-course, no approval), Draft/Approved (legacy), Paid.</summary>
         [Required]
         [MaxLength(50)]
         public string Status { get; set; } = "Draft";

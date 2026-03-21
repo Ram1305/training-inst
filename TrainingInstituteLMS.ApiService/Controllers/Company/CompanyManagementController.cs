@@ -27,7 +27,26 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
         }
 
         /// <summary>
-        /// Billing statements for a company (portal enrolments by Sydney calendar day).
+        /// Students and courses enrolled under this company (portal link and company-order links).
+        /// </summary>
+        [HttpGet("{companyId:guid}/portal-enrollments")]
+        [ProducesResponseType(typeof(ApiResponse<CompanyPortalEnrollmentsResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<CompanyPortalEnrollmentsResponseDto>>> GetCompanyPortalEnrollments(Guid companyId)
+        {
+            try
+            {
+                var result = await _companyManagementService.GetCompanyPortalEnrollmentsAsync(companyId);
+                return Ok(ApiResponse<CompanyPortalEnrollmentsResponseDto>.SuccessResponse(result, "OK"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving portal enrollments for company {CompanyId}", companyId);
+                return StatusCode(500, ApiResponse<CompanyPortalEnrollmentsResponseDto>.FailureResponse("An error occurred"));
+            }
+        }
+
+        /// <summary>
+        /// Billing statements for a company (per-course or legacy daily batches).
         /// </summary>
         [HttpGet("{companyId:guid}/billing-statements")]
         [ProducesResponseType(typeof(ApiResponse<CompanyBillingStatementListResponseDto>), StatusCodes.Status200OK)]
