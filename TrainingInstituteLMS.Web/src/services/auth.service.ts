@@ -50,6 +50,15 @@ class AuthService {
     );
   }
 
+  /** Clears the API session cookie (same-site credentialed requests). */
+  async logout(): Promise<void> {
+    try {
+      await apiService.post(API_CONFIG.ENDPOINTS.AUTH.LOGOUT);
+    } catch {
+      // Still clear client state if the API is unreachable
+    }
+  }
+
   async checkEmail(email: string): Promise<ApiResponse<boolean>> {
     return apiService.get<ApiResponse<boolean>>(
       `${API_CONFIG.ENDPOINTS.AUTH.CHECK_EMAIL}/${email}`

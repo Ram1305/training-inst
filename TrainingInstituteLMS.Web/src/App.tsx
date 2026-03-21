@@ -272,8 +272,8 @@ export default function App() {
     setCurrentPage('portal');
   };
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     allowLandingViewRef.current = false;
     setCurrentPage('landing');
     setSelectedCourseId(null);

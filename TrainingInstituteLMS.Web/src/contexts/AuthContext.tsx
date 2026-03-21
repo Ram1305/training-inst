@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
+import { authService } from '../services/auth.service';
 
 // Export the AuthUser interface so it can be used in other files
 export interface AuthUser {
@@ -17,7 +18,7 @@ interface AuthContextType {
   setUser: (user: AuthUser | null) => void;
   isAuthenticated: boolean;
   isLoading: boolean;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -53,7 +54,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
+    await authService.logout();
     setUser(null);
     localStorage.removeItem('user');
   };

@@ -1,4 +1,7 @@
-﻿using Microsoft.AspNetCore.Http;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TrainingInstituteLMS.ApiService.Services.Auth;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.Auth;
@@ -18,6 +21,23 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
         {
             _authService = authService;
             _logger = logger;
+        }
+
+        /// <summary>
+        /// Issues the auth cookie on the API host so cross-origin requests with credentials (e.g. multipart bank transfer) are authenticated.
+        /// </summary>
+        private async Task SignInAuthCookieAsync(AuthResponseDto user)
+        {
+            var claims = new List<Claim>
+            {
+                new(ClaimTypes.NameIdentifier, user.UserId.ToString()),
+                new(ClaimTypes.Email, user.Email),
+                new(ClaimTypes.Name, user.FullName),
+                new(ClaimTypes.Role, user.UserType),
+            };
+            var identity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
+            var principal = new ClaimsPrincipal(identity);
+            await HttpContext.SignInAsync(CookieAuthenticationDefaults.AuthenticationScheme, principal);
         }
 
         [HttpPost("login")]
@@ -50,6 +70,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
                     return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Invalid email or password"));
                 }
 
+                await SignInAuthCookieAsync(response);
                 _logger.LogInformation("User logged in successfully: {Email}", request.Email);
                 return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(response, "Login successful"));
             }
@@ -89,6 +110,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
                     return BadRequest(ApiResponse<AuthResponseDto>.FailureResponse("Email already exists"));
                 }
 
+                await SignInAuthCookieAsync(response);
                 _logger.LogInformation("User registered successfully: {Email}", request.Email);
                 return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(response, "Registration successful"));
             }
@@ -97,6 +119,15 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
                 _logger.LogError(ex, "Error during registration for email: {Email}", request.Email);
                 return StatusCode(500, ApiResponse<AuthResponseDto>.FailureResponse("An error occurred during registration"));
             }
+        }
+
+        /// <summary>Clears the API auth cookie (call from SPA on logout when using credentials).</summary>
+        [HttpPost("logout")]
+        [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<object?>>> Logout()
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Ok(ApiResponse<object?>.SuccessResponse(null, "Logged out"));
         }
 
         [HttpGet("check-email/{email}")]

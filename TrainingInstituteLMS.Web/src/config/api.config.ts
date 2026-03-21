@@ -24,6 +24,7 @@ export const API_CONFIG = {
     AUTH: {
       LOGIN: '/auth/login',
       REGISTER: '/auth/register',
+      LOGOUT: '/auth/logout',
       CHECK_EMAIL: '/auth/check-email',
       GET_USER: '/auth/user',
     },
