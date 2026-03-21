@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.CompanyManagement;
@@ -24,6 +26,73 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
             _companyManagementService = companyManagementService;
             _companyBillingService = companyBillingService;
             _logger = logger;
+        }
+
+        private Guid? GetCurrentUserId()
+        {
+            var v = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(v, out var id) ? id : null;
+        }
+
+        /// <summary>
+        /// Company portal: submit bank transfer notice for selected bills (receipt required). Emails company and academy.
+        /// </summary>
+        [HttpPost("{companyId:guid}/billing/bank-transfer")]
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>), StatusCodes.Status200OK)]
+        public async Task<ActionResult<ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>>> SubmitCompanyBillingBankTransfer(
+            Guid companyId,
+            [FromForm] string statementIds,
+            [FromForm] decimal amount,
+            [FromForm] string? customerReference,
+            IFormFile receipt,
+            CancellationToken cancellationToken)
+        {
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("Authentication required."));
+
+            try
+            {
+                var company = await _companyManagementService.GetCompanyByIdAsync(companyId);
+                if (company == null || company.UserId != userId.Value)
+                    return Forbid();
+
+                List<Guid> ids;
+                try
+                {
+                    ids = JsonSerializer.Deserialize<List<Guid>>(statementIds ?? "[]") ?? new List<Guid>();
+                }
+                catch
+                {
+                    return BadRequest(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("Invalid statementIds JSON."));
+                }
+
+                if (receipt == null || receipt.Length == 0)
+                    return BadRequest(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("Receipt file is required."));
+
+                var result = await _companyBillingService.SubmitCompanyBankTransferAsync(
+                    companyId,
+                    ids,
+                    amount,
+                    customerReference,
+                    receipt,
+                    cancellationToken);
+
+                if (result == null)
+                    return BadRequest(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("Could not submit payment notice."));
+
+                return Ok(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.SuccessResponse(result, result.Message));
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse(ex.Message));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Bank transfer submission failed for company {CompanyId}", companyId);
+                return StatusCode(500, ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("An error occurred."));
+            }
         }
 
         /// <summary>

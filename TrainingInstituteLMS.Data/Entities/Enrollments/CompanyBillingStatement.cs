@@ -26,6 +26,10 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         [Column(TypeName = "decimal(12,2)")]
         public decimal TotalAmount { get; set; }
 
+        /// <summary>Cumulative amount received toward this statement (partial or full payments).</summary>
+        [Column(TypeName = "decimal(12,2)")]
+        public decimal PaidAmount { get; set; }
+
         [MaxLength(50)]
         public string? PaymentMethod { get; set; }
 

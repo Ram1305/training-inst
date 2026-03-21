@@ -67,5 +67,21 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
         /// Welcome email for a new company account with the permanent employee enrolment link.
         /// </summary>
         Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl);
+
+        /// <summary>Company bank transfer billing submission: confirmation to company and notice to academy.</summary>
+        Task SendCompanyBillingBankTransferSubmittedAsync(
+            string companyEmail,
+            string companyName,
+            decimal amount,
+            string submissionId,
+            string linesSummary);
+
+        /// <summary>Company card billing payment applied: receipt to company and notice to academy.</summary>
+        Task SendCompanyBillingCardPaymentAppliedAsync(
+            string companyEmail,
+            string companyName,
+            decimal amount,
+            string transactionReference,
+            string linesSummary);
     }
 }

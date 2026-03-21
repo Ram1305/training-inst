@@ -1,5 +1,9 @@
+using System.Text.Json;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using TrainingInstituteLMS.ApiService.Common;
+using TrainingInstituteLMS.ApiService.Services.Email;
+using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Enrollments;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling;
@@ -10,11 +14,19 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
     {
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<CompanyBillingService> _logger;
+        private readonly IFileStorageService _fileStorageService;
+        private readonly IEmailService _emailService;
 
-        public CompanyBillingService(TrainingLMSDbContext context, ILogger<CompanyBillingService> logger)
+        public CompanyBillingService(
+            TrainingLMSDbContext context,
+            ILogger<CompanyBillingService> logger,
+            IFileStorageService fileStorageService,
+            IEmailService emailService)
         {
             _context = context;
             _logger = logger;
+            _fileStorageService = fileStorageService;
+            _emailService = emailService;
         }
 
         private static bool IsPermanentCompanyPortalLink(EnrollmentLink? link) =>
@@ -73,6 +85,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 SydneyBillingDate = sydneyDate,
                 Status = "Unpaid",
                 TotalAmount = amount,
+                PaidAmount = 0,
                 CreatedAt = DateTime.UtcNow
             };
             _context.CompanyBillingStatements.Add(statement);
@@ -138,6 +151,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                     s.SydneyBillingDate,
                     s.Status,
                     s.TotalAmount,
+                    s.PaidAmount,
                     s.PaymentMethod,
                     s.PaidAt,
                     s.PaymentReference,
@@ -156,6 +170,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 SydneyBillingDate = s.SydneyBillingDate.ToString("yyyy-MM-dd"),
                 Status = s.Status,
                 TotalAmount = s.TotalAmount,
+                PaidAmount = s.PaidAmount,
+                BalanceDue = s.TotalAmount - s.PaidAmount,
                 PaymentMethod = s.PaymentMethod,
                 PaidAt = s.PaidAt,
                 PaymentReference = s.PaymentReference,
@@ -208,6 +224,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 SydneyBillingDate = s.SydneyBillingDate.ToString("yyyy-MM-dd"),
                 Status = s.Status,
                 TotalAmount = s.TotalAmount,
+                PaidAmount = s.PaidAmount,
+                BalanceDue = s.TotalAmount - s.PaidAmount,
                 PaymentMethod = s.PaymentMethod,
                 PaidAt = s.PaidAt,
                 PaymentReference = s.PaymentReference,
@@ -241,9 +259,10 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             }
             else if (newStatus == "Paid")
             {
-                if (s.Status != "Draft" && s.Status != "Approved" && s.Status != "Unpaid")
+                if (s.Status != "Draft" && s.Status != "Approved" && s.Status != "Unpaid" && s.Status != "PartiallyPaid")
                     return false;
                 s.PaidAt = DateTime.UtcNow;
+                s.PaidAmount = s.TotalAmount;
                 if (!string.IsNullOrWhiteSpace(paymentMethod))
                     s.PaymentMethod = paymentMethod.Trim();
                 if (!string.IsNullOrWhiteSpace(paymentReference))
@@ -278,6 +297,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                     s.SydneyBillingDate,
                     s.Status,
                     s.TotalAmount,
+                    s.PaidAmount,
                     s.PaymentMethod,
                     s.PaidAt,
                     s.PaymentReference,
@@ -296,6 +316,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 SydneyBillingDate = s.SydneyBillingDate.ToString("yyyy-MM-dd"),
                 Status = s.Status,
                 TotalAmount = s.TotalAmount,
+                PaidAmount = s.PaidAmount,
+                BalanceDue = s.TotalAmount - s.PaidAmount,
                 PaymentMethod = s.PaymentMethod,
                 PaidAt = s.PaidAt,
                 PaymentReference = s.PaymentReference,
@@ -312,6 +334,209 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 Page = page,
                 PageSize = pageSize
             };
+        }
+
+        public async Task<(bool Ok, string? Error)> ApplyCompanyBillingPaymentAsync(
+            Guid companyId,
+            IReadOnlyList<Guid> statementIdsInOrder,
+            decimal paymentAmount,
+            string paymentMethod,
+            string paymentReference,
+            string? gatewayTransactionId)
+        {
+            if (paymentAmount <= 0)
+                return (false, "Payment amount must be greater than zero.");
+
+            if (statementIdsInOrder.Count == 0)
+                return (false, "Select at least one bill.");
+
+            var idSet = statementIdsInOrder.ToHashSet();
+            var statements = await _context.CompanyBillingStatements
+                .Where(s => idSet.Contains(s.StatementId) && s.CompanyId == companyId)
+                .ToListAsync();
+
+            if (statements.Count != idSet.Count)
+                return (false, "One or more bills were not found for your company.");
+
+            var ordered = statementIdsInOrder
+                .Select(id => statements.First(s => s.StatementId == id))
+                .ToList();
+
+            decimal maxApplicable = 0;
+            foreach (var s in ordered)
+            {
+                var bal = s.TotalAmount - s.PaidAmount;
+                if (bal > 0) maxApplicable += bal;
+            }
+
+            if (paymentAmount - maxApplicable > 0.01m)
+                return (false, "Payment amount is greater than the total balance due on the selected bills.");
+
+            var refSuffix = string.IsNullOrWhiteSpace(gatewayTransactionId)
+                ? string.Empty
+                : $" txn:{gatewayTransactionId}";
+
+            decimal toAllocate = paymentAmount;
+            foreach (var s in ordered)
+            {
+                var balance = s.TotalAmount - s.PaidAmount;
+                if (balance <= 0)
+                    continue;
+
+                var apply = Math.Min(toAllocate, balance);
+                if (apply <= 0)
+                    continue;
+
+                s.PaidAmount += apply;
+                toAllocate -= apply;
+
+                s.PaymentMethod = paymentMethod;
+                var combinedRef = (paymentReference + refSuffix).Trim();
+                if (!string.IsNullOrWhiteSpace(combinedRef))
+                {
+                    s.PaymentReference = string.IsNullOrWhiteSpace(s.PaymentReference)
+                        ? combinedRef
+                        : $"{s.PaymentReference}; {combinedRef}";
+                }
+
+                if (s.PaidAmount >= s.TotalAmount)
+                {
+                    s.Status = "Paid";
+                    s.PaidAt ??= DateTime.UtcNow;
+                }
+                else if (s.PaidAmount > 0)
+                    s.Status = "PartiallyPaid";
+
+                s.UpdatedAt = DateTime.UtcNow;
+            }
+
+            if (toAllocate > 0.01m)
+                return (false, "Could not allocate the full payment (internal error).");
+
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<CompanyBillingBankTransferSubmissionResponseDto?> SubmitCompanyBankTransferAsync(
+            Guid companyId,
+            IReadOnlyList<Guid> statementIdsInOrder,
+            decimal amount,
+            string? customerReference,
+            IFormFile receipt,
+            CancellationToken cancellationToken = default)
+        {
+            if (statementIdsInOrder.Count == 0)
+                return null;
+
+            if (!_fileStorageService.ValidateFile(receipt, out var fileErr))
+                throw new InvalidOperationException(fileErr);
+
+            var idSet = statementIdsInOrder.ToHashSet();
+            var statements = await _context.CompanyBillingStatements
+                .Include(s => s.Lines)
+                .Include(s => s.Company)
+                .ThenInclude(c => c.User)
+                .Where(s => idSet.Contains(s.StatementId) && s.CompanyId == companyId)
+                .ToListAsync();
+
+            if (statements.Count != idSet.Count)
+                throw new InvalidOperationException("One or more bills were not found for your company.");
+
+            decimal maxApplicable = statements.Sum(s => Math.Max(0, s.TotalAmount - s.PaidAmount));
+            if (amount <= 0 || amount - maxApplicable > 0.01m)
+                throw new InvalidOperationException("Amount must be greater than zero and not more than the balance due on the selected bills.");
+
+            var upload = await _fileStorageService.UploadFileAsync(receipt, "payment-receipts", cancellationToken);
+            if (!upload.Success || string.IsNullOrWhiteSpace(upload.RelativePath))
+                throw new InvalidOperationException(upload.ErrorMessage ?? "Receipt upload failed.");
+
+            var submission = new CompanyBillingPaymentSubmission
+            {
+                SubmissionId = Guid.NewGuid(),
+                CompanyId = companyId,
+                Amount = amount,
+                Method = "bank_transfer",
+                ReceiptFileUrl = upload.RelativePath,
+                CustomerReference = customerReference?.Trim(),
+                StatementIdsJson = JsonSerializer.Serialize(statementIdsInOrder),
+                Status = "Pending",
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.CompanyBillingPaymentSubmissions.Add(submission);
+            await _context.SaveChangesAsync(cancellationToken);
+
+            var company = statements[0].Company;
+
+            var companyEmail = company.User?.Email ?? string.Empty;
+            await _emailService.SendCompanyBillingBankTransferSubmittedAsync(
+                companyEmail,
+                company.CompanyName,
+                amount,
+                submission.SubmissionId.ToString(),
+                await FormatBillingPaymentSummaryAsync(statementIdsInOrder, companyId));
+
+            return new CompanyBillingBankTransferSubmissionResponseDto
+            {
+                SubmissionId = submission.SubmissionId.ToString(),
+                Message = "Bank transfer notice received. We will verify your deposit and update your balance."
+            };
+        }
+
+        public async Task<(bool Ok, string? Error)> ApplyBankSubmissionAsync(Guid submissionId)
+        {
+            var sub = await _context.CompanyBillingPaymentSubmissions
+                .FirstOrDefaultAsync(s => s.SubmissionId == submissionId);
+            if (sub == null)
+                return (false, "Submission not found.");
+            if (!string.Equals(sub.Status, "Pending", StringComparison.OrdinalIgnoreCase))
+                return (false, "Submission is not pending.");
+
+            var ids = JsonSerializer.Deserialize<List<Guid>>(sub.StatementIdsJson);
+            if (ids == null || ids.Count == 0)
+                return (false, "Invalid submission data.");
+
+            var refText = string.IsNullOrWhiteSpace(sub.CustomerReference)
+                ? $"Bank submission {sub.SubmissionId:N}"
+                : sub.CustomerReference.Trim();
+
+            var (ok, err) = await ApplyCompanyBillingPaymentAsync(
+                sub.CompanyId,
+                ids,
+                sub.Amount,
+                "bank_transfer",
+                refText,
+                null);
+
+            if (!ok)
+                return (false, err);
+
+            sub.Status = "Applied";
+            sub.AppliedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            return (true, null);
+        }
+
+        public async Task<string> FormatBillingPaymentSummaryAsync(IReadOnlyList<Guid> statementIdsInOrder, Guid companyId)
+        {
+            var lines = new List<string>();
+            foreach (var sid in statementIdsInOrder)
+            {
+                var stmt = await _context.CompanyBillingStatements
+                    .AsNoTracking()
+                    .Include(s => s.Lines)
+                    .FirstOrDefaultAsync(s => s.StatementId == sid && s.CompanyId == companyId);
+                if (stmt == null)
+                    continue;
+
+                foreach (var line in stmt.Lines.OrderBy(l => l.LineId))
+                {
+                    var who = line.StudentNameSnapshot ?? "Student";
+                    var course = line.CourseNameSnapshot ?? "Course";
+                    lines.Add($"- {who} — {course} — {line.Amount:C} (statement {sid:N})");
+                }
+            }
+
+            return lines.Count > 0 ? string.Join("\n", lines) : "(no line detail)";
         }
     }
 }

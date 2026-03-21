@@ -70,6 +70,7 @@ namespace TrainingInstituteLMS.Data.Data
 
         public DbSet<CompanyBillingStatement> CompanyBillingStatements { get; set; }
         public DbSet<CompanyBillingLine> CompanyBillingLines { get; set; }
+        public DbSet<CompanyBillingPaymentSubmission> CompanyBillingPaymentSubmissions { get; set; }
 
         // Google Reviews (for landing page)
         public DbSet<GoogleReview> GoogleReviews { get; set; }
@@ -351,6 +352,12 @@ namespace TrainingInstituteLMS.Data.Data
             modelBuilder.Entity<CompanyBillingLine>()
                 .HasIndex(l => l.EnrollmentId)
                 .IsUnique();
+
+            modelBuilder.Entity<CompanyBillingPaymentSubmission>()
+                .HasOne(s => s.Company)
+                .WithMany()
+                .HasForeignKey(s => s.CompanyId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // SiteSettings: unique key for key-value store
             modelBuilder.Entity<SiteSetting>()

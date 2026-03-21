@@ -44,6 +44,7 @@ export const API_CONFIG = {
       TOGGLE_STATUS: (companyId: string) => `/CompanyManagement/${companyId}/toggle-status`,
       BILLING_STATEMENTS: (companyId: string) => `/CompanyManagement/${companyId}/billing-statements`,
       PORTAL_ENROLLMENTS: (companyId: string) => `/CompanyManagement/${companyId}/portal-enrollments`,
+      BILLING_BANK_TRANSFER: (companyId: string) => `/CompanyManagement/${companyId}/billing/bank-transfer`,
     },
     QUIZ: {
       SUBMIT: '/quiz/submit',
@@ -61,6 +62,9 @@ export const API_CONFIG = {
       BYPASS: '/admin/quiz/bypass',
       REJECT: '/admin/quiz/reject',
       BYPASSES: '/admin/quiz/bypasses',
+    },
+    PAYMENT: {
+      PROCESS_CARD_COMPANY_BILLING: '/payment/process-card-company-billing',
     },
     COURSE: {
       BASE: '/course',

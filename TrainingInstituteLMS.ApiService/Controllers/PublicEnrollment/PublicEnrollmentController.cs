@@ -537,6 +537,25 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         }
 
         /// <summary>
+        /// Admin: apply a pending company bank transfer submission to statement balances (after verifying the deposit).
+        /// </summary>
+        [HttpPost("admin/company-billing/payment-submissions/{submissionId:guid}/apply")]
+        public async Task<IActionResult> ApplyCompanyBillingBankSubmission(Guid submissionId)
+        {
+            try
+            {
+                var (ok, err) = await _companyBillingService.ApplyBankSubmissionAsync(submissionId);
+                if (!ok)
+                    return BadRequest(ApiResponse<object>.FailureResponse(err ?? "Could not apply submission."));
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Submission applied to company balances."));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
+        /// <summary>
         /// Admin: when training is finished, mark enrollment complete and create a per-course company bill (permanent portal link enrollments only).
         /// </summary>
         [HttpPost("admin/company-billing/complete-training/{enrollmentId:guid}")]

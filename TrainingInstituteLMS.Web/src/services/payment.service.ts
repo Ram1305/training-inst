@@ -2,6 +2,18 @@
 import { apiService } from './api.service';
 import { API_CONFIG } from '../config/api.config';
 
+export interface ProcessCompanyBillingCardRequest {
+  companyId: string;
+  statementIds: string[];
+  amountCents: number;
+  currency?: string;
+  cardName: string;
+  cardNumber: string;
+  expiryMonth: string;
+  expiryYear: string;
+  cvv: string;
+}
+
 export interface ProcessCardPaymentRequest {
   fullName: string;
   email: string;
@@ -96,6 +108,34 @@ class PaymentService {
   /**
    * Process a credit card payment for an existing logged-in student and create enrollment
    */
+  async processCompanyBillingCard(
+    request: ProcessCompanyBillingCardRequest
+  ): Promise<ApiResponse<CardPaymentResult>> {
+    try {
+      return await apiService.post<ApiResponse<CardPaymentResult>>(
+        API_CONFIG.ENDPOINTS.PAYMENT.PROCESS_CARD_COMPANY_BILLING,
+        {
+          companyId: request.companyId,
+          statementIds: request.statementIds.map((id) => id),
+          amountCents: request.amountCents,
+          currency: request.currency || 'AUD',
+          cardName: request.cardName,
+          cardNumber: request.cardNumber,
+          expiryMonth: request.expiryMonth,
+          expiryYear: request.expiryYear,
+          cvv: request.cvv,
+        }
+      );
+    } catch (error: unknown) {
+      const err = error as Error & { responseBody?: { message?: string; errors?: string[] } };
+      const body = err?.responseBody;
+      const message = body?.message ?? (error instanceof Error ? error.message : 'Unknown error occurred');
+      const errors = body?.errors?.length ? body.errors : [message];
+      console.error('[Payment] company-billing card:', { message, errors, responseBody: body });
+      return { success: false, message, errors };
+    }
+  }
+
   async processCardPaymentExistingStudent(
     request: ProcessCardPaymentExistingStudentRequest
   ): Promise<ApiResponse<CardPaymentResult>> {

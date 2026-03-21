@@ -26,6 +26,10 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling
         public string? PrimaryCourseName { get; set; }
 
         public string? PrimaryStudentName { get; set; }
+
+        public decimal PaidAmount { get; set; }
+
+        public decimal BalanceDue { get; set; }
     }
 
     public class CompanyBillingStatementDetailDto : CompanyBillingStatementListItemDto
@@ -49,5 +53,11 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling
         public string Status { get; set; } = string.Empty;
         public string? PaymentMethod { get; set; }
         public string? PaymentReference { get; set; }
+    }
+
+    public class CompanyBillingBankTransferSubmissionResponseDto
+    {
+        public string SubmissionId { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
     }
 }

@@ -15,6 +15,8 @@ export interface CompanyBillingStatementListItem {
   lineCount: number;
   primaryCourseName?: string;
   primaryStudentName?: string;
+  paidAmount?: number;
+  balanceDue?: number;
 }
 
 export interface CompanyBillingLineItem {

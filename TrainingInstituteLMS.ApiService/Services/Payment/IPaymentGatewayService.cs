@@ -14,5 +14,9 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
         /// Process a credit card payment and create enrollment (for existing logged-in students)
         /// </summary>
         Task<CardPaymentResultResponseDto> ProcessCardPaymentExistingStudentAsync(ProcessCardPaymentExistingStudentRequestDto request);
+
+        Task<CardPaymentResultResponseDto> ProcessCompanyBillingCardPaymentAsync(
+            ProcessCompanyBillingCardPaymentRequestDto request,
+            Guid authenticatedUserId);
     }
 }

@@ -949,6 +949,175 @@ Enrolment link:
             }
         }
 
+        public async Task SendCompanyBillingBankTransferSubmittedAsync(
+            string companyEmail,
+            string companyName,
+            decimal amount,
+            string submissionId,
+            string linesSummary)
+        {
+            if (!_settings.IsConfigured)
+            {
+                _logger.LogWarning("Email not configured - skipping company billing bank notice");
+                return;
+            }
+
+            var amountStr = amount.ToString("C", CultureInfo.GetCultureInfo("en-AU"));
+            var subjectCompany = $"We received your bank transfer notice — {amountStr}";
+            var plainCompany = $@"Hello {companyName},
+
+Thank you. We received your bank transfer payment notice for {amountStr}.
+
+Reference: {submissionId}
+
+Lines included:
+{linesSummary}
+
+Our accounts team will verify your transfer against our bank deposit and update your balance. If you have questions, reply to this email or call 1300 976 097.
+
+Safety Training Academy
+";
+            var htmlCompany = $@"<!DOCTYPE html><html><body style=""font-family:Arial,sans-serif;font-size:14px;color:#333;"">
+<p>Hello <strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong>,</p>
+<p>We received your <strong>bank transfer</strong> payment notice for <strong>{System.Net.WebUtility.HtmlEncode(amountStr)}</strong>.</p>
+<p>Reference: <code>{System.Net.WebUtility.HtmlEncode(submissionId)}</code></p>
+<pre style=""white-space:pre-wrap;font-size:13px;background:#f8fafc;padding:12px;border-radius:8px;"">{System.Net.WebUtility.HtmlEncode(linesSummary)}</pre>
+<p>Our team will verify the deposit and update your company balance.</p>
+</body></html>";
+
+            var subjectAcademy = $"Company bank transfer notice — {companyName} — {amountStr}";
+            var plainAcademy = $@"COMPANY BILLING — BANK TRANSFER SUBMITTED
+
+Company: {companyName} ({companyEmail})
+Amount: {amountStr}
+Submission ID: {submissionId}
+
+{linesSummary}
+";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                await client.AuthenticateAsync(user, smtpPassword);
+
+                if (!string.IsNullOrWhiteSpace(companyEmail))
+                {
+                    var msgC = new MimeMessage();
+                    msgC.From.Add(new MailboxAddress(_settings.FromName, user));
+                    msgC.To.Add(MailboxAddress.Parse(companyEmail.Trim()));
+                    msgC.Subject = subjectCompany;
+                    msgC.Body = new BodyBuilder { TextBody = plainCompany, HtmlBody = htmlCompany }.ToMessageBody();
+                    await client.SendAsync(msgC);
+                }
+
+                var bookings = _settings.BookingsEmail?.Trim();
+                if (!string.IsNullOrWhiteSpace(bookings))
+                {
+                    var msgA = new MimeMessage();
+                    msgA.From.Add(new MailboxAddress(_settings.FromName, user));
+                    msgA.To.Add(MailboxAddress.Parse(bookings));
+                    msgA.Subject = subjectAcademy;
+                    msgA.Body = new BodyBuilder { TextBody = plainAcademy }.ToMessageBody();
+                    await client.SendAsync(msgA);
+                }
+
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Company billing bank submission emails sent for {SubmissionId}", submissionId);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send company billing bank submission emails");
+            }
+        }
+
+        public async Task SendCompanyBillingCardPaymentAppliedAsync(
+            string companyEmail,
+            string companyName,
+            decimal amount,
+            string transactionReference,
+            string linesSummary)
+        {
+            if (!_settings.IsConfigured)
+            {
+                _logger.LogWarning("Email not configured - skipping company billing card notice");
+                return;
+            }
+
+            var amountStr = amount.ToString("C", CultureInfo.GetCultureInfo("en-AU"));
+            var subjectCompany = $"Payment received — {amountStr}";
+            var plainCompany = $@"Hello {companyName},
+
+Your card payment of {amountStr} has been applied to your company billing.
+
+Transaction: {transactionReference}
+
+{linesSummary}
+
+Thank you,
+Safety Training Academy
+";
+            var htmlCompany = $@"<!DOCTYPE html><html><body style=""font-family:Arial,sans-serif;font-size:14px;color:#333;"">
+<p>Hello <strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong>,</p>
+<p>Your <strong>card payment</strong> of <strong>{System.Net.WebUtility.HtmlEncode(amountStr)}</strong> has been applied to your company account.</p>
+<p>Transaction: <code>{System.Net.WebUtility.HtmlEncode(transactionReference)}</code></p>
+<pre style=""white-space:pre-wrap;font-size:13px;background:#f8fafc;padding:12px;border-radius:8px;"">{System.Net.WebUtility.HtmlEncode(linesSummary)}</pre>
+</body></html>";
+
+            var subjectAcademy = $"Company card payment — {companyName} — {amountStr}";
+            var plainAcademy = $@"COMPANY BILLING — CARD PAYMENT APPLIED
+
+Company: {companyName} ({companyEmail})
+Amount: {amountStr}
+Transaction: {transactionReference}
+
+{linesSummary}
+";
+
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+
+                using var client = new SmtpClient();
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                await client.AuthenticateAsync(user, smtpPassword);
+
+                if (!string.IsNullOrWhiteSpace(companyEmail))
+                {
+                    var msgC = new MimeMessage();
+                    msgC.From.Add(new MailboxAddress(_settings.FromName, user));
+                    msgC.To.Add(MailboxAddress.Parse(companyEmail.Trim()));
+                    msgC.Subject = subjectCompany;
+                    msgC.Body = new BodyBuilder { TextBody = plainCompany, HtmlBody = htmlCompany }.ToMessageBody();
+                    await client.SendAsync(msgC);
+                }
+
+                var bookings = _settings.BookingsEmail?.Trim();
+                if (!string.IsNullOrWhiteSpace(bookings))
+                {
+                    var msgA = new MimeMessage();
+                    msgA.From.Add(new MailboxAddress(_settings.FromName, user));
+                    msgA.To.Add(MailboxAddress.Parse(bookings));
+                    msgA.Subject = subjectAcademy;
+                    msgA.Body = new BodyBuilder { TextBody = plainAcademy }.ToMessageBody();
+                    await client.SendAsync(msgA);
+                }
+
+                await client.DisconnectAsync(true);
+                _logger.LogInformation("Company billing card payment emails sent for txn {Ref}", transactionReference);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send company billing card payment emails");
+            }
+        }
+
         private static string FormatBookingIdForEmail(string bookingId)
         {
             if (string.IsNullOrWhiteSpace(bookingId)) return "00000000";

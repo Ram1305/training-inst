@@ -8,6 +8,7 @@ using Microsoft.Extensions.Options;
 using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.ApiService.Configuration;
 using TrainingInstituteLMS.ApiService.Helpers;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
@@ -25,19 +26,22 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<PaymentGatewayService> _logger;
         private readonly IEmailService _emailService;
+        private readonly ICompanyBillingService _companyBillingService;
 
         public PaymentGatewayService(
             IHttpClientFactory httpClientFactory,
             IOptions<EwaySettings> ewaySettings,
             TrainingLMSDbContext context,
             ILogger<PaymentGatewayService> logger,
-            IEmailService emailService)
+            IEmailService emailService,
+            ICompanyBillingService companyBillingService)
         {
             _httpClient = httpClientFactory.CreateClient("EwayClient");
             _ewaySettings = ewaySettings.Value;
             _context = context;
             _logger = logger;
             _emailService = emailService;
+            _companyBillingService = companyBillingService;
 
             // Configure base address and authentication
             _httpClient.BaseAddress = new Uri(_ewaySettings.GetEndpointUrl());
@@ -804,6 +808,232 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                     throw;
                 }
             });
+        }
+
+        public async Task<CardPaymentResultResponseDto> ProcessCompanyBillingCardPaymentAsync(
+            ProcessCompanyBillingCardPaymentRequestDto request,
+            Guid authenticatedUserId)
+        {
+            var invoiceNumber = Random.Shared.Next(10000000, 100000000).ToString();
+            var companyKey = request.CompanyId.ToString("N");
+            var invoiceReference = companyKey.Length >= 8 ? $"CB-{companyKey[..8]}" : $"CB-{companyKey}";
+
+            try
+            {
+                var company = await _context.Companies
+                    .Include(c => c.User)
+                    .FirstOrDefaultAsync(c => c.CompanyId == request.CompanyId);
+                if (company == null || company.UserId != authenticatedUserId)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Company not found or access denied.",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var email = company.User?.Email ?? string.Empty;
+                var displayName = string.IsNullOrWhiteSpace(company.CompanyName) ? "Company" : company.CompanyName;
+                var phone = company.MobileNumber ?? company.User?.PhoneNumber ?? string.Empty;
+
+                var orderedIds = request.StatementIds.Distinct().ToList();
+                if (orderedIds.Count == 0)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Select at least one bill.",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var statements = await _context.CompanyBillingStatements
+                    .Where(s => orderedIds.Contains(s.StatementId) && s.CompanyId == request.CompanyId)
+                    .ToListAsync();
+                if (statements.Count != orderedIds.Count)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "One or more billing items are invalid.",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var ordered = orderedIds.Select(id => statements.First(s => s.StatementId == id)).ToList();
+                var maxPay = ordered.Sum(s => Math.Max(0, s.TotalAmount - s.PaidAmount));
+                var payDecimal = request.AmountCents / 100m;
+                if (payDecimal <= 0 || payDecimal - maxPay > 0.01m)
+                {
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = "Payment amount is invalid for the selected bills.",
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var ewayRequest = new EwayDirectPaymentRequest
+                {
+                    Customer = new EwayCustomer
+                    {
+                        FirstName = GetFirstName(displayName),
+                        LastName = GetLastName(displayName),
+                        Email = email,
+                        Phone = phone,
+                        Reference = email,
+                        CardDetails = new EwayCardDetails
+                        {
+                            Name = request.CardName,
+                            Number = request.CardNumber,
+                            ExpiryMonth = request.ExpiryMonth,
+                            ExpiryYear = request.ExpiryYear,
+                            CVN = request.Cvv
+                        }
+                    },
+                    Payment = new EwayPayment
+                    {
+                        TotalAmount = request.AmountCents,
+                        InvoiceNumber = invoiceNumber,
+                        InvoiceDescription = GetEwayInvoiceDescription(null, $"Company billing {displayName}"),
+                        InvoiceReference = invoiceReference,
+                        CurrencyCode = request.Currency ?? "AUD"
+                    },
+                    TransactionType = "Purchase",
+                    Method = "ProcessPayment"
+                };
+
+                var jsonOptions = new JsonSerializerOptions
+                {
+                    PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+                    DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull
+                };
+
+                var json = JsonSerializer.Serialize(ewayRequest, jsonOptions);
+                _logger.LogInformation("eWay Request (company billing): {Request}", json);
+
+                var content = new StringContent(json, Encoding.UTF8, "application/json");
+                var response = await _httpClient.PostAsync("/Transaction", content);
+                var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    var gatewayError = string.IsNullOrWhiteSpace(responseBody)
+                        ? $"Payment gateway error ({(int)response.StatusCode} {response.StatusCode})."
+                        : $"Payment gateway error: {responseBody.Trim().TrimEnd('.')}";
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages = gatewayError,
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var deserializeOptions = new JsonSerializerOptions
+                {
+                    PropertyNameCaseInsensitive = true,
+                    NumberHandling = JsonNumberHandling.AllowReadingFromString
+                };
+                var ewayResponse = JsonSerializer.Deserialize<EwayTransactionResponse>(responseBody, deserializeOptions);
+                var paymentSuccess = ewayResponse?.TransactionStatus == true;
+                var responseCode = ewayResponse?.ResponseCode;
+                var responseMessage = ewayResponse?.ResponseMessage;
+                var transactionId = ewayResponse?.TransactionID ?? 0;
+                var authorisationCode = ewayResponse?.AuthorisationCode;
+
+                if (!paymentSuccess)
+                {
+                    var userFriendlyMessage = EwayResponseHelper.GetUserFriendlyMessage(responseMessage);
+                    var errorDetails = ewayResponse?.Errors != null && ewayResponse.Errors.Count > 0
+                        ? string.Join(", ", ewayResponse.Errors)
+                        : null;
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        TransactionId = transactionId,
+                        ResponseCode = responseCode,
+                        ResponseMessage = userFriendlyMessage,
+                        ErrorMessages = errorDetails ?? userFriendlyMessage,
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var (ok, err) = await _companyBillingService.ApplyCompanyBillingPaymentAsync(
+                    request.CompanyId,
+                    orderedIds,
+                    payDecimal,
+                    "credit_card",
+                    $"eWay inv {invoiceNumber}",
+                    transactionId.ToString());
+
+                if (!ok)
+                {
+                    _logger.LogError(
+                        "Company billing: eWay succeeded but allocation failed: {Error}. Txn {Txn}",
+                        err,
+                        transactionId);
+                    return new CardPaymentResultResponseDto
+                    {
+                        Success = false,
+                        ErrorMessages =
+                            $"Payment was captured (ref {transactionId}) but updating your account failed. Please contact support with this reference.",
+                        TransactionId = transactionId,
+                        AmountPaidCents = request.AmountCents,
+                        InvoiceNumber = invoiceNumber
+                    };
+                }
+
+                var summary = await _companyBillingService.FormatBillingPaymentSummaryAsync(orderedIds, request.CompanyId);
+                await _emailService.SendCompanyBillingCardPaymentAppliedAsync(
+                    email,
+                    displayName,
+                    payDecimal,
+                    transactionId.ToString(),
+                    summary);
+
+                return new CardPaymentResultResponseDto
+                {
+                    Success = true,
+                    TransactionId = transactionId,
+                    ResponseCode = responseCode,
+                    ResponseMessage = "Payment successful!",
+                    AuthorisationCode = authorisationCode,
+                    AmountPaidCents = request.AmountCents,
+                    InvoiceNumber = invoiceNumber,
+                    Email = email,
+                    StudentName = displayName,
+                    PaymentStatus = "Verified"
+                };
+            }
+            catch (JsonException jsonEx)
+            {
+                _logger.LogError(jsonEx, "JSON error processing company billing card payment");
+                return new CardPaymentResultResponseDto
+                {
+                    Success = false,
+                    ErrorMessages = $"Payment gateway response error: {jsonEx.Message}",
+                    AmountPaidCents = request.AmountCents,
+                    InvoiceNumber = invoiceNumber
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error processing company billing card payment");
+                return new CardPaymentResultResponseDto
+                {
+                    Success = false,
+                    ErrorMessages = ex.Message,
+                    AmountPaidCents = request.AmountCents,
+                    InvoiceNumber = invoiceNumber
+                };
+            }
         }
 
         private static string GetFirstName(string fullName)

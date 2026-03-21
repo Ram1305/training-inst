@@ -127,7 +127,7 @@ export function AdminCompanyBilling() {
   };
 
   const canMarkPaid = (status: string) =>
-    status === 'Draft' || status === 'Approved' || status === 'Unpaid';
+    status === 'Draft' || status === 'Approved' || status === 'Unpaid' || status === 'PartiallyPaid';
 
   const recordTrainingComplete = async () => {
     const id = enrollmentIdToComplete.trim();
@@ -206,6 +206,7 @@ export function AdminCompanyBilling() {
             >
               <option value="">All statuses</option>
               <option value="Unpaid">Unpaid</option>
+              <option value="PartiallyPaid">Partially paid</option>
               <option value="Draft">Draft</option>
               <option value="Approved">Approved</option>
               <option value="Paid">Paid</option>

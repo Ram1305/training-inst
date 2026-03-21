@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using TrainingInstituteLMS.ApiService.Services.Payment;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.Payment;
@@ -17,6 +18,49 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Payment
         {
             _paymentGatewayService = paymentGatewayService;
             _logger = logger;
+        }
+
+        private Guid? GetCurrentUserId()
+        {
+            var v = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            return Guid.TryParse(v, out var id) ? id : null;
+        }
+
+        /// <summary>
+        /// Company portal: pay selected billing statements by card (eWay). User must own the company.
+        /// </summary>
+        [HttpPost("process-card-company-billing")]
+        public async Task<IActionResult> ProcessCompanyBillingCardPayment([FromBody] ProcessCompanyBillingCardPaymentRequestDto request)
+        {
+            if (!ModelState.IsValid)
+            {
+                var errorList = ModelState
+                    .Where(ms => ms.Value?.Errors.Count > 0)
+                    .SelectMany(ms => ms.Value!.Errors.Select(e =>
+                        string.IsNullOrEmpty(ms.Key) ? e.ErrorMessage ?? "Invalid value" : $"{ms.Key}: {e.ErrorMessage ?? "Invalid value"}"))
+                    .ToList();
+                var message = errorList.Count > 0 ? "Validation failed." : "Invalid request data.";
+                return BadRequest(ApiResponse<CardPaymentResultResponseDto>.FailureResponse(message, errorList));
+            }
+
+            var userId = GetCurrentUserId();
+            if (!userId.HasValue)
+                return Unauthorized(ApiResponse<CardPaymentResultResponseDto>.FailureResponse("Authentication required."));
+
+            try
+            {
+                var result = await _paymentGatewayService.ProcessCompanyBillingCardPaymentAsync(request, userId.Value);
+                if (result.Success)
+                    return Ok(ApiResponse<CardPaymentResultResponseDto>.SuccessResponse(result, "Payment processed successfully"));
+
+                var exactError = result.ErrorMessages ?? result.ResponseMessage ?? "Payment failed";
+                return BadRequest(ApiResponse<CardPaymentResultResponseDto>.FailureResponse(exactError, new[] { exactError }));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Company billing card payment error");
+                return StatusCode(500, ApiResponse<CardPaymentResultResponseDto>.FailureResponse(ex.Message));
+            }
         }
 
         /// <summary>

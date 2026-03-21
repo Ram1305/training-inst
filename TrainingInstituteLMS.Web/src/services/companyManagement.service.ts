@@ -61,6 +61,11 @@ export interface CompanyPortalEnrollmentsResponse {
   items: CompanyPortalEnrollmentRow[];
 }
 
+export interface CompanyBillingBankTransferSubmissionResponse {
+  submissionId: string;
+  message: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -120,6 +125,16 @@ class CompanyManagementService {
   async toggleCompanyStatus(companyId: string): Promise<ApiResponse<boolean>> {
     return apiService.patch<ApiResponse<boolean>>(
       API_CONFIG.ENDPOINTS.COMPANY_MANAGEMENT.TOGGLE_STATUS(companyId)
+    );
+  }
+
+  async submitBillingBankTransfer(
+    companyId: string,
+    formData: FormData
+  ): Promise<ApiResponse<CompanyBillingBankTransferSubmissionResponse>> {
+    return apiService.post<ApiResponse<CompanyBillingBankTransferSubmissionResponse>>(
+      API_CONFIG.ENDPOINTS.COMPANY_MANAGEMENT.BILLING_BANK_TRANSFER(companyId),
+      formData
     );
   }
 

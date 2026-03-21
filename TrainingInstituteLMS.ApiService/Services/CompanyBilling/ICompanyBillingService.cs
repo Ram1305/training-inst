@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Http;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling;
 
 namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
@@ -26,5 +27,28 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             string? paymentReference);
 
         Task<CompanyBillingStatementListResponseDto> GetStatementsForCompanyAsync(Guid companyId, int page, int pageSize);
+
+        /// <summary>
+        /// Allocates a payment across statements in order until the amount is used. Updates PaidAmount / status.
+        /// </summary>
+        Task<(bool Ok, string? Error)> ApplyCompanyBillingPaymentAsync(
+            Guid companyId,
+            IReadOnlyList<Guid> statementIdsInOrder,
+            decimal paymentAmount,
+            string paymentMethod,
+            string paymentReference,
+            string? gatewayTransactionId);
+
+        Task<CompanyBillingBankTransferSubmissionResponseDto?> SubmitCompanyBankTransferAsync(
+            Guid companyId,
+            IReadOnlyList<Guid> statementIdsInOrder,
+            decimal amount,
+            string? customerReference,
+            IFormFile receipt,
+            CancellationToken cancellationToken = default);
+
+        Task<(bool Ok, string? Error)> ApplyBankSubmissionAsync(Guid submissionId);
+
+        Task<string> FormatBillingPaymentSummaryAsync(IReadOnlyList<Guid> statementIdsInOrder, Guid companyId);
     }
 }
