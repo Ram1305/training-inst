@@ -8,6 +8,35 @@
   }
 }
 
+/* Clips the row, keeps vertical scrolling reliable on touch (wide transformed row otherwise steals pans). */
+.reviews-marquee__viewport {
+  overflow-x: hidden;
+  touch-action: pan-y;
+  overscroll-behavior-x: none;
+}
+
+/*
+ * iOS WebKit: infinite translateX animation on a max-content flex row often breaks hit-testing and
+ * vertical scroll for content below. Use native horizontal scroll instead (same cards, no transform).
+ */
+.reviews-marquee__viewport--ios-scroll {
+  overflow-x: auto;
+  overflow-y: hidden;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x pan-y;
+  overscroll-behavior-x: contain;
+}
+
+.reviews-marquee__viewport--ios-scroll .reviews-marquee__track {
+  animation: none !important;
+  transform: none !important;
+  pointer-events: auto;
+}
+
+.reviews-marquee__viewport--ios-scroll .reviews-marquee__item {
+  touch-action: manipulation;
+}
+
 .reviews-marquee__track {
   display: flex;
   flex-direction: row;
@@ -16,7 +45,8 @@
   animation-name: reviews-marquee-rtl;
   animation-timing-function: linear;
   animation-iteration-count: infinite;
-  /* Avoid extra compositor layers bleeding over the section below on some mobile GPUs */
+  /* Wide flex row: don't let it capture horizontal touch; cards still receive taps. */
+  pointer-events: none;
 }
 
 .reviews-marquee__track:hover {
@@ -25,11 +55,26 @@
 
 .reviews-marquee__item {
   flex-shrink: 0;
+  pointer-events: auto;
+  touch-action: pan-y;
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .reviews-marquee__viewport {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+
   .reviews-marquee__track {
     animation: none;
     transform: none;
+    pointer-events: auto;
+    width: max-content;
+    padding-bottom: 0.25rem;
+  }
+
+  .reviews-marquee__item {
+    touch-action: manipulation;
   }
 }

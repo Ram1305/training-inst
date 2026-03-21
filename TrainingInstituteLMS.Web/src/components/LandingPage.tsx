@@ -84,6 +84,13 @@ function useDebounce<T>(value: T, delay: number): T {
   return debouncedValue;
 }
 
+/** iPhone / iPod / iPad (incl. iPadOS desktop UA). Used to avoid WebKit marquee transform hit-testing bugs. */
+function detectIOS(): boolean {
+  if (typeof navigator === "undefined") return false;
+  if (/iPad|iPhone|iPod/.test(navigator.userAgent)) return true;
+  return navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1;
+}
+
 const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
   { name: "Avopiling", logo: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=200" },
@@ -132,6 +139,8 @@ function LandingReviewCard({ review }: { review: LandingReview }) {
 }
 
 export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC, onViewCourses }: LandingPageProps) {
+  const [isIOS] = useState(() => detectIOS());
+
   // State
   const [searchQuery, setSearchQuery] = useState("");
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -1129,7 +1138,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
       {/* Reviews — auto marquee right → left on all screen sizes */}
       <section
         id="reviews"
-        className="py-20 bg-gradient-to-b from-cyan-50/40 via-white to-blue-50/40 overflow-x-hidden isolate"
+        className="relative z-0 scroll-mt-28 md:scroll-mt-24 py-20 bg-gradient-to-b from-cyan-50/40 via-white to-blue-50/40 overflow-x-hidden"
       >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -1151,10 +1160,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         ) : googleReviews.length === 0 ? (
           <div className="text-center py-12 text-gray-500 px-4">No reviews to display</div>
         ) : (
-          <div className="w-full overflow-hidden py-3 [contain:layout]" aria-label="Google reviews row">
+          <div
+            className={`reviews-marquee__viewport w-full py-3${isIOS ? " reviews-marquee__viewport--ios-scroll" : ""}`}
+            aria-label="Google reviews row"
+          >
             <div
               className="reviews-marquee__track"
-              style={{ animationDuration: `${reviewsMarqueeDurationSec}s` }}
+              style={isIOS ? undefined : { animationDuration: `${reviewsMarqueeDurationSec}s` }}
             >
               {[...googleReviews, ...googleReviews].map((review, index) => (
                 <div
