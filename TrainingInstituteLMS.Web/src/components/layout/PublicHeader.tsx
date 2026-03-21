@@ -102,7 +102,7 @@ export function PublicHeader({
   }, [mobileMenuOpen]);
 
   return (
-    <>
+    <header className="w-full">
       {/* Top Bar with Contact Info - Light Blue Stripe */}
       <div className="bg-cyan-400 text-white py-2.5 px-4">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
@@ -474,6 +474,6 @@ export function PublicHeader({
           </AnimatePresence>
         </div>
       </nav>
-    </>
+    </header>
   );
 }

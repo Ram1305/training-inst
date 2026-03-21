@@ -548,9 +548,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             transition={{ duration: 0.5, delay: 0.1 }}
           >
             {/* Primary Heading */}
-            <h3 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
+            <h2 className="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 leading-tight">
               Workplace Health and Safety Training Courses in Sydney
-            </h3>
+            </h2>
 
             {/* Course Categories */}
             <div className="flex flex-wrap justify-center items-center gap-3 md:gap-4 text-lg md:text-xl lg:text-2xl font-semibold text-slate-800 pt-2">
@@ -616,6 +616,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                           <ImageWithFallback
                             src={course.imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080"}
                             alt={course.courseName}
+                            loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
                           <div className="absolute top-4 right-4 flex gap-2">
@@ -856,6 +857,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                             <ImageWithFallback
                               src={course.imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080"}
                               alt={course.courseName}
+                              loading="lazy"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
                             {course.validityPeriod && (
@@ -1110,11 +1112,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=400"
                   alt="Training facility"
+                  loading="lazy"
                   className="w-full h-64 object-cover rounded-2xl shadow-lg"
                 />
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400"
                   alt="Equipment training"
+                  loading="lazy"
                   className="w-full h-48 object-cover rounded-2xl shadow-lg"
                 />
               </div>
@@ -1122,11 +1126,13 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <ImageWithFallback
                   src="/assets/workers.png"
                   alt="Student learning"
+                  loading="lazy"
                   className="w-full h-48 object-cover rounded-2xl shadow-lg"
                 />
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1513467535987-fd81bc7d62f8?w=400"
                   alt="Practical training"
+                  loading="lazy"
                   className="w-full h-64 object-cover rounded-2xl shadow-lg"
                 />
               </div>
@@ -1207,6 +1213,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <ImageWithFallback
                   src={client.logo}
                   alt={client.name}
+                  loading="lazy"
                   className="w-full h-24 object-contain grayscale hover:grayscale-0 transition-all"
                 />
               </motion.div>
@@ -1224,6 +1231,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           <ImageWithFallback
             src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920"
             alt="Background"
+            loading="lazy"
             className="w-full h-full object-cover opacity-20"
           />
         </div>
@@ -1309,24 +1317,27 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 />
               </div>
               <p className="text-white/90 text-sm mb-4">Professional certification programs for your career growth.</p>
-              <div className="flex gap-3">
+              <div className="flex gap-4">
                 <a
                   href="#"
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                  aria-label="Facebook"
+                  className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
                 >
-                  <Facebook className="w-5 h-5" />
+                  <Facebook className="w-6 h-6" />
                 </a>
                 <a
                   href="#"
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                  aria-label="LinkedIn"
+                  className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
                 >
-                  <Linkedin className="w-5 h-5" />
+                  <Linkedin className="w-6 h-6" />
                 </a>
                 <a
                   href="#"
-                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                  aria-label="Instagram"
+                  className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
                 >
-                  <Instagram className="w-5 h-5" />
+                  <Instagram className="w-6 h-6" />
                 </a>
               </div>
             </div>

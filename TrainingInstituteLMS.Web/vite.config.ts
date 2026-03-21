@@ -46,6 +46,14 @@ export default defineConfig({
       input: {
         main: path.resolve(__dirname, 'index.html'),
       },
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'lucide': ['lucide-react'],
+          'framer-motion': ['motion'],
+          'ui-vendor': ['sonner', 'vaul', 'cmdk', 'input-otp', 'embla-carousel-react'],
+        },
+      },
     },
   },
   // SPA mode - Vite automatically serves index.html for all routes

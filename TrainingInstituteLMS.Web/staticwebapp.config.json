@@ -3,6 +3,12 @@
     "rewrite": "/index.html",
     "exclude": ["/assets/*", "*.js", "*.css", "*.png", "*.jpg", "*.svg", "*.ico"]
   },
+  "globalHeaders": {
+    "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Content-Security-Policy": "default-src 'self' https:; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com; img-src 'self' data: https:; connect-src 'self' https://safety-academy-api-afh9eua2ctege9bz.australiasoutheast-01.azurewebsites.net https://www.google-analytics.com;"
+  },
   "routes": [
     {
       "route": "/*",

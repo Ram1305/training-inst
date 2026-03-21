@@ -324,6 +324,7 @@ export function CourseDetailsPage({
               <ImageWithFallback
                 src={course.image}
                 alt={course.title}
+                loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/60 to-transparent" />
@@ -459,12 +460,12 @@ export function CourseDetailsPage({
             >
               <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-white overflow-hidden">
                 <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center shadow-lg border border-blue-200">
                       <BookOpen className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600" />
                     </div>
                     Course Overview
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6 overflow-x-auto">
                   <div
@@ -508,12 +509,12 @@ export function CourseDetailsPage({
             >
               <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
                 <CardHeader className="p-4 sm:p-6">
-                  <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
                     <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
                       <Target className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
                     Entry Requirements
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent className="p-4 sm:p-6">
                   <ul className="space-y-3">
@@ -536,14 +537,14 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                        <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </div>
-                      Duration
-                    </CardTitle>
-                  </CardHeader>
+                <CardHeader className="p-4 sm:p-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
+                    Duration
+                  </h2>
+                </CardHeader>
                   <CardContent className="p-4 sm:p-6">
                     <p className="text-blue-700 text-lg">
                       The total duration is <strong className="text-blue-700">{course.duration.toLowerCase()}</strong>. Training and assessment are conducted in our modern training facilities with industry-standard equipment.
@@ -561,14 +562,14 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.35 }}
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
-                  <CardHeader className="p-4 sm:p-6">
-                    <CardTitle className="text-xl sm:text-2xl text-slate-900 flex items-center gap-3">
-                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
-                      </div>
-                      Training Overview
-                    </CardTitle>
-                  </CardHeader>
+                <CardHeader className="p-4 sm:p-6">
+                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                      <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
+                    </div>
+                    Training Overview
+                  </h2>
+                </CardHeader>
                   <CardContent className="p-4 sm:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {course.trainingOverview.map((item: string, index: number) => (
@@ -592,12 +593,12 @@ export function CourseDetailsPage({
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
                   <CardHeader>
-                    <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                       <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
                         <Award className="w-6 h-6" />
                       </div>
                       Vocational Outcome
-                    </CardTitle>
+                    </h2>
                   </CardHeader>
                   <CardContent>
                     <p className="text-blue-700 mb-4 text-lg font-semibold">
@@ -625,12 +626,12 @@ export function CourseDetailsPage({
               >
                 <Card className="border-2 border-indigo-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-indigo-50">
                   <CardHeader>
-                    <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                       <div className="w-12 h-12 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg text-white">
                         <TrendingUp className="w-6 h-6" />
                       </div>
                       Pathways & Further Study
-                    </CardTitle>
+                    </h2>
                   </CardHeader>
                   <CardContent>
                     <p className="text-gray-700 italic mb-4 text-lg bg-white p-4 rounded-xl">
@@ -660,12 +661,12 @@ export function CourseDetailsPage({
             >
               <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
                 <CardHeader>
-                  <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
+                  <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                     <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
                       <DollarSign className="w-6 h-6 text-white" />
                     </div>
                     Fees and Charges
-                  </CardTitle>
+                  </h2>
                 </CardHeader>
                 <CardContent>
                   <ul className="space-y-3">
@@ -689,12 +690,12 @@ export function CourseDetailsPage({
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
                   <CardHeader>
-                    <CardTitle className="text-2xl text-slate-900 flex items-center gap-3">
+                    <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-3">
                       <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
                         <DollarSign className="w-6 h-6" />
                       </div>
                       Optional Charges
-                    </CardTitle>
+                    </h2>
                   </CardHeader>
                   <CardContent>
                     <ul className="space-y-2">
@@ -938,15 +939,15 @@ export function CourseDetailsPage({
                 Professional certification programs for your career growth.
               </p>
               {/* Social Media Icons */}
-              <div className="flex gap-3">
-                <a href="#" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
-                  <Facebook className="w-5 h-5" />
+              <div className="flex gap-4">
+                <a href="#" aria-label="Facebook" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                  <Facebook className="w-6 h-6" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
-                  <Linkedin className="w-5 h-5" />
+                <a href="#" aria-label="LinkedIn" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                  <Linkedin className="w-6 h-6" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
-                  <Instagram className="w-5 h-5" />
+                <a href="#" aria-label="Instagram" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                  <Instagram className="w-6 h-6" />
                 </a>
               </div>
             </div>

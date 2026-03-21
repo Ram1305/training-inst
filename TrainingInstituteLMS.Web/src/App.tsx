@@ -1,24 +1,24 @@
-import { useState, useEffect, useRef } from 'react';
-import { LandingPage } from './components/LandingPage';
-import { LoginPage } from './components/LoginPage';
-import { StudentPortal } from './components/StudentPortal';
-import { TeacherPortal } from './components/TeacherPortal';
-import { AdminPortal } from './components/AdminPortal';
-import { SuperAdminPortal } from './components/SuperAdminPortal';
-import { CompanyPortal } from './components/CompanyPortal';
-import { CourseDetailsPage } from './components/CourseDetails';
-import { HandbookViewerPage } from './components/HandbookViewerPage';
-import { CourseBooking } from './components/CourseBooking';
-import { AboutUsPage } from './components/AboutUsPage';
-import { ContactPage } from './components/ContactPage';
-import { BookNowPage } from './components/BookNowPage';
-import { FormsPage } from './components/FormsPage';
-import { FeesRefundPage } from './components/FeesRefundPage';
-import { GalleryPage } from './components/GalleryPage';
-import { PublicQuiz } from './components/student/PublicQuiz';
-import { PublicEnrollmentForm } from './components/student/PublicEnrollmentForm';
-import { PublicEnrollmentWizard } from './components/student/PublicEnrollmentWizard';
-import { PublicVOCForm } from './components/student/PublicVOCForm';
+import { useState, useEffect, useRef, lazy, Suspense } from 'react';
+const LandingPage = lazy(() => import('./components/LandingPage').then(m => ({ default: m.LandingPage })));
+const LoginPage = lazy(() => import('./components/LoginPage').then(m => ({ default: m.LoginPage })));
+const StudentPortal = lazy(() => import('./components/StudentPortal').then(m => ({ default: m.StudentPortal })));
+const TeacherPortal = lazy(() => import('./components/TeacherPortal').then(m => ({ default: m.TeacherPortal })));
+const AdminPortal = lazy(() => import('./components/AdminPortal').then(m => ({ default: m.AdminPortal })));
+const SuperAdminPortal = lazy(() => import('./components/SuperAdminPortal').then(m => ({ default: m.SuperAdminPortal })));
+const CompanyPortal = lazy(() => import('./components/CompanyPortal').then(m => ({ default: m.CompanyPortal })));
+const CourseDetailsPage = lazy(() => import('./components/CourseDetails').then(m => ({ default: m.CourseDetailsPage })));
+const HandbookViewerPage = lazy(() => import('./components/HandbookViewerPage').then(m => ({ default: m.HandbookViewerPage })));
+const CourseBooking = lazy(() => import('./components/CourseBooking').then(m => ({ default: m.CourseBooking })));
+const AboutUsPage = lazy(() => import('./components/AboutUsPage').then(m => ({ default: m.AboutUsPage })));
+const ContactPage = lazy(() => import('./components/ContactPage').then(m => ({ default: m.ContactPage })));
+const BookNowPage = lazy(() => import('./components/BookNowPage').then(m => ({ default: m.BookNowPage })));
+const FormsPage = lazy(() => import('./components/FormsPage').then(m => ({ default: m.FormsPage })));
+const FeesRefundPage = lazy(() => import('./components/FeesRefundPage').then(m => ({ default: m.FeesRefundPage })));
+const GalleryPage = lazy(() => import('./components/GalleryPage').then(m => ({ default: m.GalleryPage })));
+const PublicQuiz = lazy(() => import('./components/student/PublicQuiz').then(m => ({ default: m.PublicQuiz })));
+const PublicEnrollmentForm = lazy(() => import('./components/student/PublicEnrollmentForm').then(m => ({ default: m.PublicEnrollmentForm })));
+const PublicEnrollmentWizard = lazy(() => import('./components/student/PublicEnrollmentWizard').then(m => ({ default: m.PublicEnrollmentWizard })));
+const PublicVOCForm = lazy(() => import('./components/student/PublicVOCForm').then(m => ({ default: m.PublicVOCForm })));
 import { useAuth } from './contexts/AuthContext';
 import type { AuthUser } from './contexts/AuthContext';
 import { publicEnrollmentWizardService } from './services/publicEnrollmentWizard.service';
@@ -523,272 +523,231 @@ export default function App() {
     );
   }
 
-  if (currentPage === 'landing') {
-    return (
-      <LandingPage 
-        onLogin={handleGoToLogin} 
-        onRegister={handleGoToLogin} 
-        onCourseDetails={handleCourseDetails}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onBookNow={handleGoToBookNow}
-        onEnrollNow={handleGoToPublicEnrollmentWizard}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onBookCourse={handleBookCourse}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'forms') {
-    return (
-      <FormsPage
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onBookNow={handleGoToBookNow}
-        onCourseDetails={handleCourseDetails}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'feesRefund') {
-    return (
-      <FeesRefundPage
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onBookNow={handleGoToBookNow}
-        onCourseDetails={handleCourseDetails}
-        onGallery={handleGoToGallery}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'gallery') {
-    return (
-      <GalleryPage
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onBookNow={handleGoToBookNow}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'publicQuiz') {
-    return (
-      <PublicQuiz
-        onComplete={handlePublicQuizComplete}
-        onCancel={handleBackToLanding}
-      />
-    );
-  }
-
-  if (currentPage === 'publicEnrollment') {
-    return (
-      <PublicEnrollmentForm
-        onComplete={handlePublicEnrollmentComplete}
-        onCancel={handleBackToLanding}
-      />
-    );
-  }
-
-  if (currentPage === 'publicEnrollmentWizard') {
-    return (
-      <PublicEnrollmentWizard
-        onComplete={handlePublicEnrollmentWizardComplete}
-        onCancel={handleBackToLanding}
-        preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
-        preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? selectedCourseDateId ?? undefined}
-        preSelectedCoursePrice={selectedCourseData.coursePrice}
-        isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
-        allowPayLater={enrollmentLinkData?.allowPayLater}
-        enrollCode={enrollCode ?? ''}
-      />
-    );
-  }
-
-  if (currentPage === 'publicVOCForm') {
-    return (
-      <PublicVOCForm
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onBookNow={handleGoToBookNow}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onCourseDetails={handleCourseDetails}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'bookNow') {
-    return (
-      <BookNowPage 
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onCourseDetails={handleCourseDetails}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'about') {
-    return (
-      <AboutUsPage 
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onContact={handleGoToContact}
-        onViewCourses={handleViewCourses}
-        onBookNow={handleGoToBookNow}
-        onCourseDetails={handleCourseDetails}
-        onGallery={handleGoToGallery}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onVOC={handleGoToVOCForm}
-      />
-    );
-  }
-
-  if (currentPage === 'contact') {
-    return (
-      <ContactPage
-        onBack={handleBackToLanding}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onAbout={handleGoToAbout}
-        onViewCourses={handleViewCourses}
-        onBookNow={handleGoToBookNow}
-        onCourseDetails={handleCourseDetails}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onVOC={handleGoToVOCForm}
-      />
-    );
-  }
-
-  if (currentPage === 'handbookViewer' && handbookViewerState) {
-    return (
-      <HandbookViewerPage
-        pdfUrl={handbookViewerState.pdfUrl}
-        title={handbookViewerState.title}
-        courseName={handbookViewerState.courseName}
-        onBack={handleBackFromHandbookViewer}
-      />
-    );
-  }
-
   const handleCourseUrlReady = (courseId: string, courseName: string) => {
     const slug = courseNameToSlug(courseName);
     updateUrl(PATHS.course(courseId, slug), true);
   };
 
-  if (currentPage === 'courseDetails' && selectedCourseId) {
-    return (
-      <CourseDetailsPage
-        courseId={selectedCourseId}
-        onBack={handleBackToLanding}
-        onEnroll={handleCourseBooking}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onContact={handleGoToContact}
-        onViewCourses={handleViewCourses}
-        onBookNow={handleGoToBookNow}
-        onCourseDetails={handleCourseDetails}
-        onAbout={handleGoToAbout}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onViewHandbook={handleViewHandbook}
-        onCourseUrlReady={handleCourseUrlReady}
-        onVOC={handleGoToVOCForm}
-      />
-    );
-  }
-
-  if (currentPage === 'courseBooking') {
-    return (
-      <CourseBooking
-        courseId={selectedCourseId || undefined}
-        courseName={selectedCourseData.courseName}
-        courseCode={selectedCourseData.courseCode}
-        coursePrice={selectedCourseData.coursePrice}
-        experienceType={selectedCourseData.experienceType}
-        onBack={handleBackFromBooking}
-        onBookingSuccess={handleBookingSuccess}
-        onAbout={handleGoToAbout}
-        onContact={handleGoToContact}
-        onBookNow={handleGoToBookNow}
-        onForms={handleGoToForms}
-        onFeesRefund={handleGoToFeesRefund}
-        onGallery={handleGoToGallery}
-        onLogin={handleGoToLogin}
-        onRegister={handleGoToLogin}
-        onVOC={handleGoToVOCForm}
-        onViewCourses={handleViewCourses}
-      />
-    );
-  }
-
-  if (currentPage === 'login') {
-    return (
-      <LoginPage
-        onLogin={handleLogin}
-        onBack={handleBackToLanding}
-        onNavigateToEnroll={handleGoToPublicEnrollmentWizard}
-      />
-    );
-  }
-
-  if (isAuthenticated && user) {
-    switch (user.role) {
-      case 'company':
-        return <CompanyPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
-      case 'student':
-        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
-      case 'teacher':
-        return <TeacherPortal user={user} onLogout={handleLogout} />;
-      case 'admin':
-        return <AdminPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
-      case 'superadmin':
-        return <SuperAdminPortal user={user} onLogout={handleLogout} />;
-      default:
-        return <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />;
-    }
-  }
-
-  return null;
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-cyan-600"></div>
+      </div>
+    }>
+      <main id="main-content">
+        {currentPage === 'landing' && (
+          <LandingPage 
+            onLogin={handleGoToLogin} 
+            onRegister={handleGoToLogin} 
+            onCourseDetails={handleCourseDetails}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onBookNow={handleGoToBookNow}
+            onEnrollNow={handleGoToPublicEnrollmentWizard}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onBookCourse={handleBookCourse}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'forms' && (
+          <FormsPage
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onBookNow={handleGoToBookNow}
+            onCourseDetails={handleCourseDetails}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'feesRefund' && (
+          <FeesRefundPage
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onBookNow={handleGoToBookNow}
+            onCourseDetails={handleCourseDetails}
+            onGallery={handleGoToGallery}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'gallery' && (
+          <GalleryPage
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onBookNow={handleGoToBookNow}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'publicQuiz' && (
+          <PublicQuiz
+            onComplete={handlePublicQuizComplete}
+            onCancel={handleBackToLanding}
+          />
+        )}
+        {currentPage === 'publicEnrollment' && (
+          <PublicEnrollmentForm
+            onComplete={handlePublicEnrollmentComplete}
+            onCancel={handleBackToLanding}
+          />
+        )}
+        {currentPage === 'publicEnrollmentWizard' && (
+          <PublicEnrollmentWizard
+            onComplete={handlePublicEnrollmentWizardComplete}
+            onCancel={handleBackToLanding}
+            preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
+            preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? selectedCourseDateId ?? undefined}
+            preSelectedCoursePrice={selectedCourseData.coursePrice}
+            isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
+            allowPayLater={enrollmentLinkData?.allowPayLater}
+            enrollCode={enrollCode ?? ''}
+          />
+        )}
+        {currentPage === 'publicVOCForm' && (
+          <PublicVOCForm
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onBookNow={handleGoToBookNow}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onCourseDetails={handleCourseDetails}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'bookNow' && (
+          <BookNowPage 
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onCourseDetails={handleCourseDetails}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'about' && (
+          <AboutUsPage 
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onContact={handleGoToContact}
+            onViewCourses={handleViewCourses}
+            onBookNow={handleGoToBookNow}
+            onCourseDetails={handleCourseDetails}
+            onGallery={handleGoToGallery}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onVOC={handleGoToVOCForm}
+          />
+        )}
+        {currentPage === 'contact' && (
+          <ContactPage
+            onBack={handleBackToLanding}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onAbout={handleGoToAbout}
+            onViewCourses={handleViewCourses}
+            onBookNow={handleGoToBookNow}
+            onCourseDetails={handleCourseDetails}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onVOC={handleGoToVOCForm}
+          />
+        )}
+        {currentPage === 'handbookViewer' && handbookViewerState && (
+          <HandbookViewerPage
+            pdfUrl={handbookViewerState.pdfUrl}
+            title={handbookViewerState.title}
+            courseName={handbookViewerState.courseName}
+            onBack={handleBackFromHandbookViewer}
+          />
+        )}
+        {currentPage === 'courseDetails' && selectedCourseId && (
+          <CourseDetailsPage
+            courseId={selectedCourseId}
+            onBack={handleBackToLanding}
+            onEnroll={handleCourseBooking}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onContact={handleGoToContact}
+            onViewCourses={handleViewCourses}
+            onBookNow={handleGoToBookNow}
+            onCourseDetails={handleCourseDetails}
+            onAbout={handleGoToAbout}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onViewHandbook={handleViewHandbook}
+            onCourseUrlReady={handleCourseUrlReady}
+            onVOC={handleGoToVOCForm}
+          />
+        )}
+        {currentPage === 'courseBooking' && (
+          <CourseBooking
+            courseId={selectedCourseId || undefined}
+            courseName={selectedCourseData.courseName}
+            courseCode={selectedCourseData.courseCode}
+            coursePrice={selectedCourseData.coursePrice}
+            experienceType={selectedCourseData.experienceType}
+            onBack={handleBackFromBooking}
+            onBookingSuccess={handleBookingSuccess}
+            onAbout={handleGoToAbout}
+            onContact={handleGoToContact}
+            onBookNow={handleGoToBookNow}
+            onForms={handleGoToForms}
+            onFeesRefund={handleGoToFeesRefund}
+            onGallery={handleGoToGallery}
+            onLogin={handleGoToLogin}
+            onRegister={handleGoToLogin}
+            onVOC={handleGoToVOCForm}
+            onViewCourses={handleViewCourses}
+          />
+        )}
+        {currentPage === 'login' && (
+          <LoginPage
+            onLogin={handleLogin}
+            onBack={handleBackToLanding}
+            onNavigateToEnroll={handleGoToPublicEnrollmentWizard}
+          />
+        )}
+        {currentPage === 'portal' && isAuthenticated && user && (
+          <>
+            {user.role === 'company' && <CompanyPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />}
+            {user.role === 'student' && <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />}
+            {user.role === 'teacher' && <TeacherPortal user={user} onLogout={handleLogout} />}
+            {user.role === 'admin' && <AdminPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />}
+            {user.role === 'superadmin' && <SuperAdminPortal user={user} onLogout={handleLogout} />}
+            {!['company', 'student', 'teacher', 'admin', 'superadmin'].includes(user.role || '') && 
+              <StudentPortal user={user} onLogout={handleLogout} onNavigateToLanding={handleBackToLanding} />
+            }
+          </>
+        )}
+      </main>
+    </Suspense>
+  );
 }

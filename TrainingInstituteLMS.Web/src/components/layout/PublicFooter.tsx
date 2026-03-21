@@ -28,15 +28,15 @@ export function PublicFooter({ onBack, onAbout, onContact, onForms, onFeesRefund
             <p className="text-white/90 text-sm mb-4">
               Professional certification programs for your career growth.
             </p>
-            <div className="flex gap-3">
-              <a href="#" aria-label="Facebook" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
-                <Facebook className="w-5 h-5" />
+            <div className="flex gap-4">
+              <a href="#" aria-label="Facebook" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                <Facebook className="w-6 h-6" />
               </a>
-              <a href="#" aria-label="LinkedIn" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
-                <Linkedin className="w-5 h-5" />
+              <a href="#" aria-label="LinkedIn" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                <Linkedin className="w-6 h-6" />
               </a>
-              <a href="#" aria-label="Instagram" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
-                <Instagram className="w-5 h-5" />
+              <a href="#" aria-label="Instagram" className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                <Instagram className="w-6 h-6" />
               </a>
             </div>
           </div>
