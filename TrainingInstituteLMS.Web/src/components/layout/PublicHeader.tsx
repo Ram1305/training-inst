@@ -104,22 +104,22 @@ export function PublicHeader({
 
   return (
     <header className="w-full">
-      {/* Top Bar with Contact Info — dark cyan for WCAG contrast with white text */}
-      <div className="bg-cyan-950 text-white py-2.5 px-4">
+      {/* Top Bar with Contact Info — dark bar (uses utilities present in prebuilt index.css) */}
+      <div className="bg-slate-900 text-white py-2 px-4 border-b border-cyan-500/30">
         <div className="max-w-7xl mx-auto flex flex-wrap justify-center md:justify-between items-center text-sm gap-3 md:gap-6">
           <a
             href="tel:1300976097"
-            className="flex items-center gap-2 font-semibold text-white phone-number-link underline-offset-2 hover:text-cyan-100 hover:underline transition-colors"
+            className="flex items-center gap-2 font-semibold text-white phone-number-link underline-offset-2 hover:text-cyan-400 hover:underline transition-colors"
           >
-            <Phone className="w-4 h-4 shrink-0 text-cyan-200" aria-hidden />
+            <Phone className="w-4 h-4 shrink-0 text-cyan-400" aria-hidden />
             1300 976 097
           </a>
           <span className="flex items-center gap-2 font-medium text-white">
-            <Mail className="w-4 h-4 shrink-0 text-cyan-200" aria-hidden />
+            <Mail className="w-4 h-4 shrink-0 text-cyan-400" aria-hidden />
             info@safetytrainingacademy.edu.au
           </span>
           <span className="flex items-center gap-2 font-medium text-white">
-            <MapPin className="w-4 h-4 shrink-0 text-cyan-200" aria-hidden />
+            <MapPin className="w-4 h-4 shrink-0 text-cyan-400" aria-hidden />
             3/14-16 Marjorie Street, Sefton NSW 2162
           </span>
         </div>
@@ -313,14 +313,14 @@ export function PublicHeader({
               </div>
               <Button
                 onClick={onBookNow}
-                className="bg-cyan-700 hover:bg-cyan-800 text-white rounded-full px-6 shadow-sm"
+                className="rounded-full px-6 shadow-md bg-cyan-500 text-white hover:bg-cyan-600"
               >
                 Book now
               </Button>
               <Button
                 variant="outline"
                 onClick={onVOC}
-                className="border-2 border-cyan-200/90 bg-white/5 text-cyan-100 hover:bg-white/15 hover:text-white rounded-full px-6 font-semibold"
+                className="rounded-full px-6 font-semibold border-2 border-cyan-200 bg-transparent text-cyan-400 hover:bg-slate-800 hover:text-cyan-300"
               >
                 VOC
               </Button>
@@ -449,7 +449,7 @@ export function PublicHeader({
                       closeMobileMenu();
                       (onBookNow || onLogin)?.();
                     }}
-                    className="w-full bg-cyan-700 hover:bg-cyan-800 text-white"
+                    className="w-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 shadow-md"
                   >
                     Book now
                   </Button>
@@ -460,7 +460,7 @@ export function PublicHeader({
                       closeMobileMenu();
                       onVOC?.();
                     }}
-                    className="w-full border-2 border-cyan-200 text-cyan-100 hover:bg-slate-800 hover:text-white"
+                    className="w-full rounded-full border-2 border-cyan-200 text-cyan-400 hover:bg-slate-800 hover:text-cyan-300"
                   >
                     VOC
                   </Button>
