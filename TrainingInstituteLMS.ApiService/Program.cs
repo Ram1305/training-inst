@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using TrainingInstituteLMS.ApiService.Configuration;
@@ -24,6 +25,16 @@ using TrainingInstituteLMS.ApiService.Services.VOC;
 using TrainingInstituteLMS.Data.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Behind Azure Static Web Apps / reverse proxy: honor X-Forwarded-* so cookies and URLs use the public host.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor
+        | ForwardedHeaders.XForwardedProto
+        | ForwardedHeaders.XForwardedHost;
+    options.KnownNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 // Support EMAIL_USER and EMAIL_PASS environment variables for email configuration
 var emailUser = Environment.GetEnvironmentVariable("EMAIL_USER");
@@ -245,6 +256,8 @@ builder.Services.AddCors(options =>
 });
 
 var app = builder.Build();
+
+app.UseForwardedHeaders();
 
 // Apply pending migrations on startup (e.g. CompanyOrders.CompanyMobile, new tables)
 using (var scope = app.Services.CreateScope())

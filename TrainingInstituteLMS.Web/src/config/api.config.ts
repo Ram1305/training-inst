@@ -1,5 +1,9 @@
 // Resolve API base URL: VITE_API_URL > VITE_API_BASE_URL + '/api' > default
 // Set VITE_USE_HTTP=true to use http://localhost:5576/api (avoids SSL cert issues)
+//
+// Production (Azure Static Web App + linked App Service): set VITE_API_URL=/api so the browser calls
+// the same origin as the SPA; in Azure Portal link the App Service API to the SWA first so /api/* is proxied.
+// Direct calls to *.azurewebsites.net keep the auth cookie on another site and often get 401 in the browser.
 function getBaseUrl(): string {
   const useHttp = import.meta.env.VITE_USE_HTTP === 'true';
   if (useHttp) {
