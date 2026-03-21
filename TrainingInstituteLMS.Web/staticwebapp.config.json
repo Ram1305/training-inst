@@ -1,7 +1,7 @@
 {
   "navigationFallback": {
     "rewrite": "/index.html",
-    "exclude": ["/assets/*", "*.js", "*.css", "*.png", "*.jpg", "*.svg", "*.ico"]
+    "exclude": ["/assets/*", "*.js", "*.css", "*.png", "*.jpg", "*.svg", "*.ico", "/robots.txt", "/sitemap.xml"]
   },
   "globalHeaders": {
     "Strict-Transport-Security": "max-age=63072000; includeSubDomains; preload",
