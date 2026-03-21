@@ -60,8 +60,12 @@ class ApiService {
         } catch {
           message = text || response.statusText || message;
         }
-        const err = new Error(message) as Error & { responseBody?: typeof body };
+        const err = new Error(message) as Error & {
+          responseBody?: typeof body;
+          status?: number;
+        };
         err.responseBody = body;
+        err.status = response.status;
         throw err;
       }
 

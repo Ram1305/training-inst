@@ -20,6 +20,18 @@ import { paymentService } from '../../services/payment.service';
 import type { CompanyBillingStatementListItem } from '../../services/adminCompanyBilling.service';
 import { toast } from 'sonner';
 
+function toastPaymentAuthError(err: unknown, fallback: string) {
+  const msg = err instanceof Error ? err.message : '';
+  const status = (err as Error & { status?: number }).status;
+  if (status === 401 || /authentication required/i.test(msg)) {
+    toast.error(
+      'Your session is not valid with the server. Please sign out, sign in again, and retry (the billing list can load without a live session).'
+    );
+    return;
+  }
+  toast.error(msg || fallback);
+}
+
 export function balanceOf(row: CompanyBillingStatementListItem): number {
   if (row.balanceDue != null) return row.balanceDue;
   const paid = row.paidAmount ?? 0;
@@ -162,7 +174,7 @@ export function CompanyBillingPaymentsPanel({
         toast.error(msg);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Payment failed.');
+      toastPaymentAuthError(e, 'Payment failed.');
     } finally {
       setSubmitting(false);
     }
@@ -194,7 +206,7 @@ export function CompanyBillingPaymentsPanel({
         toast.error(res.message || 'Submission failed.');
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Submission failed.');
+      toastPaymentAuthError(e, 'Submission failed.');
     } finally {
       setSubmitting(false);
     }

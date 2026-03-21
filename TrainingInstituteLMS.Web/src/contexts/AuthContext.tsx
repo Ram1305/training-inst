@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
-import { authService } from '../services/auth.service';
+import { authService, type AuthResponse } from '../services/auth.service';
 
 // Export the AuthUser interface so it can be used in other files
 export interface AuthUser {
@@ -23,6 +23,19 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function mapAuthResponseToUser(data: AuthResponse): AuthUser {
+  return {
+    userId: String(data.userId),
+    fullName: data.fullName,
+    email: data.email,
+    userType: data.userType,
+    phoneNumber: data.phoneNumber,
+    lastLoginAt: data.lastLoginAt,
+    isActive: data.isActive,
+    studentId: data.studentId != null && data.studentId !== '' ? String(data.studentId) : undefined,
+  };
+}
+
 interface AuthProviderProps {
   children: ReactNode;
 }
@@ -32,17 +45,52 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check for stored user data on mount
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
+    let cancelled = false;
+
+    async function syncSession() {
       try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error('Error parsing stored user:', error);
-        localStorage.removeItem('user');
+        const res = await authService.getCurrentUser();
+        if (cancelled) return;
+        if (res.success && res.data) {
+          const next = mapAuthResponseToUser(res.data);
+          setUser(next);
+          try {
+            localStorage.setItem('user', JSON.stringify(next));
+          } catch {
+            // ignore quota / private mode
+          }
+        } else {
+          setUser(null);
+          localStorage.removeItem('user');
+        }
+      } catch (e) {
+        if (cancelled) return;
+        const status = (e as Error & { status?: number }).status;
+        if (status === 401) {
+          setUser(null);
+          localStorage.removeItem('user');
+        } else {
+          const stored = localStorage.getItem('user');
+          if (stored) {
+            try {
+              setUser(JSON.parse(stored) as AuthUser);
+            } catch {
+              localStorage.removeItem('user');
+              setUser(null);
+            }
+          } else {
+            setUser(null);
+          }
+        }
+      } finally {
+        if (!cancelled) setIsLoading(false);
       }
     }
-    setIsLoading(false);
+
+    void syncSession();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const handleSetUser = (userData: AuthUser | null) => {

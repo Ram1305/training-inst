@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using TrainingInstituteLMS.ApiService.Services.Auth;
@@ -118,6 +119,32 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
             {
                 _logger.LogError(ex, "Error during registration for email: {Email}", request.Email);
                 return StatusCode(500, ApiResponse<AuthResponseDto>.FailureResponse("An error occurred during registration"));
+            }
+        }
+
+        /// <summary>Returns the signed-in user from the auth cookie so the SPA can sync with server session (localStorage alone is not enough for multipart/card calls).</summary>
+        [HttpGet("me")]
+        [Authorize]
+        [ProducesResponseType(typeof(ApiResponse<AuthResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        public async Task<ActionResult<ApiResponse<AuthResponseDto>>> GetCurrentUser()
+        {
+            var userIdStr = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+            if (!Guid.TryParse(userIdStr, out var userId))
+                return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Authentication required."));
+
+            try
+            {
+                var user = await _authService.GetUserByIdAsync(userId);
+                if (user == null)
+                    return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Authentication required."));
+
+                return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(user, "OK"));
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error resolving current user");
+                return StatusCode(500, ApiResponse<AuthResponseDto>.FailureResponse("An error occurred."));
             }
         }
 

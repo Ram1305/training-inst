@@ -59,6 +59,11 @@ class AuthService {
     }
   }
 
+  /** Current session from the auth cookie (source of truth). Fails with status 401 if not signed in. */
+  async getCurrentUser(): Promise<ApiResponse<AuthResponse>> {
+    return apiService.get<ApiResponse<AuthResponse>>(API_CONFIG.ENDPOINTS.AUTH.ME);
+  }
+
   async checkEmail(email: string): Promise<ApiResponse<boolean>> {
     return apiService.get<ApiResponse<boolean>>(
       `${API_CONFIG.ENDPOINTS.AUTH.CHECK_EMAIL}/${email}`
