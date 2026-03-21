@@ -99,6 +99,9 @@ const clients = [
   { name: "Kenny Construction", logo: "https://images.unsplash.com/photo-1560179707-f14e90ef3623?w=200" },
 ];
 
+/** Max reviews shown in the landing marquee; keeps scroll smooth without loading the full JSON set. */
+const LANDING_REVIEWS_MARQUEE_MAX = 20;
+
 type LandingReview = {
   googleReviewId: string;
   author: string;
@@ -284,7 +287,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             isMainReview: false,
           };
         })
-        .filter((review): review is LandingReview => review !== null);
+        .filter((review): review is LandingReview => review !== null)
+        .slice(0, LANDING_REVIEWS_MARQUEE_MAX);
 
       if (parsedReviews.length > 0) {
         parsedReviews[0] = {
