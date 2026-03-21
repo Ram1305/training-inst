@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.Data.Data;
@@ -33,6 +34,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
 
         public async Task<List<StudentBrowseCourseDto>> GetAvailableCoursesForStudentAsync(Guid studentId, string? searchQuery = null)
         {
+            var sydneyToday = AustraliaSydneyTime.TodayDate;
+
             // Get courses the student is already enrolled in
             var enrolledCourseIds = await _context.Enrollments
                 .Where(e => e.StudentId == studentId && e.Status != "Cancelled")
@@ -43,7 +46,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
             var query = _context.Courses
                 .Include(c => c.Category)
                 .Include(c => c.CourseRule)
-                .Include(c => c.CourseDates.Where(d => d.IsActive && d.ScheduledDate.Date >= DateTime.UtcNow.Date))
+                .Include(c => c.CourseDates.Where(d => d.IsActive && d.ScheduledDate.Date >= sydneyToday))
                 .Where(c => c.IsActive && !enrolledCourseIds.Contains(c.CourseId))
                 .AsQueryable();
 
@@ -62,7 +65,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
             {
                 // Get active course dates for this course
                 var activeDates = c.CourseDates
-                    .Where(d => d.IsActive && d.ScheduledDate.Date >= DateTime.UtcNow.Date)
+                    .Where(d => d.IsActive && d.ScheduledDate.Date >= sydneyToday)
                     .ToList();
 
                 // Group dates by day (ScheduledDate.Date) and create unique date entries
@@ -936,12 +939,14 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     if (course == null)
                         throw new ArgumentException("Course not found or inactive");
 
+                    var sydneyToday = AustraliaSydneyTime.TodayDate;
+
                     // 3. Validate selected course date
                     var courseDate = await _context.CourseDates
                         .FirstOrDefaultAsync(d => d.CourseDateId == request.SelectedCourseDateId
                                                   && d.CourseId == request.CourseId
                                                   && d.IsActive
-                                                  && d.ScheduledDate.Date >= DateTime.UtcNow.Date);
+                                                  && d.ScheduledDate.Date >= sydneyToday);
                     if (courseDate == null)
                         throw new ArgumentException("Invalid or unavailable course date selected");
 

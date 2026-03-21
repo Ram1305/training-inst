@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.ApiService.Configuration;
 using TrainingInstituteLMS.ApiService.Helpers;
 using TrainingInstituteLMS.ApiService.Services.Email;
@@ -80,11 +81,12 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                     };
                 }
 
+                var sydneyToday = AustraliaSydneyTime.TodayDate;
                 var courseDate = await _context.CourseDates
                     .FirstOrDefaultAsync(d => d.CourseDateId == request.SelectedCourseDateId
                                               && d.CourseId == request.CourseId
                                               && d.IsActive
-                                              && d.ScheduledDate.Date >= DateTime.UtcNow.Date);
+                                              && d.ScheduledDate.Date >= sydneyToday);
                 if (courseDate == null)
                 {
                     return new CardPaymentResultResponseDto
@@ -370,11 +372,12 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                     };
                 }
 
+                var sydneyToday = AustraliaSydneyTime.TodayDate;
                 var courseDate = await _context.CourseDates
                     .FirstOrDefaultAsync(d => d.CourseDateId == request.SelectedCourseDateId
                                               && d.CourseId == request.CourseId
                                               && d.IsActive
-                                              && d.ScheduledDate.Date >= DateTime.UtcNow.Date);
+                                              && d.ScheduledDate.Date >= sydneyToday);
                 if (courseDate == null)
                 {
                     return new CardPaymentResultResponseDto

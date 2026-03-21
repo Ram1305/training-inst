@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
+using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
@@ -45,7 +46,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<List<CourseDropdownItemDto>> GetCoursesForDropdownAsync()
         {
-            var today = DateTime.UtcNow.Date;
+            var today = AustraliaSydneyTime.TodayDate;
             var items = await _context.Courses
                 // For public enrollment, show active courses, plus any courses that have upcoming active dates.
                 // This avoids hiding schedulable courses that were accidentally marked inactive.
@@ -91,7 +92,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
         public async Task<List<CourseDateDropdownItemDto>> GetCourseDatesAsync(Guid courseId)
         {
-            var today = DateTime.UtcNow.Date;
+            var today = AustraliaSydneyTime.TodayDate;
 
             var dates = await _context.CourseDates
                 // Align with course dropdown visibility: show any upcoming scheduled dates.
@@ -862,14 +863,15 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var courseDateId = link.CourseDateId;
             if (courseDateId == null)
             {
+                var sydneyToday = AustraliaSydneyTime.TodayDate;
                 var firstDate = await _context.CourseDates
-                    .Where(cd => cd.CourseId == link.CourseId && cd.IsActive && cd.ScheduledDate >= DateTime.UtcNow.Date)
+                    .Where(cd => cd.CourseId == link.CourseId && cd.IsActive && cd.ScheduledDate >= sydneyToday)
                     .OrderBy(cd => cd.ScheduledDate)
                     .FirstOrDefaultAsync();
                 if (firstDate == null)
                 {
-                    // No future course date: create one for today so enrollment can proceed
-                    var today = DateTime.UtcNow.Date;
+                    // No future course date: create one for Sydney "today" so enrollment can proceed
+                    var today = sydneyToday;
                     var newCourseDate = new CourseDate
                     {
                         CourseDateId = Guid.NewGuid(),

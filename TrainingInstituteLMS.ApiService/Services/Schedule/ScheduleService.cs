@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Courses;
@@ -175,7 +176,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Schedule
                 .AsQueryable();
 
             // Only show today and future dates - never past
-            var today = DateTime.UtcNow.Date;
+            var today = AustraliaSydneyTime.TodayDate;
             var effectiveFrom = fromDate.HasValue && fromDate.Value.Date > today ? fromDate.Value.Date : today;
             query = query.Where(d => d.ScheduledDate >= effectiveFrom);
 
@@ -245,7 +246,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Schedule
                 .AsQueryable();
 
             // Only show today and future dates - never past
-            var today = DateTime.UtcNow.Date;
+            var today = AustraliaSydneyTime.TodayDate;
             var effectiveFrom = fromDate.HasValue && fromDate.Value.Date > today ? fromDate.Value.Date : today;
             query = query.Where(d => d.ScheduledDate >= effectiveFrom);
 
@@ -300,7 +301,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Schedule
                 .AsQueryable();
 
             // Only show today and future dates - never past
-            var today = DateTime.UtcNow.Date;
+            var today = AustraliaSydneyTime.TodayDate;
             var effectiveFrom = fromDate.HasValue && fromDate.Value.Date > today ? fromDate.Value.Date : today;
             query = query.Where(d => d.ScheduledDate >= effectiveFrom);
 

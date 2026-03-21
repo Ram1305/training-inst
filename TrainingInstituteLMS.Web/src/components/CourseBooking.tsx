@@ -29,6 +29,7 @@ import { ResourcesDropdown } from "./ui/ResourcesDropdown";
 import { PublicHeader } from "./layout/PublicHeader";
 import { PaymentSuccessCard } from "./PaymentSuccessCard";
 import { PaymentFailureCard } from "./PaymentFailureCard";
+import { getCalendarDateKeyInAustralia, formatAustraliaCivilDateHeading } from "../utils/australiaTime";
 import { courseDateService } from "../services/courseDate.service";
 import { enrollmentService } from "../services/enrollment.service";
 import { paymentService } from "../services/payment.service";
@@ -112,7 +113,7 @@ export function CourseBooking({
   // Group course dates by calendar date; multiple slots per day sort by start/end time.
   const courseDatesByDate = useMemo(() => {
     const slotSortMs = (d: CourseDateSimple) => {
-      const day = d.scheduledDate.split("T")[0];
+      const day = getCalendarDateKeyInAustralia(d.scheduledDate) || d.scheduledDate.split("T")[0];
       if (d.startTime?.trim()) {
         const t = d.startTime.length <= 5 ? `${d.startTime}:00` : d.startTime;
         const ms = new Date(`${day}T${t}`).getTime();
@@ -122,7 +123,7 @@ export function CourseBooking({
       return Number.isNaN(ms) ? 0 : ms;
     };
     const slotEndSortMs = (d: CourseDateSimple) => {
-      const day = d.scheduledDate.split("T")[0];
+      const day = getCalendarDateKeyInAustralia(d.scheduledDate) || d.scheduledDate.split("T")[0];
       if (d.endTime?.trim()) {
         const t = d.endTime.length <= 5 ? `${d.endTime}:00` : d.endTime;
         const ms = new Date(`${day}T${t}`).getTime();
@@ -131,9 +132,10 @@ export function CourseBooking({
       return slotSortMs(d);
     };
     const byDate = courseDates.reduce<Record<string, CourseDateSimple[]>>((acc, d) => {
-      const key = d.scheduledDate.split("T")[0];
-      if (!acc[key]) acc[key] = [];
-      acc[key].push(d);
+      const datePart = getCalendarDateKeyInAustralia(d.scheduledDate);
+      if (!datePart) return acc;
+      if (!acc[datePart]) acc[datePart] = [];
+      acc[datePart].push(d);
       return acc;
     }, {});
     return Object.keys(byDate)
@@ -672,12 +674,7 @@ export function CourseBooking({
                   {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
                     <div key={dateKey} className="flex flex-col items-center w-full">
                       <p className="text-sm font-semibold text-gray-700 mb-2 text-center">
-                        {new Date(dateKey + "T12:00:00").toLocaleDateString("en-AU", {
-                          weekday: "short",
-                          day: "numeric",
-                          month: "short",
-                          year: "numeric",
-                        })}
+                        {formatAustraliaCivilDateHeading(dateKey)}
                       </p>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 justify-items-center w-full max-w-4xl mx-auto">
                         {dates.map((date) => {

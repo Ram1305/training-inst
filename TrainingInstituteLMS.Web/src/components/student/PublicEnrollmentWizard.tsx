@@ -83,6 +83,7 @@ import {
   AU_LOCALE_TIME,
   formatAustraliaCivilDateHeading,
   getCalendarDateKeyInAustralia,
+  getTodayCalendarDateKeyInAustralia,
 } from '../../utils/australiaTime';
 
 interface PublicEnrollmentWizardProps {
@@ -605,7 +606,7 @@ export function PublicEnrollmentWizard({
     try {
       const response = await publicEnrollmentWizardService.getCourseDates(courseId);
       if (response.success && response.data) {
-        const todayKey = getCalendarDateKeyInAustralia(new Date());
+        const todayKey = getTodayCalendarDateKeyInAustralia();
         const now = Date.now();
         const all = Array.isArray(response.data) ? response.data : [];
         const filtered = all.filter((d) => {

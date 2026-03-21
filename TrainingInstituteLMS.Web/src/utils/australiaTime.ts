@@ -22,6 +22,11 @@ export function getCalendarDateKeyInAustralia(isoOrDate: string | Date): string 
   return `${y}-${m}-${day}`;
 }
 
+/** Sydney calendar YYYY-MM-DD for the current instant (same basis as API `AustraliaSydneyTime.TodayDate`). */
+export function getTodayCalendarDateKeyInAustralia(): string {
+  return getCalendarDateKeyInAustralia(new Date());
+}
+
 /**
  * Heading for a Sydney civil date key (weekday + day month year).
  * `dateKey` must be YYYY-MM-DD as produced by getCalendarDateKeyInAustralia.

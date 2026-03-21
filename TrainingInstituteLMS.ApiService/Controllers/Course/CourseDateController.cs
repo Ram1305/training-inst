@@ -1,6 +1,7 @@
 using System.Globalization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.ApiService.Services.Course.CourseDate;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.CourseDate;
 
@@ -57,8 +58,8 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Course
         {
             try
             {
-                // Parse fromDate (user's local today); fallback to UTC today so we never return past dates
-                DateTime minDate = DateTime.UtcNow.Date;
+                // Optional yyyy-MM-dd anchor; default is Australia/Sydney calendar today
+                DateTime minDate = AustraliaSydneyTime.TodayDate;
                 if (!string.IsNullOrEmpty(fromDate) && DateTime.TryParseExact(fromDate, "yyyy-MM-dd", CultureInfo.InvariantCulture, DateTimeStyles.None, out var parsed))
                 {
                     minDate = parsed.Date;

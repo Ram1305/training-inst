@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Common;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.CourseDate;
@@ -148,9 +149,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Course.CourseDate
 
         public async Task<List<CourseDateSimpleDto>> GetCourseDatesForCourseAsync(Guid courseId, bool activeOnly = true, DateTime? fromDate = null)
         {
-            // Use fromDate (user's local today) when provided; otherwise fall back to UTC today
-            // Always filter out past dates - compare date parts only to avoid timezone edge cases
-            var minDate = (fromDate?.Date ?? DateTime.UtcNow.Date);
+            // Use explicit fromDate when provided; otherwise Sydney calendar "today" (institute timezone).
+            var minDate = (fromDate?.Date ?? AustraliaSydneyTime.TodayDate);
             var query = _context.CourseDates
                 .Where(d => d.CourseId == courseId)
                 .Where(d => d.ScheduledDate.Date >= minDate); // Only today and future - no past dates
