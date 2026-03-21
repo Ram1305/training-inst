@@ -61,6 +61,19 @@ export function AdminCompanyPayments() {
     });
   };
 
+  const orderDateOpts = { day: 'numeric' as const, month: 'short' as const, year: 'numeric' as const };
+
+  const renderDateWithTime = (dateString: string | undefined | null, emptyLabel = 'N/A') => {
+    if (!dateString) return emptyLabel;
+    const d = new Date(dateString);
+    return (
+      <div className="leading-tight">
+        <div>{d.toLocaleDateString('en-AU', orderDateOpts)}</div>
+        <div className="text-xs text-gray-500 tabular-nums">{d.toLocaleTimeString('en-AU')}</div>
+      </div>
+    );
+  };
+
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(amount);
   };
@@ -247,7 +260,7 @@ export function AdminCompanyPayments() {
                   <TableBody>
                     {orders.map((order) => (
                       <TableRow key={order.orderId}>
-                        <TableCell>{formatDate(order.createdAt)}</TableCell>
+                        <TableCell>{renderDateWithTime(order.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -336,7 +349,7 @@ export function AdminCompanyPayments() {
       </Card>
 
       <Dialog open={!!detailOrderId} onOpenChange={(open) => !open && closeDetails()}>
-        <DialogContent className="w-[95vw] max-w-6xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-6xl max-h-[calc(100dvh-2rem)] overflow-y-auto left-1/2 top-3 -translate-x-1/2 translate-y-0 sm:top-5 pb-6 [-webkit-overflow-scrolling:touch]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Building2 className="w-5 h-5 text-blue-600" />
@@ -365,7 +378,10 @@ export function AdminCompanyPayments() {
                     {detailOrder.companyMobile && (
                       <span className="flex items-center gap-1"><Phone className="w-3.5 h-3.5" />{detailOrder.companyMobile}</span>
                     )}
-                    <span className="flex items-center gap-1"><Calendar className="w-3.5 h-3.5" />{formatDate(detailOrder.createdAt)}</span>
+                    <span className="flex items-start gap-1">
+                      <Calendar className="w-3.5 h-3.5 mt-0.5 flex-shrink-0" />
+                      {renderDateWithTime(detailOrder.createdAt)}
+                    </span>
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
@@ -490,9 +506,7 @@ export function AdminCompanyPayments() {
                                   <td className="px-4 py-2.5 text-gray-600">{s.email}</td>
                                   <td className="px-4 py-2.5 text-gray-600">{s.phone || '—'}</td>
                                   <td className="px-4 py-2.5 text-gray-500 text-xs">
-                                    {new Date(s.enrolledAt).toLocaleDateString('en-AU', {
-                                      day: 'numeric', month: 'short', year: 'numeric'
-                                    })}
+                                    {renderDateWithTime(s.enrolledAt, '—')}
                                   </td>
                                 </tr>
                               ))}

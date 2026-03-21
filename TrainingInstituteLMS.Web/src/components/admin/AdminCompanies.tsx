@@ -192,6 +192,25 @@ export function AdminCompanies() {
     return new Date(dateString).toLocaleDateString('en-AU', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
+  const renderDateWithTime = (
+    dateString: string | undefined | null,
+    options: { emptyLabel?: string; dateStyle?: 'company' | 'enrolled' } = {}
+  ) => {
+    const { emptyLabel = 'Never', dateStyle = 'company' } = options;
+    if (!dateString) return emptyLabel;
+    const d = new Date(dateString);
+    const dateOpts =
+      dateStyle === 'enrolled'
+        ? ({ day: 'numeric', month: 'short', year: 'numeric' } as const)
+        : ({ day: '2-digit', month: '2-digit', year: 'numeric' } as const);
+    return (
+      <div className="leading-tight">
+        <div>{d.toLocaleDateString('en-AU', dateOpts)}</div>
+        <div className="text-xs text-gray-500 tabular-nums">{d.toLocaleTimeString('en-AU')}</div>
+      </div>
+    );
+  };
+
   const formatCurrency = (amount: number) =>
     new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(amount);
 
@@ -442,7 +461,7 @@ export function AdminCompanies() {
                   <TableBody>
                     {companies.map((company) => (
                       <TableRow key={company.companyId}>
-                        <TableCell>{formatDate(company.createdAt)}</TableCell>
+                        <TableCell>{renderDateWithTime(company.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
@@ -551,10 +570,10 @@ export function AdminCompanies() {
         </CardContent>
       </Card>
 
-      {/* Company View Detail Dialog — flex + min-h-0 so the body scrolls inside the dialog (not clipped) */}
+      {/* Company View Detail Dialog — top-aligned + dvh so Safari/macOS doesn’t clip; inner panel scrolls */}
       <Dialog open={!!viewCompany} onOpenChange={(open) => { if (!open) setViewCompany(null); }}>
-        <DialogContent className="flex h-[92vh] max-h-[900px] w-[calc(100vw-1.5rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border border-violet-100/80 p-0 shadow-2xl sm:max-w-6xl lg:max-w-7xl">
-          <div className="flex min-h-0 flex-1 flex-col">
+        <DialogContent className="flex h-[min(900px,calc(100dvh-1.5rem))] max-h-[min(900px,calc(100dvh-1.5rem))] w-[calc(100vw-1.5rem)] max-w-5xl flex-col gap-0 overflow-hidden rounded-2xl border border-violet-100/80 p-0 shadow-2xl left-1/2 top-3 -translate-x-1/2 translate-y-0 sm:top-5 sm:h-[min(900px,calc(100dvh-2rem))] sm:max-h-[min(900px,calc(100dvh-2rem))] sm:max-w-6xl lg:max-w-7xl">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
             <div className="relative z-10 flex-shrink-0 border-b border-violet-100/90 bg-gradient-to-br from-slate-50 via-white to-violet-50/40 px-6 pb-5 pt-6 pr-14">
               <DialogHeader className="space-y-2 text-left">
                 <DialogTitle className="flex items-start gap-4 pr-0 sm:pr-2">
@@ -576,7 +595,7 @@ export function AdminCompanies() {
               </DialogHeader>
             </div>
 
-            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain bg-gradient-to-b from-gray-50/80 to-white px-4 py-5 sm:px-6 sm:py-6">
+            <div className="min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-y-contain bg-gradient-to-b from-gray-50/80 to-white px-4 py-5 pb-8 sm:px-6 sm:py-6 [-webkit-overflow-scrolling:touch]">
               {viewLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
@@ -603,12 +622,28 @@ export function AdminCompanies() {
                             <span className="font-medium text-gray-900">{viewCompany.mobileNumber}</span>
                           </span>
                         )}
-                        <span className="inline-flex items-center gap-2">
+                        <span className="inline-flex items-start gap-2">
                           <span className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700">
                             <Calendar className="h-4 w-4" />
                           </span>
-                          <span>
-                            Joined <span className="font-medium text-gray-900">{formatDate(viewCompany?.createdAt)}</span>
+                          <span className="leading-tight">
+                            <span className="text-xs text-gray-500 block">Joined</span>
+                            {viewCompany?.createdAt ? (
+                              <>
+                                <span className="font-medium text-gray-900 block">
+                                  {new Date(viewCompany.createdAt).toLocaleDateString('en-AU', {
+                                    day: '2-digit',
+                                    month: '2-digit',
+                                    year: 'numeric',
+                                  })}
+                                </span>
+                                <span className="text-xs text-gray-500 tabular-nums block">
+                                  {new Date(viewCompany.createdAt).toLocaleTimeString('en-AU')}
+                                </span>
+                              </>
+                            ) : (
+                              <span className="font-medium text-gray-900 block">Never</span>
+                            )}
                           </span>
                         </span>
                       </div>
@@ -683,8 +718,22 @@ export function AdminCompanies() {
                             </div>
                             <div className="flex-1 text-left min-w-0">
                               <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                                <span className="font-semibold text-gray-900 text-sm">
-                                  Order — {formatDate(order.createdAt)}
+                                <span className="font-semibold text-gray-900 text-sm leading-tight block">
+                                  <span className="block">
+                                    Order —{' '}
+                                    {order.createdAt
+                                      ? new Date(order.createdAt).toLocaleDateString('en-AU', {
+                                          day: '2-digit',
+                                          month: '2-digit',
+                                          year: 'numeric',
+                                        })
+                                      : '—'}
+                                  </span>
+                                  {order.createdAt ? (
+                                    <span className="block text-xs font-normal text-gray-500 tabular-nums">
+                                      {new Date(order.createdAt).toLocaleTimeString('en-AU')}
+                                    </span>
+                                  ) : null}
                                 </span>
                                 <span className="text-xs text-gray-500 capitalize">{(order.paymentMethod || '').replace('_', ' ')}</span>
                               </div>
@@ -787,8 +836,8 @@ export function AdminCompanies() {
                                                     {s.email}
                                                   </td>
                                                   <td className="px-4 py-3 text-gray-600">{s.phone || '—'}</td>
-                                                  <td className="whitespace-nowrap px-4 py-3 text-xs text-gray-600">
-                                                    {new Date(s.enrolledAt).toLocaleDateString('en-AU', { day: 'numeric', month: 'short', year: 'numeric' })}
+                                                  <td className="px-4 py-3 text-xs text-gray-600">
+                                                    {renderDateWithTime(s.enrolledAt, { emptyLabel: '—', dateStyle: 'enrolled' })}
                                                   </td>
                                                 </tr>
                                               ))}
