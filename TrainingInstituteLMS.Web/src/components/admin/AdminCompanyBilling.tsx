@@ -3,6 +3,7 @@ import { Building2, Loader2, Search, Eye } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
+import { Label } from '../ui/label';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import {
@@ -33,6 +34,7 @@ export function AdminCompanyBilling() {
   const [detailLoading, setDetailLoading] = useState(false);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [payRef, setPayRef] = useState('');
+  const [markPaidPaymentMethod, setMarkPaidPaymentMethod] = useState('bank_transfer');
   const [enrollmentIdToComplete, setEnrollmentIdToComplete] = useState('');
   const [recordingComplete, setRecordingComplete] = useState(false);
 
@@ -107,7 +109,7 @@ export function AdminCompanyBilling() {
       const res = await adminCompanyBillingService.updateStatement(statementId, {
         status,
         paymentReference: extra?.paymentReference,
-        paymentMethod: status === 'Paid' ? 'admin_marked_paid' : undefined,
+        paymentMethod: status === 'Paid' ? markPaidPaymentMethod : undefined,
       });
       if (res.success) {
         toast.success('Updated');
@@ -159,8 +161,9 @@ export function AdminCompanyBilling() {
           Company billing
         </h1>
         <p className="text-gray-600">
-          Bills are raised when training is marked complete for a company portal enrolment. Companies can pay each item
-          without an approval step. Use the company filter to see one account at a time.
+          Bills are raised when training is marked complete for a company portal enrolment. Card payments are marked paid
+          automatically; for bank transfer, use <strong>Mark paid</strong> after you verify the deposit. There is no
+          separate approve step for companies.
         </p>
       </div>
 
@@ -170,7 +173,7 @@ export function AdminCompanyBilling() {
             <Building2 className="h-5 w-5" />
             Statements ({totalCount})
           </CardTitle>
-          <CardDescription>Unpaid → Mark paid when received (legacy Draft / Approved still supported).</CardDescription>
+          <CardDescription>Unpaid lines: mark paid when payment is confirmed. Choose how payment was received below.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2 items-end">
@@ -207,20 +210,36 @@ export function AdminCompanyBilling() {
               <option value="">All statuses</option>
               <option value="Unpaid">Unpaid</option>
               <option value="PartiallyPaid">Partially paid</option>
-              <option value="Draft">Draft</option>
-              <option value="Approved">Approved</option>
               <option value="Paid">Paid</option>
+              <option value="Draft">Draft (legacy)</option>
             </select>
             <Button type="button" variant="secondary" onClick={() => load()}>
               Search
             </Button>
           </div>
-          <Input
-            placeholder="Default payment reference when using Mark paid in the table"
-            value={payRef}
-            onChange={(e) => setPayRef(e.target.value)}
-            className="max-w-md"
-          />
+          <div className="flex flex-wrap items-end gap-4 max-w-2xl">
+            <div className="flex flex-col gap-1 flex-1 min-w-[200px]">
+              <Label className="text-xs text-gray-500">Recorded payment method (when you click Mark paid)</Label>
+              <select
+                className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                value={markPaidPaymentMethod}
+                onChange={(e) => setMarkPaidPaymentMethod(e.target.value)}
+              >
+                <option value="bank_transfer">Bank transfer (verified)</option>
+                <option value="credit_card">Credit card (manual record)</option>
+                <option value="admin_adjustment">Admin adjustment / other</option>
+              </select>
+            </div>
+            <div className="flex-1 min-w-[200px]">
+              <Label className="text-xs text-gray-500">Default reference / note (optional)</Label>
+              <Input
+                placeholder="e.g. receipt #, submission id"
+                value={payRef}
+                onChange={(e) => setPayRef(e.target.value)}
+                className="mt-1"
+              />
+            </div>
+          </div>
 
           {loading ? (
             <div className="flex justify-center py-12">
@@ -263,16 +282,6 @@ export function AdminCompanyBilling() {
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      {row.status === 'Draft' && (
-                        <Button
-                          type="button"
-                          size="sm"
-                          disabled={updatingId === row.statementId}
-                          onClick={() => patchStatus(row.statementId, 'Approved')}
-                        >
-                          Approve
-                        </Button>
-                      )}
                       {canMarkPaid(row.status) && (
                         <Button
                           type="button"
@@ -337,8 +346,29 @@ export function AdminCompanyBilling() {
               <p className="text-lg font-semibold">{formatCurrency(detail.totalAmount)}</p>
               <p className="text-sm text-gray-600">
                 Use &quot;Record training complete&quot; above with the enrollment GUID when a course is finished so an
-                Unpaid line appears here.
+                Unpaid line appears here. When the company pays by bank transfer, verify the deposit then use{' '}
+                <strong>Mark paid</strong> in the table above (choose payment method and reference first).
               </p>
+              {detail && canMarkPaid(detail.status) && (
+                <div className="flex flex-wrap items-center gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    disabled={updatingId === detail.statementId}
+                    onClick={() =>
+                      patchStatus(detail.statementId, 'Paid', {
+                        paymentReference: payRef.trim() || undefined,
+                      })
+                    }
+                  >
+                    Mark this statement paid
+                  </Button>
+                  <span className="text-xs text-gray-500">
+                    Uses &quot;Recorded payment method&quot; and reference from the filters above.
+                  </span>
+                </div>
+              )}
               <Table>
                 <TableHeader>
                   <TableRow>

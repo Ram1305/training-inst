@@ -47,12 +47,16 @@ export interface CompanyPortalEnrollmentRow {
   enrollmentId: string;
   studentName: string;
   studentEmail?: string;
+  studentPhone?: string;
   courseName: string;
   courseId: string;
   enrolledAt: string;
   completedAt?: string;
   status: string;
   paymentStatus: string;
+  amountPaid: number;
+  llnAssessmentCompleted: boolean;
+  enrollmentFormCompleted: boolean;
   hasCompanyBill: boolean;
   companyBillStatus?: string;
 }

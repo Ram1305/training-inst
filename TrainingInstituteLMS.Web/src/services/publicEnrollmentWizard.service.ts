@@ -128,12 +128,18 @@ export interface OneTimeLinkCompleteResponse {
 }
 
 export interface EnrollmentLinkStudent {
+  enrollmentId?: string;
   studentId: string;
   fullName: string;
   email: string;
   phone?: string;
   courseName?: string;
   enrolledAt: string;
+  status?: string;
+  paymentStatus?: string;
+  amountPaid?: number;
+  llnAssessmentCompleted?: boolean;
+  enrollmentFormCompleted?: boolean;
 }
 
 export interface EnrollmentLinkStudentsResponse {

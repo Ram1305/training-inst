@@ -1222,12 +1222,18 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 .OrderBy(e => e.EnrolledAt)
                 .Select(e => new EnrollmentLinkStudentDto
                 {
+                    EnrollmentId = e.EnrollmentId.ToString(),
                     StudentId = e.StudentId.ToString(),
                     FullName = e.Student.FullName,
                     Email = e.Student.Email,
-                    Phone = e.Student.PhoneNumber,
+                    Phone = e.Student.PhoneNumber ?? e.Student.Mobile,
                     CourseName = e.Course.CourseName,
-                    EnrolledAt = e.EnrolledAt
+                    EnrolledAt = e.EnrolledAt,
+                    Status = e.Status,
+                    PaymentStatus = e.PaymentStatus,
+                    AmountPaid = e.AmountPaid,
+                    LlnAssessmentCompleted = e.QuizCompleted,
+                    EnrollmentFormCompleted = e.Student.EnrollmentFormCompleted
                 })
                 .ToListAsync();
 

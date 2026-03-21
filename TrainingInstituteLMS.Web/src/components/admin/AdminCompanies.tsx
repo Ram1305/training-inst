@@ -8,7 +8,11 @@ import { Badge } from '../ui/badge';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { toast } from 'sonner';
-import { companyManagementService, type CompanyResponse } from '../../services/companyManagement.service';
+import {
+  companyManagementService,
+  type CompanyResponse,
+  type CompanyPortalEnrollmentRow,
+} from '../../services/companyManagement.service';
 import { adminCompanyOrdersService, type AdminCompanyOrderDetail } from '../../services/adminCompanyOrders.service';
 import { publicEnrollmentWizardService, type EnrollmentLinkStudent } from '../../services/publicEnrollmentWizard.service';
 
@@ -33,6 +37,7 @@ export function AdminCompanies() {
   const [viewLoading, setViewLoading] = useState(false);
   const [viewStudentsMap, setViewStudentsMap] = useState<Record<string, EnrollmentLinkStudent[]>>({});
   const [viewStudentsLoading, setViewStudentsLoading] = useState(false);
+  const [viewPortalRows, setViewPortalRows] = useState<CompanyPortalEnrollmentRow[]>([]);
   const [expandedOrderId, setExpandedOrderId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
@@ -218,10 +223,18 @@ export function AdminCompanies() {
     setViewCompany(company);
     setViewOrders([]);
     setViewStudentsMap({});
+    setViewPortalRows([]);
     setExpandedOrderId(null);
     setViewLoading(true);
     try {
-      const res = await adminCompanyOrdersService.getCompanyOrders({ search: company.email, pageSize: 200 });
+      const [portalRes, res] = await Promise.all([
+        companyManagementService.getPortalEnrollments(company.companyId),
+        adminCompanyOrdersService.getCompanyOrders({ search: company.email, pageSize: 200 }),
+      ]);
+      if (portalRes.success && portalRes.data?.items) {
+        setViewPortalRows(portalRes.data.items);
+      }
+
       const emailKey = company.email.trim().toLowerCase();
       const rawItems = res.data?.items ?? [];
       const itemsHaveEmail = rawItems.some((i) => Boolean(i.companyEmail?.trim()));
@@ -585,12 +598,13 @@ export function AdminCompanies() {
                       {viewCompany?.companyName}
                     </span>
                     <span className="mt-1 block text-sm text-gray-600">
-                      Orders, enrollment links, and students for this company
+                      Live enrolment list, orders, and per-link students
                     </span>
                   </span>
                 </DialogTitle>
                 <DialogDescription className="max-w-2xl text-left text-gray-600">
-                  Review purchases and who enrolled through each course link. Scroll the panel below if the list is long.
+                  The table below lists every company enrolment (course, LLND, form, payment). Further down you can open
+                  orders and copy share links.
                 </DialogDescription>
               </DialogHeader>
             </div>
@@ -599,7 +613,7 @@ export function AdminCompanies() {
               {viewLoading ? (
                 <div className="flex items-center justify-center py-16">
                   <Loader2 className="w-8 h-8 animate-spin text-violet-600" />
-                  <span className="ml-3 text-gray-500">Loading orders and students…</span>
+                  <span className="ml-3 text-gray-500">Loading enrolments, orders, and students…</span>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -690,18 +704,150 @@ export function AdminCompanies() {
                       </div>
                       <div>
                         <p className="text-3xl font-bold tabular-nums text-emerald-800">
-                          {Object.values(viewStudentsMap).reduce((s, arr) => s + arr.length, 0)}
+                          {viewPortalRows.length}
                         </p>
-                        <p className="text-xs font-medium text-gray-600">Students enrolled</p>
+                        <p className="text-xs font-medium text-gray-600">Company enrolments</p>
                       </div>
                     </div>
+                  </div>
+
+                  <div className="overflow-hidden rounded-2xl border border-gray-200/90 bg-white shadow-md shadow-gray-200/50 ring-1 ring-gray-100">
+                    <div className="border-b border-violet-100 bg-gradient-to-r from-violet-50 to-indigo-50/40 px-4 py-3 sm:px-5">
+                      <p className="text-sm font-semibold text-gray-900">Students registered under this company</p>
+                      <p className="mt-0.5 text-xs text-gray-600">
+                        Each row is one enrolment: course purchased, amount, payment status, LLND assessment, enrolment
+                        form, and training progress. Updates automatically when students complete steps.
+                      </p>
+                    </div>
+                    {viewPortalRows.length === 0 ? (
+                      <p className="px-4 py-10 text-center text-sm text-gray-500 sm:px-5">
+                        No company enrolments yet. Staff appear here after they use the company portal link or a
+                        company-order course link.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="w-full min-w-[980px] text-sm">
+                          <thead className="border-b border-gray-200 bg-gray-50/90">
+                            <tr>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                #
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Student
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Course
+                              </th>
+                              <th className="px-3 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Amount
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Payment
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                LLND
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Enrolment form
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Training
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Enrolled
+                              </th>
+                              <th className="px-3 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">
+                                Bill
+                              </th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-gray-100">
+                            {viewPortalRows.map((r, ri) => (
+                              <tr key={r.enrollmentId} className="transition-colors hover:bg-violet-50/40">
+                                <td className="px-3 py-3 text-xs text-gray-400">{ri + 1}</td>
+                                <td className="px-3 py-3">
+                                  <div className="font-medium text-gray-900">{r.studentName}</div>
+                                  <div className="max-w-[200px] truncate text-xs text-gray-500" title={r.studentEmail}>
+                                    {r.studentEmail ?? '—'}
+                                  </div>
+                                  {r.studentPhone ? (
+                                    <div className="text-xs text-gray-500">{r.studentPhone}</div>
+                                  ) : null}
+                                </td>
+                                <td className="px-3 py-3 text-gray-800">{r.courseName}</td>
+                                <td className="px-3 py-3 text-right tabular-nums text-gray-800">
+                                  {formatCurrency(r.amountPaid ?? 0)}
+                                </td>
+                                <td className="px-3 py-3">
+                                  <Badge variant="outline" className="text-xs font-normal">
+                                    {r.paymentStatus || '—'}
+                                  </Badge>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      r.llnAssessmentCompleted
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 text-xs'
+                                        : 'border-amber-200 bg-amber-50 text-amber-800 text-xs'
+                                    }
+                                  >
+                                    {r.llnAssessmentCompleted ? 'Completed' : 'Not completed'}
+                                  </Badge>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <Badge
+                                    variant="outline"
+                                    className={
+                                      r.enrollmentFormCompleted
+                                        ? 'border-emerald-200 bg-emerald-50 text-emerald-800 text-xs'
+                                        : 'border-gray-200 bg-gray-50 text-gray-600 text-xs'
+                                    }
+                                  >
+                                    {r.enrollmentFormCompleted ? 'Submitted' : 'Not submitted'}
+                                  </Badge>
+                                </td>
+                                <td className="px-3 py-3">
+                                  <Badge variant="secondary" className="text-xs font-normal">
+                                    {r.status}
+                                  </Badge>
+                                  {r.completedAt ? (
+                                    <div className="mt-1 text-xs text-gray-500">
+                                      Done {new Date(r.completedAt).toLocaleDateString('en-AU')}
+                                    </div>
+                                  ) : null}
+                                </td>
+                                <td className="px-3 py-3 text-xs text-gray-600">
+                                  {renderDateWithTime(r.enrolledAt, { emptyLabel: '—', dateStyle: 'enrolled' })}
+                                </td>
+                                <td className="px-3 py-3">
+                                  {r.hasCompanyBill ? (
+                                    <Badge
+                                      variant={r.companyBillStatus === 'Paid' ? 'default' : 'secondary'}
+                                      className="text-xs"
+                                    >
+                                      {r.companyBillStatus ?? '—'}
+                                    </Badge>
+                                  ) : (
+                                    <span className="text-xs text-gray-400">—</span>
+                                  )}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
                   </div>
 
                   {viewOrders.length === 0 ? (
                     <div className="flex flex-col items-center py-14 text-gray-400">
                       <BookOpen className="w-12 h-12 mb-3 text-gray-300" />
-                      <p className="font-semibold text-gray-700">No orders found</p>
-                      <p className="text-sm mt-1 text-gray-500">Orders created via the company enrollment flow will appear here.</p>
+                      <p className="font-semibold text-gray-700">No bulk orders found</p>
+                      <p className="text-sm mt-1 max-w-md text-center text-gray-500">
+                        Company course orders (with share links) appear here. Students who only used the permanent
+                        company portal still appear in the table above.
+                      </p>
                     </div>
                   ) : (
                     <div className="space-y-4">
@@ -817,25 +963,64 @@ export function AdminCompanies() {
                                         </div>
                                       ) : (
                                         <div className="overflow-x-auto rounded-b-xl bg-white">
-                                          <table className="w-full min-w-[640px] text-sm">
+                                          <table className="w-full min-w-[960px] text-sm">
                                             <thead className="border-b border-gray-200 bg-gray-50/90">
                                               <tr>
                                                 <th className="w-10 px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">#</th>
                                                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Name</th>
-                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Email</th>
-                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Phone</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Course</th>
+                                                <th className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wide text-gray-500">Amount</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Payment</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">LLND</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Form</th>
+                                                <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Training</th>
                                                 <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500">Enrolled</th>
                                               </tr>
                                             </thead>
                                             <tbody className="divide-y divide-gray-100">
                                               {students.map((s, si) => (
-                                                <tr key={s.studentId} className="transition-colors hover:bg-violet-50/40">
+                                                <tr
+                                                  key={s.enrollmentId ?? `${link.linkId}-${s.studentId}-${si}`}
+                                                  className="transition-colors hover:bg-violet-50/40"
+                                                >
                                                   <td className="px-4 py-3 text-xs text-gray-400">{si + 1}</td>
-                                                  <td className="px-4 py-3 font-medium text-gray-900">{s.fullName}</td>
-                                                  <td className="max-w-[200px] truncate px-4 py-3 text-gray-600" title={s.email}>
-                                                    {s.email}
+                                                  <td className="px-4 py-3">
+                                                    <div className="font-medium text-gray-900">{s.fullName}</div>
+                                                    <div className="max-w-[180px] truncate text-xs text-gray-500" title={s.email}>
+                                                      {s.email}
+                                                    </div>
+                                                    <div className="text-xs text-gray-500">{s.phone || '—'}</div>
                                                   </td>
-                                                  <td className="px-4 py-3 text-gray-600">{s.phone || '—'}</td>
+                                                  <td className="px-4 py-3 text-gray-800">{s.courseName ?? link.courseName}</td>
+                                                  <td className="px-4 py-3 text-right tabular-nums text-gray-800">
+                                                    {formatCurrency(s.amountPaid ?? 0)}
+                                                  </td>
+                                                  <td className="px-4 py-3 text-xs text-gray-700">{s.paymentStatus ?? '—'}</td>
+                                                  <td className="px-4 py-3">
+                                                    <Badge
+                                                      variant="outline"
+                                                      className={
+                                                        s.llnAssessmentCompleted
+                                                          ? 'border-emerald-200 bg-emerald-50 text-emerald-800 text-xs'
+                                                          : 'border-amber-200 bg-amber-50 text-amber-800 text-xs'
+                                                      }
+                                                    >
+                                                      {s.llnAssessmentCompleted ? 'Done' : 'Pending'}
+                                                    </Badge>
+                                                  </td>
+                                                  <td className="px-4 py-3">
+                                                    <Badge
+                                                      variant="outline"
+                                                      className={
+                                                        s.enrollmentFormCompleted
+                                                          ? 'border-emerald-200 bg-emerald-50 text-emerald-800 text-xs'
+                                                          : 'border-gray-200 bg-gray-50 text-gray-600 text-xs'
+                                                      }
+                                                    >
+                                                      {s.enrollmentFormCompleted ? 'Yes' : 'No'}
+                                                    </Badge>
+                                                  </td>
+                                                  <td className="px-4 py-3 text-xs text-gray-700">{s.status ?? '—'}</td>
                                                   <td className="px-4 py-3 text-xs text-gray-600">
                                                     {renderDateWithTime(s.enrolledAt, { emptyLabel: '—', dateStyle: 'enrolled' })}
                                                   </td>

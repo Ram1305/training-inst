@@ -182,12 +182,18 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
     /// </summary>
     public class EnrollmentLinkStudentDto
     {
+        public string EnrollmentId { get; set; } = string.Empty;
         public string StudentId { get; set; } = string.Empty;
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? Phone { get; set; }
         public string? CourseName { get; set; }
         public DateTime EnrolledAt { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public string PaymentStatus { get; set; } = string.Empty;
+        public decimal AmountPaid { get; set; }
+        public bool LlnAssessmentCompleted { get; set; }
+        public bool EnrollmentFormCompleted { get; set; }
     }
 
     /// <summary>

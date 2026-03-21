@@ -1,9 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import { Users, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { companyManagementService, type CompanyPortalEnrollmentRow } from '../../services/companyManagement.service';
+import { CompanyBillingPaymentsPanel } from './CompanyBillingPaymentsPanel';
 
 interface CompanyStudentsEnrolledProps {
   companyId?: string | null;
@@ -13,22 +14,20 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
   const [rows, setRows] = useState<CompanyPortalEnrollmentRow[]>([]);
   const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
+  const loadEnrolments = useCallback(async () => {
     if (!companyId) return;
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await companyManagementService.getPortalEnrollments(companyId);
-        if (!cancelled && res.success && res.data?.items) setRows(res.data.items);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
+    setLoading(true);
+    try {
+      const res = await companyManagementService.getPortalEnrollments(companyId);
+      if (res.success && res.data?.items) setRows(res.data.items);
+    } finally {
+      setLoading(false);
+    }
   }, [companyId]);
+
+  useEffect(() => {
+    loadEnrolments();
+  }, [loadEnrolments]);
 
   return (
     <div className="space-y-6">
@@ -37,7 +36,8 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
           Students enrolled
         </h1>
         <p className="text-gray-600">
-          Staff who enrolled using your company links, with the course they selected.
+          Staff progress (LLND, enrolment form, training). Below that, pay outstanding training fees — same list as the
+          Payments tab, with tick boxes for each line that still has a balance.
         </p>
       </div>
 
@@ -64,10 +64,12 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
                 <TableRow>
                   <TableHead>Student</TableHead>
                   <TableHead>Course</TableHead>
-                  <TableHead>Enrolled</TableHead>
+                  <TableHead>Amount</TableHead>
+                  <TableHead>Payment</TableHead>
+                  <TableHead>LLND</TableHead>
+                  <TableHead>Form</TableHead>
                   <TableHead>Training</TableHead>
-                  <TableHead>Bill</TableHead>
-                  <TableHead>Enrolment ID</TableHead>
+                  <TableHead>Enrolled</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -76,10 +78,40 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
                     <TableCell>
                       <div className="font-medium">{r.studentName}</div>
                       <div className="text-xs text-gray-500">{r.studentEmail ?? '—'}</div>
+                      {r.studentPhone ? <div className="text-xs text-gray-500">{r.studentPhone}</div> : null}
                     </TableCell>
                     <TableCell>{r.courseName}</TableCell>
-                    <TableCell className="whitespace-nowrap text-sm">
-                      {new Date(r.enrolledAt).toLocaleString('en-AU')}
+                    <TableCell className="whitespace-nowrap tabular-nums text-sm">
+                      {new Intl.NumberFormat('en-AU', { style: 'currency', currency: 'AUD' }).format(r.amountPaid ?? 0)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className="text-xs font-normal">
+                        {r.paymentStatus}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          r.llnAssessmentCompleted
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800 text-xs'
+                            : 'border-amber-200 bg-amber-50 text-amber-800 text-xs'
+                        }
+                      >
+                        {r.llnAssessmentCompleted ? 'Completed' : 'Not completed'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant="outline"
+                        className={
+                          r.enrollmentFormCompleted
+                            ? 'border-emerald-200 bg-emerald-50 text-emerald-800 text-xs'
+                            : 'border-gray-200 bg-gray-50 text-gray-600 text-xs'
+                        }
+                      >
+                        {r.enrollmentFormCompleted ? 'Submitted' : 'Not submitted'}
+                      </Badge>
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-col gap-1">
@@ -93,19 +125,8 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
                         )}
                       </div>
                     </TableCell>
-                    <TableCell>
-                      {r.hasCompanyBill ? (
-                        <Badge variant={r.companyBillStatus === 'Paid' ? 'default' : 'secondary'}>
-                          {r.companyBillStatus ?? '—'}
-                        </Badge>
-                      ) : (
-                        <span className="text-sm text-gray-500">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <span className="font-mono text-xs text-gray-600 break-all" title={r.enrollmentId}>
-                        {r.enrollmentId}
-                      </span>
+                    <TableCell className="whitespace-nowrap text-sm">
+                      {new Date(r.enrolledAt).toLocaleString('en-AU')}
                     </TableCell>
                   </TableRow>
                 ))}
@@ -114,6 +135,13 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
           )}
         </CardContent>
       </Card>
+
+      <CompanyBillingPaymentsPanel
+        companyId={companyId ?? undefined}
+        cardTitle="Pay outstanding training fees"
+        cardDescription="Tick each line with a balance. Credit card marks paid immediately. Bank transfer: submit your receipt here, then we mark paid in admin after we verify the deposit."
+        onStatementsChanged={loadEnrolments}
+      />
     </div>
   );
 }

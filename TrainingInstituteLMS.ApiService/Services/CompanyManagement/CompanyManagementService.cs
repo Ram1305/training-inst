@@ -332,12 +332,16 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 EnrollmentId = e.EnrollmentId.ToString(),
                 StudentName = e.Student?.FullName ?? string.Empty,
                 StudentEmail = e.Student?.Email,
+                StudentPhone = e.Student?.PhoneNumber ?? e.Student?.Mobile,
                 CourseName = e.Course?.CourseName ?? string.Empty,
                 CourseId = e.CourseId.ToString(),
                 EnrolledAt = e.EnrolledAt,
                 CompletedAt = e.CompletedAt,
                 Status = e.Status,
                 PaymentStatus = e.PaymentStatus,
+                AmountPaid = e.AmountPaid,
+                LlnAssessmentCompleted = e.QuizCompleted,
+                EnrollmentFormCompleted = e.Student?.EnrollmentFormCompleted ?? false,
                 HasCompanyBill = billByEnrollment.ContainsKey(e.EnrollmentId),
                 CompanyBillStatus = billByEnrollment.TryGetValue(e.EnrollmentId, out var st) ? st : null
             }).ToList();
