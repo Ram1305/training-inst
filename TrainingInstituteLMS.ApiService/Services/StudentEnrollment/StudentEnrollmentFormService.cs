@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.Data.Data;
@@ -19,17 +20,20 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
         private readonly IFileStorageService _fileStorageService;
         private readonly IEmailService _emailService;
         private readonly ILogger<StudentEnrollmentFormService> _logger;
+        private readonly ICompanyBillingService _companyBillingService;
 
         public StudentEnrollmentFormService(
             TrainingLMSDbContext context,
             IFileStorageService fileStorageService,
             IEmailService emailService,
-            ILogger<StudentEnrollmentFormService> logger)
+            ILogger<StudentEnrollmentFormService> logger,
+            ICompanyBillingService companyBillingService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _emailService = emailService;
             _logger = logger;
+            _companyBillingService = companyBillingService;
         }
 
         private static bool IsCompanyPortalLink(EnrollmentLink? link) =>
@@ -333,6 +337,10 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 _logger.LogError(ex, "SubmitPublicEnrollmentForm: SaveChangesAsync failed. UserId={UserId}, StudentId={StudentId}", user.UserId, student.StudentId);
                 throw;
             }
+
+            if (enrollment != null &&
+                string.Equals(enrollment.EnrollmentType, "Company", StringComparison.OrdinalIgnoreCase))
+                await _companyBillingService.EnsureUnpaidCompanyBillForEnrollmentAsync(enrollment.EnrollmentId);
 
             // Send enrollment confirmation email to both student and academy (when course is selected)
             if (enrollment != null)

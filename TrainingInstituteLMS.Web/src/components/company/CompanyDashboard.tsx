@@ -60,9 +60,9 @@ export function CompanyDashboard({ company, userName }: CompanyDashboardProps) {
             <DollarSign className="h-4 w-4 text-gray-500" />
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-bold">Payment history</p>
+            <p className="text-2xl font-bold">Training fees</p>
             <p className="text-xs text-gray-500">
-              View and manage payments in the Payments section
+              Pay outstanding per-enrolment lines by card or bank; balances update when payments are applied
             </p>
           </CardContent>
         </Card>

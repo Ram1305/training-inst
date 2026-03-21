@@ -472,7 +472,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             >
               <Card className="bg-slate-800/70 backdrop-blur-lg border-2 border-cyan-400/40 shadow-xl rounded-2xl p-6 w-[340px]">
                 <CardHeader className="p-0 mb-4">
-                  <CardTitle className="text-2xl font-bold text-cyan-200 mb-2">
+                  <CardTitle className="text-2xl font-bold text-white mb-2">
                     Course Enrolment
                   </CardTitle>
                   <CardDescription className="text-white/70 text-sm leading-relaxed">
@@ -1300,10 +1300,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               transition={{ duration: 0.7 }}
               className="flex flex-col justify-center"
             >
-              <p className="text-cyan-200/90 text-sm font-semibold uppercase tracking-wide mb-2">
+              <p className="text-red-600 text-sm font-semibold uppercase tracking-wide mb-2">
                 After reviews — contact &amp; enrolment
               </p>
-              <h2 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-6">Course Enrolment</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Course Enrolment</h2>
               <p className="text-white text-lg mb-8">
                 Browse and book courses from the <span className="font-semibold text-cyan-200">Courses</span> section
                 higher on this page. This area is for messages and completing the official <span className="font-semibold text-cyan-200">enrolment form</span>.

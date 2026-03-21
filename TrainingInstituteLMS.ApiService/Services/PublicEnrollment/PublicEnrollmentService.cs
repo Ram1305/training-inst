@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using QRCoder;
 using TrainingInstituteLMS.ApiService.Common;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
@@ -24,19 +25,22 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         private readonly ISiteSettingsService _siteSettingsService;
         private readonly IEmailService _emailService;
         private readonly IFileStorageService _fileStorageService;
+        private readonly ICompanyBillingService _companyBillingService;
 
         public PublicEnrollmentService(
             TrainingLMSDbContext context,
             ILogger<PublicEnrollmentService> logger,
             ISiteSettingsService siteSettingsService,
             IEmailService emailService,
-            IFileStorageService fileStorageService)
+            IFileStorageService fileStorageService,
+            ICompanyBillingService companyBillingService)
         {
             _context = context;
             _logger = logger;
             _siteSettingsService = siteSettingsService;
             _emailService = emailService;
             _fileStorageService = fileStorageService;
+            _companyBillingService = companyBillingService;
         }
 
         private static bool IsCompanyPortalLink(EnrollmentLinkEntity? link) =>
@@ -355,6 +359,9 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             }
 
             await _context.SaveChangesAsync();
+
+            if (string.Equals(enrollmentType, "Company", StringComparison.OrdinalIgnoreCase))
+                await _companyBillingService.EnsureUnpaidCompanyBillForEnrollmentAsync(enrollment.EnrollmentId);
 
             return new PublicCourseEnrollmentResponseDto
             {

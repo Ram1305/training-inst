@@ -556,7 +556,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
         }
 
         /// <summary>
-        /// Admin: when training is finished, mark enrollment complete and create a per-course company bill (permanent portal link enrollments only).
+        /// Admin: when training is finished, mark enrollment complete and ensure a company bill exists when fees are still owed.
         /// </summary>
         [HttpPost("admin/company-billing/complete-training/{enrollmentId:guid}")]
         public async Task<IActionResult> RecordCompanyPortalTrainingComplete(Guid enrollmentId)
@@ -567,10 +567,10 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
                 if (!ok)
                 {
                     return BadRequest(ApiResponse<object>.FailureResponse(
-                        "Enrollment not found, or not a company portal enrollment (permanent portal link only)."));
+                        "Enrollment not found, or not a company enrolment linked to a company (portal or bulk order)."));
                 }
 
-                return Ok(ApiResponse<object>.SuccessResponse(null, "Training marked complete; company bill created when not already billed."));
+                return Ok(ApiResponse<object>.SuccessResponse(null, "Training marked complete; company bill created when still unpaid and not already billed."));
             }
             catch (Exception ex)
             {

@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DollarSign, Loader2, CreditCard, Building2 } from 'lucide-react';
+import { DollarSign, Loader2, CreditCard, Building2, RefreshCw } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -43,8 +43,9 @@ export interface CompanyBillingPaymentsPanelProps {
 
 export function CompanyBillingPaymentsPanel({
   companyId,
-  cardTitle = 'Outstanding bills',
-  cardDescription = 'Balance due reflects payments already applied. Card payments update your balance straight away.',
+  cardTitle = 'Training fees',
+  cardDescription =
+    'Each pay-later company enrolment appears as a line here. Balance reflects payments already applied. Card settles immediately; bank transfer updates after we verify your receipt in admin.',
   onStatementsChanged,
 }: CompanyBillingPaymentsPanelProps) {
   const [items, setItems] = useState<CompanyBillingStatementListItem[]>([]);
@@ -211,6 +212,18 @@ export function CompanyBillingPaymentsPanel({
             <CardDescription>{cardDescription}</CardDescription>
           </div>
           <div className="flex flex-wrap gap-2">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="gap-2"
+              onClick={() => load()}
+              disabled={!companyId || loading}
+              title="Reload balances from the server"
+            >
+              {loading ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <RefreshCw className="h-4 w-4 shrink-0" />}
+              <span className="hidden sm:inline">Refresh</span>
+            </Button>
             <Button type="button" variant="outline" size="sm" onClick={selectAllPending} disabled={pendingRows.length === 0}>
               Select all outstanding
             </Button>
@@ -230,7 +243,9 @@ export function CompanyBillingPaymentsPanel({
               <Loader2 className="h-8 w-8 animate-spin text-violet-600" />
             </div>
           ) : items.length === 0 ? (
-            <p className="text-gray-600 text-center py-8">No charges yet. Fees appear after training is completed.</p>
+            <p className="text-gray-600 text-center py-8">
+              No outstanding charges. Pay-later company enrolments appear here as soon as they are recorded.
+            </p>
           ) : (
             <Table>
               <TableHeader>

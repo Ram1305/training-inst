@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.PublicEnrollment;
 using TrainingInstituteLMS.ApiService.Services.SiteSettings;
@@ -17,19 +18,22 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
         private readonly IPublicEnrollmentService _publicEnrollmentService;
         private readonly IEmailService _emailService;
         private readonly ISiteSettingsService _siteSettingsService;
+        private readonly ICompanyBillingService _companyBillingService;
 
         public CompanyManagementService(
             TrainingLMSDbContext context,
             ILogger<CompanyManagementService> logger,
             IPublicEnrollmentService publicEnrollmentService,
             IEmailService emailService,
-            ISiteSettingsService siteSettingsService)
+            ISiteSettingsService siteSettingsService,
+            ICompanyBillingService companyBillingService)
         {
             _context = context;
             _logger = logger;
             _publicEnrollmentService = publicEnrollmentService;
             _emailService = emailService;
             _siteSettingsService = siteSettingsService;
+            _companyBillingService = companyBillingService;
         }
 
         public async Task<CompanyListResponseDto> GetAllCompaniesAsync(CompanyFilterRequestDto filter)
@@ -294,6 +298,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
 
         public async Task<CompanyPortalEnrollmentsResponseDto> GetCompanyPortalEnrollmentsAsync(Guid companyId)
         {
+            await _companyBillingService.BackfillUnpaidCompanyBillsForCompanyAsync(companyId);
+
             var enrollments = await _context.Enrollments
                 .AsNoTracking()
                 .Include(e => e.Student)

@@ -12,13 +12,13 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
           Payments
         </h1>
         <p className="text-gray-600">
-          Tick each student / course line you want to settle. Payment is always the full remaining balance for the lines
-          you select. Card payment marks the bill paid immediately; bank transfer is marked paid after we verify your
-          deposit in admin.
+          Lines match pay-later enrolments from your portal or bulk-order links (one fee per course). Tick what you want
+          to pay; the amount is always the full remaining balance on each selected line. After you pay by card, totals and
+          the Payment column update straight away—use Refresh if you need the latest from the server.
         </p>
       </div>
 
-      <CompanyBillingPaymentsPanel companyId={companyId} />
+      <CompanyBillingPaymentsPanel companyId={companyId} cardTitle="Pay training fees" />
     </div>
   );
 }

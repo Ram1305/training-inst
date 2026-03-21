@@ -7,9 +7,19 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
     public interface ICompanyBillingService
     {
         /// <summary>
-        /// Marks the enrollment completed and creates a per-course company bill (portal links only), if not already billed.
+        /// Marks training complete. Creates a company bill when the company still owes fees and no billing line exists; otherwise only updates completion.
         /// </summary>
         Task<bool> RecordPortalEnrollmentTrainingCompletedAsync(Guid enrollmentId);
+
+        /// <summary>
+        /// Creates an unpaid company billing statement for this enrollment when the company still owes fees and no line exists yet (portal or pay-later bulk links).
+        /// </summary>
+        Task<bool> EnsureUnpaidCompanyBillForEnrollmentAsync(Guid enrollmentId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Ensures billing lines exist for unpaid company enrolments that were created before pay-at-company billing was enabled.
+        /// </summary>
+        Task BackfillUnpaidCompanyBillsForCompanyAsync(Guid companyId, CancellationToken cancellationToken = default);
 
         Task<CompanyBillingStatementListResponseDto> GetAdminStatementsAsync(
             int page,

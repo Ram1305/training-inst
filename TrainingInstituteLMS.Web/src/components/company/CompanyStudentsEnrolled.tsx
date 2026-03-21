@@ -36,8 +36,8 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
           Students enrolled
         </h1>
         <p className="text-gray-600">
-          Staff progress (LLND, enrolment form, training). Below that, pay outstanding training fees — same list as the
-          Payments tab, with tick boxes for each line that still has a balance.
+          Staff progress (LLND, enrolment form, training). Each pay-later enrolment appears in Pay outstanding training
+          fees below (one line per course) so you can select and use Pay selected / card or bank transfer.
         </p>
       </div>
 
@@ -139,7 +139,7 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
       <CompanyBillingPaymentsPanel
         companyId={companyId ?? undefined}
         cardTitle="Pay outstanding training fees"
-        cardDescription="Tick each line with a balance. Credit card marks paid immediately. Bank transfer: submit your receipt here, then we mark paid in admin after we verify the deposit."
+        cardDescription="Same list as the Payments tab. Tick lines with a balance, Pay selected, then card or bank. Use Refresh after a payment if totals do not update. Bank transfer is marked paid after we verify your receipt in admin."
         onStatementsChanged={loadEnrolments}
       />
     </div>

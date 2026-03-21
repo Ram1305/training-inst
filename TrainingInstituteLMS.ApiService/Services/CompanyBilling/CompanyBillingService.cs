@@ -6,6 +6,7 @@ using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Enrollments;
+using EnrollmentEntity = TrainingInstituteLMS.Data.Entities.Enrollments.Enrollment;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling;
 
 namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
@@ -29,8 +30,124 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             _emailService = emailService;
         }
 
-        private static bool IsPermanentCompanyPortalLink(EnrollmentLink? link) =>
-            link != null && link.CompanyId.HasValue && !link.CompanyOrderId.HasValue;
+        private static Guid? ResolveBillingCompanyId(EnrollmentEntity enrollment)
+        {
+            var link = enrollment.EnrollmentLink;
+            if (link == null) return null;
+            if (link.CompanyId.HasValue)
+                return link.CompanyId.Value;
+            if (link.CompanyOrderId.HasValue && link.CompanyOrder != null)
+                return link.CompanyOrder.CompanyId;
+            return null;
+        }
+
+        private async Task CreateUnpaidCompanyStatementCoreAsync(
+            EnrollmentEntity enrollment,
+            Guid companyId,
+            CancellationToken cancellationToken = default)
+        {
+            var amount = enrollment.Course?.Price ?? 0;
+            var anchorUtc = enrollment.EnrolledAt.Kind == DateTimeKind.Utc
+                ? enrollment.EnrolledAt
+                : DateTime.SpecifyKind(enrollment.EnrolledAt.ToUniversalTime(), DateTimeKind.Utc);
+            var sydneyDate = AustraliaSydneyTime.UtcInstantToSydneyDateOnly(anchorUtc);
+            var courseName = enrollment.Course?.CourseName;
+            var studentName = enrollment.Student?.FullName;
+
+            var statement = new CompanyBillingStatement
+            {
+                StatementId = Guid.NewGuid(),
+                CompanyId = companyId,
+                SydneyBillingDate = sydneyDate,
+                Status = "Unpaid",
+                TotalAmount = amount,
+                PaidAmount = 0,
+                CreatedAt = DateTime.UtcNow
+            };
+            _context.CompanyBillingStatements.Add(statement);
+
+            var line = new CompanyBillingLine
+            {
+                LineId = Guid.NewGuid(),
+                StatementId = statement.StatementId,
+                EnrollmentId = enrollment.EnrollmentId,
+                Amount = amount,
+                CourseNameSnapshot = courseName,
+                StudentNameSnapshot = studentName
+            };
+            _context.CompanyBillingLines.Add(line);
+
+            await _context.SaveChangesAsync(cancellationToken);
+            _logger.LogInformation(
+                "Company billing: created Unpaid statement {StatementId} for enrollment {EnrollmentId} (company {CompanyId})",
+                statement.StatementId,
+                enrollment.EnrollmentId,
+                companyId);
+        }
+
+        /// <inheritdoc />
+        public async Task<bool> EnsureUnpaidCompanyBillForEnrollmentAsync(Guid enrollmentId, CancellationToken cancellationToken = default)
+        {
+            var enrollment = await _context.Enrollments
+                .Include(e => e.EnrollmentLink!)
+                    .ThenInclude(l => l.CompanyOrder)
+                .Include(e => e.Course)
+                .Include(e => e.Student)
+                .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId, cancellationToken);
+
+            if (enrollment == null)
+                return false;
+
+            if (!string.Equals(enrollment.EnrollmentType, "Company", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            if (await _context.CompanyBillingLines.AnyAsync(l => l.EnrollmentId == enrollmentId, cancellationToken))
+                return true;
+
+            if (string.Equals(enrollment.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            var companyId = ResolveBillingCompanyId(enrollment);
+            if (!companyId.HasValue)
+                return false;
+
+            await CreateUnpaidCompanyStatementCoreAsync(enrollment, companyId.Value, cancellationToken);
+            return true;
+        }
+
+        /// <inheritdoc />
+        public async Task BackfillUnpaidCompanyBillsForCompanyAsync(Guid companyId, CancellationToken cancellationToken = default)
+        {
+            var enrollments = await _context.Enrollments
+                .Include(e => e.EnrollmentLink!)
+                    .ThenInclude(l => l.CompanyOrder)
+                .Include(e => e.Course)
+                .Include(e => e.Student)
+                .Where(e =>
+                    e.EnrollmentType == "Company" &&
+                    e.EnrollmentLink != null &&
+                    (
+                        e.EnrollmentLink.CompanyId == companyId ||
+                        (e.EnrollmentLink.CompanyOrderId != null &&
+                         e.EnrollmentLink.CompanyOrder != null &&
+                         e.EnrollmentLink.CompanyOrder.CompanyId == companyId)))
+                .ToListAsync(cancellationToken);
+
+            foreach (var e in enrollments)
+            {
+                if (string.Equals(e.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                if (await _context.CompanyBillingLines.AnyAsync(l => l.EnrollmentId == e.EnrollmentId, cancellationToken))
+                    continue;
+
+                var cid = ResolveBillingCompanyId(e);
+                if (!cid.HasValue || cid.Value != companyId)
+                    continue;
+
+                await CreateUnpaidCompanyStatementCoreAsync(e, cid.Value, cancellationToken);
+            }
+        }
 
         /// <summary>
         /// Company billing no longer uses Draft/Approved gating: any open balance is Unpaid so the portal payment list works immediately.
@@ -60,7 +177,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
         public async Task<bool> RecordPortalEnrollmentTrainingCompletedAsync(Guid enrollmentId)
         {
             var enrollment = await _context.Enrollments
-                .Include(e => e.EnrollmentLink)
+                .Include(e => e.EnrollmentLink!)
+                    .ThenInclude(l => l.CompanyOrder)
                 .Include(e => e.Course)
                 .Include(e => e.Student)
                 .FirstOrDefaultAsync(e => e.EnrollmentId == enrollmentId);
@@ -71,65 +189,24 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             if (!string.Equals(enrollment.EnrollmentType, "Company", StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (!IsPermanentCompanyPortalLink(enrollment.EnrollmentLink))
+            var companyId = ResolveBillingCompanyId(enrollment);
+            if (!companyId.HasValue)
                 return false;
 
-            var companyId = enrollment.EnrollmentLink!.CompanyId!.Value;
+            var hasLine = await _context.CompanyBillingLines.AnyAsync(l => l.EnrollmentId == enrollmentId);
 
-            if (await _context.CompanyBillingLines.AnyAsync(l => l.EnrollmentId == enrollmentId))
+            if (!hasLine && !string.Equals(enrollment.PaymentStatus, "Paid", StringComparison.OrdinalIgnoreCase))
+                await CreateUnpaidCompanyStatementCoreAsync(enrollment, companyId.Value);
+
+            if (enrollment.Status != "Completed")
             {
-                if (enrollment.Status != "Completed")
-                {
-                    enrollment.Status = "Completed";
-                    enrollment.CompletedAt ??= DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-                }
-                else if (!enrollment.CompletedAt.HasValue)
-                {
-                    enrollment.CompletedAt = DateTime.UtcNow;
-                    await _context.SaveChangesAsync();
-                }
-
-                return true;
+                enrollment.Status = "Completed";
+                enrollment.CompletedAt ??= DateTime.UtcNow;
             }
-
-            var completedAt = DateTime.UtcNow;
-            enrollment.Status = "Completed";
-            enrollment.CompletedAt = completedAt;
-
-            var amount = enrollment.Course?.Price ?? 0;
-            var sydneyDate = AustraliaSydneyTime.UtcInstantToSydneyDateOnly(completedAt);
-            var courseName = enrollment.Course?.CourseName;
-            var studentName = enrollment.Student?.FullName;
-
-            var statement = new CompanyBillingStatement
-            {
-                StatementId = Guid.NewGuid(),
-                CompanyId = companyId,
-                SydneyBillingDate = sydneyDate,
-                Status = "Unpaid",
-                TotalAmount = amount,
-                PaidAmount = 0,
-                CreatedAt = DateTime.UtcNow
-            };
-            _context.CompanyBillingStatements.Add(statement);
-
-            var line = new CompanyBillingLine
-            {
-                LineId = Guid.NewGuid(),
-                StatementId = statement.StatementId,
-                EnrollmentId = enrollmentId,
-                Amount = amount,
-                CourseNameSnapshot = courseName,
-                StudentNameSnapshot = studentName
-            };
-            _context.CompanyBillingLines.Add(line);
+            else if (!enrollment.CompletedAt.HasValue)
+                enrollment.CompletedAt = DateTime.UtcNow;
 
             await _context.SaveChangesAsync();
-            _logger.LogInformation(
-                "Company portal billing: created Unpaid statement {StatementId} for enrollment {EnrollmentId}",
-                statement.StatementId,
-                enrollmentId);
             return true;
         }
 
@@ -301,6 +378,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
 
         public async Task<CompanyBillingStatementListResponseDto> GetStatementsForCompanyAsync(Guid companyId, int page, int pageSize)
         {
+            await BackfillUnpaidCompanyBillsForCompanyAsync(companyId);
             await NormalizeOutstandingStatementsToUnpaidAsync(companyId);
 
             var query = _context.CompanyBillingStatements
