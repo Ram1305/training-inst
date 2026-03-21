@@ -614,8 +614,13 @@ export function PublicEnrollmentWizard({
           const startKey = getCalendarDateKeyInAustralia(d.startDate);
           if (!startKey) return true;
           if (startKey < todayKey) return false;
-          if (start.getTime() <= now) return false;
-          return true;
+          if (startKey > todayKey) return true;
+          // Same calendar day (Sydney): list until session end (e.g. 08:00–18:00 stays until 18:00), not until start.
+          const startMs = start.getTime();
+          const endMs = new Date(d.endDate).getTime();
+          const hasEndAfterStart = !Number.isNaN(endMs) && endMs > startMs;
+          const listUntilMs = hasEndAfterStart ? endMs : startMs;
+          return now < listUntilMs;
         });
         setCourseDates(filtered);
       } else {
