@@ -138,7 +138,9 @@ export function PublicHeader({
             <img
               src={logoImage}
               alt="Safety Training Academy"
-              className="h-14 md:h-16"
+              width={200}
+              height={64}
+              className="h-14 md:h-16 w-auto"
             />
           </motion.div>
 

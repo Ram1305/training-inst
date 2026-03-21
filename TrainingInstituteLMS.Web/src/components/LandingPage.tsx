@@ -398,7 +398,9 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
             >
               <ImageWithFallback
                 src={heroSlides[currentSlide].image}
-                alt="Hero"
+                alt={heroSlides[currentSlide].title}
+                width={1536}
+                height={700}
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-r from-slate-900/95 via-slate-800/85 to-blue-900/90" />
@@ -510,14 +512,17 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           </button>
 
           {/* Slider Dots */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-2">
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1">
             {heroSlides.map((_, index) => (
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all ${currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50"
-                  }`}
-              />
+                className="p-3 group"
+                aria-label={`Go to slide ${index + 1}`}
+              >
+                <div className={`w-3 h-3 rounded-full transition-all ${currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50 group-hover:bg-white/80"
+                  }`} />
+              </button>
             ))}
           </div>
         </div>
@@ -616,6 +621,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                           <ImageWithFallback
                             src={course.imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080"}
                             alt={course.courseName}
+                            width={400}
+                            height={224}
                             loading="lazy"
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                           />
@@ -857,6 +864,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                             <ImageWithFallback
                               src={course.imageUrl || "https://images.unsplash.com/photo-1581094271901-8022df4466f9?w=1080"}
                               alt={course.courseName}
+                              width={400}
+                              height={224}
                               loading="lazy"
                               className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                             />
@@ -1112,12 +1121,16 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1581092795360-fd1ca04f0952?w=400"
                   alt="Training facility"
+                  width={400}
+                  height={256}
                   loading="lazy"
                   className="w-full h-64 object-cover rounded-2xl shadow-lg"
                 />
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=400"
                   alt="Equipment training"
+                  width={400}
+                  height={192}
                   loading="lazy"
                   className="w-full h-48 object-cover rounded-2xl shadow-lg"
                 />
@@ -1126,12 +1139,16 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <ImageWithFallback
                   src="/assets/workers.png"
                   alt="Student learning"
+                  width={400}
+                  height={192}
                   loading="lazy"
                   className="w-full h-48 object-cover rounded-2xl shadow-lg"
                 />
                 <ImageWithFallback
                   src="https://images.unsplash.com/photo-1513467535987-fd81bc7d62f8?w=400"
                   alt="Practical training"
+                  width={400}
+                  height={256}
                   loading="lazy"
                   className="w-full h-64 object-cover rounded-2xl shadow-lg"
                 />
@@ -1213,6 +1230,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <ImageWithFallback
                   src={client.logo}
                   alt={client.name}
+                  width={200}
+                  height={96}
                   loading="lazy"
                   className="w-full h-24 object-contain grayscale hover:grayscale-0 transition-all"
                 />
@@ -1231,6 +1250,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           <ImageWithFallback
             src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=1920"
             alt="Background"
+            width={1920}
+            height={1080}
             loading="lazy"
             className="w-full h-full object-cover opacity-20"
           />
@@ -1313,6 +1334,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
                 <img
                   src="/assets/SafetyTrainingAcademylogo.png"
                   alt="Safety Training Academy"
+                  width={200}
+                  height={64}
                   className="h-16 w-auto brightness-0 invert"
                 />
               </div>

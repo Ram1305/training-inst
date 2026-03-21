@@ -324,6 +324,8 @@ export function CourseDetailsPage({
               <ImageWithFallback
                 src={course.image}
                 alt={course.title}
+                width={800}
+                height={384}
                 loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
