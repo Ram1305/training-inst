@@ -109,8 +109,27 @@ export function CourseBooking({
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({});
   const [showAllCourseDates, setShowAllCourseDates] = useState(false);
 
-  // Group course dates by calendar date for grid layout
+  // Group course dates by calendar date; multiple slots per day sort by start/end time.
   const courseDatesByDate = useMemo(() => {
+    const slotSortMs = (d: CourseDateSimple) => {
+      const day = d.scheduledDate.split("T")[0];
+      if (d.startTime?.trim()) {
+        const t = d.startTime.length <= 5 ? `${d.startTime}:00` : d.startTime;
+        const ms = new Date(`${day}T${t}`).getTime();
+        if (!Number.isNaN(ms)) return ms;
+      }
+      const ms = new Date(d.scheduledDate).getTime();
+      return Number.isNaN(ms) ? 0 : ms;
+    };
+    const slotEndSortMs = (d: CourseDateSimple) => {
+      const day = d.scheduledDate.split("T")[0];
+      if (d.endTime?.trim()) {
+        const t = d.endTime.length <= 5 ? `${d.endTime}:00` : d.endTime;
+        const ms = new Date(`${day}T${t}`).getTime();
+        if (!Number.isNaN(ms)) return ms;
+      }
+      return slotSortMs(d);
+    };
     const byDate = courseDates.reduce<Record<string, CourseDateSimple[]>>((acc, d) => {
       const key = d.scheduledDate.split("T")[0];
       if (!acc[key]) acc[key] = [];
@@ -119,7 +138,14 @@ export function CourseBooking({
     }, {});
     return Object.keys(byDate)
       .sort()
-      .map((dateKey) => ({ dateKey, dates: byDate[dateKey] }));
+      .map((dateKey) => ({
+        dateKey,
+        dates: [...byDate[dateKey]].sort((a, b) => {
+          const byStart = slotSortMs(a) - slotSortMs(b);
+          if (byStart !== 0) return byStart;
+          return slotEndSortMs(a) - slotEndSortMs(b);
+        }),
+      }));
   }, [courseDates]);
 
   // Fetch available course dates

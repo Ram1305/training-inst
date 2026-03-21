@@ -247,6 +247,7 @@ export function AdminCompanyPayments() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Date</TableHead>
+                      <TableHead>Order ID</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead>Email</TableHead>
                       <TableHead>Company mobile number</TableHead>
@@ -261,6 +262,14 @@ export function AdminCompanyPayments() {
                     {orders.map((order) => (
                       <TableRow key={order.orderId}>
                         <TableCell>{renderDateWithTime(order.createdAt)}</TableCell>
+                        <TableCell className="max-w-[220px]">
+                          <span
+                            className="font-mono text-xs text-gray-700 break-all"
+                            title={order.orderId}
+                          >
+                            {order.orderId}
+                          </span>
+                        </TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-9 h-9 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center flex-shrink-0">
@@ -373,6 +382,21 @@ export function AdminCompanyPayments() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-bold text-gray-900 text-lg">{detailOrder.companyName || '—'}</p>
+                  <div className="flex flex-wrap items-center gap-2 mt-1">
+                    <span className="font-mono text-xs text-gray-500 break-all" title={detailOrder.orderId}>
+                      {detailOrder.orderId}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        navigator.clipboard.writeText(detailOrder.orderId).then(() => toast.success('Order ID copied'))
+                      }
+                      className="p-1 rounded hover:bg-blue-100 text-blue-600 flex-shrink-0"
+                      title="Copy order ID"
+                    >
+                      <Copy className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-gray-600">
                     <span className="flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{detailOrder.companyEmail}</span>
                     {detailOrder.companyMobile && (

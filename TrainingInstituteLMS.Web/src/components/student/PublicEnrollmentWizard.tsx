@@ -391,12 +391,21 @@ export function PublicEnrollmentWizard({
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
 
-  // Group course dates by calendar date for grid layout (same as Booking Form)
+  // Group course dates by calendar date for grid layout (same as Booking Form).
+  // Each DB row is one slot (courseDateId); same calendar day can have many rows — sort by start/end instants.
   const courseDatesByDate = useMemo(() => {
+    const slotStartMs = (d: CourseDateDropdownItem) => {
+      const t = new Date(d.startDate).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
+    const slotEndMs = (d: CourseDateDropdownItem) => {
+      const t = new Date(d.endDate).getTime();
+      return Number.isNaN(t) ? 0 : t;
+    };
     const byDate = courseDates.reduce<Record<string, CourseDateDropdownItem[]>>((acc, d) => {
       const datePart = getCalendarDateKeyInAustralia(d.startDate);
       if (!datePart) return acc;
-      // Group by date + dateType so different session types on the same day get separate boxes
+      // Group by Sydney calendar date + dateType so different session types on the same day get separate sections
       const key = `${datePart}__${d.dateType || 'General'}`;
       if (!acc[key]) acc[key] = [];
       acc[key].push(d);
@@ -404,9 +413,14 @@ export function PublicEnrollmentWizard({
     }, {});
     return Object.keys(byDate)
       .sort()
-      .map((key) => {
-        const dateKey = key.split('__')[0];
-        return { dateKey, dates: byDate[key] };
+      .map((groupKey) => {
+        const dateKey = groupKey.split('__')[0];
+        const dates = [...byDate[groupKey]].sort((a, b) => {
+          const byStart = slotStartMs(a) - slotStartMs(b);
+          if (byStart !== 0) return byStart;
+          return slotEndMs(a) - slotEndMs(b);
+        });
+        return { groupKey, dateKey, dates };
       });
   }, [courseDates]);
 
@@ -1918,8 +1932,8 @@ export function PublicEnrollmentWizard({
                                   </div>
                                 ) : (
                                   <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                                    {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
-                                      <div key={`${dateKey}-${dates[0]?.dateType}`} className="flex flex-col items-center w-full">
+                                    {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ groupKey, dateKey, dates }) => (
+                                      <div key={groupKey} className="flex flex-col items-center w-full">
                                         <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
                                           {formatAustraliaCivilDateHeading(dateKey)}
                                         </p>
@@ -2101,8 +2115,8 @@ export function PublicEnrollmentWizard({
                             </div>
                           ) : (
                             <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                              {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ dateKey, dates }) => (
-                                <div key={`${dateKey}-${dates[0]?.dateType}`} className="flex flex-col items-center w-full">
+                              {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ groupKey, dateKey, dates }) => (
+                                <div key={groupKey} className="flex flex-col items-center w-full">
                                   <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
                                     {formatAustraliaCivilDateHeading(dateKey)}
                                   </p>
