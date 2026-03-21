@@ -120,6 +120,58 @@ function extractCivilClockFromIso(iso: string): { hour: number; minute: number }
   return { hour, minute };
 }
 
+const sydneyWallPartsFmt = new Intl.DateTimeFormat('en-CA', {
+  timeZone: AUSTRALIA_ENROLLMENT_TZ,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+  hour: '2-digit',
+  minute: '2-digit',
+  hour12: false,
+});
+
+function readSydneyWallParts(utcMs: number): { y: number; mo: number; d: number; h: number; mi: number } {
+  const p = sydneyWallPartsFmt.formatToParts(new Date(utcMs));
+  const g = (t: Intl.DateTimeFormatPartTypes) => parseInt(p.find((x) => x.type === t)?.value ?? 'NaN', 10);
+  let h = g('hour');
+  if (h === 24) h = 0;
+  return { y: g('year'), mo: g('month'), d: g('day'), h, mi: g('minute') };
+}
+
+/**
+ * UTC instant for a given Australia/Sydney civil date (YYYY-MM-DD) and wall-clock time.
+ * Uses a minute scan so DST is handled without extra dependencies. Returns null if no match (e.g. gap).
+ */
+export function getUtcMsAustraliaSydneyWallClock(civilDateKey: string, hour: number, minute: number): number | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(civilDateKey)) return null;
+  const [ys, mos, ds] = civilDateKey.split('-');
+  const y = parseInt(ys, 10);
+  const mo = parseInt(mos, 10);
+  const d = parseInt(ds, 10);
+  if (Number.isNaN(y) || Number.isNaN(mo) || Number.isNaN(d)) return null;
+
+  const start = Date.UTC(y, mo - 1, d - 1, 0, 0, 0);
+  const end = Date.UTC(y, mo - 1, d + 2, 0, 0, 0);
+  for (let t = start; t <= end; t += 60 * 1000) {
+    const r = readSydneyWallParts(t);
+    if (r.y === y && r.mo === mo && r.d === d && r.h === hour && r.mi === minute) return t;
+  }
+  return null;
+}
+
+/**
+ * UTC ms for a course slot boundary from API: civil date prefix of `iso` + `timeSpanApi` or clock in `iso`.
+ * Interprets wall times as Australia/Sydney (same as scheduling), not the browser's local zone.
+ */
+export function getCourseSlotInstantUtcMsSydney(iso: string, timeSpanApi?: string | null): number | null {
+  const key = isoCalendarDateKey(iso);
+  if (!key) return null;
+  let hm = parseApiTimeSpanToHourMinute(timeSpanApi ?? null);
+  if (!hm) hm = extractCivilClockFromIso(iso);
+  if (!hm) return null;
+  return getUtcMsAustraliaSydneyWallClock(key, hm.hour, hm.minute);
+}
+
 /**
  * Public enrollment slot line: Sydney calendar date + wall-clock times from API (StartTime/EndTime) or civil time in ISO strings.
  * Avoids `new Date(isoWithoutZ)` which ECMAScript treats as the viewer's local time zone.

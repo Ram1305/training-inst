@@ -83,7 +83,9 @@ import {
   formatAustraliaCivilDateHeading,
   formatEnrollmentSlotScheduleText,
   getCalendarDateKeyInAustralia,
+  getCourseSlotInstantUtcMsSydney,
   getTodayCalendarDateKeyInAustralia,
+  isoCalendarDateKey,
 } from '../../utils/australiaTime';
 
 interface PublicEnrollmentWizardProps {
@@ -396,15 +398,19 @@ export function PublicEnrollmentWizard({
   // Each DB row is one slot (courseDateId); same calendar day can have many rows — sort by start/end instants.
   const courseDatesByDate = useMemo(() => {
     const slotStartMs = (d: CourseDateDropdownItem) => {
-      const t = new Date(d.startDate).getTime();
-      return Number.isNaN(t) ? 0 : t;
+      const t = getCourseSlotInstantUtcMsSydney(d.startDate, d.startTime);
+      if (t != null) return t;
+      const u = new Date(d.startDate).getTime();
+      return Number.isNaN(u) ? 0 : u;
     };
     const slotEndMs = (d: CourseDateDropdownItem) => {
-      const t = new Date(d.endDate).getTime();
-      return Number.isNaN(t) ? 0 : t;
+      const t = getCourseSlotInstantUtcMsSydney(d.endDate, d.endTime);
+      if (t != null) return t;
+      const u = new Date(d.endDate).getTime();
+      return Number.isNaN(u) ? 0 : u;
     };
     const byDate = courseDates.reduce<Record<string, CourseDateDropdownItem[]>>((acc, d) => {
-      const datePart = getCalendarDateKeyInAustralia(d.startDate);
+      const datePart = isoCalendarDateKey(d.startDate) || getCalendarDateKeyInAustralia(d.startDate);
       if (!datePart) return acc;
       // Group by Sydney calendar date + dateType so different session types on the same day get separate sections
       const key = `${datePart}__${d.dateType || 'General'}`;
@@ -610,16 +616,17 @@ export function PublicEnrollmentWizard({
         const now = Date.now();
         const all = Array.isArray(response.data) ? response.data : [];
         const filtered = all.filter((d) => {
-          const start = new Date(d.startDate);
-          if (Number.isNaN(start.getTime())) return true;
-          const startKey = getCalendarDateKeyInAustralia(d.startDate);
-          if (!startKey) return true;
-          if (startKey < todayKey) return false;
-          if (startKey > todayKey) return true;
-          // Same calendar day (Sydney): list until session end (e.g. 08:00–18:00 stays until 18:00), not until start.
-          const startMs = start.getTime();
-          const endMs = new Date(d.endDate).getTime();
-          const hasEndAfterStart = !Number.isNaN(endMs) && endMs > startMs;
+          const sessionDateKey =
+            isoCalendarDateKey(d.startDate) || getCalendarDateKeyInAustralia(d.startDate);
+          if (!sessionDateKey) return true;
+          if (sessionDateKey < todayKey) return false;
+          if (sessionDateKey > todayKey) return true;
+          // Same Sydney calendar day: hide after session end in Sydney wall time (not browser-local parse of ISO).
+          const startMs =
+            getCourseSlotInstantUtcMsSydney(d.startDate, d.startTime) ?? new Date(d.startDate).getTime();
+          const endMs =
+            getCourseSlotInstantUtcMsSydney(d.endDate, d.endTime) ?? new Date(d.endDate).getTime();
+          const hasEndAfterStart = !Number.isNaN(endMs) && !Number.isNaN(startMs) && endMs > startMs;
           const listUntilMs = hasEndAfterStart ? endMs : startMs;
           return now < listUntilMs;
         });
