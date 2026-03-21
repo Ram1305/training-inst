@@ -867,12 +867,12 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                 var ordered = orderedIds.Select(id => statements.First(s => s.StatementId == id)).ToList();
                 var maxPay = ordered.Sum(s => Math.Max(0, s.TotalAmount - s.PaidAmount));
                 var payDecimal = request.AmountCents / 100m;
-                if (payDecimal <= 0 || payDecimal - maxPay > 0.01m)
+                if (payDecimal <= 0 || Math.Abs(payDecimal - maxPay) > 0.01m)
                 {
                     return new CardPaymentResultResponseDto
                     {
                         Success = false,
-                        ErrorMessages = "Payment amount is invalid for the selected bills.",
+                        ErrorMessages = "Payment amount must exactly match the total balance due on the selected bills.",
                         AmountPaidCents = request.AmountCents,
                         InvoiceNumber = invoiceNumber
                     };

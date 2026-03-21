@@ -14,7 +14,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from '../ui/dialog';
-import { RadioGroup, RadioGroupItem } from '../ui/radio-group';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { companyManagementService } from '../../services/companyManagement.service';
 import { paymentService } from '../../services/payment.service';
@@ -36,8 +35,6 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
   const [loading, setLoading] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<string[]>([]);
   const [checkoutOpen, setCheckoutOpen] = useState(false);
-  const [payMode, setPayMode] = useState<'full' | 'partial'>('full');
-  const [partialAmount, setPartialAmount] = useState('');
   const [payTab, setPayTab] = useState<'card' | 'bank'>('card');
   const [submitting, setSubmitting] = useState(false);
 
@@ -83,12 +80,7 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
     [selectedRows]
   );
 
-  const payAmount = useMemo(() => {
-    if (payMode === 'full') return selectedBalanceTotal;
-    const n = parseFloat(partialAmount.replace(/,/g, ''));
-    if (Number.isNaN(n) || n <= 0) return 0;
-    return Math.min(n, selectedBalanceTotal);
-  }, [payMode, partialAmount, selectedBalanceTotal]);
+  const payAmount = selectedBalanceTotal;
 
   const toggleRow = (statementId: string) => {
     setSelectedOrder((prev) =>
@@ -107,8 +99,6 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
       toast.error('Select at least one bill to pay.');
       return;
     }
-    setPayMode('full');
-    setPartialAmount('');
     setPayTab('card');
     setBankRef('');
     setBankFile(null);
@@ -117,7 +107,7 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
 
   const submitCard = async () => {
     if (!companyId || payAmount <= 0) {
-      toast.error('Enter a valid payment amount.');
+      toast.error('Select bills with a balance due.');
       return;
     }
     if (!cardName.trim() || !cardNumber.trim() || !expiryMonth || !expiryYear || !cvv) {
@@ -158,7 +148,7 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
 
   const submitBank = async () => {
     if (!companyId || payAmount <= 0) {
-      toast.error('Enter a valid payment amount.');
+      toast.error('Select bills with a balance due.');
       return;
     }
     if (!bankFile) {
@@ -195,9 +185,9 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
           Payments
         </h1>
         <p className="text-gray-600">
-          Tick the staff / course lines you want to pay, choose full or part payment, then pay by card (applied
-          immediately) or bank transfer (we verify your deposit before updating balances — you will get email
-          confirmation either way).
+          Tick each student / course line you want to settle. Payment is always the full remaining balance for the
+          lines you select. Pay by card (applied immediately) or bank transfer (we verify your deposit before updating
+          balances — you will get email confirmation either way).
         </p>
       </div>
 
@@ -293,46 +283,12 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
           <DialogHeader>
             <DialogTitle>Pay selected bills</DialogTitle>
             <DialogDescription>
-              Selected balance: <strong>{formatCurrency(selectedBalanceTotal)}</strong>. Amount to pay now:{' '}
-              <strong>{formatCurrency(payAmount)}</strong>.
+              Total for selected lines: <strong>{formatCurrency(payAmount)}</strong> (full balance for each selected
+              bill).
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium">Payment amount</Label>
-              <RadioGroup
-                value={payMode}
-                onValueChange={(v) => setPayMode(v as 'full' | 'partial')}
-                className="mt-2 flex flex-col gap-2"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="full" id="pay-full" />
-                  <Label htmlFor="pay-full" className="font-normal cursor-pointer">
-                    Pay full balance for selection ({formatCurrency(selectedBalanceTotal)})
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="partial" id="pay-partial" />
-                  <Label htmlFor="pay-partial" className="font-normal cursor-pointer">
-                    Part payment
-                  </Label>
-                </div>
-              </RadioGroup>
-              {payMode === 'partial' && (
-                <Input
-                  type="number"
-                  min={0.01}
-                  step={0.01}
-                  max={selectedBalanceTotal}
-                  className="mt-2"
-                  placeholder="Amount (AUD)"
-                  value={partialAmount}
-                  onChange={(e) => setPartialAmount(e.target.value)}
-                />
-              )}
-            </div>
-
             <div className="flex rounded-lg border border-violet-100 p-1 bg-violet-50/40">
               <Button
                 type="button"
@@ -389,9 +345,9 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
             {payTab === 'bank' && (
               <div className="space-y-3 text-sm text-gray-600">
                 <p>
-                  Transfer the amount below using your bank&apos;s app, then upload the receipt. We will match the
-                  deposit and apply it to the selected bills (you will receive email confirmation; balances update
-                  after we verify).
+                  Transfer the exact amount below using your bank&apos;s app, then upload the receipt. We will match the
+                  deposit and settle the selected bills in full (you will receive email confirmation; balances update after
+                  we verify).
                 </p>
                 <div>
                   <Label htmlFor="cb-bank-ref">Your reference (optional)</Label>

@@ -29,7 +29,7 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
         Task<CompanyBillingStatementListResponseDto> GetStatementsForCompanyAsync(Guid companyId, int page, int pageSize);
 
         /// <summary>
-        /// Allocates a payment across statements in order until the amount is used. Updates PaidAmount / status.
+        /// Applies a payment that must equal the combined balance due on the selected statements (full settlement only). Updates PaidAmount / status.
         /// </summary>
         Task<(bool Ok, string? Error)> ApplyCompanyBillingPaymentAsync(
             Guid companyId,

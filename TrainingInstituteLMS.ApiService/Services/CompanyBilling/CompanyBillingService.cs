@@ -369,8 +369,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 if (bal > 0) maxApplicable += bal;
             }
 
-            if (paymentAmount - maxApplicable > 0.01m)
-                return (false, "Payment amount is greater than the total balance due on the selected bills.");
+            if (Math.Abs(paymentAmount - maxApplicable) > 0.01m)
+                return (false, "Payment amount must exactly match the total balance due on the selected bills.");
 
             var refSuffix = string.IsNullOrWhiteSpace(gatewayTransactionId)
                 ? string.Empty
@@ -443,8 +443,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
                 throw new InvalidOperationException("One or more bills were not found for your company.");
 
             decimal maxApplicable = statements.Sum(s => Math.Max(0, s.TotalAmount - s.PaidAmount));
-            if (amount <= 0 || amount - maxApplicable > 0.01m)
-                throw new InvalidOperationException("Amount must be greater than zero and not more than the balance due on the selected bills.");
+            if (amount <= 0 || Math.Abs(amount - maxApplicable) > 0.01m)
+                throw new InvalidOperationException("Amount must exactly match the total balance due on the selected bills.");
 
             var upload = await _fileStorageService.UploadFileAsync(receipt, "payment-receipts", cancellationToken);
             if (!upload.Success || string.IsNullOrWhiteSpace(upload.RelativePath))
