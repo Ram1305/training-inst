@@ -302,6 +302,17 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     return new Date(dateString).toLocaleDateString();
   };
 
+  const renderRegisterDate = (dateString?: string) => {
+    if (!dateString) return 'Never';
+    const d = new Date(dateString);
+    return (
+      <div className="leading-tight">
+        <div>{d.toLocaleDateString()}</div>
+        <div className="text-xs text-gray-500 tabular-nums">{d.toLocaleTimeString()}</div>
+      </div>
+    );
+  };
+
   const formatDateLong = (dateString?: string) => {
     if (!dateString) return 'N/A';
     return new Date(dateString).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -555,7 +566,7 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                       const paymentStatusLabel = enrollments.length === 0 ? '—' : allPaid ? 'Paid' : 'Unpaid';
                       return (
                       <TableRow key={student.studentId}>
-                        <TableCell>{formatDate(student.createdAt)}</TableCell>
+                        <TableCell>{renderRegisterDate(student.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 bg-gradient-to-br from-violet-600 to-purple-600 rounded-lg flex items-center justify-center">
