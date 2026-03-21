@@ -501,19 +501,21 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           {/* Slider Controls */}
           <button
             onClick={prevSlide}
-            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+            aria-label="Previous slide"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all z-20"
           >
             <ChevronLeft className="w-6 h-6 text-white" />
           </button>
           <button
             onClick={nextSlide}
-            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+            aria-label="Next slide"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all z-20"
           >
             <ChevronRight className="w-6 h-6 text-white" />
           </button>
 
           {/* Slider Dots */}
-          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1">
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1 z-20">
             {heroSlides.map((_, index) => (
               <button
                 key={index}

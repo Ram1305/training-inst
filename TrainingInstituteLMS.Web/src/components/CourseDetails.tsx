@@ -1,7 +1,7 @@
 // src/components/CourseDetailsPage.tsx
 import { useState, useEffect } from 'react';
-import { 
-  ArrowLeft, Clock, Users, Award, CheckCircle, BookOpen, Target, 
+import {
+  ArrowLeft, Clock, Users, Award, CheckCircle, BookOpen, Target,
   Zap, Star, Calendar, MapPin, Globe, DollarSign, Phone, Mail,
   FileText, Loader2, TrendingUp, Shield, Sparkles,
   Menu, X, ChevronDown, ChevronRight, ChevronUp, Facebook, Linkedin, Instagram, Eye
@@ -70,21 +70,21 @@ const mapApiCourseToDisplay = (apiCourse: APICourseDetail) => {
       duration: apiCourse.comboOffer.duration || undefined
     } : undefined,
     courseDescription: apiCourse.courseDescription?.trim() || 'Course description not available.',
-    entryRequirements: apiCourse.entryRequirements.length > 0 
-      ? apiCourse.entryRequirements 
+    entryRequirements: apiCourse.entryRequirements.length > 0
+      ? apiCourse.entryRequirements
       : ['Be at least 18 years of age.', 'Successfully complete the enrolment process.'],
-    trainingOverview: apiCourse.trainingOverview.length > 0 
-      ? apiCourse.trainingOverview 
+    trainingOverview: apiCourse.trainingOverview.length > 0
+      ? apiCourse.trainingOverview
       : [],
-    vocationalOutcome: apiCourse.vocationalOutcome.length > 0 
-      ? apiCourse.vocationalOutcome 
+    vocationalOutcome: apiCourse.vocationalOutcome.length > 0
+      ? apiCourse.vocationalOutcome
       : [],
     pathways: apiCourse.pathways ? {
       description: apiCourse.pathways.description || 'Students who successfully complete this unit of competency will be awarded a statement of attainment.',
       certifications: apiCourse.pathways.certifications
     } : undefined,
-    feesAndCharges: apiCourse.feesAndCharges.length > 0 
-      ? apiCourse.feesAndCharges 
+    feesAndCharges: apiCourse.feesAndCharges.length > 0
+      ? apiCourse.feesAndCharges
       : ['Group discounts apply', 'Refund and fee protection policy – Please refer to the student handbook'],
     optionalCharges: apiCourse.optionalCharges.length > 0 ? apiCourse.optionalCharges : [],
     resourcePdf: apiCourse.resourcePdf?.title && apiCourse.resourcePdf?.url ? {
@@ -95,9 +95,9 @@ const mapApiCourseToDisplay = (apiCourse: APICourseDetail) => {
   };
 };
 
-export function CourseDetailsPage({ 
-  courseId, 
-  onBack, 
+export function CourseDetailsPage({
+  courseId,
+  onBack,
   onEnroll,
   onLogin,
   onRegister,
@@ -172,9 +172,9 @@ export function CourseDetailsPage({
     try {
       setIsLoading(true);
       setError(null);
-      
+
       const response = await courseService.getCourseById(courseId);
-      
+
       if (response.success && response.data) {
         // Debug: Log API response to verify categoryName, courseName, courseDescription
         console.debug('[CourseDetails] API response:', {
@@ -270,7 +270,7 @@ export function CourseDetailsPage({
             <ArrowLeft className="w-5 h-5 mr-2" />
             Back to Courses
           </Button>
-          
+
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-3">
               <Badge className="bg-cyan-500 text-white px-4 py-1.5 text-sm font-semibold rounded-full shadow-lg">
@@ -432,7 +432,7 @@ export function CourseDetailsPage({
                             <div className="text-xl font-bold text-white">{course.comboOffer.duration}</div>
                           </div>
                         )}
-                        <Button 
+                        <Button
                           onClick={() => onEnroll({
                             courseName: course.title,
                             courseCode: course.code,
@@ -475,7 +475,7 @@ export function CourseDetailsPage({
                     className="course-description-content text-gray-700 text-base sm:text-lg leading-relaxed [&_.course-desc-kv-label]:text-blue-600 [&_.course-desc-kv-label]:font-semibold [&_.course-desc-kv-value]:text-blue-700 [&_.course-desc-kv-value]:font-bold [&_.course-desc-h2]:text-lg sm:[&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-base sm:[&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-4 sm:[&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-4 sm:[&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic [&_table]:w-full [&_table]:overflow-hidden [&_table]:block sm:[&_table]:table [&_table]:overflow-x-auto"
                     dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(course.courseDescription) }}
                   />
-                  
+
                   {/* Handbook */}
                   {course.resourcePdf && (
                     <div className="mt-6 p-6 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-2xl border-2 border-blue-100">
@@ -540,14 +540,14 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.3 }}
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
-                <CardHeader className="p-4 sm:p-6">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                      <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                    Duration
-                  </h2>
-                </CardHeader>
+                  <CardHeader className="p-4 sm:p-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <Clock className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </div>
+                      Duration
+                    </h2>
+                  </CardHeader>
                   <CardContent className="p-4 sm:p-6">
                     <p className="text-blue-700 text-lg">
                       The total duration is <strong className="text-blue-700">{course.duration.toLowerCase()}</strong>. Training and assessment are conducted in our modern training facilities with industry-standard equipment.
@@ -565,14 +565,14 @@ export function CourseDetailsPage({
                 transition={{ duration: 0.5, delay: 0.35 }}
               >
                 <Card className="border-2 border-blue-100 shadow-xl rounded-3xl bg-gradient-to-br from-white to-blue-50">
-                <CardHeader className="p-4 sm:p-6">
-                  <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
-                    <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
-                      <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
-                    </div>
-                    Training Overview
-                  </h2>
-                </CardHeader>
+                  <CardHeader className="p-4 sm:p-6">
+                    <h2 className="text-xl sm:text-2xl font-bold text-slate-900 flex items-center gap-3">
+                      <div className="w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg text-white">
+                        <TrendingUp className="w-5 h-5 sm:w-6 sm:h-6" />
+                      </div>
+                      Training Overview
+                    </h2>
+                  </CardHeader>
                   <CardContent className="p-4 sm:p-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       {course.trainingOverview.map((item: string, index: number) => (
@@ -831,7 +831,7 @@ export function CourseDetailsPage({
 
                   {/* Action Buttons */}
                   <div className="space-y-3 pt-4">
-                    <Button 
+                    <Button
                       onClick={() => onEnroll({
                         courseId,
                         courseName: course.title,
@@ -855,9 +855,9 @@ export function CourseDetailsPage({
                         Book Now SL + BL — ${slBlPrice}
                       </Button>
                     )}
-                    
+
                     {course.courseDates && course.courseDates.length > 0 && (
-                      <Button 
+                      <Button
                         variant="outline"
                         className="w-full border-2 border-cyan-500 text-cyan-600 hover:bg-cyan-50 rounded-full h-12 font-semibold"
                       >
@@ -865,9 +865,9 @@ export function CourseDetailsPage({
                         View Course Calendar 2025
                       </Button>
                     )}
-                    
+
                     {course.resourcePdf && (
-                      <Button 
+                      <Button
                         variant="outline"
                         className="w-full border-2 border-slate-300 text-slate-700 hover:bg-slate-50 rounded-full h-12 font-semibold"
                         onClick={() => onViewHandbook
