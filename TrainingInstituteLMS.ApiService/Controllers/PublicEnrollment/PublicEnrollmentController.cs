@@ -518,7 +518,7 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             try
             {
                 if (request == null || string.IsNullOrWhiteSpace(request.Status))
-                    return BadRequest(ApiResponse<object>.FailureResponse("Status is required (Approved or Paid). Unpaid statements can be marked Paid directly."));
+                    return BadRequest(ApiResponse<object>.FailureResponse("Status is required. Use Paid to record a verified payment (Unpaid lines are payable by the company without approval)."));
                 var userId = GetCurrentUserId();
                 var ok = await _companyBillingService.UpdateStatementAsync(
                     statementId,

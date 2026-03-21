@@ -32,6 +32,30 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
         private static bool IsPermanentCompanyPortalLink(EnrollmentLink? link) =>
             link != null && link.CompanyId.HasValue && !link.CompanyOrderId.HasValue;
 
+        /// <summary>
+        /// Company billing no longer uses Draft/Approved gating: any open balance is Unpaid so the portal payment list works immediately.
+        /// </summary>
+        private async Task NormalizeOutstandingStatementsToUnpaidAsync(Guid? restrictToCompanyId, CancellationToken cancellationToken = default)
+        {
+            var q = _context.CompanyBillingStatements.Where(s =>
+                (s.Status == "Approved" || s.Status == "Draft") &&
+                s.PaidAmount < s.TotalAmount);
+            if (restrictToCompanyId.HasValue)
+                q = q.Where(s => s.CompanyId == restrictToCompanyId.Value);
+
+            var n = await q.ExecuteUpdateAsync(
+                setters => setters
+                    .SetProperty(s => s.Status, "Unpaid")
+                    .SetProperty(s => s.UpdatedAt, DateTime.UtcNow),
+                cancellationToken);
+            if (n > 0)
+                _logger.LogInformation("Company billing: normalized {Count} statement(s) from Draft/Approved to Unpaid.", n);
+        }
+
+        /// <inheritdoc />
+        public Task NormalizeLegacyBillingStatusesForCompanyAsync(Guid companyId, CancellationToken cancellationToken = default) =>
+            NormalizeOutstandingStatementsToUnpaidAsync(companyId, cancellationToken);
+
         /// <inheritdoc />
         public async Task<bool> RecordPortalEnrollmentTrainingCompletedAsync(Guid enrollmentId)
         {
@@ -116,6 +140,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             string? search,
             Guid? companyId)
         {
+            await NormalizeOutstandingStatementsToUnpaidAsync(companyId);
+
             var query = _context.CompanyBillingStatements
                 .AsNoTracking()
                 .Include(s => s.Company)
@@ -192,6 +218,14 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
 
         public async Task<CompanyBillingStatementDetailDto?> GetStatementDetailAsync(Guid statementId)
         {
+            await _context.CompanyBillingStatements
+                .Where(x => x.StatementId == statementId
+                    && (x.Status == "Approved" || x.Status == "Draft")
+                    && x.PaidAmount < x.TotalAmount)
+                .ExecuteUpdateAsync(setters => setters
+                    .SetProperty(x => x.Status, "Unpaid")
+                    .SetProperty(x => x.UpdatedAt, DateTime.UtcNow));
+
             var s = await _context.CompanyBillingStatements
                 .AsNoTracking()
                 .Include(x => x.Company)
@@ -246,29 +280,19 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             if (s == null) return false;
 
             var newStatus = status.Trim();
-            if (newStatus != "Approved" && newStatus != "Paid")
+            // No Draft → Approved workflow: companies pay Unpaid lines directly; admin only marks Paid or legacy data is normalized to Unpaid.
+            if (!string.Equals(newStatus, "Paid", StringComparison.OrdinalIgnoreCase))
                 return false;
 
-            if (newStatus == "Approved")
-            {
-                if (s.Status != "Draft")
-                    return false;
-                s.ApprovedAt = DateTime.UtcNow;
-                s.ApprovedBy = approvedByUserId;
-                s.Status = "Approved";
-            }
-            else if (newStatus == "Paid")
-            {
-                if (s.Status != "Draft" && s.Status != "Approved" && s.Status != "Unpaid" && s.Status != "PartiallyPaid")
-                    return false;
-                s.PaidAt = DateTime.UtcNow;
-                s.PaidAmount = s.TotalAmount;
-                if (!string.IsNullOrWhiteSpace(paymentMethod))
-                    s.PaymentMethod = paymentMethod.Trim();
-                if (!string.IsNullOrWhiteSpace(paymentReference))
-                    s.PaymentReference = paymentReference.Trim();
-                s.Status = "Paid";
-            }
+            if (s.Status != "Draft" && s.Status != "Approved" && s.Status != "Unpaid" && s.Status != "PartiallyPaid")
+                return false;
+            s.PaidAt = DateTime.UtcNow;
+            s.PaidAmount = s.TotalAmount;
+            if (!string.IsNullOrWhiteSpace(paymentMethod))
+                s.PaymentMethod = paymentMethod.Trim();
+            if (!string.IsNullOrWhiteSpace(paymentReference))
+                s.PaymentReference = paymentReference.Trim();
+            s.Status = "Paid";
 
             s.UpdatedAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
@@ -277,6 +301,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
 
         public async Task<CompanyBillingStatementListResponseDto> GetStatementsForCompanyAsync(Guid companyId, int page, int pageSize)
         {
+            await NormalizeOutstandingStatementsToUnpaidAsync(companyId);
+
             var query = _context.CompanyBillingStatements
                 .AsNoTracking()
                 .Where(s => s.CompanyId == companyId);
@@ -349,6 +375,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
 
             if (statementIdsInOrder.Count == 0)
                 return (false, "Select at least one bill.");
+
+            await NormalizeOutstandingStatementsToUnpaidAsync(companyId);
 
             var idSet = statementIdsInOrder.ToHashSet();
             var statements = await _context.CompanyBillingStatements
@@ -427,6 +455,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
         {
             if (statementIdsInOrder.Count == 0)
                 return null;
+
+            await NormalizeOutstandingStatementsToUnpaidAsync(companyId, cancellationToken);
 
             if (!_fileStorageService.ValidateFile(receipt, out var fileErr))
                 throw new InvalidOperationException(fileErr);

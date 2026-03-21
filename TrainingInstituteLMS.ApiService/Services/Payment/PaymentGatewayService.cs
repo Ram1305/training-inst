@@ -834,6 +834,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                     };
                 }
 
+                await _companyBillingService.NormalizeLegacyBillingStatusesForCompanyAsync(request.CompanyId);
+
                 var email = company.User?.Email ?? string.Empty;
                 var displayName = string.IsNullOrWhiteSpace(company.CompanyName) ? "Company" : company.CompanyName;
                 var phone = company.MobileNumber ?? company.User?.PhoneNumber ?? string.Empty;

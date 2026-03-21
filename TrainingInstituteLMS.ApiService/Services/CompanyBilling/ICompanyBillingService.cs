@@ -1,3 +1,4 @@
+using System.Threading;
 using Microsoft.AspNetCore.Http;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.CompanyBilling;
 
@@ -27,6 +28,11 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             string? paymentReference);
 
         Task<CompanyBillingStatementListResponseDto> GetStatementsForCompanyAsync(Guid companyId, int page, int pageSize);
+
+        /// <summary>
+        /// Converts legacy Draft/Approved rows with an open balance to Unpaid so the company can pay without an admin approval step.
+        /// </summary>
+        Task NormalizeLegacyBillingStatusesForCompanyAsync(Guid companyId, CancellationToken cancellationToken = default);
 
         /// <summary>
         /// Applies a payment that must equal the combined balance due on the selected statements (full settlement only). Updates PaidAmount / status.

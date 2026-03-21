@@ -18,10 +18,10 @@ namespace TrainingInstituteLMS.Data.Entities.Enrollments
         /// <summary>Sydney civil date for which enrollments are grouped.</summary>
         public DateOnly SydneyBillingDate { get; set; }
 
-        /// <summary>Unpaid (per-course, no approval), Draft/Approved (legacy), Paid.</summary>
+        /// <summary>Unpaid (payable immediately on the company portal), PartiallyPaid, Paid. Draft/Approved are legacy and normalized to Unpaid when there is a balance.</summary>
         [Required]
         [MaxLength(50)]
-        public string Status { get; set; } = "Draft";
+        public string Status { get; set; } = "Unpaid";
 
         [Column(TypeName = "decimal(12,2)")]
         public decimal TotalAmount { get; set; }
