@@ -3,14 +3,20 @@ import { Users, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
-import { companyManagementService, type CompanyPortalEnrollmentRow } from '../../services/companyManagement.service';
+import {
+  companyManagementService,
+  type CompanyPortalEnrollmentRow,
+  type CompanyResponse,
+} from '../../services/companyManagement.service';
 import { CompanyBillingPaymentsPanel } from './CompanyBillingPaymentsPanel';
 
 interface CompanyStudentsEnrolledProps {
   companyId?: string | null;
+  company?: CompanyResponse | null;
+  onCompanyUpdated?: (company: CompanyResponse) => void;
 }
 
-export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledProps) {
+export function CompanyStudentsEnrolled({ companyId, company, onCompanyUpdated }: CompanyStudentsEnrolledProps) {
   const [rows, setRows] = useState<CompanyPortalEnrollmentRow[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -138,6 +144,8 @@ export function CompanyStudentsEnrolled({ companyId }: CompanyStudentsEnrolledPr
 
       <CompanyBillingPaymentsPanel
         companyId={companyId ?? undefined}
+        company={company ?? undefined}
+        onCompanyUpdated={onCompanyUpdated}
         cardTitle="Pay outstanding training fees"
         cardDescription="Same list as the Payments tab. Tick lines with a balance, Pay selected, then card or bank. Use Refresh after a payment if totals do not update. Bank transfer is marked paid after we verify your receipt in admin."
         onStatementsChanged={loadEnrolments}

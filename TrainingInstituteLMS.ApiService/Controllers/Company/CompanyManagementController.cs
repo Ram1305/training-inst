@@ -1,5 +1,6 @@
 using System.Security.Claims;
 using System.Text.Json;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.CompanyManagement;
@@ -33,6 +34,9 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
             var v = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
             return Guid.TryParse(v, out var id) ? id : null;
         }
+
+        private static bool IsPrivilegedAdmin(ClaimsPrincipal user) =>
+            user.IsInRole("Admin") || user.IsInRole("SuperAdmin");
 
         /// <summary>
         /// Company portal: submit bank transfer notice for selected bills (receipt required). Emails company and academy.
@@ -70,6 +74,9 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
 
                 if (receipt == null || receipt.Length == 0)
                     return BadRequest(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("Receipt file is required."));
+
+                if (string.IsNullOrWhiteSpace(customerReference))
+                    return BadRequest(ApiResponse<CompanyBillingBankTransferSubmissionResponseDto>.FailureResponse("Transaction or bank reference is required."));
 
                 var result = await _companyBillingService.SubmitCompanyBankTransferAsync(
                     companyId,
@@ -236,9 +243,12 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
         }
 
         [HttpPut("{companyId:guid}")]
+        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<CompanyResponseDto>), StatusCodes.Status200OK)]
         [ProducesResponseType(typeof(ErrorResponse), StatusCodes.Status400BadRequest)]
         [ProducesResponseType(typeof(ApiResponse<CompanyResponseDto>), StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<ApiResponse<CompanyResponseDto>>> UpdateCompany(
             Guid companyId,
             [FromBody] UpdateCompanyRequestDto request)
@@ -257,8 +267,19 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
                 });
             }
 
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+                return Unauthorized(ApiResponse<CompanyResponseDto>.FailureResponse("Authentication required."));
+
             try
             {
+                var existing = await _companyManagementService.GetCompanyByIdAsync(companyId);
+                if (existing == null)
+                    return NotFound(ApiResponse<CompanyResponseDto>.FailureResponse("Company not found"));
+
+                if (!IsPrivilegedAdmin(User) && existing.UserId != currentUserId.Value)
+                    return Forbid();
+
                 var result = await _companyManagementService.UpdateCompanyAsync(companyId, request);
 
                 if (result == null)

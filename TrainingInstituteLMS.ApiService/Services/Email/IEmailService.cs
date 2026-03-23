@@ -65,8 +65,9 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
 
         /// <summary>
         /// Welcome email for a new company account with the permanent employee enrolment link.
+        /// When <paramref name="initialPassword"/> is set (e.g. admin-created company), sign-in details are included; omit for self-registration.
         /// </summary>
-        Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl);
+        Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl, string? initialPassword = null);
 
         /// <summary>Company bank transfer billing submission: confirmation to company and notice to academy.</summary>
         Task SendCompanyBillingBankTransferSubmittedAsync(

@@ -1,10 +1,13 @@
 import { CompanyBillingPaymentsPanel } from './CompanyBillingPaymentsPanel';
+import type { CompanyResponse } from '../../services/companyManagement.service';
 
 interface CompanyPaymentsProps {
   companyId?: string;
+  company?: CompanyResponse | null;
+  onCompanyUpdated?: (company: CompanyResponse) => void;
 }
 
-export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
+export function CompanyPayments({ companyId, company, onCompanyUpdated }: CompanyPaymentsProps) {
   return (
     <div className="space-y-6">
       <div>
@@ -18,7 +21,12 @@ export function CompanyPayments({ companyId }: CompanyPaymentsProps) {
         </p>
       </div>
 
-      <CompanyBillingPaymentsPanel companyId={companyId} cardTitle="Pay training fees" />
+      <CompanyBillingPaymentsPanel
+        companyId={companyId}
+        company={company ?? undefined}
+        onCompanyUpdated={onCompanyUpdated}
+        cardTitle="Pay training fees"
+      />
     </div>
   );
 }

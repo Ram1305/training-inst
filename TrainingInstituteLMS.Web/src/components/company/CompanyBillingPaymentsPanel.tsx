@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { DollarSign, Loader2, CreditCard, Building2, RefreshCw } from 'lucide-react';
+import { DollarSign, Loader2, CreditCard, Building2, RefreshCw, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Badge } from '../ui/badge';
 import { Button } from '../ui/button';
@@ -16,6 +16,7 @@ import {
 } from '../ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../ui/table';
 import { companyManagementService } from '../../services/companyManagement.service';
+import type { CompanyResponse } from '../../services/companyManagement.service';
 import { paymentService } from '../../services/payment.service';
 import type { CompanyBillingStatementListItem } from '../../services/adminCompanyBilling.service';
 import { BankTransferDetailsCard } from '../payment/BankTransferDetailsCard';
@@ -46,8 +47,15 @@ function companyPaymentDisplay(row: CompanyBillingStatementListItem): { label: s
   return { label: 'Pending payment', paid: false };
 }
 
+function isValidEmail(v: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
+}
+
 export interface CompanyBillingPaymentsPanelProps {
   companyId?: string;
+  /** Profile used to pre-fill billing contact; kept in sync after successful update. */
+  company?: CompanyResponse;
+  onCompanyUpdated?: (company: CompanyResponse) => void;
   cardTitle?: string;
   cardDescription?: string;
   /** Called after a successful card payment or bank submission (reload enrolments, etc.). */
@@ -56,6 +64,8 @@ export interface CompanyBillingPaymentsPanelProps {
 
 export function CompanyBillingPaymentsPanel({
   companyId,
+  company,
+  onCompanyUpdated,
   cardTitle = 'Training fees',
   cardDescription =
     'Each pay-later company enrolment appears as a line here. Balance reflects payments already applied. Card settles immediately; bank transfer updates after we verify your receipt in admin.',
@@ -67,6 +77,10 @@ export function CompanyBillingPaymentsPanel({
   const [checkoutOpen, setCheckoutOpen] = useState(false);
   const [payTab, setPayTab] = useState<'card' | 'bank'>('card');
   const [submitting, setSubmitting] = useState(false);
+
+  const [billingCompanyName, setBillingCompanyName] = useState('');
+  const [billingEmail, setBillingEmail] = useState('');
+  const [billingMobile, setBillingMobile] = useState('');
 
   const [cardName, setCardName] = useState('');
   const [cardNumber, setCardNumber] = useState('');
@@ -129,6 +143,9 @@ export function CompanyBillingPaymentsPanel({
       toast.error('Select at least one line to pay.');
       return;
     }
+    setBillingCompanyName(company?.companyName ?? '');
+    setBillingEmail(company?.email ?? '');
+    setBillingMobile(company?.mobileNumber ?? '');
     setPayTab('card');
     setBankRef('');
     setBankFile(null);
@@ -138,6 +155,66 @@ export function CompanyBillingPaymentsPanel({
   const notifyChanged = async () => {
     await load();
     onStatementsChanged?.();
+  };
+
+  const validateBillingContact = (): boolean => {
+    const name = billingCompanyName.trim();
+    const email = billingEmail.trim();
+    const mobile = billingMobile.trim();
+    if (!name) {
+      toast.error('Enter your company name.');
+      return false;
+    }
+    if (!email || !isValidEmail(email)) {
+      toast.error('Enter a valid email address.');
+      return false;
+    }
+    if (mobile && !/^[\d\s+().-]{6,20}$/.test(mobile)) {
+      toast.error('Enter a valid mobile number, or leave it blank.');
+      return false;
+    }
+    return true;
+  };
+
+  const persistBillingContact = async (): Promise<boolean> => {
+    if (!companyId) {
+      toast.error('Company is not loaded.');
+      return false;
+    }
+    if (!validateBillingContact()) return false;
+
+    const name = billingCompanyName.trim();
+    const email = billingEmail.trim();
+    const mobile = billingMobile.trim();
+
+    const prevEmail = company?.email?.trim() ?? '';
+    const unchanged =
+      company != null &&
+      name === (company.companyName ?? '').trim() &&
+      email === prevEmail &&
+      mobile === (company.mobileNumber ?? '').trim();
+
+    if (unchanged) return true;
+
+    try {
+      const res = await companyManagementService.updateCompany(companyId, {
+        companyName: name,
+        email,
+        mobileNumber: mobile || undefined,
+      });
+      if (!res.success || !res.data) {
+        toast.error(res.message || 'Could not save billing contact.');
+        return false;
+      }
+      onCompanyUpdated?.(res.data);
+      if (email.toLowerCase() !== prevEmail.toLowerCase()) {
+        toast.info('Sign-in email was updated. Use the new address next time you log in.');
+      }
+      return true;
+    } catch (e) {
+      toastPaymentAuthError(e, 'Could not save billing contact.');
+      return false;
+    }
   };
 
   const submitCard = async () => {
@@ -151,6 +228,9 @@ export function CompanyBillingPaymentsPanel({
     }
     setSubmitting(true);
     try {
+      const saved = await persistBillingContact();
+      if (!saved) return;
+
       const res = await paymentService.processCompanyBillingCard({
         companyId,
         statementIds: selectedOrder,
@@ -186,16 +266,23 @@ export function CompanyBillingPaymentsPanel({
       toast.error('Select lines with a balance due.');
       return;
     }
+    if (!bankRef.trim()) {
+      toast.error('Enter your bank transaction or reference ID.');
+      return;
+    }
     if (!bankFile) {
       toast.error('Attach your transfer receipt (screenshot or PDF).');
       return;
     }
     setSubmitting(true);
     try {
+      const saved = await persistBillingContact();
+      if (!saved) return;
+
       const fd = new FormData();
       fd.append('statementIds', JSON.stringify(selectedOrder));
       fd.append('amount', String(payAmount));
-      if (bankRef.trim()) fd.append('customerReference', bankRef.trim());
+      fd.append('customerReference', bankRef.trim());
       fd.append('receipt', bankFile);
       const res = await companyManagementService.submitBillingBankTransfer(companyId, fd);
       if (res.success && res.data) {
@@ -212,6 +299,8 @@ export function CompanyBillingPaymentsPanel({
       setSubmitting(false);
     }
   };
+
+  const bankReferenceHint = [billingCompanyName.trim(), billingEmail.trim(), billingMobile.trim()].filter(Boolean).join(' ');
 
   return (
     <>
@@ -321,10 +410,47 @@ export function CompanyBillingPaymentsPanel({
             <DialogTitle>Pay selected lines</DialogTitle>
             <DialogDescription>
               Total for selected lines: <strong>{formatCurrency(payAmount)}</strong> (full balance for each selected line).
+              Billing details are saved before payment so card charges and receipts match your company profile.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
+            <div className="rounded-xl border border-violet-200 bg-violet-50/50 p-4 space-y-3">
+              <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">Billing contact</p>
+              <div>
+                <Label htmlFor="cbp-co-name">Company name</Label>
+                <Input
+                  id="cbp-co-name"
+                  value={billingCompanyName}
+                  onChange={(e) => setBillingCompanyName(e.target.value)}
+                  className="mt-1"
+                  autoComplete="organization"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cbp-co-email">Email</Label>
+                <Input
+                  id="cbp-co-email"
+                  type="email"
+                  value={billingEmail}
+                  onChange={(e) => setBillingEmail(e.target.value)}
+                  className="mt-1"
+                  autoComplete="email"
+                />
+              </div>
+              <div>
+                <Label htmlFor="cbp-co-mobile">Mobile</Label>
+                <Input
+                  id="cbp-co-mobile"
+                  value={billingMobile}
+                  onChange={(e) => setBillingMobile(e.target.value)}
+                  className="mt-1"
+                  autoComplete="tel"
+                  placeholder="Optional"
+                />
+              </div>
+            </div>
+
             <div className="flex rounded-lg border border-violet-100 p-1 bg-violet-50/40">
               <Button
                 type="button"
@@ -386,8 +512,16 @@ export function CompanyBillingPaymentsPanel({
                   email confirmation.
                 </p>
                 <BankTransferDetailsCard />
+                {bankReferenceHint ? (
+                  <div className="flex gap-2 rounded-lg border border-indigo-100 bg-indigo-50/80 p-3 text-indigo-900">
+                    <AlertCircle className="h-5 w-5 shrink-0 text-indigo-600" />
+                    <p className="text-xs leading-relaxed">
+                      Use <strong>{bankReferenceHint}</strong> as part of your payment reference so we can match your transfer.
+                    </p>
+                  </div>
+                ) : null}
                 <div>
-                  <Label htmlFor="cbp-bank-ref">Transaction ID / reference (optional)</Label>
+                  <Label htmlFor="cbp-bank-ref">Transaction ID / reference</Label>
                   <Input
                     id="cbp-bank-ref"
                     value={bankRef}

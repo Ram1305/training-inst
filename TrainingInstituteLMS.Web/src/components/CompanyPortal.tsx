@@ -95,9 +95,21 @@ export function CompanyPortal({ user, onLogout, onNavigateToLanding }: CompanyPo
       case 'courses':
         return <CompanyCourses />;
       case 'payments':
-        return <CompanyPayments companyId={company?.companyId} />;
+        return (
+          <CompanyPayments
+            companyId={company?.companyId}
+            company={company}
+            onCompanyUpdated={(c) => setCompany(c)}
+          />
+        );
       case 'students-enrolled':
-        return <CompanyStudentsEnrolled companyId={company?.companyId} />;
+        return (
+          <CompanyStudentsEnrolled
+            companyId={company?.companyId}
+            company={company}
+            onCompanyUpdated={(c) => setCompany(c)}
+          />
+        );
       default:
         return <CompanyDashboard company={company} userName={user.name} />;
     }

@@ -892,7 +892,7 @@ Safety Training Academy";
             }
         }
 
-        public async Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl)
+        public async Task SendCompanyPortalWelcomeAsync(string toEmail, string companyName, string portalEnrollmentUrl, string? loginBaseUrl, string? initialPassword = null)
         {
             if (!_settings.IsConfigured)
             {
@@ -902,27 +902,90 @@ Safety Training Academy";
             if (string.IsNullOrWhiteSpace(toEmail))
                 return;
 
-            var subject = $"Your company account — employee enrolment link";
+            var toTrim = toEmail.Trim();
+            var loginTrim = (loginBaseUrl ?? "").TrimEnd('/');
+            var hasPassword = !string.IsNullOrEmpty(initialPassword);
+            var subject = hasPassword
+                ? "Welcome — your company portal sign-in & employee enrolment link"
+                : "Your company account — employee enrolment link";
+
+            var credentialsPlain = hasPassword
+                ? $@"
+
+Your sign-in details
+--------------------
+Company name:  {companyName}
+Email (login): {toTrim}
+Password:      {initialPassword}
+
+Keep this message confidential. Do not forward the password. Sign in as soon as you can and change your password if your portal offers that option.
+
+"
+                : "";
+
             var plain = $@"Hello {companyName},
 
-Your company account is ready. Share this link with employees so they can select a course and session. Training fees are billed to your company (no student card payment on this link).
+Your company account is ready.{credentialsPlain}Share this link with employees so they can select a course and session. Training fees are billed to your company (no student card payment on this link).
 
-Enrolment link:
+Employee enrolment link:
 {portalEnrollmentUrl}
 ";
-            if (!string.IsNullOrWhiteSpace(loginBaseUrl))
-                plain += $"\nCompany portal login: {loginBaseUrl.TrimEnd('/')}\n";
+            if (!string.IsNullOrWhiteSpace(loginTrim))
+                plain += $"\nCompany portal (for you): {loginTrim}\n";
 
-            var loginHtml = string.IsNullOrWhiteSpace(loginBaseUrl)
+            plain += $@"
+If you need help, reply to this email or contact us.
+
+Kind regards,
+{_settings.FromName}";
+
+            var encName = System.Net.WebUtility.HtmlEncode(companyName);
+            var encTo = System.Net.WebUtility.HtmlEncode(toTrim);
+            var encPortalUrl = System.Net.WebUtility.HtmlEncode(portalEnrollmentUrl);
+            var encPwd = hasPassword ? System.Net.WebUtility.HtmlEncode(initialPassword!) : "";
+
+            var credentialsHtml = hasPassword
+                ? $@"<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin:0 0 24px;background-color:#f8fafc;border-radius:8px;border:1px solid #e2e8f0;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 12px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Your sign-in details</p>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='font-size:14px;color:#334155;'>
+<tr><td style='padding:6px 0;color:#64748b;width:140px;vertical-align:top;'>Company name</td><td style='padding:6px 0;font-weight:600;'>{encName}</td></tr>
+<tr><td style='padding:6px 0;color:#64748b;vertical-align:top;'>Email (login)</td><td style='padding:6px 0;font-weight:600;word-break:break-all;'>{encTo}</td></tr>
+<tr><td style='padding:6px 0;color:#64748b;vertical-align:top;'>Password</td><td style='padding:6px 0;font-family:Consolas,monospace;font-size:13px;font-weight:600;letter-spacing:0.02em;word-break:break-all;background:#fff;border-radius:4px;border:1px solid #e2e8f0;padding:8px 12px;'>{encPwd}</td></tr>
+</table>
+<p style='margin:16px 0 0;font-size:13px;color:#64748b;line-height:1.5;'>Keep this email confidential. Do not share your password. Sign in when you can and change your password if your portal allows it.</p>
+</td></tr></table>"
+                : "";
+
+            var loginBlockHtml = string.IsNullOrWhiteSpace(loginTrim)
                 ? ""
-                : $@"<p style=""margin:16px 0 0;font-size:14px;color:#334155;"">Log in to your company portal: <a href=""{loginBaseUrl.TrimEnd('/')}"">{loginBaseUrl.TrimEnd('/')}</a></p>";
+                : $@"<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Company portal (for you)</p>
+<p style='margin:0 0 24px;font-size:14px;color:#334155;'><a href=""{System.Net.WebUtility.HtmlEncode(loginTrim)}"" style='color:#3b82f6;word-break:break-all;'>{System.Net.WebUtility.HtmlEncode(loginTrim)}</a></p>";
 
-            var html = $@"<!DOCTYPE html><html><body style=""font-family:Arial,sans-serif;font-size:14px;color:#333;"">
-<p>Hello <strong>{System.Net.WebUtility.HtmlEncode(companyName)}</strong>,</p>
-<p>Your company account is ready. Share the link below with employees so they can select a course and session. Training fees are billed to your company.</p>
-<p><a href=""{portalEnrollmentUrl}"" style=""color:#3b82f6;word-break:break-all;"">{System.Net.WebUtility.HtmlEncode(portalEnrollmentUrl)}</a></p>
-{loginHtml}
-</body></html>";
+            var html = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>Company portal</title></head>
+<body style='margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;font-size:14px;line-height:1.5;color:#333;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='background-color:#f4f4f4;padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
+<tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:22px;font-weight:700;'>Your company portal is ready</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p style='margin:0 0 20px;font-size:15px;color:#555;'>Hello <strong style='color:#333;'>{encName}</strong>,</p>
+<p style='margin:0 0 20px;font-size:15px;color:#555;'>You can manage your company account and share the employee link below. Training booked through this link is billed to your company.</p>
+{credentialsHtml}
+<p style='margin:0 0 12px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Employee enrolment link</p>
+<p style='margin:0 0 24px;font-size:14px;color:#334155;'>Share this link with your team so they can choose a course and session:</p>
+<p style='margin:0 0 24px;font-size:14px;'><a href=""{encPortalUrl}"" style='color:#3b82f6;word-break:break-all;'>{encPortalUrl}</a></p>
+{loginBlockHtml}
+<p style='margin:0;font-size:14px;color:#64748b;'>Questions? Reply to this email or contact the training team.</p>
+</td></tr>
+<tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;'>
+<p style='margin:0;font-size:13px;color:#64748b;'>Kind regards,<br/><strong style='color:#334155;'>{System.Net.WebUtility.HtmlEncode(_settings.FromName)}</strong></p>
+</td></tr>
+</table></td></tr></table></body></html>";
 
             try
             {
@@ -936,7 +999,7 @@ Enrolment link:
 
                 var message = new MimeMessage();
                 message.From.Add(new MailboxAddress(_settings.FromName, user));
-                message.To.Add(MailboxAddress.Parse(toEmail));
+                message.To.Add(MailboxAddress.Parse(toTrim));
                 message.Subject = subject;
                 message.Body = new BodyBuilder { TextBody = plain, HtmlBody = html }.ToMessageBody();
                 await client.SendAsync(message);

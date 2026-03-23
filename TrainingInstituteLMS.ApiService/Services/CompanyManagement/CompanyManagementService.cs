@@ -194,7 +194,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                         request.Email.Trim(),
                         company.CompanyName,
                         portalUrl ?? string.Empty,
-                        siteBase);
+                        siteBase,
+                        request.Password);
                 }
                 catch (Exception ex)
                 {

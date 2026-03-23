@@ -534,6 +534,9 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyBilling
             if (statementIdsInOrder.Count == 0)
                 return null;
 
+            if (string.IsNullOrWhiteSpace(customerReference))
+                throw new InvalidOperationException("Transaction or bank reference is required.");
+
             await NormalizeOutstandingStatementsToUnpaidAsync(companyId, cancellationToken);
 
             if (!_fileStorageService.ValidateFile(receipt, out var fileErr))
