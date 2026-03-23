@@ -14,6 +14,11 @@ export interface CourseDropdownItem {
   experienceOriginalPrice?: number;
   noExperiencePrice?: number;
   noExperienceOriginalPrice?: number;
+  /** SL + BL / promo (e.g. RIIHAN301E). */
+  promoPrice?: number;
+  promoOriginalPrice?: number;
+  /** Active combo offer unit price (when combo is active). */
+  comboOfferPrice?: number;
 }
 
 export interface CourseDateDropdownItem {

@@ -328,8 +328,26 @@ const AUTO_PASS_ATTEMPT = 4;
 
 type EnrollmentType = 'individual' | 'company';
 
+const RIIHAN301E_COURSE_CODE = 'RIIHAN301E';
+
+/** SL + BL pricing; matches CourseDetailsPage (promo first, else active combo). */
+function getSlBlPricingForDropdownCourse(course: CourseDropdownItem): { price: number; original: number | null } | null {
+  if (course.courseCode !== RIIHAN301E_COURSE_CODE) return null;
+  const promo = course.promoPrice != null && Number(course.promoPrice) > 0 ? Number(course.promoPrice) : null;
+  const combo = course.comboOfferPrice != null && Number(course.comboOfferPrice) > 0 ? Number(course.comboOfferPrice) : null;
+  const price = promo ?? combo;
+  if (price == null || price <= 0) return null;
+  const original =
+    promo != null &&
+    course.promoOriginalPrice != null &&
+    Number(course.promoOriginalPrice) > 0
+      ? Number(course.promoOriginalPrice)
+      : null;
+  return { price, original };
+}
+
 /** One line in company order: course + date + quantity. */
-type CoursePricingVariant = 'std' | 'with' | 'without' | 'prem';
+type CoursePricingVariant = 'std' | 'with' | 'without' | 'prem' | 'slbl';
 
 interface CompanyCourseItem {
   courseId: string;
@@ -480,6 +498,22 @@ export function PublicEnrollmentWizard({
           categoryName,
           variant: 'without'
         });
+        const slBlExp = getSlBlPricingForDropdownCourse(course);
+        if (slBlExp) {
+          const dupExp =
+            Math.abs(slBlExp.price - pw) <= 0.001 || Math.abs(slBlExp.price - pn) <= 0.001;
+          if (!dupExp) {
+            items.push({
+              id: course.courseId,
+              price: slBlExp.price,
+              label: `${course.courseCode} – ${course.courseName} · SL + BL $${slBlExp.price}${
+                slBlExp.original != null ? ` (was $${slBlExp.original})` : ''
+              }`,
+              categoryName,
+              variant: 'slbl'
+            });
+          }
+        }
       } else {
         items.push({
           id: course.courseId,
@@ -488,10 +522,23 @@ export function PublicEnrollmentWizard({
           categoryName,
           variant: 'std'
         });
+        const slBl = getSlBlPricingForDropdownCourse(course);
+        if (slBl && Math.abs(slBl.price - Number(course.price)) > 0.001) {
+          items.push({
+            id: course.courseId,
+            price: slBl.price,
+            label: `${course.courseCode} – ${course.courseName} · SL + BL $${slBl.price}${
+              slBl.original != null ? ` (was $${slBl.original})` : ''
+            }`,
+            categoryName,
+            variant: 'slbl'
+          });
+        }
         if (
           course.courseId === preSelectedCourseId &&
           preSelectedCoursePrice != null &&
-          Math.abs(preSelectedCoursePrice - Number(course.price)) > 0.001
+          Math.abs(preSelectedCoursePrice - Number(course.price)) > 0.001 &&
+          !(slBl && Math.abs(preSelectedCoursePrice - slBl.price) <= 0.001)
         ) {
           items.push({
             id: course.courseId,
@@ -543,7 +590,15 @@ export function PublicEnrollmentWizard({
     if (!c) return;
 
     if (c.experienceBookingEnabled) {
-      if (preSelectedExperienceType === 'with') {
+      const slBlExp = getSlBlPricingForDropdownCourse(c);
+      if (
+        typeof preSelectedCoursePrice === 'number' &&
+        slBlExp &&
+        Math.abs(preSelectedCoursePrice - slBlExp.price) <= 0.001
+      ) {
+        setSelectedPricingVariant('slbl');
+        setSelectedCoursePriceOverride(slBlExp.price);
+      } else if (preSelectedExperienceType === 'with') {
         setSelectedPricingVariant('with');
         setSelectedCoursePriceOverride(null);
       } else if (preSelectedExperienceType === 'without') {
@@ -566,15 +621,25 @@ export function PublicEnrollmentWizard({
         setSelectedPricingVariant('with');
         setSelectedCoursePriceOverride(null);
       }
-    } else if (
-      typeof preSelectedCoursePrice === 'number' &&
-      Math.abs(preSelectedCoursePrice - Number(c.price)) > 0.001
-    ) {
-      setSelectedPricingVariant('prem');
-      setSelectedCoursePriceOverride(preSelectedCoursePrice);
     } else {
-      setSelectedPricingVariant('std');
-      setSelectedCoursePriceOverride(null);
+      const slBl = getSlBlPricingForDropdownCourse(c);
+      if (
+        typeof preSelectedCoursePrice === 'number' &&
+        slBl &&
+        Math.abs(preSelectedCoursePrice - slBl.price) <= 0.001
+      ) {
+        setSelectedPricingVariant('slbl');
+        setSelectedCoursePriceOverride(slBl.price);
+      } else if (
+        typeof preSelectedCoursePrice === 'number' &&
+        Math.abs(preSelectedCoursePrice - Number(c.price)) > 0.001
+      ) {
+        setSelectedPricingVariant('prem');
+        setSelectedCoursePriceOverride(preSelectedCoursePrice);
+      } else {
+        setSelectedPricingVariant('std');
+        setSelectedCoursePriceOverride(null);
+      }
     }
   }, [courses, preSelectedCourseId, preSelectedCoursePrice, preSelectedExperienceType, selectedCourseId]);
 
@@ -1806,6 +1871,10 @@ export function PublicEnrollmentWizard({
     if (selectedCoursePriceOverride != null && selectedCoursePriceOverride >= 0) {
       return selectedCoursePriceOverride;
     }
+    if (selectedPricingVariant === 'slbl') {
+      const sl = getSlBlPricingForDropdownCourse(c);
+      if (sl) return sl.price;
+    }
     if (selectedPricingVariant === 'with' && c.experienceBookingEnabled) {
       return Number(c.experiencePrice ?? c.price);
     }
@@ -1981,7 +2050,14 @@ export function PublicEnrollmentWizard({
                             } else if (next === 'company' && preSelectedCourseId && typeof preSelectedCoursePrice === 'number') {
                               const c = courses.find((x) => x.courseId === preSelectedCourseId);
                               let pricingVariant: CoursePricingVariant = 'std';
-                              if (c?.experienceBookingEnabled) {
+                              const slBlPre = c ? getSlBlPricingForDropdownCourse(c) : null;
+                              if (
+                                c &&
+                                slBlPre &&
+                                Math.abs(preSelectedCoursePrice - slBlPre.price) <= 0.001
+                              ) {
+                                pricingVariant = 'slbl';
+                              } else if (c?.experienceBookingEnabled) {
                                 if (preSelectedExperienceType === 'with') pricingVariant = 'with';
                                 else if (preSelectedExperienceType === 'without') pricingVariant = 'without';
                                 else {
@@ -2293,7 +2369,7 @@ export function PublicEnrollmentWizard({
                                 const variant = (variantRaw || 'std') as CoursePricingVariant;
                                 setSelectedCourseId(id);
                                 setSelectedPricingVariant(variant);
-                                if (variant === 'prem') {
+                                if (variant === 'prem' || variant === 'slbl') {
                                   setSelectedCoursePriceOverride(price);
                                 } else {
                                   setSelectedCoursePriceOverride(null);

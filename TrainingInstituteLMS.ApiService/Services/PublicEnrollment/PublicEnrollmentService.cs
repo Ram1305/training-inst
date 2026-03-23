@@ -74,7 +74,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     c.ExperiencePrice,
                     c.ExperienceOriginalPrice,
                     c.NoExperiencePrice,
-                    c.NoExperienceOriginalPrice
+                    c.NoExperienceOriginalPrice,
+                    c.PromoPrice,
+                    c.PromoOriginalPrice,
+                    ComboOfferPrice = c.ComboOffer != null && c.ComboOffer.IsActive
+                        ? (decimal?)c.ComboOffer.ComboPrice
+                        : null
                 })
                 .OrderBy(c => c.CourseName)
                 .ToListAsync();
@@ -92,7 +97,10 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 ExperiencePrice = c.ExperiencePrice,
                 ExperienceOriginalPrice = c.ExperienceOriginalPrice,
                 NoExperiencePrice = c.NoExperiencePrice,
-                NoExperienceOriginalPrice = c.NoExperienceOriginalPrice
+                NoExperienceOriginalPrice = c.NoExperienceOriginalPrice,
+                PromoPrice = c.PromoPrice,
+                PromoOriginalPrice = c.PromoOriginalPrice,
+                ComboOfferPrice = c.ComboOfferPrice
             }).ToList();
         }
 

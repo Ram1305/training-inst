@@ -29,6 +29,12 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public decimal? ExperienceOriginalPrice { get; set; }
         public decimal? NoExperiencePrice { get; set; }
         public decimal? NoExperienceOriginalPrice { get; set; }
+
+        /// <summary>SL + BL and similar promos (e.g. RIIHAN301E).</summary>
+        public decimal? PromoPrice { get; set; }
+        public decimal? PromoOriginalPrice { get; set; }
+        /// <summary>Active combo offer price only (mirrors public course detail API).</summary>
+        public decimal? ComboOfferPrice { get; set; }
     }
     
     public class CourseDateDropdownItemDto
