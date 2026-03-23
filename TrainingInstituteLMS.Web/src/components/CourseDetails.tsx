@@ -26,7 +26,7 @@ const logoImage = '/assets/SafetyTrainingAcademylogo.png';
 interface CourseDetailsPageProps {
   courseId: string;
   onBack: () => void;
-  onEnroll: (courseData?: { courseId?: string; courseName?: string; courseCode?: string; coursePrice?: number }) => void;
+  onEnroll: (courseData?: { courseId?: string; courseName?: string; courseCode?: string; coursePrice?: number; experienceType?: 'with' | 'without' }) => void;
   onLogin?: () => void;
   onRegister?: () => void;
   onContact?: () => void;
@@ -91,7 +91,12 @@ const mapApiCourseToDisplay = (apiCourse: APICourseDetail) => {
       title: apiCourse.resourcePdf.title,
       url: apiCourse.resourcePdf.url
     } : undefined,
-    courseDates: apiCourse.courseDates || []
+    courseDates: apiCourse.courseDates || [],
+    experienceBookingEnabled: apiCourse.experienceBookingEnabled ?? false,
+    experiencePrice: apiCourse.experiencePrice,
+    experienceOriginalPrice: apiCourse.experienceOriginalPrice,
+    noExperiencePrice: apiCourse.noExperiencePrice,
+    noExperienceOriginalPrice: apiCourse.noExperienceOriginalPrice
   };
 };
 
@@ -137,6 +142,13 @@ export function CourseDetailsPage({
     isSlBlCourse && course?.promoOriginalPrice != null && course.promoOriginalPrice > 0
       ? course.promoOriginalPrice
       : null;
+
+  const experienceBookingEnabled = Boolean(course?.experienceBookingEnabled);
+  const withExperiencePrice =
+    experienceBookingEnabled && course ? (course.experiencePrice ?? course.price) : null;
+  const withoutExperiencePrice =
+    experienceBookingEnabled && course ? (course.noExperiencePrice ?? course.price) : null;
+
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
   const [showBackToTop, setShowBackToTop] = useState(false);
 
@@ -372,7 +384,20 @@ export function CourseDetailsPage({
                     <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 stroke-blue-600" />
                   </div>
                   <div className="text-xs text-blue-600 mb-1">Price</div>
-                  <div className="text-sm font-bold text-blue-700 h-10 sm:h-auto flex items-center justify-center">${course.price}</div>
+                  {experienceBookingEnabled && withExperiencePrice != null && withoutExperiencePrice != null ? (
+                    <div className="text-xs sm:text-sm font-bold text-blue-700 space-y-1 min-h-10 flex flex-col items-center justify-center">
+                      <div>
+                        <span className="text-blue-600 font-semibold">w/ exp</span>{' '}
+                        ${withExperiencePrice}
+                      </div>
+                      <div>
+                        <span className="text-blue-600 font-semibold">w/o exp</span>{' '}
+                        ${withoutExperiencePrice}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="text-sm font-bold text-blue-700 h-10 sm:h-auto flex items-center justify-center">${course.price}</div>
+                  )}
                 </CardContent>
               </Card>
 
@@ -730,19 +755,47 @@ export function CourseDetailsPage({
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
                   <div className="relative">
-                    {course.originalPrice && (
-                      <div className="price-strikethrough text-xl text-white/60 mb-1">
-                        ${course.originalPrice}
-                      </div>
-                    )}
-                    <div className="text-5xl font-bold mb-2">
-                      ${course.price}
-                    </div>
-                    <p className="text-blue-100 text-lg">Course Fee</p>
-                    {course.originalPrice && (
-                      <Badge className="mt-3 bg-red-500 text-white border-0 px-4 py-1.5 text-sm font-bold">
-                        SAVE ${course.originalPrice - course.price}!
-                      </Badge>
+                    {experienceBookingEnabled && withExperiencePrice != null && withoutExperiencePrice != null ? (
+                      <>
+                        <p className="text-blue-100 text-lg mb-4">Course Fee</p>
+                        <div className="space-y-4 text-left sm:text-center">
+                          <div>
+                            <p className="text-blue-100 text-sm mb-1">With experience</p>
+                            {course.experienceOriginalPrice != null && course.experienceOriginalPrice > 0 && (
+                              <div className="price-strikethrough text-lg text-white/60 mb-1">
+                                ${course.experienceOriginalPrice}
+                              </div>
+                            )}
+                            <div className="text-3xl sm:text-4xl font-bold">${withExperiencePrice}</div>
+                          </div>
+                          <div className="pt-4 border-t border-white/20">
+                            <p className="text-blue-100 text-sm mb-1">Without experience</p>
+                            {course.noExperienceOriginalPrice != null && course.noExperienceOriginalPrice > 0 && (
+                              <div className="price-strikethrough text-lg text-white/60 mb-1">
+                                ${course.noExperienceOriginalPrice}
+                              </div>
+                            )}
+                            <div className="text-3xl sm:text-4xl font-bold">${withoutExperiencePrice}</div>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        {course.originalPrice && (
+                          <div className="price-strikethrough text-xl text-white/60 mb-1">
+                            ${course.originalPrice}
+                          </div>
+                        )}
+                        <div className="text-5xl font-bold mb-2">
+                          ${course.price}
+                        </div>
+                        <p className="text-blue-100 text-lg">Course Fee</p>
+                        {course.originalPrice && (
+                          <Badge className="mt-3 bg-red-500 text-white border-0 px-4 py-1.5 text-sm font-bold">
+                            SAVE ${course.originalPrice - course.price}!
+                          </Badge>
+                        )}
+                      </>
                     )}
                     {slBlPrice != null && slBlPrice > 0 && (
                       <div className="mt-4 pt-4 border-t border-white/20">
@@ -831,29 +884,68 @@ export function CourseDetailsPage({
 
                   {/* Action Buttons */}
                   <div className="space-y-3 pt-4">
-                    <Button
-                      onClick={() => onEnroll({
-                        courseId,
-                        courseName: course.title,
-                        courseCode: course.code,
-                        coursePrice: course.price
-                      })}
-                      className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
-                    >
-                      BOOK NOW — ${course.price}
-                    </Button>
-                    {slBlPrice != null && slBlPrice > 0 && (
-                      <Button
-                        onClick={() => onEnroll({
-                          courseId,
-                          courseName: course.title,
-                          courseCode: course.code,
-                          coursePrice: slBlPrice
-                        })}
-                        className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
-                      >
-                        Book Now SL + BL — ${slBlPrice}
-                      </Button>
+                    {experienceBookingEnabled && withExperiencePrice != null && withoutExperiencePrice != null ? (
+                      <>
+                        <Button
+                          onClick={() => onEnroll({
+                            courseId,
+                            courseName: course.title,
+                            courseCode: course.code,
+                            coursePrice: withExperiencePrice,
+                            experienceType: 'with'
+                          })}
+                          className="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 flex-wrap px-3"
+                        >
+                          {course.experienceOriginalPrice != null && course.experienceOriginalPrice > 0 && (
+                            <span className="price-strikethrough text-white/80 text-base">${course.experienceOriginalPrice}</span>
+                          )}
+                          <span className="text-lg">${withExperiencePrice}</span>
+                          <span>Book With Experience</span>
+                        </Button>
+                        <Button
+                          onClick={() => onEnroll({
+                            courseId,
+                            courseName: course.title,
+                            courseCode: course.code,
+                            coursePrice: withoutExperiencePrice,
+                            experienceType: 'without'
+                          })}
+                          className="w-full bg-gradient-to-r from-red-400 to-rose-500 hover:from-red-500 hover:to-rose-600 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all flex items-center justify-center gap-2 flex-wrap px-3"
+                        >
+                          {course.noExperienceOriginalPrice != null && course.noExperienceOriginalPrice > 0 && (
+                            <span className="price-strikethrough text-white/80 text-base">${course.noExperienceOriginalPrice}</span>
+                          )}
+                          <span className="text-lg">${withoutExperiencePrice}</span>
+                          <span>Book Without Experience</span>
+                        </Button>
+                      </>
+                    ) : (
+                      <>
+                        <Button
+                          onClick={() => onEnroll({
+                            courseId,
+                            courseName: course.title,
+                            courseCode: course.code,
+                            coursePrice: course.price
+                          })}
+                          className="w-full bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-600 hover:to-blue-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                        >
+                          BOOK NOW — ${course.price}
+                        </Button>
+                        {slBlPrice != null && slBlPrice > 0 && (
+                          <Button
+                            onClick={() => onEnroll({
+                              courseId,
+                              courseName: course.title,
+                              courseCode: course.code,
+                              coursePrice: slBlPrice
+                            })}
+                            className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                          >
+                            Book Now SL + BL — ${slBlPrice}
+                          </Button>
+                        )}
+                      </>
                     )}
 
                     {course.courseDates && course.courseDates.length > 0 && (
