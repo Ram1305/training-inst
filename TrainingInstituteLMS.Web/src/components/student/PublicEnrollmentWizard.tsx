@@ -328,22 +328,19 @@ const AUTO_PASS_ATTEMPT = 4;
 
 type EnrollmentType = 'individual' | 'company';
 
-const RIIHAN301E_COURSE_CODE = 'RIIHAN301E';
-
-/** SL + BL pricing; matches CourseDetailsPage (promo first, else active combo). */
+/** Promo / combo special tier; matches CourseDetails + landing course cards (promo first, else combo). */
 function getSlBlPricingForDropdownCourse(course: CourseDropdownItem): { price: number; original: number | null } | null {
-  if (course.courseCode !== RIIHAN301E_COURSE_CODE) return null;
   const promo = course.promoPrice != null && Number(course.promoPrice) > 0 ? Number(course.promoPrice) : null;
+  if (promo != null) {
+    const original =
+      course.promoOriginalPrice != null && Number(course.promoOriginalPrice) > 0
+        ? Number(course.promoOriginalPrice)
+        : null;
+    return { price: promo, original };
+  }
   const combo = course.comboOfferPrice != null && Number(course.comboOfferPrice) > 0 ? Number(course.comboOfferPrice) : null;
-  const price = promo ?? combo;
-  if (price == null || price <= 0) return null;
-  const original =
-    promo != null &&
-    course.promoOriginalPrice != null &&
-    Number(course.promoOriginalPrice) > 0
-      ? Number(course.promoOriginalPrice)
-      : null;
-  return { price, original };
+  if (combo == null) return null;
+  return { price: combo, original: null };
 }
 
 /** One line in company order: course + date + quantity. */

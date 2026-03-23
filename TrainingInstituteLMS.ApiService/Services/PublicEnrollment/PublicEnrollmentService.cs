@@ -61,6 +61,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 // schedulable courses to appear if they have any upcoming date.
                 .Where(c => c.IsActive || c.CourseDates.Any(cd => cd.ScheduledDate >= today))
                 .Include(c => c.Category)
+                .Include(c => c.ComboOffer)
                 .Select(c => new
                 {
                     c.CourseId,

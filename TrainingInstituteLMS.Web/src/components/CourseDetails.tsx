@@ -127,20 +127,24 @@ export function CourseDetailsPage({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
 
-  // SL + BL (State Levy + Booking Levy) pricing
-  // Restrict this special pricing to the elevating work platform course only.
-  const isSlBlCourse = course?.code === 'RIIHAN301E';
-
+  // SL + BL / special tier: promo first, else active combo (same as landing course cards and enroll dropdown).
+  const promoNum = course?.promoPrice != null ? Number(course.promoPrice) : NaN;
+  const comboNum =
+    course?.comboOffer?.price != null ? Number(course.comboOffer.price) : NaN;
   const slBlPrice =
-    isSlBlCourse && course?.promoPrice != null && course.promoPrice > 0
-      ? course.promoPrice
-      : isSlBlCourse && course?.comboOffer?.price != null && course.comboOffer.price > 0
-        ? course.comboOffer.price
+    !Number.isNaN(promoNum) && promoNum > 0
+      ? promoNum
+      : !Number.isNaN(comboNum) && comboNum > 0
+        ? comboNum
         : null;
-
+  const promoOrigNum =
+    course?.promoOriginalPrice != null ? Number(course.promoOriginalPrice) : NaN;
   const slBlOriginalPrice =
-    isSlBlCourse && course?.promoOriginalPrice != null && course.promoOriginalPrice > 0
-      ? course.promoOriginalPrice
+    !Number.isNaN(promoNum) &&
+    promoNum > 0 &&
+    !Number.isNaN(promoOrigNum) &&
+    promoOrigNum > 0
+      ? promoOrigNum
       : null;
 
   const experienceBookingEnabled = Boolean(course?.experienceBookingEnabled);
@@ -918,6 +922,25 @@ export function CourseDetailsPage({
                           <span className="text-lg">${withoutExperiencePrice}</span>
                           <span>Book Without Experience</span>
                         </Button>
+                        {slBlPrice != null && slBlPrice > 0 &&
+                          Math.abs(slBlPrice - withExperiencePrice) > 0.001 &&
+                          Math.abs(slBlPrice - withoutExperiencePrice) > 0.001 && (
+                          <Button
+                            onClick={() => onEnroll({
+                              courseId,
+                              courseName: course.title,
+                              courseCode: course.code,
+                              coursePrice: slBlPrice
+                            })}
+                            className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                          >
+                            {slBlOriginalPrice != null && (
+                              <span className="price-strikethrough text-white/80 text-base mr-2">${slBlOriginalPrice}</span>
+                            )}
+                            <span className="text-lg">${slBlPrice}</span>
+                            <span className="ml-1">Book Now SL + BL</span>
+                          </Button>
+                        )}
                       </>
                     ) : (
                       <>
