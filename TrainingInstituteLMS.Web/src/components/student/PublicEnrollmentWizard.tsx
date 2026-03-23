@@ -95,6 +95,8 @@ interface PublicEnrollmentWizardProps {
   preSelectedCourseDateId?: string;
   /** Optional override for the selected course price (e.g., promo/offer price from Course Details). */
   preSelectedCoursePrice?: number;
+  /** When set with experience-based course, matches the w/ exp vs w/o exp line in the course dropdown. */
+  preSelectedExperienceType?: 'with' | 'without';
   /** When true, show only name/email/phone/password and complete via one-time link (no payment, no LLN). */
   isOneTimeLink?: boolean;
   /** When true, users complete full flow without payment (name, email, mobile, LLN, enrollment form only). */
@@ -327,6 +329,8 @@ const AUTO_PASS_ATTEMPT = 4;
 type EnrollmentType = 'individual' | 'company';
 
 /** One line in company order: course + date + quantity. */
+type CoursePricingVariant = 'std' | 'with' | 'without' | 'prem';
+
 interface CompanyCourseItem {
   courseId: string;
   courseDateId?: string;
@@ -342,6 +346,7 @@ export function PublicEnrollmentWizard({
   preSelectedCourseId,
   preSelectedCourseDateId,
   preSelectedCoursePrice,
+  preSelectedExperienceType,
   isOneTimeLink = false,
   allowPayLater = false,
   enrollCode = '',
@@ -356,7 +361,12 @@ export function PublicEnrollmentWizard({
   const [enrollmentType, setEnrollmentType] = useState<EnrollmentType>('individual');
   // Company: multiple courses, each with date + quantity
   const [selectedCompanyCourses, setSelectedCompanyCourses] = useState<CompanyCourseItem[]>([]);
-  const [pendingCompanyCourse, setPendingCompanyCourse] = useState<{ courseId: string; courseName: string; price: number } | null>(null);
+  const [pendingCompanyCourse, setPendingCompanyCourse] = useState<{
+    courseId: string;
+    courseName: string;
+    price: number;
+    pricingVariant: CoursePricingVariant;
+  } | null>(null);
   const [companyEmail, setCompanyEmail] = useState('');
   const [companyName, setCompanyName] = useState('');
   const [companyMobile, setCompanyMobile] = useState('');
@@ -394,9 +404,12 @@ export function PublicEnrollmentWizard({
   const [courseDates, setCourseDates] = useState<CourseDateDropdownItem[]>([]);
   const [selectedCourseId, setSelectedCourseId] = useState(preSelectedCourseId || '');
   const [selectedCourseDateId, setSelectedCourseDateId] = useState(preSelectedCourseDateId || '');
-  const [selectedCoursePriceOverride, setSelectedCoursePriceOverride] = useState<number | null>(
-    typeof preSelectedCoursePrice === 'number' ? preSelectedCoursePrice : null
-  );
+  const [selectedCoursePriceOverride, setSelectedCoursePriceOverride] = useState<number | null>(null);
+  const [selectedPricingVariant, setSelectedPricingVariant] = useState<CoursePricingVariant>(() => {
+    if (preSelectedExperienceType === 'with') return 'with';
+    if (preSelectedExperienceType === 'without') return 'without';
+    return 'std';
+  });
   const [showAllCourseDates, setShowAllCourseDates] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
@@ -438,24 +451,56 @@ export function PublicEnrollmentWizard({
       });
   }, [courseDates]);
 
-  // Generate all items for dropdowns and group them
+  // Generate all items for dropdowns and group them (experience courses → two lines; promo → optional premium line)
   const groupedCourseItems = useMemo(() => {
     const allCourseItems = courses.flatMap((course) => {
-      const items = [];
       const categoryName = course.categoryName?.trim() || CATEGORY_OTHER;
-      items.push({
-        id: course.courseId,
-        price: course.price,
-        label: `${course.courseCode} – ${course.courseName} · $${course.price}`,
-        categoryName
-      });
-      if (course.courseId === preSelectedCourseId && preSelectedCoursePrice != null && preSelectedCoursePrice !== course.price) {
+      const items: {
+        id: string;
+        price: number;
+        label: string;
+        categoryName: string;
+        variant: CoursePricingVariant;
+      }[] = [];
+
+      if (course.experienceBookingEnabled) {
+        const pw = Number(course.experiencePrice ?? course.price);
+        const pn = Number(course.noExperiencePrice ?? course.price);
         items.push({
           id: course.courseId,
-          price: preSelectedCoursePrice,
-          label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`,
-          categoryName
+          price: pw,
+          label: `${course.courseCode} – ${course.courseName} · w/ exp $${pw}`,
+          categoryName,
+          variant: 'with'
         });
+        items.push({
+          id: course.courseId,
+          price: pn,
+          label: `${course.courseCode} – ${course.courseName} · w/o exp $${pn}`,
+          categoryName,
+          variant: 'without'
+        });
+      } else {
+        items.push({
+          id: course.courseId,
+          price: Number(course.price),
+          label: `${course.courseCode} – ${course.courseName} · $${course.price}`,
+          categoryName,
+          variant: 'std'
+        });
+        if (
+          course.courseId === preSelectedCourseId &&
+          preSelectedCoursePrice != null &&
+          Math.abs(preSelectedCoursePrice - Number(course.price)) > 0.001
+        ) {
+          items.push({
+            id: course.courseId,
+            price: preSelectedCoursePrice,
+            label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`,
+            categoryName,
+            variant: 'prem'
+          });
+        }
       }
       return items;
     });
@@ -489,6 +534,49 @@ export function PublicEnrollmentWizard({
       return orderedGroups;
     };
   }, [courses, preSelectedCourseId, preSelectedCoursePrice]);
+
+  // Apply URL / parent preselection to pricing variant once courses are loaded (do not override user’s different course choice).
+  useEffect(() => {
+    if (!courses.length || !preSelectedCourseId) return;
+    if (selectedCourseId !== preSelectedCourseId) return;
+    const c = courses.find((x) => x.courseId === preSelectedCourseId);
+    if (!c) return;
+
+    if (c.experienceBookingEnabled) {
+      if (preSelectedExperienceType === 'with') {
+        setSelectedPricingVariant('with');
+        setSelectedCoursePriceOverride(null);
+      } else if (preSelectedExperienceType === 'without') {
+        setSelectedPricingVariant('without');
+        setSelectedCoursePriceOverride(null);
+      } else if (typeof preSelectedCoursePrice === 'number') {
+        const pw = Number(c.experiencePrice ?? c.price);
+        const pn = Number(c.noExperiencePrice ?? c.price);
+        if (Math.abs(preSelectedCoursePrice - pw) <= 0.001) {
+          setSelectedPricingVariant('with');
+          setSelectedCoursePriceOverride(null);
+        } else if (Math.abs(preSelectedCoursePrice - pn) <= 0.001) {
+          setSelectedPricingVariant('without');
+          setSelectedCoursePriceOverride(null);
+        } else {
+          setSelectedPricingVariant('with');
+          setSelectedCoursePriceOverride(null);
+        }
+      } else {
+        setSelectedPricingVariant('with');
+        setSelectedCoursePriceOverride(null);
+      }
+    } else if (
+      typeof preSelectedCoursePrice === 'number' &&
+      Math.abs(preSelectedCoursePrice - Number(c.price)) > 0.001
+    ) {
+      setSelectedPricingVariant('prem');
+      setSelectedCoursePriceOverride(preSelectedCoursePrice);
+    } else {
+      setSelectedPricingVariant('std');
+      setSelectedCoursePriceOverride(null);
+    }
+  }, [courses, preSelectedCourseId, preSelectedCoursePrice, preSelectedExperienceType, selectedCourseId]);
 
   // Step 3: Payment (moved up). When allowPayLater, force pay_later.
   const [paymentMethod, setPaymentMethod] = useState(allowPayLater ? 'pay_later' : 'bank_transfer');
@@ -603,13 +691,6 @@ export function PublicEnrollmentWizard({
       setSelectedCourseDateId('');
     }
   }, [selectedCourseId]);
-
-  // If the user changes the course manually, drop any override price (promo applies only to the preselected course).
-  useEffect(() => {
-    if (!selectedCourseId) return;
-    if (preSelectedCourseId && selectedCourseId === preSelectedCourseId) return;
-    if (selectedCoursePriceOverride != null) setSelectedCoursePriceOverride(null);
-  }, [selectedCourseId, preSelectedCourseId, selectedCoursePriceOverride]);
 
   // If selected date gets filtered out (e.g., now in the past), clear selection
   useEffect(() => {
@@ -1720,10 +1801,18 @@ export function PublicEnrollmentWizard({
 
   const getSelectedCourse = () => courses.find(c => c.courseId === selectedCourseId);
   const getSelectedCoursePrice = () => {
+    const c = getSelectedCourse();
+    if (!c) return 0;
     if (selectedCoursePriceOverride != null && selectedCoursePriceOverride >= 0) {
       return selectedCoursePriceOverride;
     }
-    return getSelectedCourse()?.price || 0;
+    if (selectedPricingVariant === 'with' && c.experienceBookingEnabled) {
+      return Number(c.experiencePrice ?? c.price);
+    }
+    if (selectedPricingVariant === 'without' && c.experienceBookingEnabled) {
+      return Number(c.noExperiencePrice ?? c.price);
+    }
+    return Number(c.price);
   };
   const getSelectedDate = () => courseDates.find(d => d.courseDateId === selectedCourseDateId);
 
@@ -1891,10 +1980,28 @@ export function PublicEnrollmentWizard({
                               setPendingCompanyCourse(null);
                             } else if (next === 'company' && preSelectedCourseId && typeof preSelectedCoursePrice === 'number') {
                               const c = courses.find((x) => x.courseId === preSelectedCourseId);
+                              let pricingVariant: CoursePricingVariant = 'std';
+                              if (c?.experienceBookingEnabled) {
+                                if (preSelectedExperienceType === 'with') pricingVariant = 'with';
+                                else if (preSelectedExperienceType === 'without') pricingVariant = 'without';
+                                else {
+                                  const pw = Number(c.experiencePrice ?? c.price);
+                                  const pn = Number(c.noExperiencePrice ?? c.price);
+                                  if (Math.abs(preSelectedCoursePrice - pw) <= 0.001) pricingVariant = 'with';
+                                  else if (Math.abs(preSelectedCoursePrice - pn) <= 0.001) pricingVariant = 'without';
+                                  else pricingVariant = 'with';
+                                }
+                              } else if (
+                                c &&
+                                Math.abs(preSelectedCoursePrice - Number(c.price)) > 0.001
+                              ) {
+                                pricingVariant = 'prem';
+                              }
                               setPendingCompanyCourse({
                                 courseId: preSelectedCourseId,
                                 courseName: c?.courseName ?? '',
                                 price: preSelectedCoursePrice,
+                                pricingVariant,
                               });
                               setSelectedCourseId(preSelectedCourseId);
                             }
@@ -1936,13 +2043,23 @@ export function PublicEnrollmentWizard({
                         ) : (
                           <div className="space-y-2">
                             <Select
-                              value={pendingCompanyCourse ? `${pendingCompanyCourse.courseId}|${pendingCompanyCourse.price}` : ''}
+                              value={
+                                pendingCompanyCourse
+                                  ? `${pendingCompanyCourse.courseId}|${pendingCompanyCourse.price}|${pendingCompanyCourse.pricingVariant}`
+                                  : ''
+                              }
                               onValueChange={(value) => {
-                                const [courseId, priceStr] = value.split('|');
+                                const [courseId, priceStr, variantRaw] = value.split('|');
                                 const price = parseFloat(priceStr);
+                                const variant = (variantRaw || 'std') as CoursePricingVariant;
                                 const c = courses.find((x) => x.courseId === courseId);
                                 if (c) {
-                                  setPendingCompanyCourse({ courseId: c.courseId, courseName: c.courseName, price: price });
+                                  setPendingCompanyCourse({
+                                    courseId: c.courseId,
+                                    courseName: c.courseName,
+                                    price,
+                                    pricingVariant: variant,
+                                  });
                                   setSelectedCourseId(c.courseId);
                                   setSelectedCourseDateId('');
                                 }
@@ -1957,8 +2074,8 @@ export function PublicEnrollmentWizard({
                                     <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
                                     {group.items.map(item => (
                                       <SelectItem 
-                                        key={`${item.id}|${item.price}`} 
-                                        value={`${item.id}|${item.price}`}
+                                        key={`${item.id}|${item.price}|${item.variant}`} 
+                                        value={`${item.id}|${item.price}|${item.variant}`}
                                         className="max-w-full"
                                       >
                                         <div className="truncate max-w-[280px] sm:max-w-[400px]">{item.label}</div>
@@ -2076,6 +2193,8 @@ export function PublicEnrollmentWizard({
                                                   setPendingCompanyCourse(null);
                                                   setSelectedCourseId('');
                                                   setSelectedCourseDateId('');
+                                                  setSelectedPricingVariant('std');
+                                                  setSelectedCoursePriceOverride(null);
                                                 }}
                                                 className={`
                                               relative text-left rounded-xl border-2 p-4 transition-all duration-200 w-full max-w-sm
@@ -2163,13 +2282,18 @@ export function PublicEnrollmentWizard({
                         ) : (
                           <>
                             <Select
-                              value={selectedCourseId ? `${selectedCourseId}|${getSelectedCoursePrice()}` : undefined}
+                              value={
+                                selectedCourseId && getSelectedCourse()
+                                  ? `${selectedCourseId}|${getSelectedCoursePrice()}|${selectedPricingVariant}`
+                                  : undefined
+                              }
                               onValueChange={(value) => {
-                                const [id, priceStr] = value.split('|');
+                                const [id, priceStr, variantRaw] = value.split('|');
                                 const price = parseFloat(priceStr);
+                                const variant = (variantRaw || 'std') as CoursePricingVariant;
                                 setSelectedCourseId(id);
-                                const baseCourse = courses.find(c => c.courseId === id);
-                                if (baseCourse && price !== baseCourse.price) {
+                                setSelectedPricingVariant(variant);
+                                if (variant === 'prem') {
                                   setSelectedCoursePriceOverride(price);
                                 } else {
                                   setSelectedCoursePriceOverride(null);
@@ -2184,7 +2308,7 @@ export function PublicEnrollmentWizard({
                                   <SelectGroup key={group.category}>
                                     <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
                                     {group.items.map(item => (
-                                      <SelectItem key={`${item.id}|${item.price}`} value={`${item.id}|${item.price}`}>
+                                      <SelectItem key={`${item.id}|${item.price}|${item.variant}`} value={`${item.id}|${item.price}|${item.variant}`}>
                                         {item.label}
                                       </SelectItem>
                                     ))}

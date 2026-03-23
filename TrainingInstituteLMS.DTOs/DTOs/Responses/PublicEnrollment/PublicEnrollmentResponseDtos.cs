@@ -22,6 +22,13 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public string? Duration { get; set; }
         public string? CategoryName { get; set; }
         public string? ImageUrl { get; set; }
+
+        // Experience-based pricing (same shape as course list for public UI)
+        public bool ExperienceBookingEnabled { get; set; }
+        public decimal? ExperiencePrice { get; set; }
+        public decimal? ExperienceOriginalPrice { get; set; }
+        public decimal? NoExperiencePrice { get; set; }
+        public decimal? NoExperienceOriginalPrice { get; set; }
     }
     
     public class CourseDateDropdownItemDto

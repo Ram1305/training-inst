@@ -69,7 +69,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     c.Price,
                     c.Duration,
                     c.ImageUrl,
-                    CategoryName = c.Category != null ? c.Category.CategoryName : null
+                    CategoryName = c.Category != null ? c.Category.CategoryName : null,
+                    c.ExperienceBookingEnabled,
+                    c.ExperiencePrice,
+                    c.ExperienceOriginalPrice,
+                    c.NoExperiencePrice,
+                    c.NoExperienceOriginalPrice
                 })
                 .OrderBy(c => c.CourseName)
                 .ToListAsync();
@@ -82,7 +87,12 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 Price = c.Price,
                 Duration = c.Duration,
                 CategoryName = c.CategoryName,
-                ImageUrl = GetImageFullUrl(c.ImageUrl)
+                ImageUrl = GetImageFullUrl(c.ImageUrl),
+                ExperienceBookingEnabled = c.ExperienceBookingEnabled,
+                ExperiencePrice = c.ExperiencePrice,
+                ExperienceOriginalPrice = c.ExperienceOriginalPrice,
+                NoExperiencePrice = c.NoExperiencePrice,
+                NoExperienceOriginalPrice = c.NoExperienceOriginalPrice
             }).ToList();
         }
 

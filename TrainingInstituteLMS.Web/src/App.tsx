@@ -618,6 +618,7 @@ export default function App() {
             preSelectedCourseId={enrollmentLinkData?.courseId ?? selectedCourseId ?? undefined}
             preSelectedCourseDateId={enrollmentLinkData?.courseDateId ?? selectedCourseDateId ?? undefined}
             preSelectedCoursePrice={selectedCourseData.coursePrice}
+            preSelectedExperienceType={selectedCourseData.experienceType}
             isOneTimeLink={enrollmentLinkData?.isOneTimeLink}
             allowPayLater={enrollmentLinkData?.allowPayLater}
             enrollCode={enrollCode ?? ''}

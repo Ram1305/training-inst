@@ -9,6 +9,11 @@ export interface CourseDropdownItem {
   duration?: string;
   categoryName?: string;
   imageUrl?: string;
+  experienceBookingEnabled?: boolean;
+  experiencePrice?: number;
+  experienceOriginalPrice?: number;
+  noExperiencePrice?: number;
+  noExperienceOriginalPrice?: number;
 }
 
 export interface CourseDateDropdownItem {
