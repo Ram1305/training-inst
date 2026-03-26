@@ -3,7 +3,12 @@ export type DDMMYYYYValidationResult =
   | { valid: false; reason: 'format' | 'invalid_date' | 'year_range' };
 
 export function sanitizeDateInput(value: string): string {
-  return value.replace(/[^0-9/]/g, '').slice(0, 10);
+  const digitsOnly = value.replace(/\D/g, '').slice(0, 8);
+
+  if (digitsOnly.length <= 2) return digitsOnly;
+  if (digitsOnly.length <= 4) return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2)}`;
+
+  return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
 }
 
 export function isValidDDMMYYYY(
