@@ -60,19 +60,40 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                 // Get total count
                 var totalCount = await query.CountAsync();
 
-                // Apply pagination
+                // Sort by latest activity so recently verified/paid students surface first.
+                // Fallback order: latest payment activity -> latest enrollment -> student creation date.
                 var students = await query
-                    .OrderByDescending(s => s.CreatedAt)
+                    .Select(s => new
+                    {
+                        Student = s,
+                        LastActivityAt =
+                            _context.PaymentProofs
+                                .Where(pp => pp.StudentId == s.StudentId)
+                                .Select(pp => (DateTime?)(pp.VerifiedAt ?? pp.UploadedAt))
+                                .OrderByDescending(d => d)
+                                .FirstOrDefault()
+                            ?? _context.Enrollments
+                                .Where(e => e.StudentId == s.StudentId)
+                                .Select(e => (DateTime?)e.EnrolledAt)
+                                .OrderByDescending(d => d)
+                                .FirstOrDefault()
+                            ?? s.CreatedAt
+                    })
+                    .OrderByDescending(x => x.LastActivityAt)
                     .Skip((filter.PageNumber - 1) * filter.PageSize)
                     .Take(filter.PageSize)
-                    .Select(s => MapToStudentResponse(s))
+                    .Select(x => x.Student)
                     .ToListAsync();
+
+                var studentDtos = students
+                    .Select(MapToStudentResponse)
+                    .ToList();
 
                 var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
 
                 return new StudentListResponseDto
                 {
-                    Students = students,
+                    Students = studentDtos,
                     TotalCount = totalCount,
                     PageNumber = filter.PageNumber,
                     PageSize = filter.PageSize,
