@@ -724,7 +724,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
         <CardContent className="py-4">
           <div className="enrollment-navigation">
             <div className="enrollment-navigation-left">
-              {onCancel && (
+              {onCancel && currentSection === 1 && (
                 <Button variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
                   Cancel
                 </Button>
