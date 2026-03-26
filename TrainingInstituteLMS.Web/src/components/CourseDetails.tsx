@@ -129,23 +129,18 @@ export function CourseDetailsPage({
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
 
-  // SL + BL / special tier: promo first, else active combo (same as landing course cards and enroll dropdown).
+  // SL + BL is a special promo tier (same rule as landing course cards).
+  // IMPORTANT: Do not derive SL+BL from combo pricing; combo already has its own banner + CTA.
   const promoNum = course?.promoPrice != null ? Number(course.promoPrice) : NaN;
-  const comboNum =
-    course?.comboOffer?.price != null ? Number(course.comboOffer.price) : NaN;
-  const slBlPrice =
-    !Number.isNaN(promoNum) && promoNum > 0
-      ? promoNum
-      : !Number.isNaN(comboNum) && comboNum > 0
-        ? comboNum
-        : null;
   const promoOrigNum =
     course?.promoOriginalPrice != null ? Number(course.promoOriginalPrice) : NaN;
+
+  const isSlBlPromo =
+    course?.code === 'RIIHAN301E' && !Number.isNaN(promoNum) && promoNum > 0;
+
+  const slBlPrice = isSlBlPromo ? promoNum : null;
   const slBlOriginalPrice =
-    !Number.isNaN(promoNum) &&
-    promoNum > 0 &&
-    !Number.isNaN(promoOrigNum) &&
-    promoOrigNum > 0
+    isSlBlPromo && !Number.isNaN(promoOrigNum) && promoOrigNum > 0
       ? promoOrigNum
       : null;
 
