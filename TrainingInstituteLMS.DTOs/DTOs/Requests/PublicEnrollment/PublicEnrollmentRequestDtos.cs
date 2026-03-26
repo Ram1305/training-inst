@@ -31,6 +31,9 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
         public int? MaxUses { get; set; }
         /// <summary>When true, users opening this link complete enrollment without payment (name, email, mobile, LLN, enrollment form only).</summary>
         public bool AllowPayLater { get; set; }
+
+        /// <summary>When true, the public enroll page shows course names in the dropdown without prices (agent / quote-style links).</summary>
+        public bool IsAgentLink { get; set; }
     }
 
     /// <summary>

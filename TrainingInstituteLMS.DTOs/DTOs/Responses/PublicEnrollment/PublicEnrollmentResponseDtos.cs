@@ -86,6 +86,7 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public int UsedCount { get; set; }
         public bool IsActive { get; set; }
         public bool AllowPayLater { get; set; }
+        public bool IsAgentLink { get; set; }
     }
     
     public class EnrollmentLinkListResponseDto
@@ -116,6 +117,9 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.PublicEnrollment
         public bool IsCompanyPortalLink { get; set; }
 
         public string? CompanyName { get; set; }
+
+        /// <summary>When true, course dropdown hides prices (agent link).</summary>
+        public bool IsAgentLink { get; set; }
     }
 
     public class CompanyOrderResponseDto

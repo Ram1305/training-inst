@@ -15,7 +15,8 @@ import {
   Users,
   Clock,
   Edit2,
-  AlertTriangle
+  AlertTriangle,
+  UserCheck
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
@@ -58,7 +59,8 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
     courseDateId: undefined,
     maxUses: undefined,
     expiresAt: undefined,
-    allowPayLater: false
+    allowPayLater: false,
+    isAgentLink: false
   });
 
   // Edit dialog
@@ -129,6 +131,7 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
     const payload: EnrollmentLinkRequest = {
       name: trimmedName,
       allowPayLater: newLink.allowPayLater ?? false,
+      isAgentLink: newLink.isAgentLink ?? false,
     };
     if (newLink.description?.trim()) payload.description = newLink.description.trim();
     if (newLink.courseId && newLink.courseId !== 'none') payload.courseId = newLink.courseId;
@@ -141,7 +144,7 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
       if (response.success) {
         toast.success('Enrollment link created successfully');
         setCreateDialogOpen(false);
-        setNewLink({ name: '', description: '', courseId: undefined, courseDateId: undefined, maxUses: undefined, expiresAt: undefined, allowPayLater: false });
+        setNewLink({ name: '', description: '', courseId: undefined, courseDateId: undefined, maxUses: undefined, expiresAt: undefined, allowPayLater: false, isAgentLink: false });
         fetchLinks();
       } else {
         toast.error(response.message || 'Failed to create link');
@@ -179,6 +182,7 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
         description: linkToEdit.description,
         courseId: linkToEdit.courseId,
         allowPayLater: linkToEdit.allowPayLater ?? false,
+        isAgentLink: linkToEdit.isAgentLink ?? false,
         maxUses: editMaxUses && editMaxUses > 0 ? editMaxUses : undefined,
         expiresAt: editExpiresAt || undefined,
       };
@@ -486,6 +490,11 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
                                 Pay Later
                               </Badge>
                             )}
+                            {link.isAgentLink && (
+                              <Badge variant="outline" className="border-amber-300 text-amber-800">
+                                Agent
+                              </Badge>
+                            )}
                           </div>
                         </TableCell>
                         <TableCell>
@@ -620,21 +629,36 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
               />
             </div>
 
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="allowPayLater"
-                checked={newLink.allowPayLater || false}
-                onChange={(e) => setNewLink({ ...newLink, allowPayLater: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500"
-              />
-              <Label htmlFor="allowPayLater" className="cursor-pointer flex items-center gap-2">
-                <Clock className="w-4 h-4 text-violet-600" />
-                Pay Later
-              </Label>
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex items-center space-x-2 min-w-0">
+                <input
+                  type="checkbox"
+                  id="allowPayLater"
+                  checked={newLink.allowPayLater || false}
+                  onChange={(e) => setNewLink({ ...newLink, allowPayLater: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-violet-600 focus:ring-violet-500 shrink-0"
+                />
+                <Label htmlFor="allowPayLater" className="cursor-pointer flex items-center gap-2">
+                  <Clock className="w-4 h-4 text-violet-600 shrink-0" />
+                  Pay Later
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2 min-w-0">
+                <input
+                  type="checkbox"
+                  id="isAgentLink"
+                  checked={newLink.isAgentLink || false}
+                  onChange={(e) => setNewLink({ ...newLink, isAgentLink: e.target.checked })}
+                  className="h-4 w-4 rounded border-gray-300 text-amber-600 focus:ring-amber-500 shrink-0"
+                />
+                <Label htmlFor="isAgentLink" className="cursor-pointer flex items-center gap-2">
+                  <UserCheck className="w-4 h-4 text-amber-700 shrink-0" />
+                  Agent
+                </Label>
+              </div>
             </div>
-            <p className="text-xs text-gray-500 -mt-2 ml-6">
-              Users opening this link can complete enrollment without payment (name, email, mobile, LLN, enrollment form).
+            <p className="text-xs text-gray-500 -mt-1">
+              Pay Later: complete enrollment without payment (name, email, mobile, LLN, enrollment form). Agent: course list shows course names only—no prices in the dropdown.
             </p>
 
             <div>
@@ -774,9 +798,14 @@ export function AdminEnrollmentLinks({ linkType }: AdminEnrollmentLinksProps) {
                     <p>{selectedLink.description}</p>
                   </div>
                 )}
-                {selectedLink.allowPayLater && (
-                  <div className="col-span-2">
-                    <Badge variant="outline" className="border-violet-300 text-violet-700">Pay Later</Badge>
+                {(selectedLink.allowPayLater || selectedLink.isAgentLink) && (
+                  <div className="col-span-2 flex flex-wrap gap-2">
+                    {selectedLink.allowPayLater && (
+                      <Badge variant="outline" className="border-violet-300 text-violet-700">Pay Later</Badge>
+                    )}
+                    {selectedLink.isAgentLink && (
+                      <Badge variant="outline" className="border-amber-300 text-amber-800">Agent</Badge>
+                    )}
                   </div>
                 )}
               </div>

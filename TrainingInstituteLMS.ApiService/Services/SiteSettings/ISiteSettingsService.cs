@@ -28,5 +28,14 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
         /// Sets AllowPayLater for an enrollment link in SiteSettings.
         /// </summary>
         Task SetEnrollmentLinkAllowPayLaterAsync(Guid linkId, bool allowPayLater);
+
+        /// <summary>
+        /// When true, the public enroll wizard hides prices in the course dropdown (agent / quote-style links).
+        /// </summary>
+        Task<bool> GetEnrollmentLinkIsAgentLinkAsync(Guid linkId);
+
+        Task<Dictionary<Guid, bool>> GetEnrollmentLinkIsAgentLinkBatchAsync(IEnumerable<Guid> linkIds);
+
+        Task SetEnrollmentLinkIsAgentLinkAsync(Guid linkId, bool isAgentLink);
     }
 }

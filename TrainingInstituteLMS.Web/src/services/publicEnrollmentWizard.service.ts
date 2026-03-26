@@ -73,6 +73,8 @@ export interface EnrollmentLinkRequest {
   expiresAt?: string;
   maxUses?: number;
   allowPayLater?: boolean;
+  /** When true, enroll page course dropdown shows names only (no prices). */
+  isAgentLink?: boolean;
 }
 
 export interface EnrollmentLinkResponse {
@@ -92,6 +94,7 @@ export interface EnrollmentLinkResponse {
   usedCount: number;
   isActive: boolean;
   allowPayLater?: boolean;
+  isAgentLink?: boolean;
 }
 
 export interface EnrollmentLinkListResponse {
@@ -202,6 +205,7 @@ export const publicEnrollmentWizardService = {
     allowPayLater?: boolean;
     isCompanyPortalLink?: boolean;
     companyName?: string;
+    isAgentLink?: boolean;
   }>> {
     return apiService.get<ApiResponse<{
       linkId: string;
@@ -213,6 +217,7 @@ export const publicEnrollmentWizardService = {
       allowPayLater?: boolean;
       isCompanyPortalLink?: boolean;
       companyName?: string;
+      isAgentLink?: boolean;
     }>>(`/PublicEnrollment/link/${code}`);
   },
 

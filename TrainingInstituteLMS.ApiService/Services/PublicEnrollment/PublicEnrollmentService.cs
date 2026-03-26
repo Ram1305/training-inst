@@ -434,6 +434,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 await _context.EnrollmentLinks.AddAsync(link);
                 await _context.SaveChangesAsync();
                 await _siteSettingsService.SetEnrollmentLinkAllowPayLaterAsync(link.LinkId, request.AllowPayLater);
+                await _siteSettingsService.SetEnrollmentLinkIsAgentLinkAsync(link.LinkId, request.IsAgentLink);
             }
             catch (Microsoft.EntityFrameworkCore.DbUpdateException dbEx)
             {
@@ -449,7 +450,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 .Include(l => l.CourseDate)
                 .FirstOrDefaultAsync(l => l.LinkId == link.LinkId) ?? link;
 
-            return await MapToResponseDto(savedLink, request.AllowPayLater);
+            return await MapToResponseDto(savedLink, request.AllowPayLater, request.IsAgentLink);
         }
 
         public async Task<EnrollmentLinkListResponseDto> GetEnrollmentLinksAsync(int page, int pageSize, string? linkType = null)
@@ -485,10 +486,14 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 .ToListAsync();
 
             var allowPayLaterDict = await _siteSettingsService.GetEnrollmentLinkAllowPayLaterBatchAsync(links.Select(l => l.LinkId));
+            var isAgentLinkDict = await _siteSettingsService.GetEnrollmentLinkIsAgentLinkBatchAsync(links.Select(l => l.LinkId));
             var linkDtos = new List<EnrollmentLinkResponseDto>();
             foreach (var link in links)
             {
-                linkDtos.Add(await MapToResponseDto(link, allowPayLaterDict.GetValueOrDefault(link.LinkId, false)));
+                linkDtos.Add(await MapToResponseDto(
+                    link,
+                    allowPayLaterDict.GetValueOrDefault(link.LinkId, false),
+                    isAgentLinkDict.GetValueOrDefault(link.LinkId, false)));
             }
 
             return new EnrollmentLinkListResponseDto
@@ -509,7 +514,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
             if (link == null) return null;
             var allowPayLater = await _siteSettingsService.GetEnrollmentLinkAllowPayLaterAsync(link.LinkId);
-            return await MapToResponseDto(link, allowPayLater);
+            var isAgentLink = await _siteSettingsService.GetEnrollmentLinkIsAgentLinkAsync(link.LinkId);
+            return await MapToResponseDto(link, allowPayLater, isAgentLink);
         }
 
         public async Task<EnrollmentLinkDataDto?> GetEnrollmentLinkByCodeAsync(string code)
@@ -556,6 +562,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             }
 
             var allowPayLater = await _siteSettingsService.GetEnrollmentLinkAllowPayLaterAsync(link.LinkId);
+            var isAgentLink = await _siteSettingsService.GetEnrollmentLinkIsAgentLinkAsync(link.LinkId);
             var isCompanyPortalLink = IsCompanyPortalLink(link);
             if (isCompanyPortalLink)
                 allowPayLater = true;
@@ -570,7 +577,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 IsOneTimeLink = link.CompanyOrderId.HasValue && link.CourseId.HasValue,
                 AllowPayLater = allowPayLater,
                 IsCompanyPortalLink = isCompanyPortalLink,
-                CompanyName = link.Company?.CompanyName
+                CompanyName = link.Company?.CompanyName,
+                IsAgentLink = isAgentLink
             };
         }
 
@@ -1271,7 +1279,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             };
         }
 
-        private async Task<EnrollmentLinkResponseDto> MapToResponseDto(EnrollmentLinkEntity link, bool allowPayLater)
+        private async Task<EnrollmentLinkResponseDto> MapToResponseDto(EnrollmentLinkEntity link, bool allowPayLater, bool isAgentLink)
         {
             var baseUrl = await GetFrontendBaseUrlAsync();
             var course = link.Course;
@@ -1315,7 +1323,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 MaxUses = link.MaxUses,
                 UsedCount = link.UsedCount,
                 IsActive = link.IsActive,
-                AllowPayLater = allowPayLater
+                AllowPayLater = allowPayLater,
+                IsAgentLink = isAgentLink
             };
         }
 

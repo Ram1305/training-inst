@@ -154,5 +154,59 @@ namespace TrainingInstituteLMS.ApiService.Services.SiteSettings
             }
             await _context.SaveChangesAsync();
         }
+
+        private const string IsAgentLinkPrefix = "EnrollmentLink_IsAgentLink_";
+        private static string IsAgentLinkKey(Guid linkId) => $"{IsAgentLinkPrefix}{linkId:N}";
+
+        public async Task<bool> GetEnrollmentLinkIsAgentLinkAsync(Guid linkId)
+        {
+            var key = IsAgentLinkKey(linkId);
+            var setting = await _context.SiteSettings
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.Key == key);
+            return string.Equals(setting?.Value, "true", StringComparison.OrdinalIgnoreCase);
+        }
+
+        public async Task<Dictionary<Guid, bool>> GetEnrollmentLinkIsAgentLinkBatchAsync(IEnumerable<Guid> linkIds)
+        {
+            var ids = linkIds.ToList();
+            if (ids.Count == 0) return new Dictionary<Guid, bool>();
+            var keys = ids.Select(id => IsAgentLinkKey(id)).ToList();
+            var settings = await _context.SiteSettings
+                .AsNoTracking()
+                .Where(s => keys.Contains(s.Key))
+                .ToListAsync();
+            var dict = ids.ToDictionary(id => id, _ => false);
+            foreach (var s in settings)
+            {
+                if (s.Key.StartsWith(IsAgentLinkPrefix, StringComparison.Ordinal) &&
+                    Guid.TryParse(s.Key.AsSpan(IsAgentLinkPrefix.Length), out var linkId) &&
+                    dict.ContainsKey(linkId))
+                    dict[linkId] = string.Equals(s.Value, "true", StringComparison.OrdinalIgnoreCase);
+            }
+            return dict;
+        }
+
+        public async Task SetEnrollmentLinkIsAgentLinkAsync(Guid linkId, bool isAgentLink)
+        {
+            var key = IsAgentLinkKey(linkId);
+            var setting = await _context.SiteSettings.FirstOrDefaultAsync(s => s.Key == key);
+            var value = isAgentLink ? "true" : "false";
+            if (setting != null)
+            {
+                setting.Value = value;
+                setting.UpdatedAt = DateTime.UtcNow;
+            }
+            else
+            {
+                await _context.SiteSettings.AddAsync(new SiteSetting
+                {
+                    Id = Guid.NewGuid(),
+                    Key = key,
+                    Value = value
+                });
+            }
+            await _context.SaveChangesAsync();
+        }
     }
 }

@@ -107,6 +107,8 @@ interface PublicEnrollmentWizardProps {
   isCompanyPortalLink?: boolean;
   /** When true (e.g. opened via /enroll/:code), hide Individual vs Company and use individual only. */
   hideEnrollmentTypeSelector?: boolean;
+  /** Agent enrollment link: course dropdown shows names only (no dollar amounts). */
+  isAgentLink?: boolean;
 }
 
 // Full quiz sections data (same as in PublicQuiz.tsx)
@@ -368,7 +370,8 @@ export function PublicEnrollmentWizard({
   allowPayLater = false,
   enrollCode = '',
   isCompanyPortalLink = false,
-  hideEnrollmentTypeSelector = false
+  hideEnrollmentTypeSelector = false,
+  isAgentLink = false
 }: PublicEnrollmentWizardProps) {
   const { publicSiteUrl } = usePublicSiteUrl();
   // Wizard step state
@@ -471,6 +474,7 @@ export function PublicEnrollmentWizard({
 
   // Generate all items for dropdowns and group them (experience courses → two lines; promo → optional premium line)
   const groupedCourseItems = useMemo(() => {
+    const hidePrices = isAgentLink;
     const allCourseItems = courses.flatMap((course) => {
       const categoryName = course.categoryName?.trim() || CATEGORY_OTHER;
       const items: {
@@ -487,14 +491,18 @@ export function PublicEnrollmentWizard({
         items.push({
           id: course.courseId,
           price: pw,
-          label: `${course.courseCode} – ${course.courseName} · w/ exp $${pw}`,
+          label: hidePrices
+            ? `${course.courseCode} – ${course.courseName} · with experience`
+            : `${course.courseCode} – ${course.courseName} · w/ exp $${pw}`,
           categoryName,
           variant: 'with'
         });
         items.push({
           id: course.courseId,
           price: pn,
-          label: `${course.courseCode} – ${course.courseName} · w/o exp $${pn}`,
+          label: hidePrices
+            ? `${course.courseCode} – ${course.courseName} · without experience`
+            : `${course.courseCode} – ${course.courseName} · w/o exp $${pn}`,
           categoryName,
           variant: 'without'
         });
@@ -506,9 +514,11 @@ export function PublicEnrollmentWizard({
             items.push({
               id: course.courseId,
               price: slBlExp.price,
-              label: `${course.courseCode} – ${course.courseName} · SL + BL $${slBlExp.price}${
-                slBlExp.original != null ? ` (was $${slBlExp.original})` : ''
-              }`,
+              label: hidePrices
+                ? `${course.courseCode} – ${course.courseName} · SL + BL${slBlExp.original != null ? ' (promo)' : ''}`
+                : `${course.courseCode} – ${course.courseName} · SL + BL $${slBlExp.price}${
+                    slBlExp.original != null ? ` (was $${slBlExp.original})` : ''
+                  }`,
               categoryName,
               variant: 'slbl'
             });
@@ -518,7 +528,9 @@ export function PublicEnrollmentWizard({
         items.push({
           id: course.courseId,
           price: Number(course.price),
-          label: `${course.courseCode} – ${course.courseName} · $${course.price}`,
+          label: hidePrices
+            ? `${course.courseCode} – ${course.courseName}`
+            : `${course.courseCode} – ${course.courseName} · $${course.price}`,
           categoryName,
           variant: 'std'
         });
@@ -527,9 +539,11 @@ export function PublicEnrollmentWizard({
           items.push({
             id: course.courseId,
             price: slBl.price,
-            label: `${course.courseCode} – ${course.courseName} · SL + BL $${slBl.price}${
-              slBl.original != null ? ` (was $${slBl.original})` : ''
-            }`,
+            label: hidePrices
+              ? `${course.courseCode} – ${course.courseName} · SL + BL${slBl.original != null ? ' (promo)' : ''}`
+              : `${course.courseCode} – ${course.courseName} · SL + BL $${slBl.price}${
+                  slBl.original != null ? ` (was $${slBl.original})` : ''
+                }`,
             categoryName,
             variant: 'slbl'
           });
@@ -543,7 +557,9 @@ export function PublicEnrollmentWizard({
           items.push({
             id: course.courseId,
             price: preSelectedCoursePrice,
-            label: `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`,
+            label: hidePrices
+              ? `${course.courseCode} – ${course.courseName} (Premium)`
+              : `${course.courseCode} – ${course.courseName} (Premium) · $${preSelectedCoursePrice}`,
             categoryName,
             variant: 'prem'
           });
@@ -580,7 +596,7 @@ export function PublicEnrollmentWizard({
 
       return orderedGroups;
     };
-  }, [courses, preSelectedCourseId, preSelectedCoursePrice]);
+  }, [courses, preSelectedCourseId, preSelectedCoursePrice, isAgentLink]);
 
   // Apply URL / parent preselection to pricing variant once courses are loaded (do not override user’s different course choice).
   useEffect(() => {
@@ -2415,7 +2431,11 @@ export function PublicEnrollmentWizard({
                             {(() => {
                               const c = getSelectedCourse();
                               if (!c) return null;
-                              const summaryParts = [`$${getSelectedCoursePrice()}`, c.duration, c.categoryName].filter(Boolean);
+                              const summaryParts = (
+                                isAgentLink
+                                  ? [c.duration, c.categoryName]
+                                  : [`$${getSelectedCoursePrice()}`, c.duration, c.categoryName]
+                              ).filter(Boolean);
                               if (summaryParts.length === 0) return null;
                               return (
                                 <p className="text-sm text-gray-500 mt-2">
