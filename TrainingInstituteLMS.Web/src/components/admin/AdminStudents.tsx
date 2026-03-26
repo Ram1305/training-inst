@@ -24,6 +24,13 @@ interface StudentStatus {
   hasCompletedEnrollment: boolean;
 }
 
+interface StudentTableRow {
+  rowKey: string;
+  student: StudentResponse;
+  enrollment?: StudentEnrolledCourse;
+  payment?: AdminPaymentProof;
+}
+
 export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   const [students, setStudents] = useState<StudentResponse[]>([]);
   const [loading, setLoading] = useState(false);
@@ -323,6 +330,24 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
+  const studentTableRows: StudentTableRow[] = students.flatMap((student) => {
+    const enrollments = studentEnrollments.get(student.studentId) ?? [];
+    const payments = studentPayments.get(student.studentId) ?? [];
+
+    if (enrollments.length === 0) {
+      return [{ rowKey: `no-enrollment-${student.studentId}`, student }];
+    }
+
+    return enrollments.map((enrollment) => {
+      const payment = payments.find((p) => p.enrollmentId === enrollment.enrollmentId);
+      return {
+        rowKey: enrollment.enrollmentId || `${student.studentId}-${enrollment.courseId}`,
+        student,
+        enrollment,
+        payment,
+      };
+    });
+  });
 
   return (
     <div className="space-y-6">
@@ -549,23 +574,16 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {students.map((student) => {
+                    {studentTableRows.map((row) => {
+                      const { student, enrollment, payment, rowKey } = row;
                       const status = studentStatuses.get(student.studentId);
-                      const enrollments = studentEnrollments.get(student.studentId) ?? [];
-                      const payments = studentPayments.get(student.studentId) ?? [];
-                      const firstEnr = enrollments[0];
-                      const courseLabel = enrollments.length === 0 ? '—' : enrollments.length === 1 ? firstEnr.courseName : `${enrollments.length} courses`;
-                      const paymentForFirst = firstEnr ? payments.find(p => p.enrollmentId === firstEnr.enrollmentId) : undefined;
-                      const dateSource = firstEnr?.selectedCourseDate ?? paymentForFirst?.selectedCourseDate ?? firstEnr?.enrolledAt;
+                      const courseLabel = enrollment?.courseName ?? '—';
+                      const dateSource = enrollment?.selectedCourseDate ?? payment?.selectedCourseDate ?? enrollment?.enrolledAt;
                       const courseDateLabel = dateSource ? formatDate(dateSource) : '—';
-                      const allPaid = enrollments.length > 0 && enrollments.every((e) => {
-                        const pay = payments.find(p => p.enrollmentId === e.enrollmentId);
-                        const st = pay?.status ?? e.paymentStatus;
-                        return st === 'Verified' || st === 'Paid';
-                      });
-                      const paymentStatusLabel = enrollments.length === 0 ? '—' : allPaid ? 'Paid' : 'Unpaid';
+                      const rowPaymentStatus = payment?.status ?? enrollment?.paymentStatus;
+                      const paymentStatusLabel = !enrollment ? '—' : rowPaymentStatus === 'Verified' || rowPaymentStatus === 'Paid' ? 'Paid' : 'Unpaid';
                       return (
-                      <TableRow key={student.studentId}>
+                      <TableRow key={rowKey}>
                         <TableCell>{renderRegisterDate(student.createdAt)}</TableCell>
                         <TableCell>
                           <div className="flex items-center gap-3">
@@ -583,14 +601,14 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                         <TableCell>
                           {(() => {
                             const isCompany =
-                              firstEnr?.enrollmentType === 'Company' ||
-                              paymentForFirst?.accountType === 'Company';
+                              enrollment?.enrollmentType === 'Company' ||
+                              payment?.accountType === 'Company';
                             const companyName =
-                              paymentForFirst?.companyName ?? firstEnr?.companyName;
+                              payment?.companyName ?? enrollment?.companyName;
                             if (isCompany) {
                               return companyName ? `Company - ${companyName}` : 'Company';
                             }
-                            return firstEnr?.enrollmentType ?? paymentForFirst?.accountType ?? '—';
+                            return enrollment?.enrollmentType ?? payment?.accountType ?? '—';
                           })()}
                         </TableCell>
                         <TableCell>{student.email}</TableCell>
