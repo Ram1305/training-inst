@@ -80,7 +80,7 @@ export function PublicBannerModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="p-0 overflow-hidden w-screen h-[100svh] max-w-none rounded-none sm:w-full sm:h-auto sm:max-w-[min(72rem,calc(100%-2rem))] sm:rounded-2xl [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:opacity-100 [&_[data-slot=dialog-close]]:bg-black/25 [&_[data-slot=dialog-close]]:hover:bg-black/40 [&_[data-slot=dialog-close]]:rounded-md [&_[data-slot=dialog-close]]:p-2">
+      <DialogContent className="p-0 overflow-hidden w-screen h-[100svh] max-w-none rounded-none sm:w-full sm:h-auto sm:max-w-[min(72rem,calc(100%-2rem))] sm:rounded-2xl [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:opacity-100 [&_[data-slot=dialog-close]]:bg-red-600 [&_[data-slot=dialog-close]]:hover:bg-red-700 [&_[data-slot=dialog-close]]:rounded-full [&_[data-slot=dialog-close]]:h-10 [&_[data-slot=dialog-close]]:w-10 [&_[data-slot=dialog-close]]:p-0 [&_[data-slot=dialog-close]]:flex [&_[data-slot=dialog-close]]:items-center [&_[data-slot=dialog-close]]:justify-center">
         <div className="bg-gradient-to-r from-cyan-600 to-indigo-600 text-white px-5 sm:px-6 py-4">
           <DialogTitle className="text-white text-base sm:text-lg font-semibold pr-8">
             {topBanner.title}
@@ -88,17 +88,17 @@ export function PublicBannerModal() {
         </div>
 
         {topBanner.imageUrl ? (
-          <div className="bg-white h-[calc(100svh-4.25rem)] sm:h-auto">
+          <div className="bg-gradient-to-r from-cyan-600 to-indigo-600 h-[calc(100svh-4.25rem)] sm:h-auto">
             <img
               src={topBanner.imageUrl}
               alt={topBanner.title}
-              className="w-full h-full sm:h-auto sm:max-h-[80vh] object-contain bg-white"
+              className="w-full h-full sm:h-auto sm:max-h-[80vh] object-contain"
               loading="lazy"
             />
           </div>
         ) : (
-          <div className="bg-white px-6 py-8 text-slate-700">
-            <div className="text-sm">No image configured for this banner.</div>
+          <div className="bg-gradient-to-r from-cyan-600 to-indigo-600 px-6 py-8 text-white">
+            <div className="text-sm opacity-90">No image configured for this banner.</div>
           </div>
         )}
       </DialogContent>

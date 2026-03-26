@@ -5637,6 +5637,7 @@ nav > div {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  flex-wrap: wrap;
   padding: 1rem 0;
   margin-top: 2rem;
   border-top: 1px solid #e5e7eb;
@@ -5646,12 +5647,23 @@ nav > div {
 .enrollment-navigation-left {
   display: flex;
   gap: 0.75rem;
+  flex-wrap: wrap;
+  min-width: 0;
 }
 
 .enrollment-navigation-right {
   display: flex;
   gap: 0.75rem;
   margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  min-width: 0;
+}
+
+/* Keep buttons from overflowing their flex container */
+.enrollment-navigation-left > button,
+.enrollment-navigation-right > button {
+  max-width: 100%;
 }
 
 @media (max-width: 640px) {
