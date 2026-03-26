@@ -320,6 +320,7 @@ export default function App() {
     const scrollToCombo = () => {
       document.getElementById('combo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     };
+    // Mobile: wait for layout after state update so scroll target isn't wrong or "stuck"
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         scrollToCombo();
