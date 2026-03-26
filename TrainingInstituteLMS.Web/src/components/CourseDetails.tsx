@@ -304,8 +304,13 @@ export function CourseDetailsPage({
                 </Badge>
               )}
             </div>
+            {course.code && (
+              <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white">
+                {course.code}
+              </h1>
+            )}
             <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white">
-              {course.code ? `${course.code} - ${course.title}` : course.title}
+              {course.title}
             </h1>
             <p className="text-blue-100 text-lg max-w-3xl">
               {course.description || 'Professional certification program with industry-recognized credentials'}

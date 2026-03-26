@@ -159,7 +159,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                     UserId = Guid.NewGuid(),
                     FullName = request.CompanyName,
                     Email = request.Email,
-                    PhoneNumber = null,
+                    // Keep consistent with public enrollment company-order flow: store mobile on the user too.
+                    PhoneNumber = string.IsNullOrWhiteSpace(request.MobileNumber) ? null : request.MobileNumber.Trim(),
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                     UserType = "Company",
                     IsActive = true,
@@ -243,6 +244,8 @@ namespace TrainingInstituteLMS.ApiService.Services.CompanyManagement
                 company.User.FullName = request.CompanyName;
                 company.User.Email = request.Email;
                 company.MobileNumber = string.IsNullOrWhiteSpace(request.MobileNumber) ? null : request.MobileNumber.Trim();
+                // Keep consistent with public enrollment company-order flow: store mobile on the user too.
+                company.User.PhoneNumber = string.IsNullOrWhiteSpace(request.MobileNumber) ? null : request.MobileNumber.Trim();
 
                 if (!string.IsNullOrWhiteSpace(request.Password))
                 {

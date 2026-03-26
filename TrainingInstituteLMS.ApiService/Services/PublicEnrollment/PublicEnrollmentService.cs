@@ -961,6 +961,15 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
                 .ToListAsync();
+
+            // Some historical/company-order paths may not have CompanyMobile stored on the order row.
+            // Fallback to the company profile mobile so admin lists don't show blanks.
+            var companyIds = orders.Where(o => o.CompanyId != null).Select(o => o.CompanyId!.Value).Distinct().ToList();
+            var companyMobileMap = await _context.Companies
+                .AsNoTracking()
+                .Where(c => companyIds.Contains(c.CompanyId))
+                .Select(c => new { c.CompanyId, c.MobileNumber })
+                .ToDictionaryAsync(x => x.CompanyId, x => x.MobileNumber);
             var orderIds = orders.Select(o => o.OrderId).ToList();
             var linkCounts = await _context.EnrollmentLinks
                 .Where(l => l.CompanyOrderId != null && orderIds.Contains(l.CompanyOrderId.Value))
@@ -973,7 +982,9 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 OrderId = o.OrderId.ToString(),
                 CompanyName = o.CompanyName,
                 CompanyEmail = o.CompanyEmail,
-                CompanyMobile = o.CompanyMobile,
+                CompanyMobile = !string.IsNullOrWhiteSpace(o.CompanyMobile)
+                    ? o.CompanyMobile
+                    : (o.CompanyId != null && companyMobileMap.TryGetValue(o.CompanyId.Value, out var m) ? m : null),
                 TotalAmount = o.TotalAmount,
                 PaymentMethod = o.PaymentMethod,
                 Status = o.Status,
@@ -993,6 +1004,15 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         {
             var order = await _context.CompanyOrders.AsNoTracking().FirstOrDefaultAsync(o => o.OrderId == orderId);
             if (order == null) return null;
+            string? fallbackMobile = null;
+            if (order.CompanyId != null)
+            {
+                fallbackMobile = await _context.Companies
+                    .AsNoTracking()
+                    .Where(c => c.CompanyId == order.CompanyId.Value)
+                    .Select(c => c.MobileNumber)
+                    .FirstOrDefaultAsync();
+            }
             var baseUrl = await GetFrontendBaseUrlAsync();
             var links = await _context.EnrollmentLinks
                 .AsNoTracking()
@@ -1013,7 +1033,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 OrderId = order.OrderId.ToString(),
                 CompanyName = order.CompanyName,
                 CompanyEmail = order.CompanyEmail,
-                CompanyMobile = order.CompanyMobile,
+                CompanyMobile = !string.IsNullOrWhiteSpace(order.CompanyMobile) ? order.CompanyMobile : fallbackMobile,
                 TotalAmount = order.TotalAmount,
                 PaymentMethod = order.PaymentMethod,
                 Status = order.Status,
