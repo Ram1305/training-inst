@@ -2722,64 +2722,66 @@ export function PublicEnrollmentWizard({
                 </div>
               )}
 
-              {/* Order Summary */}
-              <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
-                <h4 className="font-semibold text-blue-900 mb-3">Order Summary</h4>
-                <div className="space-y-2 text-sm">
-                  {enrollmentType === 'company' ? (
-                    <>
-                      {selectedCompanyCourses.length > 0 && selectedCompanyCourses.map((item, i) => (
-                        <div key={`${item.courseId}-${item.courseDateId}-${i}`} className="space-y-1 pb-2 border-b border-blue-100 last:border-0 last:pb-0">
-                          <div className="flex justify-between gap-2">
-                            <span className="text-gray-600">Course:</span>
-                            <span className="font-medium">{item.courseName || item.courseId}</span>
-                          </div>
-                          {item.courseDateLabel && (
+              {/* Order Summary (hidden for Agent links) */}
+              {!isAgentLink && (
+                <div className="bg-blue-50 rounded-lg p-4 border border-blue-200">
+                  <h4 className="font-semibold text-blue-900 mb-3">Order Summary</h4>
+                  <div className="space-y-2 text-sm">
+                    {enrollmentType === 'company' ? (
+                      <>
+                        {selectedCompanyCourses.length > 0 && selectedCompanyCourses.map((item, i) => (
+                          <div key={`${item.courseId}-${item.courseDateId}-${i}`} className="space-y-1 pb-2 border-b border-blue-100 last:border-0 last:pb-0">
                             <div className="flex justify-between gap-2">
-                              <span className="text-gray-600">Date:</span>
-                              <span className="font-medium text-xs">{item.courseDateLabel}</span>
+                              <span className="text-gray-600">Course:</span>
+                              <span className="font-medium">{item.courseName || item.courseId}</span>
                             </div>
-                          )}
-                          <div className="flex justify-between gap-2">
-                            <span className="text-gray-600">Unit price × Qty:</span>
-                            <span className="font-medium">${item.price} × {item.quantity} = ${(item.price * item.quantity).toFixed(2)}</span>
+                            {item.courseDateLabel && (
+                              <div className="flex justify-between gap-2">
+                                <span className="text-gray-600">Date:</span>
+                                <span className="font-medium text-xs">{item.courseDateLabel}</span>
+                              </div>
+                            )}
+                            <div className="flex justify-between gap-2">
+                              <span className="text-gray-600">Unit price × Qty:</span>
+                              <span className="font-medium">${item.price} × {item.quantity} = ${(item.price * item.quantity).toFixed(2)}</span>
+                            </div>
                           </div>
+                        ))}
+                        {selectedCompanyCourses.length > 0 && (
+                          <div className="flex justify-between pt-2 border-t border-blue-200">
+                            <span className="font-semibold text-blue-900">Total:</span>
+                            <span className="font-bold text-blue-900 text-lg">${selectedCompanyCourses.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}</span>
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Course:</span>
+                          <span className="font-medium">{getSelectedCourse()?.courseName}</span>
                         </div>
-                      ))}
-                      {selectedCompanyCourses.length > 0 && (
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Date:</span>
+                          <span className="font-medium">
+                            {getSelectedDate() &&
+                              formatEnrollmentSlotScheduleText({
+                                dateKey: getCalendarDateKeyInAustralia(getSelectedDate()!.startDate) || '',
+                                startDateIso: getSelectedDate()!.startDate,
+                                endDateIso: getSelectedDate()!.endDate,
+                                startTime: getSelectedDate()!.startTime,
+                                endTime: getSelectedDate()!.endTime,
+                              })}
+                          </span>
+                        </div>
                         <div className="flex justify-between pt-2 border-t border-blue-200">
                           <span className="font-semibold text-blue-900">Total:</span>
-                          <span className="font-bold text-blue-900 text-lg">${selectedCompanyCourses.reduce((s, i) => s + i.price * i.quantity, 0).toFixed(2)}</span>
+                          <span className="font-bold text-blue-900 text-lg">${getSelectedCoursePrice()}</span>
                         </div>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Course:</span>
-                        <span className="font-medium">{getSelectedCourse()?.courseName}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Date:</span>
-                        <span className="font-medium">
-                          {getSelectedDate() &&
-                            formatEnrollmentSlotScheduleText({
-                              dateKey: getCalendarDateKeyInAustralia(getSelectedDate()!.startDate) || '',
-                              startDateIso: getSelectedDate()!.startDate,
-                              endDateIso: getSelectedDate()!.endDate,
-                              startTime: getSelectedDate()!.startTime,
-                              endTime: getSelectedDate()!.endTime,
-                            })}
-                        </span>
-                      </div>
-                      <div className="flex justify-between pt-2 border-t border-blue-200">
-                        <span className="font-semibold text-blue-900">Total:</span>
-                        <span className="font-bold text-blue-900 text-lg">${getSelectedCoursePrice()}</span>
-                      </div>
-                    </>
-                  )}
+                      </>
+                    )}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {allowPayLater && (
                 <div className="rounded-lg border border-violet-200 bg-violet-50/50 p-4 text-sm text-violet-800">
