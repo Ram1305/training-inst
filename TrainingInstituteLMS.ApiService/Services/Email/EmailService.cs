@@ -368,7 +368,8 @@ info@safetytrainingacademy.edu.au";
             decimal amountPaid,
             string paymentMethod,
             string loginId,
-            string password)
+            string password,
+            bool hideOrderAndPriceDetails)
         {
             if (!_settings.IsConfigured)
             {
@@ -459,6 +460,11 @@ Safety Training Academy also provides the following facilities for your convenie
 Notes:
 Ensure you arrive prepared with the necessary items and documentation for your training session.
 If you have any additional questions or concerns, please don't hesitate to contact Safety Training Academy for clarification.
+";
+
+                if (!hideOrderAndPriceDetails)
+                {
+                    plainBody += $@"
 
 ------------------------------------------------------------
 ORDER DETAILS (Order #{orderId})
@@ -467,6 +473,10 @@ Order Date: {orderDateStr}
 {courseName}                                   1    {priceStr}
 Payment Method: {paymentMethod}
 Total:                                                   {priceStr}
+";
+                }
+
+                plainBody += $@"
 
 ------------------------------------------------------------
 STUDENT PORTAL LOGIN CREDENTIALS
@@ -485,6 +495,37 @@ Business: 1300 976 097  |  M: 0483 878 887
 
 Best regards,
 {_settings.FromName}";
+
+                var orderAndProductHtml = hideOrderAndPriceDetails
+                    ? ""
+                    : $@"
+<!-- Order / Product box -->
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:16px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
+<tr><td style='padding:20px;border-bottom:1px solid #e2e8f0;'>
+<p style='margin:0 0 4px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Product</p>
+<p style='margin:0;font-size:15px;font-weight:600;color:#334155;'>{courseName}</p>
+<p style='margin:4px 0 0;font-size:13px;color:#64748b;'>Booking ID: {orderId}</p>
+<p style='margin:4px 0 0;font-size:13px;color:#64748b;'>Event: {courseName} | {dateStr} | {timeStr} ×1</p>
+</td></tr>
+<tr><td style='padding:16px 20px;'>
+<table width='100%' cellpadding='4' cellspacing='0' border='0' style='font-size:14px;'>
+<tr style='background-color:#f8fafc;'><td style='padding:8px 12px;color:#64748b;'>Quantity</td><td style='padding:8px 12px;text-align:right;font-weight:600;color:#334155;'>1</td></tr>
+<tr><td style='padding:8px 12px;color:#64748b;'>Price</td><td style='padding:8px 12px;text-align:right;font-weight:600;color:#334155;'>{priceStr}</td></tr>
+</table>
+</td></tr>
+</table>
+<!-- Payment & Total box -->
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Order Details (Order #{orderId})</p>
+<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order Date: <strong>{orderDateStr}</strong></p>
+<table width='100%' cellpadding='4' cellspacing='0' border='0' style='font-size:14px;margin-top:12px;'>
+<tr><td style='padding:8px 0;color:#334155;'>Subtotal</td><td style='padding:8px 0;text-align:right;font-weight:600;color:#334155;'>{priceStr}</td></tr>
+<tr><td style='padding:8px 0;color:#334155;'>Payment method</td><td style='padding:8px 0;text-align:right;font-weight:600;color:#334155;'>{paymentMethod}</td></tr>
+<tr style='border-top:2px solid #e2e8f0;'><td style='padding:12px 0 0;font-size:15px;font-weight:700;color:#334155;'>Total</td><td style='padding:12px 0 0;text-align:right;font-size:15px;font-weight:700;color:#334155;'>{priceStr}</td></tr>
+</table>
+</td></tr>
+</table>";
 
                 var htmlBody = $@"<!DOCTYPE html>
 <html>
@@ -542,33 +583,7 @@ Best regards,
 </ul>
 <p style='margin:0;font-size:13px;color:#334155;'><strong>Notes:</strong> Ensure you arrive prepared with the necessary items and documentation. If you have any questions, contact Safety Training Academy for clarification.</p>
 </div>
-<!-- Order / Product box -->
-<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:16px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
-<tr><td style='padding:20px;border-bottom:1px solid #e2e8f0;'>
-<p style='margin:0 0 4px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Product</p>
-<p style='margin:0;font-size:15px;font-weight:600;color:#334155;'>{courseName}</p>
-<p style='margin:4px 0 0;font-size:13px;color:#64748b;'>Booking ID: {orderId}</p>
-<p style='margin:4px 0 0;font-size:13px;color:#64748b;'>Event: {courseName} | {dateStr} | {timeStr} ×1</p>
-</td></tr>
-<tr><td style='padding:16px 20px;'>
-<table width='100%' cellpadding='4' cellspacing='0' border='0' style='font-size:14px;'>
-<tr style='background-color:#f8fafc;'><td style='padding:8px 12px;color:#64748b;'>Quantity</td><td style='padding:8px 12px;text-align:right;font-weight:600;color:#334155;'>1</td></tr>
-<tr><td style='padding:8px 12px;color:#64748b;'>Price</td><td style='padding:8px 12px;text-align:right;font-weight:600;color:#334155;'>{priceStr}</td></tr>
-</table>
-</td></tr>
-</table>
-<!-- Payment & Total box -->
-<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
-<tr><td style='padding:20px;'>
-<p style='margin:0 0 8px;font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Order Details (Order #{orderId})</p>
-<p style='margin:0 0 4px;font-size:14px;color:#334155;'>Order Date: <strong>{orderDateStr}</strong></p>
-<table width='100%' cellpadding='4' cellspacing='0' border='0' style='font-size:14px;margin-top:12px;'>
-<tr><td style='padding:8px 0;color:#334155;'>Subtotal</td><td style='padding:8px 0;text-align:right;font-weight:600;color:#334155;'>{priceStr}</td></tr>
-<tr><td style='padding:8px 0;color:#334155;'>Payment method</td><td style='padding:8px 0;text-align:right;font-weight:600;color:#334155;'>{paymentMethod}</td></tr>
-<tr style='border-top:2px solid #e2e8f0;'><td style='padding:12px 0 0;font-size:15px;font-weight:700;color:#334155;'>Total</td><td style='padding:12px 0 0;text-align:right;font-size:15px;font-weight:700;color:#334155;'>{priceStr}</td></tr>
-</table>
-</td></tr>
-</table>
+{orderAndProductHtml}
 <!-- Billing address box -->
 <table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
 <tr><td style='padding:20px;'>

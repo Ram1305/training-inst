@@ -17,6 +17,7 @@ interface PublicLayoutProps {
   onCourseDetails?: (courseId: string) => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
 export function PublicLayout({
@@ -33,6 +34,7 @@ export function PublicLayout({
   onCourseDetails,
   onVOC,
   onViewCourses,
+  onViewComboCourses,
 }: PublicLayoutProps) {
   return (
     <div className="min-h-screen bg-slate-50 font-sans flex flex-col">
@@ -49,6 +51,7 @@ export function PublicLayout({
         onCourseDetails={onCourseDetails}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
       <main className="flex-grow">
         {children}

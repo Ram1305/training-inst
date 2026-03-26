@@ -31,6 +31,7 @@ interface CourseDetailsPageProps {
   onRegister?: () => void;
   onContact?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
   onBookNow?: () => void;
   onCourseDetails?: (courseId: string) => void;
   onAbout?: () => void;
@@ -108,6 +109,7 @@ export function CourseDetailsPage({
   onRegister,
   onContact,
   onViewCourses,
+  onViewComboCourses,
   onBookNow,
   onCourseDetails,
   onAbout,
@@ -273,6 +275,7 @@ export function CourseDetailsPage({
         onGallery={onGallery}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Course Title Section */}

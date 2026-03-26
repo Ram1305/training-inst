@@ -23,6 +23,7 @@ interface AboutUsPageProps {
   onRegister: () => void;
   onContact?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
   onBookNow?: () => void;
   onCourseDetails?: (courseId: string) => void;
   onForms?: () => void;
@@ -31,7 +32,7 @@ interface AboutUsPageProps {
   onVOC?: () => void;
 }
 
-export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery, onVOC }: AboutUsPageProps) {
+export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCourses, onViewComboCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery, onVOC }: AboutUsPageProps) {
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
 
@@ -127,6 +128,8 @@ export function AboutUsPage({ onBack, onLogin, onRegister, onContact, onViewCour
         onFeesRefund={onFeesRefund}
         onGallery={onGallery}
         onVOC={onVOC}
+        onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Hero Section */}

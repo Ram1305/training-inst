@@ -24,9 +24,10 @@ interface FormsPageProps {
   onGallery?: () => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
-export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onBookNow, onCourseDetails, onFeesRefund, onGallery, onVOC, onViewCourses }: FormsPageProps) {
+export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onBookNow, onCourseDetails, onFeesRefund, onGallery, onVOC, onViewCourses, onViewComboCourses }: FormsPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -69,6 +70,7 @@ export function FormsPage({ onBack, onLogin, onRegister, onAbout, onContact, onB
         onGallery={onGallery}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Main Content */}

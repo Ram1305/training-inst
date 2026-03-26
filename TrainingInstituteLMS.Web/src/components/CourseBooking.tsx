@@ -55,6 +55,7 @@ interface CourseBookingProps {
   onRegister?: () => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
 type PaymentMethod = "bank" | "card";
@@ -77,6 +78,7 @@ export function CourseBooking({
   onRegister,
   onVOC,
   onViewCourses,
+  onViewComboCourses,
 }: CourseBookingProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("bank");
@@ -448,6 +450,7 @@ export function CourseBooking({
         onGallery={onGallery}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Hero Section with Search */}

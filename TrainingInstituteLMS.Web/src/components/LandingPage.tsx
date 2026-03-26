@@ -66,6 +66,7 @@ interface LandingPageProps {
   onBookCourse?: (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
 // Debounce hook
@@ -142,7 +143,7 @@ function LandingReviewCard({ review }: { review: LandingReview }) {
   );
 }
 
-export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC, onViewCourses }: LandingPageProps) {
+export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onContact, onBookNow, onEnrollNow, onForms, onFeesRefund, onGallery, onBookCourse, onVOC, onViewCourses, onViewComboCourses }: LandingPageProps) {
   const [isIOS] = useState(() => detectIOS());
 
   // State
@@ -387,6 +388,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         onGallery={onGallery}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Hero Slider Section with Search */}

@@ -22,9 +22,10 @@ interface FeesRefundPageProps {
   onCourseDetails?: (courseId: string) => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
-export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact, onBookNow, onCourseDetails, onGallery, onVOC, onViewCourses }: FeesRefundPageProps) {
+export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact, onBookNow, onCourseDetails, onGallery, onVOC, onViewCourses, onViewComboCourses }: FeesRefundPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
@@ -67,6 +68,7 @@ export function FeesRefundPage({ onBack, onLogin, onRegister, onAbout, onContact
         onGallery={onGallery}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Main Content */}

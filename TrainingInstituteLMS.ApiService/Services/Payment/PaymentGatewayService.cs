@@ -10,6 +10,7 @@ using TrainingInstituteLMS.ApiService.Configuration;
 using TrainingInstituteLMS.ApiService.Helpers;
 using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Enrollments;
@@ -27,6 +28,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
         private readonly ILogger<PaymentGatewayService> _logger;
         private readonly IEmailService _emailService;
         private readonly ICompanyBillingService _companyBillingService;
+        private readonly ISiteSettingsService _siteSettingsService;
 
         public PaymentGatewayService(
             IHttpClientFactory httpClientFactory,
@@ -34,7 +36,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
             TrainingLMSDbContext context,
             ILogger<PaymentGatewayService> logger,
             IEmailService emailService,
-            ICompanyBillingService companyBillingService)
+            ICompanyBillingService companyBillingService,
+            ISiteSettingsService siteSettingsService)
         {
             _httpClient = httpClientFactory.CreateClient("EwayClient");
             _ewaySettings = ewaySettings.Value;
@@ -42,6 +45,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
             _logger = logger;
             _emailService = emailService;
             _companyBillingService = companyBillingService;
+            _siteSettingsService = siteSettingsService;
 
             // Configure base address and authentication
             _httpClient.BaseAddress = new Uri(_ewaySettings.GetEndpointUrl());
@@ -268,6 +272,16 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                 // 4. Send enrollment confirmation email to student
                 try
                 {
+                    var hideOrderAndPriceDetails = false;
+                    if (!string.IsNullOrWhiteSpace(request.EnrollmentCode))
+                    {
+                        var link = await _context.EnrollmentLinks
+                            .AsNoTracking()
+                            .FirstOrDefaultAsync(l => l.UniqueCode == request.EnrollmentCode && l.IsActive);
+                        if (link != null)
+                            hideOrderAndPriceDetails = await _siteSettingsService.GetEnrollmentLinkIsAgentLinkAsync(link.LinkId);
+                    }
+
                     await _emailService.SendEnrollmentConfirmationAsync(
                         request.Email,
                         request.FullName,
@@ -285,7 +299,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                         request.AmountCents / 100m,
                         "Credit Card",
                         request.Email,
-                        request.Password);
+                        request.Password,
+                        hideOrderAndPriceDetails);
                 }
                 catch (Exception emailEx)
                 {
@@ -534,7 +549,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Payment
                         request.AmountCents / 100m,
                         "Credit Card",
                         string.Empty,
-                        string.Empty);
+                        string.Empty,
+                        false);
                 }
                 catch (Exception emailEx)
                 {

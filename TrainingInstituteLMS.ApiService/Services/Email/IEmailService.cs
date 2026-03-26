@@ -51,7 +51,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             decimal amountPaid,
             string paymentMethod,
             string loginId,
-            string password);
+            string password,
+            bool hideOrderAndPriceDetails);
         Task SendVOCSubmissionConfirmationAsync(
             string toEmail,
             string firstName,

@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using TrainingInstituteLMS.ApiService.Services.CompanyBilling;
 using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Files;
+using TrainingInstituteLMS.ApiService.Services.SiteSettings;
 using TrainingInstituteLMS.Data.Data;
 using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Students;
@@ -21,19 +22,22 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
         private readonly IEmailService _emailService;
         private readonly ILogger<StudentEnrollmentFormService> _logger;
         private readonly ICompanyBillingService _companyBillingService;
+        private readonly ISiteSettingsService _siteSettingsService;
 
         public StudentEnrollmentFormService(
             TrainingLMSDbContext context,
             IFileStorageService fileStorageService,
             IEmailService emailService,
             ILogger<StudentEnrollmentFormService> logger,
-            ICompanyBillingService companyBillingService)
+            ICompanyBillingService companyBillingService,
+            ISiteSettingsService siteSettingsService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
             _emailService = emailService;
             _logger = logger;
             _companyBillingService = companyBillingService;
+            _siteSettingsService = siteSettingsService;
         }
 
         private static bool IsCompanyPortalLink(EnrollmentLink? link) =>
@@ -354,6 +358,10 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                     var orderId = directPayBookingId ?? enrollment.EnrollmentId.ToString();
 
                     var studentAddress = FormatStudentAddress(request.ResidentialAddress, request.ResidentialSuburb, request.ResidentialState, request.ResidentialPostcode);
+                    var hideOrderAndPriceDetails = false;
+                    if (enrollment.EnrollmentLinkId.HasValue)
+                        hideOrderAndPriceDetails = await _siteSettingsService.GetEnrollmentLinkIsAgentLinkAsync(enrollment.EnrollmentLinkId.Value);
+
                     await _emailService.SendEnrollmentConfirmationAsync(
                         request.Email,
                         fullName,
@@ -371,7 +379,8 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                         amountPaid,
                         paymentMethodDisplay,
                         request.Email,
-                        request.Password);
+                        request.Password,
+                        hideOrderAndPriceDetails);
                 }
                 catch (Exception emailEx)
                 {

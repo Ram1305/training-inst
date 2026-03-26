@@ -24,6 +24,7 @@ interface ContactPageProps {
   onRegister: () => void;
   onAbout?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
   onBookNow?: () => void;
   onCourseDetails?: (courseId: string) => void;
   onForms?: () => void;
@@ -32,7 +33,7 @@ interface ContactPageProps {
   onVOC?: () => void;
 }
 
-export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery, onVOC }: ContactPageProps) {
+export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourses, onViewComboCourses, onBookNow, onCourseDetails, onForms, onFeesRefund, onGallery, onVOC }: ContactPageProps) {
   const [allCourses, setAllCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
   const [formData, setFormData] = useState({
@@ -103,6 +104,8 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
         onFeesRefund={onFeesRefund}
         onGallery={onGallery}
         onVOC={onVOC}
+        onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Hero Section */}

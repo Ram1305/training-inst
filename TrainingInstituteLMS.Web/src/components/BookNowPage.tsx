@@ -27,9 +27,10 @@ interface BookNowPageProps {
   onGallery?: () => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
-export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAbout, onContact, onForms, onFeesRefund, onGallery, onVOC, onViewCourses }: BookNowPageProps) {
+export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAbout, onContact, onForms, onFeesRefund, onGallery, onVOC, onViewCourses, onViewComboCourses }: BookNowPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -95,6 +96,7 @@ export function BookNowPage({ onBack, onLogin, onRegister, onCourseDetails, onAb
         onGallery={onGallery}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
       {/* Hero Section */}

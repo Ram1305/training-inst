@@ -34,6 +34,7 @@ interface PublicHeaderProps {
   onGallery?: () => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
 export function PublicHeader({
@@ -49,6 +50,7 @@ export function PublicHeader({
   onGallery,
   onVOC,
   onViewCourses,
+  onViewComboCourses,
 }: PublicHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
@@ -216,7 +218,7 @@ export function PublicHeader({
                 onMouseEnter={() => {
                   setCoursesDropdownOpen(true);
                   const categoriesWithCourses = categories.filter(cat =>
-                    courses.some(course => course.categoryId === cat.categoryId)
+                    courses.some(course => course.categoryId === cat.categoryId && !course.hasComboOffer)
                   );
                   if (categoriesWithCourses.length > 0 && !activeCategory) {
                     setActiveCategory(categoriesWithCourses[0].categoryId);
@@ -238,7 +240,7 @@ export function PublicHeader({
                   }}
                   className="flex items-center gap-1 text-white hover:text-cyan-400 transition-colors text-sm font-medium cursor-pointer"
                 >
-                  COURSES
+                  SHORT COURSES
                   <ChevronDown className={`w-4 h-4 transition-transform ${coursesDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
 
@@ -252,7 +254,7 @@ export function PublicHeader({
                     <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
                       <div className="dropdown-category-panel">
                         {categories
-                          .filter(category => courses.some(course => course.categoryId === category.categoryId))
+                          .filter(category => courses.some(course => course.categoryId === category.categoryId && !course.hasComboOffer))
                           .map((category) => (
                             <button
                               key={category.categoryId}
@@ -268,7 +270,7 @@ export function PublicHeader({
                         {activeCategory && (
                           <div>
                             {courses
-                              .filter(course => course.categoryId === activeCategory)
+                              .filter(course => course.categoryId === activeCategory && !course.hasComboOffer)
                               .map((course) => (
                                 <button
                                   key={course.courseId}
@@ -305,7 +307,10 @@ export function PublicHeader({
               </button>
               <div className="relative">
                 <button
-                  onClick={onBack}
+                  onClick={() => {
+                    closeMobileMenu();
+                    (onViewComboCourses || onBack)?.();
+                  }}
                   className="text-white hover:text-cyan-100 transition-colors text-sm font-bold px-4 py-2 rounded-full bg-gradient-to-r from-cyan-800 to-blue-800 shadow-lg shadow-cyan-900/40 animate-pulse"
                 >
                   COMBO COURSES
@@ -391,7 +396,17 @@ export function PublicHeader({
                     }}
                     className="text-white text-left p-2 hover:bg-slate-800 rounded"
                   >
-                    COURSES
+                    SHORT COURSES
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      (onViewComboCourses || onBack)?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    COMBO COURSES
                   </button>
                   <button
                     type="button"

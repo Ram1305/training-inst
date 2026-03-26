@@ -19,6 +19,7 @@ interface GalleryPageProps {
   onFeesRefund?: () => void;
   onVOC?: () => void;
   onViewCourses?: () => void;
+  onViewComboCourses?: () => void;
 }
 
 export function GalleryPage({
@@ -32,6 +33,7 @@ export function GalleryPage({
   onFeesRefund,
   onVOC,
   onViewCourses,
+  onViewComboCourses,
 }: GalleryPageProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [images, setImages] = useState<GalleryImage[]>([]);
@@ -67,6 +69,7 @@ export function GalleryPage({
         onGallery={undefined}
         onVOC={onVOC}
         onViewCourses={onViewCourses}
+        onViewComboCourses={onViewComboCourses}
       />
 
  {/* Hero Section - Blue Theme */}

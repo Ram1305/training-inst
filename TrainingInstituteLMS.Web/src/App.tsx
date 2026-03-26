@@ -313,6 +313,21 @@ export default function App() {
     });
   };
 
+  const handleViewComboCourses = () => {
+    setCurrentPage('landing');
+    setSelectedCourseId(null);
+    updateUrl(PATHS.landing);
+    const scrollToCombo = () => {
+      document.getElementById('combo')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    };
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        scrollToCombo();
+        setTimeout(scrollToCombo, 280);
+      });
+    });
+  };
+
   const handleGoToAbout = () => {
     setCurrentPage('about');
     updateUrl(PATHS.about);
@@ -329,6 +344,8 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
+    // Prevent mobile "scroll jump" when switching views/routes
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleGoToPublicQuiz = () => {
@@ -346,6 +363,8 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
+    // Prevent mobile "scroll jump" when switching views/routes
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleGoToForms = () => {
@@ -440,6 +459,8 @@ export default function App() {
     setEnrollmentLinkData(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
+    // Prevent mobile "scroll jump" when switching views/routes
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleBookCourse = (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => {
@@ -454,6 +475,8 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
+    // Prevent mobile "scroll jump" when switching views/routes
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleNavigateToEnrollFromPortal = (courseData?: {
@@ -477,6 +500,8 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
+    // Prevent mobile "scroll jump" when switching views/routes
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleBackFromBooking = () => {
@@ -556,6 +581,7 @@ export default function App() {
             onBookCourse={handleBookCourse}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'forms' && (
@@ -571,6 +597,7 @@ export default function App() {
             onGallery={handleGoToGallery}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'feesRefund' && (
@@ -585,6 +612,7 @@ export default function App() {
             onGallery={handleGoToGallery}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'gallery' && (
@@ -599,6 +627,7 @@ export default function App() {
             onFeesRefund={handleGoToFeesRefund}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'publicQuiz' && (
@@ -642,6 +671,7 @@ export default function App() {
             onCourseDetails={handleCourseDetails}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'bookNow' && (
@@ -657,6 +687,7 @@ export default function App() {
             onGallery={handleGoToGallery}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'about' && (
@@ -666,6 +697,7 @@ export default function App() {
             onRegister={handleGoToLogin}
             onContact={handleGoToContact}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
             onBookNow={handleGoToBookNow}
             onCourseDetails={handleCourseDetails}
             onGallery={handleGoToGallery}
@@ -681,6 +713,7 @@ export default function App() {
             onRegister={handleGoToLogin}
             onAbout={handleGoToAbout}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
             onBookNow={handleGoToBookNow}
             onCourseDetails={handleCourseDetails}
             onForms={handleGoToForms}
@@ -706,6 +739,7 @@ export default function App() {
             onRegister={handleGoToLogin}
             onContact={handleGoToContact}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
             onBookNow={handleGoToBookNow}
             onCourseDetails={handleCourseDetails}
             onAbout={handleGoToAbout}
@@ -736,6 +770,7 @@ export default function App() {
             onRegister={handleGoToLogin}
             onVOC={handleGoToVOCForm}
             onViewCourses={handleViewCourses}
+            onViewComboCourses={handleViewComboCourses}
           />
         )}
         {currentPage === 'login' && (

@@ -1080,7 +1080,8 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                             request.AmountPaid,
                             request.PaymentMethod ?? "Bank Transfer",
                             request.Email,
-                            request.Password);
+                            request.Password,
+                            false);
                     }
                     catch (Exception emailEx)
                     {
