@@ -434,6 +434,8 @@ export function PublicEnrollmentWizard({
   const [showAllCourseDates, setShowAllCourseDates] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(false);
   const [loadingDates, setLoadingDates] = useState(false);
+  const [individualDateKeyFilter, setIndividualDateKeyFilter] = useState<string>('');
+  const [companyDateKeyFilter, setCompanyDateKeyFilter] = useState<string>('');
 
   // Group course dates by calendar date for grid layout (same as Booking Form).
   // Each DB row is one slot (courseDateId); same calendar day can have many rows — sort by start/end instants.
@@ -471,6 +473,25 @@ export function PublicEnrollmentWizard({
         return { groupKey, dateKey, dates };
       });
   }, [courseDates]);
+
+  const scrollToDateGroup = (groupKey: string) => {
+    const el = document.getElementById(`course-date-group-${groupKey}`);
+    el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const applyDateFilter = (dateKey: string, mode: 'individual' | 'company') => {
+    // Ensure the chosen date is visible even when "show less" is active
+    setShowAllCourseDates(true);
+    if (mode === 'individual') setIndividualDateKeyFilter(dateKey);
+    else setCompanyDateKeyFilter(dateKey);
+
+    const firstGroup = courseDatesByDate.find(g => g.dateKey === dateKey);
+    if (!firstGroup) {
+      toast.error('No slots found for that date');
+      return;
+    }
+    scrollToDateGroup(firstGroup.groupKey);
+  };
 
   // Generate all items for dropdowns and group them (experience courses → two lines; promo → optional premium line)
   const groupedCourseItems = useMemo(() => {
@@ -1244,7 +1265,7 @@ export function PublicEnrollmentWizard({
             fullName: regRes.data.fullName,
           });
         } catch (e) {
-          toast.error(e instanceof Error ? e.message : 'Failed to complete enrolment');
+          toast.error(getBestErrorMessage(e, 'Failed to complete enrolment'));
         } finally {
           setIsSubmitting(false);
         }
@@ -1762,6 +1783,36 @@ export function PublicEnrollmentWizard({
     return { totalQuestions, totalCorrect };
   };
 
+  type ApiServiceError = Error & {
+    responseBody?: {
+      message?: string;
+      Message?: string;
+      detail?: string;
+      Detail?: string;
+      title?: string;
+      Title?: string;
+      errors?: string[] | Record<string, string[]>;
+    };
+    status?: number;
+  };
+
+  const getBestErrorMessage = (err: unknown, fallback: string): string => {
+    if (!err || typeof err !== 'object') return fallback;
+    const e = err as ApiServiceError;
+
+    // Prefer a single, specific validation error (first error item).
+    const errors = e.responseBody?.errors;
+    if (Array.isArray(errors) && errors.length > 0) return errors[0] ?? fallback;
+    if (errors && typeof errors === 'object') {
+      const first = Object.values(errors).flat()[0];
+      if (first) return first;
+    }
+
+    // Fall back to the normalized error message produced by api.service.ts
+    if (typeof e.message === 'string' && e.message.trim()) return e.message;
+    return fallback;
+  };
+
   // Final submit
   const handleFinalSubmit = async () => {
     const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
@@ -1886,7 +1937,7 @@ export function PublicEnrollmentWizard({
       }
     } catch (error) {
       console.error('Error submitting enrollment:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to submit enrollment');
+      toast.error(getBestErrorMessage(error, 'Failed to submit enrollment'));
     } finally {
       setIsSubmitting(false);
     }
@@ -2262,8 +2313,38 @@ export function PublicEnrollmentWizard({
                                   </div>
                                 ) : (
                                   <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                                    {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ groupKey, dateKey, dates }) => (
-                                      <div key={groupKey} className="flex flex-col items-center w-full">
+                                    <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                                      <div className="flex-1">
+                                        <Label className="text-xs text-gray-600">Quick pick date</Label>
+                                        <div className="relative">
+                                          <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-600" />
+                                          <Input
+                                            type="date"
+                                            value={companyDateKeyFilter}
+                                            onChange={(e) => {
+                                              const v = e.target.value;
+                                              setCompanyDateKeyFilter(v);
+                                              if (v) applyDateFilter(v, 'company');
+                                            }}
+                                            className="pl-9 rounded-xl border-2 border-violet-200 bg-white"
+                                          />
+                                        </div>
+                                      </div>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        className="rounded-xl border-violet-200 text-violet-700"
+                                        onClick={() => setCompanyDateKeyFilter('')}
+                                        disabled={!companyDateKeyFilter}
+                                      >
+                                        Clear
+                                      </Button>
+                                    </div>
+
+                                    {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4))
+                                      .filter(({ dateKey }) => !companyDateKeyFilter || dateKey === companyDateKeyFilter)
+                                      .map(({ groupKey, dateKey, dates }) => (
+                                      <div id={`course-date-group-${groupKey}`} key={groupKey} className="flex flex-col items-center w-full">
                                         <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
                                           {formatAustraliaCivilDateHeading(dateKey)}
                                         </p>
@@ -2463,8 +2544,38 @@ export function PublicEnrollmentWizard({
                             </div>
                           ) : (
                             <div className="space-y-4 p-4 rounded-xl border-2 border-violet-200 bg-violet-50/50">
-                              {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4)).map(({ groupKey, dateKey, dates }) => (
-                                <div key={groupKey} className="flex flex-col items-center w-full">
+                              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                                <div className="flex-1">
+                                  <Label className="text-xs text-gray-600">Quick pick date</Label>
+                                  <div className="relative">
+                                    <Calendar className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-violet-600" />
+                                    <Input
+                                      type="date"
+                                      value={individualDateKeyFilter}
+                                      onChange={(e) => {
+                                        const v = e.target.value;
+                                        setIndividualDateKeyFilter(v);
+                                        if (v) applyDateFilter(v, 'individual');
+                                      }}
+                                      className="pl-9 rounded-xl border-2 border-violet-200 bg-white"
+                                    />
+                                  </div>
+                                </div>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  className="rounded-xl border-violet-200 text-violet-700"
+                                  onClick={() => setIndividualDateKeyFilter('')}
+                                  disabled={!individualDateKeyFilter}
+                                >
+                                  Clear
+                                </Button>
+                              </div>
+
+                              {(showAllCourseDates ? courseDatesByDate : courseDatesByDate.slice(0, 4))
+                                .filter(({ dateKey }) => !individualDateKeyFilter || dateKey === individualDateKeyFilter)
+                                .map(({ groupKey, dateKey, dates }) => (
+                                <div id={`course-date-group-${groupKey}`} key={groupKey} className="flex flex-col items-center w-full">
                                   <p className="text-sm font-semibold text-violet-900 mb-2 text-center">
                                     {formatAustraliaCivilDateHeading(dateKey)}
                                   </p>
