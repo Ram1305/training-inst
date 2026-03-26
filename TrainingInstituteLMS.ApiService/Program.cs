@@ -22,6 +22,7 @@ using TrainingInstituteLMS.ApiService.Services.Email;
 using TrainingInstituteLMS.ApiService.Services.Reviews;
 using TrainingInstituteLMS.ApiService.Services.Gallery;
 using TrainingInstituteLMS.ApiService.Services.VOC;
+using TrainingInstituteLMS.ApiService.Services.Banners;
 using TrainingInstituteLMS.Data.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -106,6 +107,9 @@ builder.Services.AddScoped<IGoogleReviewService, GoogleReviewService>();
 
 // Gallery service
 builder.Services.AddScoped<IGalleryService, GalleryService>();
+
+// Banners service
+builder.Services.AddScoped<IBannerService, BannerService>();
 
 // Enrollment service
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();

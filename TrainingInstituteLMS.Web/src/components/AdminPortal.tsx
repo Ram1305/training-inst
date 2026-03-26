@@ -20,6 +20,7 @@ import {
   Star,
   Image,
   ClipboardCheck,
+  Megaphone,
 } from 'lucide-react';
 import { Button } from './ui/button';
 import type { User as UserType } from '../App';
@@ -41,6 +42,7 @@ import { AdminReviews } from './admin/AdminReviews';
 import { AdminGallery } from './admin/AdminGallery';
 import { AdminVOC } from './admin/AdminVOC';
 import { AdminBookingDetails } from './admin/AdminBookingDetails';
+import { AdminBanners } from './admin/AdminBanners';
 import { adminCompanyOrdersService } from '../services/adminCompanyOrders.service';
 
 interface AdminPortalProps {
@@ -67,6 +69,7 @@ type AdminPage =
   | 'reports'
   | 'google-reviews'
   | 'gallery'
+  | 'banners'
   | 'voc'
   | 'booking-details';
 
@@ -88,6 +91,7 @@ const VALID_ADMIN_PAGES: AdminPage[] = [
   'reports',
   'google-reviews',
   'gallery',
+  'banners',
   'voc',
   'booking-details',
 ];
@@ -169,6 +173,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'reports', name: 'Reports', icon: BarChart3 },
     { id: 'google-reviews', name: 'Google Reviews', icon: Star },
     { id: 'gallery', name: 'Gallery', icon: Image },
+    { id: 'banners', name: 'Banners', icon: Megaphone },
     { id: 'voc', name: 'VOC Submissions', icon: ClipboardCheck },
   ];
 
@@ -249,6 +254,8 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
         return <AdminReviews />;
       case 'gallery':
         return <AdminGallery />;
+      case 'banners':
+        return <AdminBanners />;
       case 'voc':
         return <AdminVOC />;
       case 'booking-details':

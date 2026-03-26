@@ -40,6 +40,7 @@ namespace TrainingInstituteLMS.ApiService.Configuration
             "course-images",
             "course-resources",
             "gallery-images",
+            "banners",
             // Student enrollment document container and subfolders
             "student-documents",
             "student-documents/primary-id",

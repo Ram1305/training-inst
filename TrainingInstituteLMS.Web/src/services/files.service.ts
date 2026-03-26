@@ -40,4 +40,32 @@ export const filesService = {
     // Build full URL for file access (API serves files at /api/files/{path})
     return `${API_CONFIG.BASE_URL}/files/${result.relativePath}`;
   },
+
+  /**
+   * Upload a file to the specified folder.
+   * Returns the relative path stored by the API (e.g. "banners/abc.png").
+   */
+  async uploadFileRelative(file: File, folder: string): Promise<string> {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const url = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.FILES.UPLOAD(folder)}`;
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({}));
+      throw new Error(error.message || 'Failed to upload file');
+    }
+
+    const result = (await response.json()) as FileUploadResult;
+    if (!result.success || !result.relativePath) {
+      throw new Error(result.errorMessage || 'Upload failed');
+    }
+
+    return result.relativePath;
+  },
 };

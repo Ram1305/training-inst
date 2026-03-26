@@ -48,6 +48,7 @@ namespace TrainingInstituteLMS.Data.Data
         public DbSet<Notification> Notifications { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
         public DbSet<SiteSetting> SiteSettings { get; set; }
+        public DbSet<Banner> Banners { get; set; }
 
         // Courses
         public DbSet<Course> Courses { get; set; }

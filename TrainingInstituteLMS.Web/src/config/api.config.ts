@@ -178,6 +178,12 @@ export const API_CONFIG = {
       REORDER: '/googlereview/reorder',
       TOGGLE_STATUS: (id: string) => `/googlereview/${id}/toggle-status`,
     },
+    BANNERS: {
+      ADMIN_BASE: '/admin/banners',
+      ADMIN_BY_ID: (id: string) => `/admin/banners/${id}`,
+      ADMIN_TOGGLE: (id: string) => `/admin/banners/${id}/toggle`,
+      PUBLIC_ACTIVE: '/public/banners/active',
+    },
     PUBLIC_ENROLLMENT: {
       // Dropdowns
       COURSES: '/publicenrollment/courses',
