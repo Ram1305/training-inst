@@ -8,6 +8,7 @@ import { Progress } from '../ui/progress';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { useAuth } from '../../contexts/AuthContext';
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest, type EnrollmentFormResponse } from '../../services/studentEnrollmentForm.service';
+import { fromISODate, toISODate } from '../../utils/dateDDMMYYYY';
 import {
   ApplicantSection,
   USISection,
@@ -110,7 +111,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
         givenName: data.givenName || '',
         middleName: data.middleName || '',
         preferredName: data.preferredName || '',
-        dob: data.dateOfBirth ? data.dateOfBirth.split('T')[0] : '',
+        dob: data.dateOfBirth ? (fromISODate(data.dateOfBirth.split('T')[0]) ?? '') : '',
         gender: (data.gender as ApplicantDetails['gender']) || '',
         homePhone: data.homePhone || '',
         workPhone: data.workPhone || '',
@@ -147,15 +148,15 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
         medicareNumber: data.medicareNumber || '',
         medicareIRN: data.medicareIRN || '',
         medicareColor: (data.medicareCardColor as USIDetails['medicareColor']) || '',
-        medicareExpiry: data.medicareExpiry ? data.medicareExpiry.split('T')[0] : '',
+        medicareExpiry: data.medicareExpiry ? (fromISODate(data.medicareExpiry.split('T')[0]) ?? '') : '',
         birthState: data.birthCertificateState || '',
         immiNumber: data.immiCardNumber || '',
         ausPassportNumber: data.australianPassportNumber || '',
         nonAusPassportNumber: data.nonAustralianPassportNumber || '',
         nonAusPassportCountry: data.nonAustralianPassportCountry || '',
         citizenshipStock: data.citizenshipStockNumber || '',
-        citizenshipAcqDate: data.citizenshipAcquisitionDate ? data.citizenshipAcquisitionDate.split('T')[0] : '',
-        descentAcqDate: data.descentAcquisitionDate ? data.descentAcquisitionDate.split('T')[0] : '',
+        citizenshipAcqDate: data.citizenshipAcquisitionDate ? (fromISODate(data.citizenshipAcquisitionDate.split('T')[0]) ?? '') : '',
+        descentAcqDate: data.descentAcquisitionDate ? (fromISODate(data.descentAcquisitionDate.split('T')[0]) ?? '') : '',
       },
       education: {
         schoolLevel: data.schoolLevel || '',
@@ -191,7 +192,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
         acceptPrivacy: data.acceptedPrivacyNotice,
         acceptTerms: data.acceptedTermsAndConditions,
         declareName: data.declarationName || '',
-        declareDate: data.declarationDate ? data.declarationDate.split('T')[0] : '',
+        declareDate: data.declarationDate ? (fromISODate(data.declarationDate.split('T')[0]) ?? '') : '',
         signatureData: data.signatureData || '',
       },
     });
@@ -428,7 +429,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       givenName: applicant.givenName,
       middleName: applicant.middleName || undefined,
       preferredName: applicant.preferredName || undefined,
-      dateOfBirth: applicant.dob,
+      dateOfBirth: toISODate(applicant.dob) ?? applicant.dob,
       gender: applicant.gender,
       homePhone: applicant.homePhone || undefined,
       workPhone: applicant.workPhone || undefined,
@@ -462,15 +463,15 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       medicareNumber: usi.medicareNumber || undefined,
       medicareIRN: usi.medicareIRN || undefined,
       medicareCardColor: usi.medicareColor || undefined,
-      medicareExpiry: usi.medicareExpiry || undefined,
+      medicareExpiry: usi.medicareExpiry ? (toISODate(usi.medicareExpiry) ?? usi.medicareExpiry) : undefined,
       birthCertificateState: usi.birthState || undefined,
       immiCardNumber: usi.immiNumber || undefined,
       australianPassportNumber: usi.ausPassportNumber || undefined,
       nonAustralianPassportNumber: usi.nonAusPassportNumber || undefined,
       nonAustralianPassportCountry: usi.nonAusPassportCountry || undefined,
       citizenshipStockNumber: usi.citizenshipStock || undefined,
-      citizenshipAcquisitionDate: usi.citizenshipAcqDate || undefined,
-      descentAcquisitionDate: usi.descentAcqDate || undefined,
+      citizenshipAcquisitionDate: usi.citizenshipAcqDate ? (toISODate(usi.citizenshipAcqDate) ?? usi.citizenshipAcqDate) : undefined,
+      descentAcquisitionDate: usi.descentAcqDate ? (toISODate(usi.descentAcqDate) ?? usi.descentAcqDate) : undefined,
 
       // Section 3
       schoolLevel: education.schoolLevel || '',
@@ -505,7 +506,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       acceptedPrivacyNotice: privacyTerms.acceptPrivacy,
       acceptedTermsAndConditions: privacyTerms.acceptTerms,
       declarationName: privacyTerms.declareName,
-      declarationDate: privacyTerms.declareDate,
+      declarationDate: toISODate(privacyTerms.declareDate) ?? privacyTerms.declareDate,
       signatureData: privacyTerms.signatureData,
     };
   };
