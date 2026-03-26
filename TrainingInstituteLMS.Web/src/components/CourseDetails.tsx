@@ -135,8 +135,8 @@ export function CourseDetailsPage({
   const promoOrigNum =
     course?.promoOriginalPrice != null ? Number(course.promoOriginalPrice) : NaN;
 
-  const isSlBlPromo =
-    course?.code === 'RIIHAN301E' && !Number.isNaN(promoNum) && promoNum > 0;
+  // Landing page (standard course cards) shows SL+BL whenever promoPrice is present and > 0.
+  const isSlBlPromo = !Number.isNaN(promoNum) && promoNum > 0;
 
   const slBlPrice = isSlBlPromo ? promoNum : null;
   const slBlOriginalPrice =
