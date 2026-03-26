@@ -18,6 +18,7 @@ interface ApplicantSectionProps {
 }
 
 export function ApplicantSection({ data, onChange, errors }: ApplicantSectionProps) {
+  const currentYear = new Date().getFullYear();
 
   return (
     <div className="space-y-6">
@@ -140,6 +141,9 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                     <PopoverContent align="end" className="w-auto p-0">
                       <Calendar
                         mode="single"
+                        captionLayout="dropdown"
+                        fromYear={1900}
+                        toYear={currentYear}
                         selected={ddmmyyyyToDate(data.dob) ?? undefined}
                         onSelect={(d) => {
                           if (!d) return;

@@ -19,6 +19,7 @@ interface USISectionProps {
 
 export function USISection({ data, onChange, errors }: USISectionProps) {
   const isApplyingThroughSTA = data.usiApply === 'Yes';
+  const currentYear = new Date().getFullYear();
 
   const handleFileChange = (file: File | null) => {
     onChange({ usiIdUpload: file });
@@ -354,6 +355,9 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                               <PopoverContent align="end" className="w-auto p-0">
                                 <Calendar
                                   mode="single"
+                                  captionLayout="dropdown"
+                                  fromYear={currentYear}
+                                  toYear={2100}
                                   selected={ddmmyyyyToDate(data.medicareExpiry || '') ?? undefined}
                                   onSelect={(d) => {
                                     if (!d) return;
@@ -503,6 +507,9 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                               <PopoverContent align="end" className="w-auto p-0">
                                 <Calendar
                                   mode="single"
+                                  captionLayout="dropdown"
+                                  fromYear={currentYear}
+                                  toYear={2100}
                                   selected={ddmmyyyyToDate(data.citizenshipAcqDate || '') ?? undefined}
                                   onSelect={(d) => {
                                     if (!d) return;
@@ -550,6 +557,9 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                               <PopoverContent align="end" className="w-auto p-0">
                                 <Calendar
                                   mode="single"
+                                  captionLayout="dropdown"
+                                  fromYear={currentYear}
+                                  toYear={2100}
                                   selected={ddmmyyyyToDate(data.descentAcqDate || '') ?? undefined}
                                   onSelect={(d) => {
                                     if (!d) return;
