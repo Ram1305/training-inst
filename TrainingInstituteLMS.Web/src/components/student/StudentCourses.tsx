@@ -302,13 +302,14 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
   };
 
   // Check if any enrolled course needs quiz
-  const hasEnrolledCourseNeedingQuiz = enrolledCourses.some(c => !c.quizCompleted);
+  const hasCompletedLln = hasPassedQuiz || canEnroll;
+  const hasEnrolledCourseNeedingQuiz = !hasCompletedLln;
 
   // Check if enrollment form needs to be completed
   const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
 
   // Block "Browse Courses" and other nav when these are pending (used for tab + portal)
-  const hasPendingRequirements = enrolledCourses.length > 0 && (needsEnrollmentForm || hasEnrolledCourseNeedingQuiz);
+  const hasPendingRequirements = enrolledCourses.length > 0 && (needsEnrollmentForm || !hasCompletedLln);
   const enrollmentFormPending = enrollmentFormData?.enrollmentFormStatus === 'Pending';
   const enrollmentFormApproved = enrollmentFormData?.enrollmentFormStatus === 'Approved';
   const enrollmentFormRejected = enrollmentFormData?.enrollmentFormStatus === 'Rejected';
@@ -540,7 +541,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                     ? 100
                     : course.paymentStatus !== 'Verified'
                       ? 10
-                      : !course.quizCompleted
+                      : !hasCompletedLln
                         ? 40
                         : course.status === 'Active'
                           ? 80
@@ -588,11 +589,11 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                             </Badge>
                             {/* LLN Status Badge */}
                             <Badge className={
-                              course.quizCompleted
+                              hasCompletedLln || course.quizCompleted
                                 ? 'bg-green-100 text-green-700'
                                 : 'bg-orange-100 text-orange-700'
                             }>
-                              LLN: {course.quizCompleted ? 'Completed' : 'Pending'}
+                              LLN: {hasCompletedLln || course.quizCompleted ? 'Completed' : 'Pending'}
                             </Badge>
                             {/* Enrollment Form Status Badge */}
                             {!isLoadingEnrollmentForm && (
@@ -637,7 +638,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                           </Button>
                         )}
                         {/* Show Take Assessment button if quiz not completed */}
-                        {!course.quizCompleted && !hasAttemptedQuiz && (
+                        {!hasCompletedLln && !hasAttemptedQuiz && (
                           <Button 
                             onClick={() => handleTakeAssessmentForEnrolledCourse(course)}
                             className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"

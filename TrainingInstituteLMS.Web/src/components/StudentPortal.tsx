@@ -80,13 +80,13 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
     }
   }, [currentPage, user?.studentId, fetchRequirements]);
 
+  const hasCompletedLln = hasPassedQuiz || canEnroll;
   const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
-  const hasEnrolledCourseNeedingQuiz = enrolledCourses.some((c) => !c.quizCompleted);
-  const isEnrollmentFormBlockedByLLND = !hasPassedQuiz && !canEnroll;
+  const isEnrollmentFormBlockedByLLND = !hasCompletedLln;
   const hasPendingRequirements =
     !isLoadingRequirements &&
     enrolledCourses.length > 0 &&
-    (needsEnrollmentForm || hasEnrolledCourseNeedingQuiz);
+    (needsEnrollmentForm || !hasCompletedLln);
 
   const navigation = [
     { id: 'dashboard', name: 'Dashboard', icon: LayoutDashboard },

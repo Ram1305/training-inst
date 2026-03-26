@@ -36,6 +36,7 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const hasInkRef = useRef(false);
   const isDrawingRef = useRef(false);
+  const currentYear = new Date().getFullYear();
 
   useEffect(() => {
     hasInkRef.current = hasInk;
@@ -453,6 +454,9 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
                   <PopoverContent align="end" className="w-auto p-0">
                     <Calendar
                       mode="single"
+                      captionLayout="dropdown"
+                      fromYear={currentYear}
+                      toYear={2100}
                       selected={ddmmyyyyToDate(data.declareDate) ?? undefined}
                       onSelect={(d) => {
                         if (!d) return;

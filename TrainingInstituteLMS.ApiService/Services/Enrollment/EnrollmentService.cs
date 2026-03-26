@@ -206,6 +206,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
             // Quiz is now optional - can be taken after payment
             bool isQuizCompleted = false;
             bool isAdminBypassed = false;
+            Guid? quizAttemptId = request.QuizAttemptId;
 
             if (request.QuizAttemptId.HasValue)
             {
@@ -220,6 +221,42 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
                     {
                         isQuizCompleted = true;
                         isAdminBypassed = quizAttempt.AdminBypass?.IsActive == true;
+                    }
+                }
+            }
+            else
+            {
+                // LLN/LLND is global per student. If the student has already passed (or has an active admin bypass),
+                // seed new enrollments as quiz-completed so they don't regress back to "Pending".
+                var eligibleAttempt = await _context.PreEnrollmentQuizAttempts
+                    .Include(a => a.AdminBypass)
+                    .Where(a =>
+                        a.StudentId == studentId &&
+                        (a.IsPassed || (a.AdminBypass != null && a.AdminBypass.IsActive)))
+                    .OrderByDescending(a => a.AttemptDate)
+                    .Select(a => new
+                    {
+                        a.QuizAttemptId,
+                        HasAdminBypass = a.AdminBypass != null && a.AdminBypass.IsActive
+                    })
+                    .FirstOrDefaultAsync();
+
+                if (eligibleAttempt != null)
+                {
+                    isQuizCompleted = true;
+                    isAdminBypassed = eligibleAttempt.HasAdminBypass;
+                    quizAttemptId = eligibleAttempt.QuizAttemptId;
+                }
+                else
+                {
+                    // Admin bypass can exist even without an attempt record.
+                    var hasActiveAdminBypass = await _context.AdminBypasses
+                        .AnyAsync(ab => ab.StudentId == studentId && ab.IsActive);
+                    if (hasActiveAdminBypass)
+                    {
+                        isQuizCompleted = true;
+                        isAdminBypassed = true;
+                        quizAttemptId = null;
                     }
                 }
             }
@@ -246,7 +283,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Enrollment
             {
                 StudentId = studentId,
                 CourseId = request.CourseId,
-                QuizAttemptId = request.QuizAttemptId,
+                QuizAttemptId = quizAttemptId,
                 SelectedExamDateId = request.SelectedExamDateId,
                 SelectedTheoryDateId = request.SelectedTheoryDateId,
                 AmountPaid = 0,
