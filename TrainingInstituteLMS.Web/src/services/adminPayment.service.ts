@@ -101,14 +101,14 @@ class AdminPaymentService {
 
   async verifyPayment(
     paymentProofId: string,
-    _userId?: string,
+    userId?: string,
     options?: { approve?: boolean; rejectionReason?: string }
   ): Promise<ApiResponse<boolean>> {
     const body = options
       ? { approve: options.approve ?? true, rejectionReason: options.rejectionReason }
       : {};
-    return apiService.post<ApiResponse<boolean>>(
-      API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.VERIFY(paymentProofId),
+    return apiService.put<ApiResponse<boolean>>(
+      API_CONFIG.ENDPOINTS.ADMIN_PAYMENTS.VERIFY(paymentProofId, userId),
       body
     );
   }

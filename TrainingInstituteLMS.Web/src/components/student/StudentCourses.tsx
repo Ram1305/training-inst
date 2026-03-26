@@ -145,6 +145,14 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
     fetchEnrollmentFormStatus();
   }, [fetchEnrollmentFormStatus]);
 
+  useEffect(() => {
+    if (!user?.studentId || activeTab !== 'enrolled') return;
+    const intervalId = window.setInterval(() => {
+      fetchEnrolledCourses();
+    }, 30000);
+    return () => window.clearInterval(intervalId);
+  }, [activeTab, fetchEnrolledCourses, user?.studentId]);
+
   // When onNavigateToEnroll is provided (e.g. from portal), go to same enroll page as public flow instead of modal
   const handleEnrollClick = async (course: StudentBrowseCourse) => {
     if (onNavigateToEnroll) {
@@ -278,6 +286,11 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
   const handleEnrollmentFormComplete = () => {
     setShowEnrollmentForm(false);
     fetchEnrollmentFormStatus();
+  };
+
+  const isPendingPaymentStatus = (paymentStatus?: string) => {
+    const normalized = (paymentStatus ?? '').trim().toLowerCase();
+    return normalized === 'pending' || normalized === 'pending verification';
   };
 
   // Format date for display
@@ -485,7 +498,11 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
           <AlertTitle>Error</AlertTitle>
           <AlertDescription>
             {quizStatusError || courseError}
-            <Button variant="link" onClick={() => { refreshStatus(); fetchAvailableCourses(); }} className="ml-2 p-0 h-auto">
+            <Button
+              variant="link"
+              onClick={() => { refreshStatus(); fetchAvailableCourses(); fetchEnrolledCourses(); }}
+              className="ml-2 p-0 h-auto"
+            >
               Retry
             </Button>
           </AlertDescription>
@@ -581,7 +598,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                             <Badge className={
                               course.paymentStatus === 'Verified'
                                 ? 'bg-green-100 text-green-700'
-                                : course.paymentStatus === 'Pending'
+                                : isPendingPaymentStatus(course.paymentStatus)
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-red-100 text-red-700'
                             }>

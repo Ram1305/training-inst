@@ -80,6 +80,14 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
     }
   }, [currentPage, user?.studentId, fetchRequirements]);
 
+  useEffect(() => {
+    if (!user?.studentId) return;
+    const intervalId = window.setInterval(() => {
+      fetchRequirements();
+    }, 30000);
+    return () => window.clearInterval(intervalId);
+  }, [fetchRequirements, user?.studentId]);
+
   const hasCompletedLln = hasPassedQuiz || canEnroll;
   const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
   const isEnrollmentFormBlockedByLLND = !hasCompletedLln;

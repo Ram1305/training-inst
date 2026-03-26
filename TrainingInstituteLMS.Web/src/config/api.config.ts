@@ -123,7 +123,8 @@ export const API_CONFIG = {
       STATS: '/enrollment/admin/payments/stats',
       BY_ID: (paymentProofId: string) => `/enrollment/admin/payments/${paymentProofId}`,
       DOWNLOAD: (paymentProofId: string) => `/enrollment/admin/payments/${paymentProofId}/download`,
-      VERIFY: (paymentProofId: string) => `/enrollment/payment/${paymentProofId}/verify`,
+      VERIFY: (paymentProofId: string, adminId?: string) =>
+        `/enrollment/payment/${paymentProofId}/verify${adminId ? `?adminId=${encodeURIComponent(adminId)}` : ''}`,
     },
     SCHEDULE: {
       BASE: '/schedule',
