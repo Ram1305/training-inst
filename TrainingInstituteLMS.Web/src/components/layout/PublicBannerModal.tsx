@@ -80,19 +80,19 @@ export function PublicBannerModal() {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="p-0 overflow-hidden rounded-2xl max-w-[min(46rem,calc(100%-2rem))]">
-        <div className="bg-gradient-to-r from-cyan-600 to-indigo-600 text-white px-6 py-4">
+      <DialogContent className="p-0 overflow-hidden w-screen h-[100svh] max-w-none rounded-none sm:w-full sm:h-auto sm:max-w-[min(72rem,calc(100%-2rem))] sm:rounded-2xl [&_[data-slot=dialog-close]]:text-white [&_[data-slot=dialog-close]]:opacity-100 [&_[data-slot=dialog-close]]:bg-black/25 [&_[data-slot=dialog-close]]:hover:bg-black/40 [&_[data-slot=dialog-close]]:rounded-md [&_[data-slot=dialog-close]]:p-2">
+        <div className="bg-gradient-to-r from-cyan-600 to-indigo-600 text-white px-5 sm:px-6 py-4">
           <DialogTitle className="text-white text-base sm:text-lg font-semibold pr-8">
             {topBanner.title}
           </DialogTitle>
         </div>
 
         {topBanner.imageUrl ? (
-          <div className="bg-white">
+          <div className="bg-white h-[calc(100svh-4.25rem)] sm:h-auto">
             <img
               src={topBanner.imageUrl}
               alt={topBanner.title}
-              className="w-full h-auto max-h-[75vh] object-contain bg-white"
+              className="w-full h-full sm:h-auto sm:max-h-[80vh] object-contain bg-white"
               loading="lazy"
             />
           </div>
