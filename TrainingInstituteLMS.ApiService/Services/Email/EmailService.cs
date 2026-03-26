@@ -449,7 +449,7 @@ Additional requirements if you booked for High-Risk licence (Forklift and Boom l
   You can create it using the provided link:
   Apply for AEN: {urlApplyAen}
 
-Additional requirement if you booked for White Card:
+Additional requirement if you booked for White Card,Asbestos:
 * 100 Points ID reflecting your name and address: {urlEvidenceOfIdentity}
 
 Safety Training Academy also provides the following facilities for your convenience:
