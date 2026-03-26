@@ -22,15 +22,22 @@ import type { CompanyBillingStatementListItem } from '../../services/adminCompan
 import { BankTransferDetailsCard } from '../payment/BankTransferDetailsCard';
 import { toast } from 'sonner';
 
-function toastPaymentAuthError(err: unknown, fallback: string) {
-  const msg = err instanceof Error ? err.message : '';
+function isAuthSessionFailure(err: unknown): boolean {
   const status = (err as Error & { status?: number }).status;
-  if (status === 401 || /authentication required/i.test(msg)) {
-    toast.error(
-      'Your session is not valid with the server. Please sign out, sign in again, and retry (the billing list can load without a live session).'
-    );
+  const msg = err instanceof Error ? err.message : '';
+  return status === 401 || /authentication required/i.test(msg);
+}
+
+function isAuthSessionMessage(message: string | undefined): boolean {
+  return !!message && /authentication required/i.test(message);
+}
+
+function toastPaymentAuthError(err: unknown, fallback: string) {
+  if (isAuthSessionFailure(err)) {
+    toast.error('Your session has expired. Sign out, sign in again, then retry.');
     return;
   }
+  const msg = err instanceof Error ? err.message : '';
   toast.error(msg || fallback);
 }
 
@@ -100,6 +107,9 @@ export function CompanyBillingPaymentsPanel({
     try {
       const res = await companyManagementService.getBillingStatements(companyId, { page: 1, pageSize: 200 });
       if (res.success && res.data) setItems(res.data.items);
+    } catch (e) {
+      toastPaymentAuthError(e, 'Could not load billing statements.');
+      setItems([]);
     } finally {
       setLoading(false);
     }
@@ -252,7 +262,11 @@ export function CompanyBillingPaymentsPanel({
           res.message ||
           res.errors?.join(', ') ||
           'Payment failed.';
-        toast.error(msg);
+        if (isAuthSessionMessage(msg)) {
+          toast.error('Your session has expired. Sign out, sign in again, then retry.');
+        } else {
+          toast.error(msg);
+        }
       }
     } catch (e) {
       toastPaymentAuthError(e, 'Payment failed.');

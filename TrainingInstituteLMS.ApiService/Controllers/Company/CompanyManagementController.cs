@@ -122,17 +122,32 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Company
         }
 
         /// <summary>
-        /// Billing statements for a company (per-course or legacy daily batches).
+        /// Billing statements for a company (per-course or legacy daily batches). Company owner or privileged admin only.
         /// </summary>
         [HttpGet("{companyId:guid}/billing-statements")]
+        [Authorize]
         [ProducesResponseType(typeof(ApiResponse<CompanyBillingStatementListResponseDto>), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(ApiResponse<CompanyBillingStatementListResponseDto>), StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(typeof(ApiResponse<CompanyBillingStatementListResponseDto>), StatusCodes.Status404NotFound)]
         public async Task<ActionResult<ApiResponse<CompanyBillingStatementListResponseDto>>> GetCompanyBillingStatements(
             Guid companyId,
             [FromQuery] int page = 1,
             [FromQuery] int pageSize = 20)
         {
+            var currentUserId = GetCurrentUserId();
+            if (!currentUserId.HasValue)
+                return Unauthorized(ApiResponse<CompanyBillingStatementListResponseDto>.FailureResponse("Authentication required."));
+
             try
             {
+                var existing = await _companyManagementService.GetCompanyByIdAsync(companyId);
+                if (existing == null)
+                    return NotFound(ApiResponse<CompanyBillingStatementListResponseDto>.FailureResponse("Company not found"));
+
+                if (!IsPrivilegedAdmin(User) && existing.UserId != currentUserId.Value)
+                    return Forbid();
+
                 var result = await _companyBillingService.GetStatementsForCompanyAsync(companyId, page, pageSize);
                 return Ok(ApiResponse<CompanyBillingStatementListResponseDto>.SuccessResponse(result, "OK"));
             }
