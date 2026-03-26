@@ -4,9 +4,12 @@ import { Label } from '../../ui/label';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Checkbox } from '../../ui/checkbox';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { Calendar } from '../../ui/calendar';
 import type { ApplicantDetails } from '../../../types/studentEnrolment';
 import { TITLE_OPTIONS, GENDER_OPTIONS, STATE_OPTIONS } from '../../../types/studentEnrolment';
-import { sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
+import { dateToDDMMYYYY, ddmmyyyyToDate, sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
 
 interface ApplicantSectionProps {
   data: ApplicantDetails;
@@ -113,16 +116,40 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                   Date of Birth
                   <span className="text-red-500 font-bold">*</span>
                 </Label>
-                <Input
-                  id="dob"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={10}
-                  placeholder="DD/MM/YYYY"
-                  value={data.dob}
-                  onChange={(e) => onChange({ dob: sanitizeDateInput(e.target.value) })}
-                  className={errors.dob ? 'border-red-500' : ''}
-                />
+                <div className="relative">
+                  <Input
+                    id="dob"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={10}
+                    placeholder="DD/MM/YYYY"
+                    value={data.dob}
+                    onChange={(e) => onChange({ dob: sanitizeDateInput(e.target.value) })}
+                    className={`${errors.dob ? 'border-red-500' : ''} pr-10`}
+                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button
+                        type="button"
+                        aria-label="Select date of birth"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                      >
+                        <CalendarIcon className="h-4 w-4" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent align="end" className="w-auto p-0">
+                      <Calendar
+                        mode="single"
+                        selected={ddmmyyyyToDate(data.dob) ?? undefined}
+                        onSelect={(d) => {
+                          if (!d) return;
+                          onChange({ dob: dateToDDMMYYYY(d) });
+                        }}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
                 {errors.dob && <p className="text-sm text-red-500">{errors.dob}</p>}
               </div>
 

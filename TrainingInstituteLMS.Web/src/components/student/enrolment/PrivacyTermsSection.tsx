@@ -5,7 +5,7 @@ import { Label } from '../../ui/label';
 import { Checkbox } from '../../ui/checkbox';
 import { Button } from '../../ui/button';
 import { ScrollArea } from '../../ui/scroll-area';
-import { AlertTriangle, Eraser, PenTool, Check, X } from 'lucide-react';
+import { AlertTriangle, Eraser, PenTool, Check, X, Calendar as CalendarIcon } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -16,7 +16,9 @@ import {
   DialogTrigger,
 } from '../../ui/dialog';
 import type { PrivacyTerms } from '../../../types/studentEnrolment';
-import { sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { Calendar } from '../../ui/calendar';
+import { dateToDDMMYYYY, ddmmyyyyToDate, sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
 
 interface PrivacyTermsSectionProps {
   data: PrivacyTerms;
@@ -427,16 +429,40 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
                 Date
                 <span className="text-red-500 font-bold">*</span>
               </Label>
-              <Input
-                id="declareDate"
-                type="text"
-                inputMode="numeric"
-                maxLength={10}
-                placeholder="DD/MM/YYYY"
-                value={data.declareDate}
-                onChange={(e) => onChange({ declareDate: sanitizeDateInput(e.target.value) })}
-                className={errors.declareDate ? 'border-red-500' : ''}
-              />
+              <div className="relative">
+                <Input
+                  id="declareDate"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="DD/MM/YYYY"
+                  value={data.declareDate}
+                  onChange={(e) => onChange({ declareDate: sanitizeDateInput(e.target.value) })}
+                  className={`${errors.declareDate ? 'border-red-500' : ''} pr-10`}
+                />
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      aria-label="Select declaration date"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                    >
+                      <CalendarIcon className="h-4 w-4" />
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-0">
+                    <Calendar
+                      mode="single"
+                      selected={ddmmyyyyToDate(data.declareDate) ?? undefined}
+                      onSelect={(d) => {
+                        if (!d) return;
+                        onChange({ declareDate: dateToDDMMYYYY(d) });
+                      }}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
               {errors.declareDate && <p className="text-sm text-red-500">{errors.declareDate}</p>}
             </div>
           </div>

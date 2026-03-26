@@ -11,6 +11,27 @@ export function sanitizeDateInput(value: string): string {
   return `${digitsOnly.slice(0, 2)}/${digitsOnly.slice(2, 4)}/${digitsOnly.slice(4)}`;
 }
 
+function pad2(n: number) {
+  return String(n).padStart(2, '0');
+}
+
+export function dateToDDMMYYYY(date: Date): string {
+  return `${pad2(date.getDate())}/${pad2(date.getMonth() + 1)}/${date.getFullYear()}`;
+}
+
+export function ddmmyyyyToDate(value: string): Date | null {
+  if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return null;
+  const [ddStr, mmStr, yyyyStr] = value.split('/');
+  const dd = Number(ddStr);
+  const mm = Number(mmStr);
+  const yyyy = Number(yyyyStr);
+  if (!Number.isInteger(dd) || !Number.isInteger(mm) || !Number.isInteger(yyyy)) return null;
+
+  const d = new Date(yyyy, mm - 1, dd);
+  if (d.getFullYear() !== yyyy || d.getMonth() !== mm - 1 || d.getDate() !== dd) return null;
+  return d;
+}
+
 export function isValidDDMMYYYY(
   value: string,
   minYear: number,

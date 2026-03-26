@@ -4,9 +4,12 @@ import { Label } from '../../ui/label';
 import { RadioGroup, RadioGroupItem } from '../../ui/radio-group';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { Checkbox } from '../../ui/checkbox';
+import { Calendar as CalendarIcon } from 'lucide-react';
+import { Popover, PopoverContent, PopoverTrigger } from '../../ui/popover';
+import { Calendar } from '../../ui/calendar';
 import type { USIDetails } from '../../../types/studentEnrolment';
 import { USI_ID_TYPE_OPTIONS, MEDICARE_COLOR_OPTIONS } from '../../../types/studentEnrolment';
-import { sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
+import { dateToDDMMYYYY, ddmmyyyyToDate, sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
 
 interface USISectionProps {
   data: USIDetails;
@@ -327,16 +330,40 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                             Expiry date
                             <span className="text-red-500 font-bold">*</span>
                           </Label>
-                          <Input
-                            id="medicareExpiry"
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={10}
-                            placeholder="DD/MM/YYYY"
-                            value={data.medicareExpiry || ''}
-                            onChange={(e) => onChange({ medicareExpiry: sanitizeDateInput(e.target.value) })}
-                            className={errors.medicareExpiry ? 'border-red-500' : ''}
-                          />
+                          <div className="relative">
+                            <Input
+                              id="medicareExpiry"
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={10}
+                              placeholder="DD/MM/YYYY"
+                              value={data.medicareExpiry || ''}
+                              onChange={(e) => onChange({ medicareExpiry: sanitizeDateInput(e.target.value) })}
+                              className={`${errors.medicareExpiry ? 'border-red-500' : ''} pr-10`}
+                            />
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Select Medicare expiry date"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  selected={ddmmyyyyToDate(data.medicareExpiry || '') ?? undefined}
+                                  onSelect={(d) => {
+                                    if (!d) return;
+                                    onChange({ medicareExpiry: dateToDDMMYYYY(d) });
+                                  }}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                           {errors.medicareExpiry && <p className="text-sm text-red-500">{errors.medicareExpiry}</p>}
                         </div>
                       </div>
@@ -452,16 +479,40 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                             Acquisition date
                             <span className="text-red-500 font-bold">*</span>
                           </Label>
-                          <Input
-                            id="citizenshipAcqDate"
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={10}
-                            placeholder="DD/MM/YYYY"
-                            value={data.citizenshipAcqDate || ''}
-                            onChange={(e) => onChange({ citizenshipAcqDate: sanitizeDateInput(e.target.value) })}
-                            className={errors.citizenshipAcqDate ? 'border-red-500' : ''}
-                          />
+                          <div className="relative">
+                            <Input
+                              id="citizenshipAcqDate"
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={10}
+                              placeholder="DD/MM/YYYY"
+                              value={data.citizenshipAcqDate || ''}
+                              onChange={(e) => onChange({ citizenshipAcqDate: sanitizeDateInput(e.target.value) })}
+                              className={`${errors.citizenshipAcqDate ? 'border-red-500' : ''} pr-10`}
+                            />
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Select acquisition date"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  selected={ddmmyyyyToDate(data.citizenshipAcqDate || '') ?? undefined}
+                                  onSelect={(d) => {
+                                    if (!d) return;
+                                    onChange({ citizenshipAcqDate: dateToDDMMYYYY(d) });
+                                  }}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                           {errors.citizenshipAcqDate && <p className="text-sm text-red-500">{errors.citizenshipAcqDate}</p>}
                         </div>
                       </div>
@@ -475,16 +526,40 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                             Acquisition date
                             <span className="text-red-500 font-bold">*</span>
                           </Label>
-                          <Input
-                            id="descentAcqDate"
-                            type="text"
-                            inputMode="numeric"
-                            maxLength={10}
-                            placeholder="DD/MM/YYYY"
-                            value={data.descentAcqDate || ''}
-                            onChange={(e) => onChange({ descentAcqDate: sanitizeDateInput(e.target.value) })}
-                            className={errors.descentAcqDate ? 'border-red-500' : ''}
-                          />
+                          <div className="relative">
+                            <Input
+                              id="descentAcqDate"
+                              type="text"
+                              inputMode="numeric"
+                              maxLength={10}
+                              placeholder="DD/MM/YYYY"
+                              value={data.descentAcqDate || ''}
+                              onChange={(e) => onChange({ descentAcqDate: sanitizeDateInput(e.target.value) })}
+                              className={`${errors.descentAcqDate ? 'border-red-500' : ''} pr-10`}
+                            />
+                            <Popover>
+                              <PopoverTrigger asChild>
+                                <button
+                                  type="button"
+                                  aria-label="Select acquisition date"
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                                >
+                                  <CalendarIcon className="h-4 w-4" />
+                                </button>
+                              </PopoverTrigger>
+                              <PopoverContent align="end" className="w-auto p-0">
+                                <Calendar
+                                  mode="single"
+                                  selected={ddmmyyyyToDate(data.descentAcqDate || '') ?? undefined}
+                                  onSelect={(d) => {
+                                    if (!d) return;
+                                    onChange({ descentAcqDate: dateToDDMMYYYY(d) });
+                                  }}
+                                  initialFocus
+                                />
+                              </PopoverContent>
+                            </Popover>
+                          </div>
                           {errors.descentAcqDate && <p className="text-sm text-red-500">{errors.descentAcqDate}</p>}
                         </div>
                       </div>
