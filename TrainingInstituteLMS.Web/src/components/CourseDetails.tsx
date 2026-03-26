@@ -1032,13 +1032,28 @@ export function CourseDetailsPage({
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start border-2 border-cyan-200 hover:bg-cyan-50 rounded-xl">
-                      <Phone className="w-4 h-4 mr-2 text-cyan-600" />
-                      <span className="text-cyan-600 font-semibold">Call: 1300 976 097</span>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-start border-2 border-cyan-200 hover:bg-cyan-50 rounded-xl"
+                    >
+                      <a href="tel:1300976097" aria-label="Call 1300 976 097">
+                        <Phone className="w-4 h-4 mr-2 text-cyan-600" />
+                        <span className="text-cyan-600 font-semibold">Call: 1300 976 097</span>
+                      </a>
                     </Button>
-                    <Button variant="outline" className="w-full justify-start border-2 border-blue-200 hover:bg-blue-50 rounded-xl">
-                      <Mail className="w-4 h-4 mr-2 text-blue-600" />
-                      <span className="text-blue-600 font-semibold">Email Support</span>
+                    <Button
+                      asChild
+                      variant="outline"
+                      className="w-full justify-start border-2 border-blue-200 hover:bg-blue-50 rounded-xl"
+                    >
+                      <a
+                        href="mailto:info@safetytrainingacademy.edu.au"
+                        aria-label="Email info@safetytrainingacademy.edu.au"
+                      >
+                        <Mail className="w-4 h-4 mr-2 text-blue-600" />
+                        <span className="text-blue-600 font-semibold">Email Support</span>
+                      </a>
                     </Button>
                   </div>
                 </CardContent>
@@ -1092,7 +1107,12 @@ export function CourseDetailsPage({
               <ul className="space-y-2 text-sm text-white/90">
                 <li className="flex items-start gap-2">
                   <Mail className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>info@safetytrainingacademy.edu.au</span>
+                  <a
+                    href="mailto:info@safetytrainingacademy.edu.au"
+                    className="hover:text-white transition-colors"
+                  >
+                    info@safetytrainingacademy.edu.au
+                  </a>
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -1100,7 +1120,9 @@ export function CourseDetailsPage({
                 </li>
                 <li className="flex items-start gap-2">
                   <Phone className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                  <span>1300 976 097</span>
+                  <a href="tel:1300976097" className="hover:text-white transition-colors">
+                    1300 976 097
+                  </a>
                 </li>
                 <li className="text-xs">RTO: 45234</li>
               </ul>
