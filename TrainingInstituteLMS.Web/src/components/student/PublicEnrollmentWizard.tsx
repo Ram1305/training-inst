@@ -3341,16 +3341,16 @@ export function PublicEnrollmentWizard({
 
             {/* Navigation Buttons for Form Sections 1-4 */}
             {currentFormSection < 5 && (
-              <div className="pt-4 border-t flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="pt-4 border-t flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between">
                 {currentFormSection > 1 && (
-                  <Button variant="outline" onClick={handleFormPrevious} className="w-full sm:w-auto">
+                  <Button variant="outline" onClick={handleFormPrevious} className="enrollment-nav-button">
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
                   </Button>
                 )}
                 <Button
                   onClick={handleFormNext}
-                  className={`w-full sm:w-auto bg-violet-600 hover:bg-violet-700 ${currentFormSection === 1 ? 'sm:ml-auto' : ''}`}
+                  className={`enrollment-nav-button bg-violet-600 hover:bg-violet-700 ${currentFormSection === 1 ? 'sm:ml-auto' : ''}`}
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -3607,7 +3607,7 @@ export function PublicEnrollmentWizard({
                     onCancel();
                   }
                 }}
-                className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-medium px-8"
+                className="enrollment-nav-button bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700 text-white font-medium px-8"
               >
                 Continue to Dashboard
               </Button>
@@ -3745,13 +3745,13 @@ export function PublicEnrollmentWizard({
       {currentStep <= 2 && (
         <Card className="border-violet-100">
           <CardContent className="py-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:justify-end">
+            <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
                 {currentStep > 1 && (
                   <Button
                     variant="outline"
                     onClick={handlePrevious}
                     disabled={paymentProcessing || isSubmitting}
-                    className="w-full sm:w-auto"
+                    className="enrollment-nav-button"
                   >
                     <ArrowLeft className="w-4 h-4 mr-2" />
                     Previous
@@ -3759,7 +3759,7 @@ export function PublicEnrollmentWizard({
                 )}
                 <Button
                   onClick={handleNext}
-                  className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600"
+                  className="enrollment-nav-button bg-gradient-to-r from-violet-600 to-fuchsia-600"
                   disabled={
                     paymentProcessing ||
                     isSubmitting ||
@@ -3804,7 +3804,7 @@ export function PublicEnrollmentWizard({
             <div className="flex justify-end">
               <Button
                 onClick={handleNext}
-                className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600"
+                className="enrollment-nav-button bg-gradient-to-r from-violet-600 to-fuchsia-600"
               >
                 Continue to Enrollment Form
                 <ArrowRight className="w-4 h-4 ml-2" />

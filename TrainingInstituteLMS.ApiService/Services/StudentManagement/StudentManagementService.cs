@@ -353,11 +353,39 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                 {
                     var enrollmentIds = student.Enrollments.Select(e => e.EnrollmentId).ToList();
 
+                    // PaymentProofs (1:1 with Enrollment, FK Restrict) must be removed before enrollments
+                    var paymentProofsByEnrollment = await _context.PaymentProofs
+                        .Where(pp => enrollmentIds.Contains(pp.EnrollmentId))
+                        .ToListAsync();
+                    _context.PaymentProofs.RemoveRange(paymentProofsByEnrollment);
+
                     // ExternalExamLinks (linked to enrollment)
                     var externalLinks = await _context.ExternalExamLinks
                         .Where(eel => enrollmentIds.Contains(eel.EnrollmentId))
                         .ToListAsync();
                     _context.ExternalExamLinks.RemoveRange(externalLinks);
+
+                    // Company billing lines reference EnrollmentId (FK Restrict)
+                    var billingLines = await _context.CompanyBillingLines
+                        .Where(l => enrollmentIds.Contains(l.EnrollmentId))
+                        .ToListAsync();
+                    _context.CompanyBillingLines.RemoveRange(billingLines);
+
+                    // Enrollment-bound records that may block deletion
+                    var examResultsByEnrollment = await _context.ExamResults
+                        .Where(er => enrollmentIds.Contains(er.EnrollmentId))
+                        .ToListAsync();
+                    _context.ExamResults.RemoveRange(examResultsByEnrollment);
+
+                    var certificateApprovalsByEnrollment = await _context.CertificateApprovals
+                        .Where(ca => enrollmentIds.Contains(ca.EnrollmentId))
+                        .ToListAsync();
+                    _context.CertificateApprovals.RemoveRange(certificateApprovalsByEnrollment);
+
+                    var certificatesByEnrollment = await _context.Certificates
+                        .Where(c => enrollmentIds.Contains(c.EnrollmentId))
+                        .ToListAsync();
+                    _context.Certificates.RemoveRange(certificatesByEnrollment);
 
                     // Enrollments themselves
                     _context.Enrollments.RemoveRange(student.Enrollments);
@@ -371,7 +399,7 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentManagement
                     .ToListAsync();
                 _context.AdminBypasses.RemoveRange(adminBypasses);
 
-                // 3. PaymentProof (references StudentId)
+                // 3. PaymentProof (references StudentId, cleanup leftovers not tied to enrollments)
                 var paymentProofs = await _context.PaymentProofs
                     .Where(pp => pp.StudentId == studentId)
                     .ToListAsync();

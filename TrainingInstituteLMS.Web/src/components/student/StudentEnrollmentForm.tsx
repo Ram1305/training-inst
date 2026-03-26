@@ -725,14 +725,14 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
           <div className="enrollment-navigation">
             <div className="enrollment-navigation-left">
               {onCancel && currentSection === 1 && (
-                <Button variant="ghost" onClick={onCancel} className="w-full sm:w-auto">
+                <Button variant="ghost" onClick={onCancel} className="enrollment-nav-button">
                   Cancel
                 </Button>
               )}
             </div>
             <div className="enrollment-navigation-right">
               {currentSection > 1 && (
-                <Button variant="outline" onClick={handlePrevious} className="w-full sm:w-auto">
+                <Button variant="outline" onClick={handlePrevious} className="enrollment-nav-button">
                   <ArrowLeft className="w-4 h-4 mr-2" />
                   Previous
                 </Button>
@@ -740,7 +740,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
               {currentSection < 5 ? (
                 <Button
                   onClick={handleNext}
-                  className="w-full sm:w-auto bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
+                  className="enrollment-nav-button bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700"
                 >
                   Next
                   <ArrowRight className="w-4 h-4 ml-2" />
@@ -749,7 +749,7 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
                 <Button
                   onClick={handleSubmit}
                   disabled={isSaving}
-                  className="w-full sm:w-auto bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                  className="enrollment-nav-button bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                 >
                   {isSaving ? (
                     <>
