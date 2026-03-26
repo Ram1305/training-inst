@@ -49,7 +49,6 @@ import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from "./ui/WhatsAppButton";
 import { PublicHeader } from "./layout/PublicHeader";
-import { bannersService, type Banner } from "../services/banners.service";
 import googleReviewsJson from '../../assets/googlereviews.json';
 import '../reviews-marquee.css';
 
@@ -153,7 +152,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
   const [expandedCombo, setExpandedCombo] = useState(false);
   const [showBackToTop, setShowBackToTop] = useState(false);
-  const [topLandingBanner, setTopLandingBanner] = useState<Banner | null>(null);
 
   // Data states
   const [courses, setCourses] = useState<CourseListItem[]>([]);
@@ -314,30 +312,6 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
     fetchCategories();
   }, []);
 
-  // Fetch public banners for landing hero
-  useEffect(() => {
-    let cancelled = false;
-    async function load() {
-      try {
-        const res = await bannersService.getActivePublicBanners();
-        if (cancelled) return;
-        if (res.success && Array.isArray(res.data) && res.data.length > 0) {
-          // assume API is already sorted; if not, pick lowest sortOrder
-          const sorted = [...res.data].sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
-          setTopLandingBanner(sorted[0] ?? null);
-        } else {
-          setTopLandingBanner(null);
-        }
-      } catch {
-        if (!cancelled) setTopLandingBanner(null);
-      }
-    }
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
   // Fetch reviews on mount
   useEffect(() => {
     fetchReviews();
@@ -350,13 +324,11 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
   // Auto-play slider
   useEffect(() => {
-    // If we're showing a single full-screen banner image, no need to rotate slides.
-    if (topLandingBanner?.imageUrl) return;
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % heroSlides.length);
     }, 5000);
     return () => clearInterval(interval);
-  }, [heroSlides.length, topLandingBanner?.imageUrl]);
+  }, []);
 
   // Back to top visibility
   useEffect(() => {
@@ -421,10 +393,10 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
 
       {/* Hero Slider Section with Search */}
       <section id="home" className="relative overflow-x-hidden">
-        <div className="relative h-[100svh] min-h-[520px]">
+        <div className="relative min-h-[420px] h-[70svh] max-h-[640px] md:max-h-none md:h-[700px]">
           <AnimatePresence mode="wait">
             <motion.div
-              key={topLandingBanner?.imageUrl ? `banner-${topLandingBanner.bannerId}` : currentSlide}
+              key={currentSlide}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
@@ -432,8 +404,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               className="absolute inset-0"
             >
               <ImageWithFallback
-                src={topLandingBanner?.imageUrl || heroSlides[currentSlide].image}
-                alt={topLandingBanner?.title || heroSlides[currentSlide].title}
+                src={heroSlides[currentSlide].image}
+                alt={heroSlides[currentSlide].title}
                 width={1536}
                 height={700}
                 className="w-full h-full object-cover"
@@ -451,7 +423,7 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               transition={{ duration: 0.7 }}
             >
               <h1 className="text-3xl sm:text-4xl md:text-6xl font-bold text-white mb-6 leading-tight break-words">
-                {topLandingBanner?.title || heroSlides[currentSlide].title}
+                {heroSlides[currentSlide].title}
               </h1>
               <p className="text-lg md:text-xl text-blue-100 mb-8">
                 {heroSlides[currentSlide].subtitle}
@@ -533,43 +505,35 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
           </div>
 
           {/* Slider Controls */}
-          {!topLandingBanner?.imageUrl && (
-            <>
-              <button
-                onClick={prevSlide}
-                aria-label="Previous slide"
-                className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all z-20"
-              >
-                <ChevronLeft className="w-6 h-6 text-white" />
-              </button>
-              <button
-                onClick={nextSlide}
-                aria-label="Next slide"
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all z-20"
-              >
-                <ChevronRight className="w-6 h-6 text-white" />
-              </button>
-            </>
-          )}
+          <button
+            onClick={prevSlide}
+            aria-label="Previous slide"
+            className="absolute left-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all z-20"
+          >
+            <ChevronLeft className="w-6 h-6 text-white" />
+          </button>
+          <button
+            onClick={nextSlide}
+            aria-label="Next slide"
+            className="absolute right-4 top-1/2 transform -translate-y-1/2 w-12 h-12 bg-white/20 backdrop-blur-sm hover:bg-white/30 rounded-full flex items-center justify-center transition-all z-20"
+          >
+            <ChevronRight className="w-6 h-6 text-white" />
+          </button>
 
           {/* Slider Dots */}
-          {!topLandingBanner?.imageUrl && (
-            <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1 z-20">
-              {heroSlides.map((_, index) => (
-                <button
-                  key={index}
-                  onClick={() => setCurrentSlide(index)}
-                  className="p-3 group"
-                  aria-label={`Go to slide ${index + 1}`}
-                >
-                  <div
-                    className={`w-3 h-3 rounded-full transition-all ${currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50 group-hover:bg-white/80"
-                      }`}
-                  />
-                </button>
-              ))}
-            </div>
-          )}
+          <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 flex gap-1 z-20">
+            {heroSlides.map((_, index) => (
+              <button
+                key={index}
+                onClick={() => setCurrentSlide(index)}
+                className="p-3 group"
+                aria-label={`Go to slide ${index + 1}`}
+              >
+                <div className={`w-3 h-3 rounded-full transition-all ${currentSlide === index ? "bg-cyan-400 w-8" : "bg-white/50 group-hover:bg-white/80"
+                  }`} />
+              </button>
+            ))}
+          </div>
         </div>
       </section>
 
