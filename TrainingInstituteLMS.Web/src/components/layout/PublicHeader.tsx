@@ -54,7 +54,6 @@ export function PublicHeader({
 }: PublicHeaderProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [coursesDropdownOpen, setCoursesDropdownOpen] = useState(false);
-  const [coursesMenuMode, setCoursesMenuMode] = useState<'short' | 'combo'>('short');
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [courses, setCourses] = useState<CourseListItem[]>([]);
   const [categories, setCategories] = useState<CategoryDropdownItem[]>([]);
@@ -66,6 +65,8 @@ export function PublicHeader({
   const categoriesWithShortCourses = categories.filter((cat) =>
     shortCourses.some((course) => course.categoryId === cat.categoryId)
   );
+
+  const isComboCategoryActive = activeCategory === '__combo__';
 
   const fetchData = useCallback(async () => {
     if (headerDataLoadingRef.current || headerDataLoadedRef.current) return;
@@ -224,9 +225,8 @@ export function PublicHeader({
                 className="relative"
                 onMouseEnter={() => {
                   setCoursesDropdownOpen(true);
-                  setCoursesMenuMode('short');
-                  if (categoriesWithShortCourses.length > 0 && !activeCategory) {
-                    setActiveCategory(categoriesWithShortCourses[0].categoryId);
+                  if (!activeCategory) {
+                    setActiveCategory(categoriesWithShortCourses[0]?.categoryId ?? '__combo__');
                   }
                 }}
                 onMouseLeave={() => {
@@ -257,96 +257,53 @@ export function PublicHeader({
                     className="absolute left-0 top-full pt-2 z-50"
                   >
                     <div className="flex rounded-xl shadow-2xl border border-slate-700 overflow-hidden" style={{ backgroundColor: '#0f172a' }}>
-                      {/* Mode Panel */}
-                      <div className="w-44 border-r border-slate-700/80 bg-slate-950/10 p-2">
+                      {/* Categories panel (includes manual Combo Courses) */}
+                      <div className="dropdown-category-panel">
+                        {categoriesWithShortCourses.map((category) => (
+                          <button
+                            key={category.categoryId}
+                            onMouseEnter={() => setActiveCategory(category.categoryId)}
+                            className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
+                          >
+                            <span>{category.categoryName}</span>
+                            <ChevronRight className="w-4 h-4 flex-shrink-0" />
+                          </button>
+                        ))}
                         <button
-                          type="button"
-                          onMouseEnter={() => setCoursesMenuMode('short')}
+                          key="__combo__"
+                          onMouseEnter={() => setActiveCategory('__combo__')}
                           onClick={() => {
-                            setCoursesMenuMode('short');
-                            onViewCourses?.();
-                            setCoursesDropdownOpen(false);
-                          }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                            coursesMenuMode === 'short' ? 'bg-cyan-500/15 text-cyan-200' : 'text-slate-100 hover:bg-white/10'
-                          }`}
-                        >
-                          Short Courses
-                        </button>
-                        <button
-                          type="button"
-                          onMouseEnter={() => setCoursesMenuMode('combo')}
-                          onClick={() => {
-                            setCoursesMenuMode('combo');
                             onViewComboCourses?.();
                             setCoursesDropdownOpen(false);
                           }}
-                          className={`w-full text-left px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${
-                            coursesMenuMode === 'combo' ? 'bg-purple-500/15 text-purple-200' : 'text-slate-100 hover:bg-white/10'
-                          }`}
+                          className={`dropdown-category-item ${isComboCategoryActive ? 'active' : ''}`}
                         >
-                          Combo Courses
+                          <span>Combo Courses</span>
+                          <ChevronRight className="w-4 h-4 flex-shrink-0" />
                         </button>
                       </div>
 
-                      {/* Short Courses: categories + course list */}
-                      {coursesMenuMode === 'short' ? (
-                        <>
-                          <div className="dropdown-category-panel">
-                            {categoriesWithShortCourses.map((category) => (
-                              <button
-                                key={category.categoryId}
-                                onMouseEnter={() => setActiveCategory(category.categoryId)}
-                                className={`dropdown-category-item ${activeCategory === category.categoryId ? 'active' : ''}`}
-                              >
-                                <span>{category.categoryName}</span>
-                                <ChevronRight className="w-4 h-4 flex-shrink-0" />
-                              </button>
-                            ))}
-                          </div>
-                          <div className="dropdown-courses-panel">
-                            {activeCategory && (
-                              <div>
-                                {shortCourses
-                                  .filter((course) => course.categoryId === activeCategory)
-                                  .map((course) => (
-                                    <button
-                                      key={course.courseId}
-                                      onClick={() => {
-                                        onCourseDetails?.(course.courseId);
-                                        setCoursesDropdownOpen(false);
-                                      }}
-                                      className="dropdown-course-item"
-                                    >
-                                      {course.courseName}
-                                    </button>
-                                  ))}
-                              </div>
+                      {/* Courses panel */}
+                      <div className="dropdown-courses-panel">
+                        {activeCategory && (
+                          <div>
+                            {(isComboCategoryActive ? comboCourses : shortCourses.filter((c) => c.categoryId === activeCategory)).map(
+                              (course) => (
+                                <button
+                                  key={course.courseId}
+                                  onClick={() => {
+                                    onCourseDetails?.(course.courseId);
+                                    setCoursesDropdownOpen(false);
+                                  }}
+                                  className="dropdown-course-item"
+                                >
+                                  {course.courseName}
+                                </button>
+                              )
                             )}
                           </div>
-                        </>
-                      ) : (
-                        /* Combo Courses: simple list */
-                        <div className="dropdown-courses-panel min-w-[360px]">
-                          <div className="px-3 py-2 text-xs font-semibold tracking-wide text-slate-300 uppercase">
-                            Combo Courses
-                          </div>
-                          <div>
-                            {comboCourses.map((course) => (
-                              <button
-                                key={course.courseId}
-                                onClick={() => {
-                                  onCourseDetails?.(course.courseId);
-                                  setCoursesDropdownOpen(false);
-                                }}
-                                className="dropdown-course-item"
-                              >
-                                {course.courseName}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                   </motion.div>
                 )}
@@ -446,17 +403,7 @@ export function PublicHeader({
                     }}
                     className="text-white text-left p-2 hover:bg-slate-800 rounded"
                   >
-                    SHORT COURSES
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      closeMobileMenu();
-                      (onViewComboCourses || onBack)?.();
-                    }}
-                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
-                  >
-                    COMBO COURSES
+                    COURSES
                   </button>
                   <button
                     type="button"
