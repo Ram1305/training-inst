@@ -68,3 +68,9 @@ export function toISODate(value: string): string | null {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+export function fromISODate(value: string): string | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
+  const [yyyy, mm, dd] = value.split('-');
+  return `${dd}/${mm}/${yyyy}`;
+}
+
