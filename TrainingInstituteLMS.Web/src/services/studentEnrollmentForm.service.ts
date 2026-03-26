@@ -334,7 +334,11 @@ export const studentEnrollmentFormService = {
 
   // Public enrollment endpoint - creates user, student, and submits form
   async submitPublicEnrollmentForm(request: PublicEnrollmentFormRequest): Promise<ApiResponse<PublicEnrollmentFormResponse>> {
-    return apiService.post<ApiResponse<PublicEnrollmentFormResponse>>('/StudentEnrollmentForm/public/submit', request);
+    return apiService.post<ApiResponse<PublicEnrollmentFormResponse>>(
+      '/StudentEnrollmentForm/public/submit',
+      request,
+      { credentials: 'omit' }
+    );
   },
 
   // Admin endpoints

@@ -22,7 +22,7 @@ class ApiService {
         ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
         ...options?.headers,
       },
-      credentials: 'include',
+      credentials: options?.credentials ?? 'include',
     };
 
     try {

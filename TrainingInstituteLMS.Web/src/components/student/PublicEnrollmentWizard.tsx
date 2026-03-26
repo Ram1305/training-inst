@@ -87,6 +87,7 @@ import {
   getTodayCalendarDateKeyInAustralia,
   isoCalendarDateKey,
 } from '../../utils/australiaTime';
+import { toISODate } from '../../utils/dateDDMMYYYY';
 
 interface PublicEnrollmentWizardProps {
   onComplete: (result: { userId: string; studentId: string; email: string; fullName: string }) => void;
@@ -1672,7 +1673,7 @@ export function PublicEnrollmentWizard({
       givenName: applicant.givenName,
       middleName: applicant.middleName || undefined,
       preferredName: applicant.preferredName || undefined,
-      dateOfBirth: applicant.dob,
+      dateOfBirth: toISODate(applicant.dob) ?? applicant.dob,
       gender: applicant.gender,
       homePhone: applicant.homePhone || undefined,
       workPhone: applicant.workPhone || undefined,
@@ -1704,15 +1705,15 @@ export function PublicEnrollmentWizard({
       medicareNumber: usi.medicareNumber || undefined,
       medicareIRN: usi.medicareIRN || undefined,
       medicareCardColor: usi.medicareColor || undefined,
-      medicareExpiry: usi.medicareExpiry || undefined,
+      medicareExpiry: usi.medicareExpiry ? (toISODate(usi.medicareExpiry) ?? usi.medicareExpiry) : undefined,
       birthCertificateState: usi.birthState || undefined,
       immiCardNumber: usi.immiNumber || undefined,
       australianPassportNumber: usi.ausPassportNumber || undefined,
       nonAustralianPassportNumber: usi.nonAusPassportNumber || undefined,
       nonAustralianPassportCountry: usi.nonAusPassportCountry || undefined,
       citizenshipStockNumber: usi.citizenshipStock || undefined,
-      citizenshipAcquisitionDate: usi.citizenshipAcqDate || undefined,
-      descentAcquisitionDate: usi.descentAcqDate || undefined,
+      citizenshipAcquisitionDate: usi.citizenshipAcqDate ? (toISODate(usi.citizenshipAcqDate) ?? usi.citizenshipAcqDate) : undefined,
+      descentAcquisitionDate: usi.descentAcqDate ? (toISODate(usi.descentAcqDate) ?? usi.descentAcqDate) : undefined,
       schoolLevel: education.schoolLevel || '',
       schoolCompleteYear: education.schoolLevel === '02 Never attended school' ? '' : (education.schoolCompleteYear || ''),
       schoolName: education.schoolName || 'N/A',
@@ -1741,7 +1742,7 @@ export function PublicEnrollmentWizard({
       acceptedPrivacyNotice: privacyTerms.acceptPrivacy,
       acceptedTermsAndConditions: privacyTerms.acceptTerms,
       declarationName: privacyTerms.declareName,
-      declarationDate: privacyTerms.declareDate,
+      declarationDate: toISODate(privacyTerms.declareDate) ?? privacyTerms.declareDate,
       signatureData: privacyTerms.signatureData || '',
     };
   };
