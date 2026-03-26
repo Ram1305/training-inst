@@ -20,7 +20,6 @@ import { categoryService, type CategoryDropdownItem } from '../../services/categ
 import { ResourcesDropdown } from "../ui/ResourcesDropdown";
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 import { SAFETY_TRAINING_ACADEMY_LOGO } from '../../constants/safetyTrainingAcademyLogo';
-import { PublicBannerBar } from "./PublicBannerBar";
 
 interface PublicHeaderProps {
   onBack?: () => void;
@@ -135,8 +134,6 @@ export function PublicHeader({
           </span>
         </div>
       </div>
-
-      <PublicBannerBar />
 
       {/* Logo and Info Section - White Background */}
       <div className="bg-white border-b border-gray-200 py-4 px-4">

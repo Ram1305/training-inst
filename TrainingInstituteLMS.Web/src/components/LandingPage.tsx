@@ -49,6 +49,7 @@ import { categoryService } from '../services/category.service';
 import type { CategoryDropdownItem } from '../services/category.service';
 import { WhatsAppButton } from "./ui/WhatsAppButton";
 import { PublicHeader } from "./layout/PublicHeader";
+import { PublicBannerModal } from "./layout/PublicBannerModal";
 import googleReviewsJson from '../../assets/googlereviews.json';
 import '../reviews-marquee.css';
 
@@ -390,6 +391,8 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
         onViewCourses={onViewCourses}
         onViewComboCourses={onViewComboCourses}
       />
+
+      <PublicBannerModal />
 
       {/* Hero Slider Section with Search */}
       <section id="home" className="relative overflow-x-hidden">
