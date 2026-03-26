@@ -208,19 +208,19 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     }
   };
 
-  const handleDeleteStudent = async (studentId: string, name: string) => {
-    if (!confirm(`Are you sure you want to delete ${name}?`)) return;
+  const handleDeleteEnrollment = async (enrollmentId: string, studentId: string, courseName: string) => {
+    if (!confirm(`Delete this course enrollment only?\n\nCourse: ${courseName}`)) return;
 
     setLoading(true);
     try {
-      const response = await studentManagementService.deleteStudent(studentId);
+      const response = await enrollmentService.cancelEnrollment(enrollmentId, studentId);
       
       if (response.success) {
-        toast.success('Student deleted successfully!');
+        toast.success('Course enrollment deleted successfully.');
         fetchStudents();
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : 'Failed to delete student');
+      toast.error(error instanceof Error ? error.message : 'Failed to delete course enrollment');
     } finally {
       setLoading(false);
     }
@@ -732,9 +732,12 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                               size="sm"
                               variant="outline"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                              onClick={() => handleDeleteStudent(student.studentId, student.fullName)}
-                              disabled={loading}
-                              title="Delete Student"
+                              onClick={() => {
+                                if (!enrollment) return;
+                                handleDeleteEnrollment(enrollment.enrollmentId, student.studentId, enrollment.courseName);
+                              }}
+                              disabled={loading || !enrollment}
+                              title={enrollment ? 'Delete Course Enrollment' : 'No enrollment to delete'}
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
