@@ -1497,7 +1497,6 @@ export function PublicEnrollmentWizard({
       if (!pt.declareDate) newErrors.declareDate = 'Declaration date is required';
       if (!pt.signatureData?.trim()) newErrors.signatureData = 'Signature is required';
       if (!a.docPrimaryId) newErrors.docPrimaryId = 'Primary Photo ID is required';
-      if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
     }
 
     setFormErrors(newErrors);
@@ -1582,7 +1581,6 @@ export function PublicEnrollmentWizard({
         if (!pt.declareDate) newErrors.declareDate = 'Declaration date is required';
         if (!pt.signatureData?.trim()) newErrors.signatureData = 'Signature is required';
         if (!a.docPrimaryId) newErrors.docPrimaryId = 'Primary Photo ID is required';
-        if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
       }
 
       Object.assign(allErrors, newErrors);

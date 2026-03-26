@@ -66,7 +66,6 @@ export const REQUIRED_FIELD_DEFINITIONS: RequiredFieldDefinition[] = [
   { key: 'declareDate', label: 'Declaration Date', section: 5 },
   { key: 'signatureData', label: 'Online Signature', section: 5 },
   { key: 'docPrimaryId', label: 'Primary Photo ID', section: 5 },
-  { key: 'docSecondaryId', label: 'Secondary Photo Document', section: 5 },
 ];
 
 const FIELD_LABEL_LOOKUP: Record<string, string> = REQUIRED_FIELD_DEFINITIONS.reduce(

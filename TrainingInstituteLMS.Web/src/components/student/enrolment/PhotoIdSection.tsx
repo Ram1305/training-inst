@@ -131,8 +131,7 @@ export function PhotoIdSection({ data, onChange, errors }: PhotoIdSectionProps) 
           <CardContent className="pt-6">
             <Label className="flex items-center gap-2 text-gray-800 font-semibold mb-3">
               <ImagePlus className="w-5 h-5 text-violet-600" />
-              Upload a Photo
-              <span className="text-red-500">*</span>
+              Upload a Photo (optional)
             </Label>
             <p className="text-sm text-gray-500 mb-4">Example: Upload a Photo.</p>
 

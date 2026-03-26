@@ -65,8 +65,6 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             // This ensures we fail fast without leaving orphan User/Student in context if upload fails.
             if (string.IsNullOrWhiteSpace(request.PrimaryIdDataUrl))
                 throw new InvalidOperationException("Primary Photo ID is required.");
-            if (string.IsNullOrWhiteSpace(request.SecondaryIdDataUrl))
-                throw new InvalidOperationException("Photo is required.");
 
             var primaryIdPath = await UploadFileFromDataUrlAsync(
                 request.PrimaryIdDataUrl,
@@ -74,17 +72,19 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 "primary-id",
                 request.PrimaryIdContentType,
                 request.PrimaryIdFileName);
-            var secondaryIdPath = await UploadFileFromDataUrlAsync(
-                request.SecondaryIdDataUrl,
-                "student-documents/secondary-id",
-                "secondary-id",
-                request.SecondaryIdContentType,
-                request.SecondaryIdFileName);
+            string? secondaryIdPath = null;
+            if (!string.IsNullOrWhiteSpace(request.SecondaryIdDataUrl))
+            {
+                secondaryIdPath = await UploadFileFromDataUrlAsync(
+                    request.SecondaryIdDataUrl,
+                    "student-documents/secondary-id",
+                    "secondary-id",
+                    request.SecondaryIdContentType,
+                    request.SecondaryIdFileName);
+            }
 
             if (string.IsNullOrWhiteSpace(primaryIdPath))
                 throw new InvalidOperationException("Failed to upload Primary Photo ID.");
-            if (string.IsNullOrWhiteSpace(secondaryIdPath))
-                throw new InvalidOperationException("Failed to upload Photo.");
 
             // Create User (only after uploads succeeded)
             var user = new User

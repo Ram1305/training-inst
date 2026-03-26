@@ -315,7 +315,6 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       if (!pt.declareDate) newErrors.declareDate = 'Date is required';
       if (!pt.signatureData) newErrors.signatureData = 'Signature is required';
       if (!a.docPrimaryId) newErrors.docPrimaryId = 'Primary Photo ID is required';
-      if (!a.docSecondaryId) newErrors.docSecondaryId = 'Photo document is required';
     }
 
     return newErrors;
