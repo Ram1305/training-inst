@@ -105,6 +105,8 @@ interface PublicEnrollmentWizardProps {
   enrollCode?: string;
   /** Company portal link: employees enrol; fees billed to company. */
   isCompanyPortalLink?: boolean;
+  /** When true (e.g. opened via /enroll/:code), hide Individual vs Company and use individual only. */
+  hideEnrollmentTypeSelector?: boolean;
 }
 
 // Full quiz sections data (same as in PublicQuiz.tsx)
@@ -365,7 +367,8 @@ export function PublicEnrollmentWizard({
   isOneTimeLink = false,
   allowPayLater = false,
   enrollCode = '',
-  isCompanyPortalLink = false
+  isCompanyPortalLink = false,
+  hideEnrollmentTypeSelector = false
 }: PublicEnrollmentWizardProps) {
   const { publicSiteUrl } = usePublicSiteUrl();
   // Wizard step state
@@ -588,9 +591,12 @@ export function PublicEnrollmentWizard({
 
     if (c.experienceBookingEnabled) {
       const slBlExp = getSlBlPricingForDropdownCourse(c);
+      const hasDistinctSlBlExp =
+        slBlExp != null && Math.abs(slBlExp.price - Number(c.price)) > 0.001;
       if (
         typeof preSelectedCoursePrice === 'number' &&
         slBlExp &&
+        hasDistinctSlBlExp &&
         Math.abs(preSelectedCoursePrice - slBlExp.price) <= 0.001
       ) {
         setSelectedPricingVariant('slbl');
@@ -620,9 +626,11 @@ export function PublicEnrollmentWizard({
       }
     } else {
       const slBl = getSlBlPricingForDropdownCourse(c);
+      const hasDistinctSlBl = slBl != null && Math.abs(slBl.price - Number(c.price)) > 0.001;
       if (
         typeof preSelectedCoursePrice === 'number' &&
         slBl &&
+        hasDistinctSlBl &&
         Math.abs(preSelectedCoursePrice - slBl.price) <= 0.001
       ) {
         setSelectedPricingVariant('slbl');
@@ -737,6 +745,13 @@ export function PublicEnrollmentWizard({
       window.clearTimeout(timer);
     };
   }, [isCompanyPortalLink, enrollCode, registrationData.email]);
+
+  useEffect(() => {
+    if (!hideEnrollmentTypeSelector) return;
+    setEnrollmentType('individual');
+    setSelectedCompanyCourses([]);
+    setPendingCompanyCourse(null);
+  }, [hideEnrollmentTypeSelector]);
 
   // Fetch courses on mount
   useEffect(() => {
@@ -2031,71 +2046,74 @@ export function PublicEnrollmentWizard({
                   })()}
                 </div>
                 */}
-                    <div className="flex-1 min-w-0 flex justify-start">
-                      <div>
-                        <Label className="block text-sm font-medium text-gray-700 mb-3">
-                          Enrollment type <span className="text-red-500">*</span>
-                        </Label>
-                        <RadioGroup
-                          value={enrollmentType}
-                          onValueChange={(v) => {
-                            const next = v as EnrollmentType;
-                            setEnrollmentType(next);
-                            if (next === 'individual') {
-                              setSelectedCompanyCourses([]);
-                              setPendingCompanyCourse(null);
-                            } else if (next === 'company' && preSelectedCourseId && typeof preSelectedCoursePrice === 'number') {
-                              const c = courses.find((x) => x.courseId === preSelectedCourseId);
-                              let pricingVariant: CoursePricingVariant = 'std';
-                              const slBlPre = c ? getSlBlPricingForDropdownCourse(c) : null;
-                              if (
-                                c &&
-                                slBlPre &&
-                                Math.abs(preSelectedCoursePrice - slBlPre.price) <= 0.001
-                              ) {
-                                pricingVariant = 'slbl';
-                              } else if (c?.experienceBookingEnabled) {
-                                if (preSelectedExperienceType === 'with') pricingVariant = 'with';
-                                else if (preSelectedExperienceType === 'without') pricingVariant = 'without';
-                                else {
-                                  const pw = Number(c.experiencePrice ?? c.price);
-                                  const pn = Number(c.noExperiencePrice ?? c.price);
-                                  if (Math.abs(preSelectedCoursePrice - pw) <= 0.001) pricingVariant = 'with';
-                                  else if (Math.abs(preSelectedCoursePrice - pn) <= 0.001) pricingVariant = 'without';
-                                  else pricingVariant = 'with';
+                    {!hideEnrollmentTypeSelector && (
+                      <div className="flex-1 min-w-0 flex justify-start">
+                        <div>
+                          <Label className="block text-sm font-medium text-gray-700 mb-3">
+                            Enrollment type <span className="text-red-500">*</span>
+                          </Label>
+                          <RadioGroup
+                            value={enrollmentType}
+                            onValueChange={(v) => {
+                              const next = v as EnrollmentType;
+                              setEnrollmentType(next);
+                              if (next === 'individual') {
+                                setSelectedCompanyCourses([]);
+                                setPendingCompanyCourse(null);
+                              } else if (next === 'company' && preSelectedCourseId && typeof preSelectedCoursePrice === 'number') {
+                                const c = courses.find((x) => x.courseId === preSelectedCourseId);
+                                let pricingVariant: CoursePricingVariant = 'std';
+                                const slBlPre = c ? getSlBlPricingForDropdownCourse(c) : null;
+                                if (
+                                  c &&
+                                  slBlPre &&
+                                  Math.abs(slBlPre.price - Number(c.price)) > 0.001 &&
+                                  Math.abs(preSelectedCoursePrice - slBlPre.price) <= 0.001
+                                ) {
+                                  pricingVariant = 'slbl';
+                                } else if (c?.experienceBookingEnabled) {
+                                  if (preSelectedExperienceType === 'with') pricingVariant = 'with';
+                                  else if (preSelectedExperienceType === 'without') pricingVariant = 'without';
+                                  else {
+                                    const pw = Number(c.experiencePrice ?? c.price);
+                                    const pn = Number(c.noExperiencePrice ?? c.price);
+                                    if (Math.abs(preSelectedCoursePrice - pw) <= 0.001) pricingVariant = 'with';
+                                    else if (Math.abs(preSelectedCoursePrice - pn) <= 0.001) pricingVariant = 'without';
+                                    else pricingVariant = 'with';
+                                  }
+                                } else if (
+                                  c &&
+                                  Math.abs(preSelectedCoursePrice - Number(c.price)) > 0.001
+                                ) {
+                                  pricingVariant = 'prem';
                                 }
-                              } else if (
-                                c &&
-                                Math.abs(preSelectedCoursePrice - Number(c.price)) > 0.001
-                              ) {
-                                pricingVariant = 'prem';
+                                setPendingCompanyCourse({
+                                  courseId: preSelectedCourseId,
+                                  courseName: c?.courseName ?? '',
+                                  price: preSelectedCoursePrice,
+                                  pricingVariant,
+                                });
+                                setSelectedCourseId(preSelectedCourseId);
                               }
-                              setPendingCompanyCourse({
-                                courseId: preSelectedCourseId,
-                                courseName: c?.courseName ?? '',
-                                price: preSelectedCoursePrice,
-                                pricingVariant,
-                              });
-                              setSelectedCourseId(preSelectedCourseId);
-                            }
-                          }}
-                          className="flex gap-4"
-                        >
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="individual" id="type-individual" />
-                            <Label htmlFor="type-individual" className="cursor-pointer font-normal">
-                              Individual
-                            </Label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <RadioGroupItem value="company" id="type-company" />
-                            <Label htmlFor="type-company" className="cursor-pointer font-normal">
-                              Company
-                            </Label>
-                          </div>
-                        </RadioGroup>
+                            }}
+                            className="flex gap-4"
+                          >
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="individual" id="type-individual" />
+                              <Label htmlFor="type-individual" className="cursor-pointer font-normal">
+                                Individual
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <RadioGroupItem value="company" id="type-company" />
+                              <Label htmlFor="type-company" className="cursor-pointer font-normal">
+                                Company
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   {enrollmentType === 'company' ? (

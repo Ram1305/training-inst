@@ -623,6 +623,7 @@ export default function App() {
             allowPayLater={enrollmentLinkData?.allowPayLater}
             enrollCode={enrollCode ?? ''}
             isCompanyPortalLink={enrollmentLinkData?.isCompanyPortalLink}
+            hideEnrollmentTypeSelector={enrollmentLinkData != null}
           />
         )}
         {currentPage === 'publicVOCForm' && (
