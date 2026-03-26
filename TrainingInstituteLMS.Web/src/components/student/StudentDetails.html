@@ -181,7 +181,7 @@
 
             <div class="col-12 col-md-4">
               <label class="form-label required">Date of Birth</label>
-              <input type="date" class="form-control" name="dob" required>
+              <input type="text" class="form-control date-ddmmyyyy" name="dob" required inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}">
               <div class="invalid-feedback">Date of birth is required.</div>
             </div>
 
@@ -532,7 +532,7 @@
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label required">Expiry date</label>
-                    <input type="date" class="form-control usiReq" name="medicareExpiry">
+                    <input type="text" class="form-control usiReq date-ddmmyyyy" name="medicareExpiry" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}">
                     <div class="invalid-feedback">Required.</div>
                   </div>
                 </div>
@@ -587,7 +587,7 @@
                   </div>
                   <div class="col-12 col-md-6">
                     <label class="form-label required">Acquisition date</label>
-                    <input type="date" class="form-control usiReq" name="citizenshipAcqDate">
+                    <input type="text" class="form-control usiReq date-ddmmyyyy" name="citizenshipAcqDate" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}">
                     <div class="invalid-feedback">Required.</div>
                   </div>
                 </div>
@@ -596,7 +596,7 @@
                 <div class="row g-3 usi-id-block" data-id="8" style="display:none;">
                   <div class="col-12 col-md-6">
                     <label class="form-label required">Acquisition date</label>
-                    <input type="date" class="form-control usiReq" name="descentAcqDate">
+                    <input type="text" class="form-control usiReq date-ddmmyyyy" name="descentAcqDate" inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}">
                     <div class="invalid-feedback">Required.</div>
                   </div>
                 </div>
@@ -1136,7 +1136,7 @@
 
             <div class="col-12 col-lg-6">
             <label class="form-label required">Date</label>
-            <input type="date" class="form-control" name="declareDate" required>
+            <input type="text" class="form-control date-ddmmyyyy" name="declareDate" required inputmode="numeric" maxlength="10" placeholder="DD/MM/YYYY" pattern="\d{2}/\d{2}/\d{4}">
             <div class="invalid-feedback">Date is required.</div>
             </div>
 
@@ -1192,6 +1192,51 @@
   const $$ = (sel, root=document) => [...root.querySelectorAll(sel)];
   const setShown = (el, show) => { if (el) el.style.display = show ? "" : "none"; };
   const setReq = (el, req) => { if (el) el.required = !!req; };
+  const CURRENT_YEAR = new Date().getFullYear();
+  const MIN_YEAR = CURRENT_YEAR; // per requirement: currentYear..2100
+  const MAX_YEAR = 2100;
+
+  function sanitizeDDMMYYYY(value){
+    return (value || "").replace(/[^0-9/]/g, "").slice(0, 10);
+  }
+
+  function validateDDMMYYYY(value){
+    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(value)) return { ok:false, reason:"format" };
+    const [ddStr, mmStr, yyyyStr] = value.split("/");
+    const dd = Number(ddStr), mm = Number(mmStr), yyyy = Number(yyyyStr);
+    if (!Number.isInteger(dd) || !Number.isInteger(mm) || !Number.isInteger(yyyy)) return { ok:false, reason:"format" };
+    if (yyyy < MIN_YEAR || yyyy > MAX_YEAR) return { ok:false, reason:"year" };
+    if (mm < 1 || mm > 12 || dd < 1 || dd > 31) return { ok:false, reason:"date" };
+    const d = new Date(yyyy, mm - 1, dd);
+    if (d.getFullYear() !== yyyy || d.getMonth() !== (mm - 1) || d.getDate() !== dd) return { ok:false, reason:"date" };
+    return { ok:true };
+  }
+
+  function attachDDMMYYYYValidation(){
+    const inputs = $$(".date-ddmmyyyy");
+    if (!inputs.length) return;
+
+    inputs.forEach((input) => {
+      // keep typing strict: digits + '/' only, max 10 chars
+      input.addEventListener("input", () => {
+        const next = sanitizeDDMMYYYY(input.value);
+        if (next !== input.value) input.value = next;
+        // clear stale validity while user is typing
+        input.setCustomValidity("");
+      });
+
+      input.addEventListener("blur", () => {
+        const v = sanitizeDDMMYYYY(input.value);
+        if (v !== input.value) input.value = v;
+        if (!v){
+          input.setCustomValidity("");
+          return;
+        }
+        const r = validateDDMMYYYY(v);
+        input.setCustomValidity(r.ok ? "" : `Enter a valid date (DD/MM/YYYY) between ${MIN_YEAR} and ${MAX_YEAR}.`);
+      });
+    });
+  }
 
   // Prevent accidental required on hidden elements (Bootstrap hides tab panes)
   function disableRequiredInHiddenContainers(){
@@ -1260,6 +1305,9 @@
       applyAllConditionalLogic();
     });
   });
+
+  // Strict DD/MM/YYYY date inputs
+  attachDDMMYYYYValidation();
 
   setProgressByIndex(Math.max(0, activeTabIndex()));
   disableRequiredInHiddenContainers();

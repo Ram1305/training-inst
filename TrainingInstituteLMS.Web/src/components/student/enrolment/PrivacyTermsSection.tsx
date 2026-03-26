@@ -16,6 +16,7 @@ import {
   DialogTrigger,
 } from '../../ui/dialog';
 import type { PrivacyTerms } from '../../../types/studentEnrolment';
+import { sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
 
 interface PrivacyTermsSectionProps {
   data: PrivacyTerms;
@@ -428,9 +429,12 @@ export function PrivacyTermsSection({ data, onChange, errors }: PrivacyTermsSect
               </Label>
               <Input
                 id="declareDate"
-                type="date"
+                type="text"
+                inputMode="numeric"
+                maxLength={10}
+                placeholder="DD/MM/YYYY"
                 value={data.declareDate}
-                onChange={(e) => onChange({ declareDate: e.target.value })}
+                onChange={(e) => onChange({ declareDate: sanitizeDateInput(e.target.value) })}
                 className={errors.declareDate ? 'border-red-500' : ''}
               />
               {errors.declareDate && <p className="text-sm text-red-500">{errors.declareDate}</p>}

@@ -30,6 +30,11 @@ import {
   initialAdditionalInfo,
   initialPrivacyTerms,
 } from '../../types/studentEnrolment';
+import { isValidDDMMYYYY } from '../../utils/dateDDMMYYYY';
+
+const CURRENT_YEAR = new Date().getFullYear();
+const MIN_YEAR = CURRENT_YEAR;
+const MAX_YEAR = 2100;
 
 const TABS = [
   { id: 'applicant', label: '1) Applicant' },
@@ -140,6 +145,9 @@ export function StudentEnrolmentForm() {
     if (!applicant.surname?.trim()) errs.surname = 'Surname is required.';
     if (!applicant.givenName?.trim()) errs.givenName = 'Given name is required.';
     if (!applicant.dob) errs.dob = 'Date of birth is required.';
+    else if (!isValidDDMMYYYY(applicant.dob, MIN_YEAR, MAX_YEAR).valid) {
+      errs.dob = `Enter a valid date (DD/MM/YYYY) between ${MIN_YEAR} and ${MAX_YEAR}.`;
+    }
     if (!applicant.gender) errs.gender = 'Please select gender.';
     if (!applicant.mobile?.trim()) errs.mobile = 'Mobile phone is required.';
     if (!applicant.email?.trim()) errs.email = 'Email is required.';
@@ -189,6 +197,9 @@ export function StudentEnrolmentForm() {
         if (!usi.medicareIRN?.trim()) errs.medicareIRN = 'IRN is required.';
         if (!usi.medicareColor) errs.medicareColor = 'Card colour is required.';
         if (!usi.medicareExpiry) errs.medicareExpiry = 'Expiry date is required.';
+        else if (!isValidDDMMYYYY(usi.medicareExpiry, MIN_YEAR, MAX_YEAR).valid) {
+          errs.medicareExpiry = `Enter a valid date (DD/MM/YYYY) between ${MIN_YEAR} and ${MAX_YEAR}.`;
+        }
       }
       if (usi.usiIdType === '3' && !usi.birthState?.trim()) errs.birthState = 'State/Territory is required.';
       if (usi.usiIdType === '4' && !usi.immiNumber?.trim()) errs.immiNumber = 'ImmiCard number is required.';
@@ -200,8 +211,16 @@ export function StudentEnrolmentForm() {
       if (usi.usiIdType === '7') {
         if (!usi.citizenshipStock?.trim()) errs.citizenshipStock = 'Stock number is required.';
         if (!usi.citizenshipAcqDate) errs.citizenshipAcqDate = 'Acquisition date is required.';
+        else if (!isValidDDMMYYYY(usi.citizenshipAcqDate, MIN_YEAR, MAX_YEAR).valid) {
+          errs.citizenshipAcqDate = `Enter a valid date (DD/MM/YYYY) between ${MIN_YEAR} and ${MAX_YEAR}.`;
+        }
       }
-      if (usi.usiIdType === '8' && !usi.descentAcqDate) errs.descentAcqDate = 'Acquisition date is required.';
+      if (usi.usiIdType === '8') {
+        if (!usi.descentAcqDate) errs.descentAcqDate = 'Acquisition date is required.';
+        else if (!isValidDDMMYYYY(usi.descentAcqDate, MIN_YEAR, MAX_YEAR).valid) {
+          errs.descentAcqDate = `Enter a valid date (DD/MM/YYYY) between ${MIN_YEAR} and ${MAX_YEAR}.`;
+        }
+      }
     }
 
     return errs;
@@ -257,6 +276,9 @@ export function StudentEnrolmentForm() {
     if (!privacyTerms.acceptTerms) errs.acceptTerms = 'You must accept the Terms & Conditions.';
     if (!privacyTerms.declareName?.trim()) errs.declareName = 'Name is required.';
     if (!privacyTerms.declareDate) errs.declareDate = 'Date is required.';
+    else if (!isValidDDMMYYYY(privacyTerms.declareDate, MIN_YEAR, MAX_YEAR).valid) {
+      errs.declareDate = `Enter a valid date (DD/MM/YYYY) between ${MIN_YEAR} and ${MAX_YEAR}.`;
+    }
     if (!privacyTerms.signatureData) errs.signatureData = 'Signature is required.';
 
     return errs;

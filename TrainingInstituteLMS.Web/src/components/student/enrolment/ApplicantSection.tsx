@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../../ui/checkbox';
 import type { ApplicantDetails } from '../../../types/studentEnrolment';
 import { TITLE_OPTIONS, GENDER_OPTIONS, STATE_OPTIONS } from '../../../types/studentEnrolment';
+import { sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
 
 interface ApplicantSectionProps {
   data: ApplicantDetails;
@@ -114,9 +115,12 @@ export function ApplicantSection({ data, onChange, errors }: ApplicantSectionPro
                 </Label>
                 <Input
                   id="dob"
-                  type="date"
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={10}
+                  placeholder="DD/MM/YYYY"
                   value={data.dob}
-                  onChange={(e) => onChange({ dob: e.target.value })}
+                  onChange={(e) => onChange({ dob: sanitizeDateInput(e.target.value) })}
                   className={errors.dob ? 'border-red-500' : ''}
                 />
                 {errors.dob && <p className="text-sm text-red-500">{errors.dob}</p>}

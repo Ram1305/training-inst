@@ -6,6 +6,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Checkbox } from '../../ui/checkbox';
 import type { USIDetails } from '../../../types/studentEnrolment';
 import { USI_ID_TYPE_OPTIONS, MEDICARE_COLOR_OPTIONS } from '../../../types/studentEnrolment';
+import { sanitizeDateInput } from '../../../utils/dateDDMMYYYY';
 
 interface USISectionProps {
   data: USIDetails;
@@ -328,9 +329,12 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                           </Label>
                           <Input
                             id="medicareExpiry"
-                            type="date"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="DD/MM/YYYY"
                             value={data.medicareExpiry || ''}
-                            onChange={(e) => onChange({ medicareExpiry: e.target.value })}
+                            onChange={(e) => onChange({ medicareExpiry: sanitizeDateInput(e.target.value) })}
                             className={errors.medicareExpiry ? 'border-red-500' : ''}
                           />
                           {errors.medicareExpiry && <p className="text-sm text-red-500">{errors.medicareExpiry}</p>}
@@ -450,9 +454,12 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                           </Label>
                           <Input
                             id="citizenshipAcqDate"
-                            type="date"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="DD/MM/YYYY"
                             value={data.citizenshipAcqDate || ''}
-                            onChange={(e) => onChange({ citizenshipAcqDate: e.target.value })}
+                            onChange={(e) => onChange({ citizenshipAcqDate: sanitizeDateInput(e.target.value) })}
                             className={errors.citizenshipAcqDate ? 'border-red-500' : ''}
                           />
                           {errors.citizenshipAcqDate && <p className="text-sm text-red-500">{errors.citizenshipAcqDate}</p>}
@@ -470,9 +477,12 @@ export function USISection({ data, onChange, errors }: USISectionProps) {
                           </Label>
                           <Input
                             id="descentAcqDate"
-                            type="date"
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={10}
+                            placeholder="DD/MM/YYYY"
                             value={data.descentAcqDate || ''}
-                            onChange={(e) => onChange({ descentAcqDate: e.target.value })}
+                            onChange={(e) => onChange({ descentAcqDate: sanitizeDateInput(e.target.value) })}
                             className={errors.descentAcqDate ? 'border-red-500' : ''}
                           />
                           {errors.descentAcqDate && <p className="text-sm text-red-500">{errors.descentAcqDate}</p>}
