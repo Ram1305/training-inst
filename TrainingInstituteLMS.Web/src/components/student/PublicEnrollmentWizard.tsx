@@ -379,6 +379,11 @@ export function PublicEnrollmentWizard({
   const [currentStep, setCurrentStep] = useState(1);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  useEffect(() => {
+    // Always reset viewport when changing wizard pages to avoid carrying previous scroll position.
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [currentStep]);
+
   // Enrollment type: Individual (default) or Company
   const [enrollmentType, setEnrollmentType] = useState<EnrollmentType>('individual');
   // Company: multiple courses, each with date + quantity
