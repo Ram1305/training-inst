@@ -279,6 +279,12 @@ export function AdminCompanies() {
   };
 
   const totalPages = Math.ceil(totalCount / pageSize);
+  const totalPurchasedSeats = viewOrders.reduce(
+    (sum, order) =>
+      sum +
+      (order.links ?? []).reduce((orderSum, link) => orderSum + (link.maxUses && link.maxUses > 0 ? link.maxUses : 1), 0),
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -693,9 +699,9 @@ export function AdminCompanies() {
                       </div>
                       <div>
                         <p className="text-3xl font-bold tabular-nums text-blue-800">
-                          {viewOrders.reduce((s, o) => s + (o.links?.length ?? 0), 0)}
+                          {totalPurchasedSeats}
                         </p>
-                        <p className="text-xs font-medium text-gray-600">Course links</p>
+                        <p className="text-xs font-medium text-gray-600">Seats purchased</p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 rounded-xl border border-emerald-100 bg-gradient-to-br from-emerald-50 to-white p-4 shadow-sm">
@@ -912,6 +918,7 @@ export function AdminCompanies() {
                                 (order.links ?? []).map((link, li) => {
                                   const students = viewStudentsMap[link.linkId] ?? [];
                                   const isLoaded = link.linkId in viewStudentsMap;
+                                  const seatCount = link.maxUses && link.maxUses > 0 ? link.maxUses : 1;
                                   return (
                                     <div key={link.linkId}>
                                       {/* Course header */}
@@ -921,6 +928,11 @@ export function AdminCompanies() {
                                         </div>
                                         <span className="min-w-0 flex-1 text-sm font-semibold text-gray-900 sm:truncate">{link.courseName}</span>
                                         <div className="flex w-full flex-wrap items-center gap-2 sm:ml-auto sm:w-auto sm:justify-end">
+                                          <Badge
+                                            className="border border-blue-200 bg-blue-50 text-blue-800 text-xs"
+                                          >
+                                            {seatCount} {seatCount === 1 ? 'seat' : 'seats'}
+                                          </Badge>
                                           <Badge
                                             className={`text-xs ${students.length > 0 ? 'border border-emerald-200 bg-emerald-50 text-emerald-800' : 'border border-gray-200 bg-gray-50 text-gray-600'}`}
                                           >
