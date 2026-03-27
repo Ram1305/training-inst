@@ -379,9 +379,9 @@ export function PublicHeader({
           <AnimatePresence>
             {mobileMenuOpen && (
               <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: 'auto' }}
-                exit={{ opacity: 0, height: 0 }}
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
                 className="md:hidden pb-6 border-t border-slate-700 max-h-[calc(100svh-4rem)] overflow-y-auto overscroll-contain"
               >
                 <div className="flex flex-col mt-4 space-y-2">
