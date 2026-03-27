@@ -105,21 +105,10 @@ export function PublicHeader({
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
-    const scrollY = window.scrollY;
-
-    const htmlStyle = document.documentElement.style;
-
-    const prevHtml = {
-      overflow: htmlStyle.overflow,
-    };
-
-    // Block page scroll at the root element; menu scrolls independently.
-    htmlStyle.overflow = "hidden";
-
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
     return () => {
-      htmlStyle.overflow = prevHtml.overflow;
-
-      window.scrollTo(0, scrollY);
+      document.body.style.overflow = prev;
     };
   }, [mobileMenuOpen]);
 
@@ -386,124 +375,123 @@ export function PublicHeader({
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
+
+          <AnimatePresence>
+            {mobileMenuOpen && (
+              <motion.div
+                initial={{ opacity: 0, y: -8 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -8 }}
+                className="md:hidden pb-6 border-t border-slate-700 max-h-[calc(100svh-4rem)] overflow-y-auto overscroll-contain"
+              >
+                <div className="flex flex-col mt-4 space-y-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onBack?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    HOME
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      (onViewCourses || onBack)?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    COURSES
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onForms?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    FORMS
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onFeesRefund?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    FEES & REFUND
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onGallery?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    GALLERY
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onAbout?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    ABOUT
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onContact?.();
+                    }}
+                    className="text-white text-left p-2 hover:bg-slate-800 rounded"
+                  >
+                    CONTACT
+                  </button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      (onBookNow || onLogin)?.();
+                    }}
+                    className="w-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 shadow-md"
+                  >
+                    Book now
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onVOC?.();
+                    }}
+                    className="w-full rounded-full border-2 border-cyan-200 text-cyan-400 hover:bg-slate-800 hover:text-cyan-300"
+                  >
+                    VOC
+                  </Button>
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onLogin?.();
+                    }}
+                    className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 font-semibold"
+                  >
+                    Login / Register
+                  </Button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </nav>
-
-      {/* Mobile menu — rendered outside sticky nav */}
-      <AnimatePresence>
-        {mobileMenuOpen && (
-          <motion.div
-            className="md:hidden fixed inset-0 top-16 z-40 bg-gradient-to-r from-slate-900 via-slate-800 to-slate-900 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
-            initial={{ opacity: 0, y: -8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -8 }}
-          >
-            <div className="flex flex-col p-4 space-y-2 pb-12">
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onBack?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                HOME
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  (onViewCourses || onBack)?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                COURSES
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onForms?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                FORMS
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onFeesRefund?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                FEES & REFUND
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onGallery?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                GALLERY
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onAbout?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                ABOUT
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onContact?.();
-                }}
-                className="text-white text-left p-2 hover:bg-slate-800 rounded"
-              >
-                CONTACT
-              </button>
-              <Button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  (onBookNow || onLogin)?.();
-                }}
-                className="w-full rounded-full bg-cyan-500 text-white hover:bg-cyan-600 shadow-md"
-              >
-                Book now
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  closeMobileMenu();
-                  onVOC?.();
-                }}
-                className="w-full rounded-full border-2 border-cyan-200 text-cyan-400 hover:bg-slate-800 hover:text-cyan-300"
-              >
-                VOC
-              </Button>
-              <Button
-                type="button"
-                onClick={() => {
-                  closeMobileMenu();
-                  onLogin?.();
-                }}
-                className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 font-semibold"
-              >
-                Login / Register
-              </Button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
     </header>
   );
 }
