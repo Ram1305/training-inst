@@ -159,49 +159,49 @@ export function PublicHeader({
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
+          <div className="flex items-center gap-3 overflow-x-auto flex-nowrap justify-start pb-1 pr-1 md:pb-0 md:pr-0 md:flex-wrap md:justify-center md:gap-4 md:overflow-visible">
             <motion.div
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm md:gap-4 md:px-6 md:py-3"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <div className="flex items-center justify-center w-10 h-10 bg-cyan-100 rounded-lg flex-shrink-0">
-                <Award className="w-5 h-5 text-cyan-600" />
+              <div className="flex items-center justify-center w-8 h-8 bg-cyan-100 rounded-lg flex-shrink-0 md:w-10 md:h-10">
+                <Award className="w-4 h-4 text-cyan-600 md:w-5 md:h-5" />
               </div>
               <div className="flex flex-col items-start justify-center">
-                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">RTO</span>
-                <span className="text-sm font-bold text-slate-800 leading-tight whitespace-nowrap">#45234</span>
+                <span className="text-[8px] text-gray-500 font-medium uppercase tracking-wide leading-tight md:text-[9px]">RTO</span>
+                <span className="text-xs font-bold text-slate-800 leading-tight whitespace-nowrap md:text-sm">#45234</span>
               </div>
             </motion.div>
 
             <motion.div
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm md:gap-4 md:px-6 md:py-3"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg flex-shrink-0">
-                <Users className="w-5 h-5 text-blue-600" />
+              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg flex-shrink-0 md:w-10 md:h-10">
+                <Users className="w-4 h-4 text-blue-600 md:w-5 md:h-5" />
               </div>
               <div className="flex flex-col items-start justify-center">
-                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight whitespace-nowrap">FACE TO FACE</span>
-                <span className="text-sm font-bold text-slate-800 leading-tight">Training</span>
+                <span className="text-[8px] text-gray-500 font-medium uppercase tracking-wide leading-tight whitespace-nowrap md:text-[9px]">FACE TO FACE</span>
+                <span className="text-xs font-bold text-slate-800 leading-tight md:text-sm">Training</span>
               </div>
             </motion.div>
 
             <motion.div
-              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
+              className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm md:gap-4 md:px-6 md:py-3"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg flex-shrink-0">
-                <CheckCircle className="w-5 h-5 text-indigo-600" />
+              <div className="flex items-center justify-center w-8 h-8 bg-indigo-100 rounded-lg flex-shrink-0 md:w-10 md:h-10">
+                <CheckCircle className="w-4 h-4 text-indigo-600 md:w-5 md:h-5" />
               </div>
               <div className="flex flex-col items-start justify-center">
-                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">QUALIFIED</span>
-                <span className="text-sm font-bold text-slate-800 leading-tight">Trainers</span>
+                <span className="text-[8px] text-gray-500 font-medium uppercase tracking-wide leading-tight md:text-[9px]">QUALIFIED</span>
+                <span className="text-xs font-bold text-slate-800 leading-tight md:text-sm">Trainers</span>
               </div>
             </motion.div>
           </div>
