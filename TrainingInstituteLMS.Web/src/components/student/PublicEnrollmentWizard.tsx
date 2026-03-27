@@ -1281,7 +1281,6 @@ export function PublicEnrollmentWizard({
       if (!result.valid) {
         setCurrentFormSection(result.firstInvalidSection);
         toast.error('Please complete all required fields before submitting');
-        formContainerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
         return;
       }
       setSubmitValidationErrors([]);

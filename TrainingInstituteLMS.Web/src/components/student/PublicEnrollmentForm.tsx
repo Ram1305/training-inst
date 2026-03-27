@@ -271,7 +271,6 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
   const handleNext = () => {
     if (validateSection(currentSection)) {
       setCurrentSection((prev) => Math.min(prev + 1, 5));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       toast.error('Please fill in all required fields');
     }
@@ -279,7 +278,6 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
 
   const handlePrevious = () => {
     setCurrentSection((prev) => Math.max(prev - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const mapFormDataToRequest = (): SubmitEnrollmentFormRequest => {

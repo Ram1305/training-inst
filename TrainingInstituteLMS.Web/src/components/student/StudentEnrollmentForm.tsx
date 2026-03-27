@@ -331,7 +331,6 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       setErrors({});
       setAllErrors({});
       setCurrentSection((prev) => Math.min(prev + 1, 5));
-      window.scrollTo({ top: 0, behavior: 'smooth' });
     } else {
       toast.error('Please fill in all required fields');
     }
@@ -341,7 +340,6 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
     setErrors({});
     setAllErrors({});
     setCurrentSection((prev) => Math.max(prev - 1, 1));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleSubmit = async () => {
@@ -372,7 +370,6 @@ export function StudentEnrollmentForm({ onComplete, onCancel }: StudentEnrollmen
       setCurrentSection(firstInvalidSection);
       setErrors(sectionErrors);
       setAllErrors({ [sectionTitle]: Object.values(sectionErrors) });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
       toast.error('Please fill in all required fields');
       return;
     }
