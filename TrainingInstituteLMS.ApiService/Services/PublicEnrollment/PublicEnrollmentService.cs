@@ -59,7 +59,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 // This avoids hiding schedulable courses that were accidentally marked inactive.
                 // Note: some environments may have CourseDate.IsActive not maintained consistently; we still want
                 // schedulable courses to appear if they have any upcoming date.
-                .Where(c => c.IsActive || c.CourseDates.Any(cd => cd.ScheduledDate >= today))
+                .Where(c => c.IsActive || c.CourseDates.Any(cd => cd.IsActive && cd.ScheduledDate >= today))
                 .Include(c => c.Category)
                 .Include(c => c.ComboOffer)
                 .Select(c => new
@@ -122,7 +122,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
 
             var dates = await _context.CourseDates
                 // Align with course dropdown visibility: show any upcoming scheduled dates.
-                .Where(cd => cd.CourseId == courseId && cd.ScheduledDate >= today)
+                .Where(cd => cd.CourseId == courseId && cd.IsActive && cd.ScheduledDate >= today)
                 .ToListAsync();
 
             // Filter out misconfigured dates that have no capacity set so they don't break the public flow
@@ -275,6 +275,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             if (courseDate == null)
             {
                 throw new InvalidOperationException("Course date not found");
+            }
+
+            if (!courseDate.IsActive)
+            {
+                throw new InvalidOperationException("This course date is inactive");
             }
 
             if (!courseDate.MaxCapacity.HasValue)

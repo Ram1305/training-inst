@@ -208,24 +208,19 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
     }
   };
 
-  const handleDeleteEnrollment = async (enrollmentId: string, studentId: string, courseName: string) => {
-    if (!confirm(`Delete this course enrollment only?\n\nCourse: ${courseName}`)) return;
+  const handleDeleteStudent = async (student: StudentResponse) => {
+    if (!confirm(`Delete student account?\n\nName: ${student.fullName}\nEmail: ${student.email}\n\nThis will remove the student and related records.`)) return;
 
     setLoading(true);
     try {
-      const response = await enrollmentService.cancelEnrollment(enrollmentId, studentId);
+      const response = await studentManagementService.deleteStudent(student.studentId);
       
       if (response.success) {
-        toast.success('Course enrollment deleted successfully.');
+        toast.success('Student deleted successfully.');
         fetchStudents();
       }
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to delete course enrollment';
-      if (message.toLowerCase().includes('cannot cancel enrollment after payment has been submitted')) {
-        toast.error('This enrollment cannot be deleted because payment was already submitted.');
-      } else {
-        toast.error(message);
-      }
+      toast.error(error instanceof Error ? error.message : 'Failed to delete student');
     } finally {
       setLoading(false);
     }
@@ -587,7 +582,6 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                       const courseDateLabel = dateSource ? formatDate(dateSource) : '—';
                       const rowPaymentStatus = payment?.status ?? enrollment?.paymentStatus;
                       const paymentStatusLabel = !enrollment ? '—' : rowPaymentStatus === 'Verified' || rowPaymentStatus === 'Paid' ? 'Paid' : 'Unpaid';
-                      const canDeleteEnrollment = !!enrollment && rowPaymentStatus === 'Pending';
                       return (
                       <TableRow key={rowKey}>
                         <TableCell>{renderRegisterDate(student.createdAt)}</TableCell>
@@ -738,22 +732,9 @@ export function AdminStudents({ onNavigate }: AdminStudentsProps = {}) {
                               size="sm"
                               variant="outline"
                               className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                              onClick={() => {
-                                if (!enrollment) return;
-                                if (!canDeleteEnrollment) {
-                                  toast.error('Only enrollments with Pending payment can be deleted.');
-                                  return;
-                                }
-                                handleDeleteEnrollment(enrollment.enrollmentId, student.studentId, enrollment.courseName);
-                              }}
-                              disabled={loading || !enrollment || !canDeleteEnrollment}
-                              title={
-                                !enrollment
-                                  ? 'No enrollment to delete'
-                                  : !canDeleteEnrollment
-                                    ? 'Cannot delete after payment submission'
-                                    : 'Delete Course Enrollment'
-                              }
+                              onClick={() => handleDeleteStudent(student)}
+                              disabled={loading}
+                              title="Delete Student"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
