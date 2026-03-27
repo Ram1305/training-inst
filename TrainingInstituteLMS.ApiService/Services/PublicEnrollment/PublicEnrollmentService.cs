@@ -348,7 +348,9 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             {
                 enrollmentType = "Company";
                 var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
-                paymentStatus = order != null && string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase)
+                paymentStatus = order != null && (
+                        string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(order.PaymentMethod, "bank_transfer", StringComparison.OrdinalIgnoreCase))
                     ? "Pending"
                     : "Paid";
             }
@@ -809,6 +811,11 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     totalAmount += i.Price * qty;
                 }
 
+                var normalizedOrderPaymentMethod = (request.PaymentMethod ?? "pay_later").Trim().ToLowerInvariant();
+                var initialOrderStatus = normalizedOrderPaymentMethod == "card"
+                    ? "Completed"
+                    : "Pending";
+
                 var order = new CompanyOrderEntity
                 {
                     OrderId = Guid.NewGuid(),
@@ -817,8 +824,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     CompanyName = request.CompanyName.Trim(),
                     CompanyMobile = request.CompanyMobile?.Trim(),
                     TotalAmount = totalAmount,
-                    PaymentMethod = request.PaymentMethod ?? "pay_later",
-                    Status = "Completed",
+                    PaymentMethod = normalizedOrderPaymentMethod,
+                    Status = initialOrderStatus,
                     CreatedAt = DateTime.UtcNow
                 };
                 await _context.CompanyOrders.AddAsync(order);
@@ -1184,12 +1191,14 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             if (courseDate.CurrentEnrollments >= courseDate.MaxCapacity.Value)
                 throw new InvalidOperationException("This course date is fully booked");
 
-            // Respect CompanyOrder.PaymentMethod: pay_later => Pending, otherwise => Paid
+            // Respect CompanyOrder.PaymentMethod: pay_later/bank_transfer => Pending, card => Paid
             var paymentStatus = "Paid";
             if (link.CompanyOrderId.HasValue)
             {
                 var order = await _context.CompanyOrders.FindAsync(link.CompanyOrderId.Value);
-                if (order != null && string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase))
+                if (order != null && (
+                        string.Equals(order.PaymentMethod, "pay_later", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(order.PaymentMethod, "bank_transfer", StringComparison.OrdinalIgnoreCase)))
                 {
                     paymentStatus = "Pending";
                 }
