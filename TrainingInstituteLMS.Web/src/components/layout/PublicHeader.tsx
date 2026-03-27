@@ -105,10 +105,43 @@ export function PublicHeader({
 
   useEffect(() => {
     if (!mobileMenuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    const scrollY = window.scrollY;
+
+    const bodyStyle = document.body.style;
+    const htmlStyle = document.documentElement.style;
+
+    const prevBody = {
+      overflow: bodyStyle.overflow,
+      position: bodyStyle.position,
+      top: bodyStyle.top,
+      left: bodyStyle.left,
+      right: bodyStyle.right,
+      width: bodyStyle.width,
+    };
+    const prevHtml = {
+      overflow: htmlStyle.overflow,
+    };
+
+    // iOS Safari-safe scroll lock: freeze body while allowing inner scroll containers.
+    htmlStyle.overflow = "hidden";
+    bodyStyle.overflow = "hidden";
+    bodyStyle.position = "fixed";
+    bodyStyle.top = `-${scrollY}px`;
+    bodyStyle.left = "0";
+    bodyStyle.right = "0";
+    bodyStyle.width = "100%";
+
     return () => {
-      document.body.style.overflow = prev;
+      bodyStyle.overflow = prevBody.overflow;
+      bodyStyle.position = prevBody.position;
+      bodyStyle.top = prevBody.top;
+      bodyStyle.left = prevBody.left;
+      bodyStyle.right = prevBody.right;
+      bodyStyle.width = prevBody.width;
+
+      htmlStyle.overflow = prevHtml.overflow;
+
+      window.scrollTo(0, scrollY);
     };
   }, [mobileMenuOpen]);
 
@@ -159,49 +192,49 @@ export function PublicHeader({
           </motion.div>
 
           {/* Info Badges - Gen Z Style */}
-          <div className="flex items-center gap-3 overflow-x-auto flex-nowrap justify-start pb-1 pr-1 md:pb-0 md:pr-0 md:flex-wrap md:justify-center md:gap-4 md:overflow-visible">
+          <div className="flex flex-wrap items-center justify-center gap-3 md:gap-4">
             <motion.div
-              className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm md:gap-4 md:px-6 md:py-3"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <div className="flex items-center justify-center w-8 h-8 bg-cyan-100 rounded-lg flex-shrink-0 md:w-10 md:h-10">
-                <Award className="w-4 h-4 text-cyan-600 md:w-5 md:h-5" />
+              <div className="flex items-center justify-center w-10 h-10 bg-cyan-100 rounded-lg flex-shrink-0">
+                <Award className="w-5 h-5 text-cyan-600" />
               </div>
               <div className="flex flex-col items-start justify-center">
-                <span className="text-[8px] text-gray-500 font-medium uppercase tracking-wide leading-tight md:text-[9px]">RTO</span>
-                <span className="text-xs font-bold text-slate-800 leading-tight whitespace-nowrap md:text-sm">#45234</span>
+                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">RTO</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight whitespace-nowrap">#45234</span>
               </div>
             </motion.div>
 
             <motion.div
-              className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm md:gap-4 md:px-6 md:py-3"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <div className="flex items-center justify-center w-8 h-8 bg-blue-100 rounded-lg flex-shrink-0 md:w-10 md:h-10">
-                <Users className="w-4 h-4 text-blue-600 md:w-5 md:h-5" />
+              <div className="flex items-center justify-center w-10 h-10 bg-blue-100 rounded-lg flex-shrink-0">
+                <Users className="w-5 h-5 text-blue-600" />
               </div>
               <div className="flex flex-col items-start justify-center">
-                <span className="text-[8px] text-gray-500 font-medium uppercase tracking-wide leading-tight whitespace-nowrap md:text-[9px]">FACE TO FACE</span>
-                <span className="text-xs font-bold text-slate-800 leading-tight md:text-sm">Training</span>
+                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight whitespace-nowrap">FACE TO FACE</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight">Training</span>
               </div>
             </motion.div>
 
             <motion.div
-              className="flex items-center gap-2 bg-white px-3 py-2 rounded-xl border border-gray-200 shadow-sm md:gap-4 md:px-6 md:py-3"
+              className="flex items-center gap-4 bg-white px-6 py-3 rounded-xl border border-gray-200 shadow-sm"
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
             >
-              <div className="flex items-center justify-center w-8 h-8 bg-indigo-100 rounded-lg flex-shrink-0 md:w-10 md:h-10">
-                <CheckCircle className="w-4 h-4 text-indigo-600 md:w-5 md:h-5" />
+              <div className="flex items-center justify-center w-10 h-10 bg-indigo-100 rounded-lg flex-shrink-0">
+                <CheckCircle className="w-5 h-5 text-indigo-600" />
               </div>
               <div className="flex flex-col items-start justify-center">
-                <span className="text-[8px] text-gray-500 font-medium uppercase tracking-wide leading-tight md:text-[9px]">QUALIFIED</span>
-                <span className="text-xs font-bold text-slate-800 leading-tight md:text-sm">Trainers</span>
+                <span className="text-[9px] text-gray-500 font-medium uppercase tracking-wide leading-tight">QUALIFIED</span>
+                <span className="text-sm font-bold text-slate-800 leading-tight">Trainers</span>
               </div>
             </motion.div>
           </div>
@@ -382,7 +415,7 @@ export function PublicHeader({
                 initial={{ opacity: 0, y: -8 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -8 }}
-                className="md:hidden pb-6 border-t border-slate-700 max-h-[calc(100svh-4rem)] overflow-y-auto overscroll-contain"
+                className="md:hidden pb-6 border-t border-slate-700 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]"
               >
                 <div className="flex flex-col mt-4 space-y-2">
                   <button
