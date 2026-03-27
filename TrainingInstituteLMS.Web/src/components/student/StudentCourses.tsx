@@ -375,7 +375,7 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
               <CheckCircle className="h-4 w-4 text-green-600" />
               <AlertTitle className="text-green-900">Pre-Enrollment Assessment Passed</AlertTitle>
               <AlertDescription className="text-green-800">
-                Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - You can now enroll in courses. Payment verification required after enrollment.
+                Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - You can now enroll in courses. You can also retake LLND anytime if you want to improve your result.
               </AlertDescription>
             </>
           ) : (
@@ -384,34 +384,42 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
               <AlertTitle className="text-yellow-900">Assessment Under Review</AlertTitle>
               <AlertDescription className="text-yellow-800">
                 Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - Your results are being reviewed by an administrator who may grant access to enroll.
-                You cannot retake the assessment.
+                You can still retake the assessment anytime.
               </AlertDescription>
             </>
           )}
         </Alert>
       )}
 
-      {/* LLND Assessment Required - First action (top) */}
-      {!isLoadingQuizStatus && enrolledCourses.length > 0 && hasEnrolledCourseNeedingQuiz && !hasAttemptedQuiz && (
-        <Card className="border-red-200 bg-gradient-to-r from-red-50 to-rose-50">
+      {/* LLND Assessment - First action (top) */}
+      {!isLoadingQuizStatus && enrolledCourses.length > 0 && (
+        <Card className={hasCompletedLln ? 'border-violet-200 bg-gradient-to-r from-violet-50 to-fuchsia-50' : 'border-red-200 bg-gradient-to-r from-red-50 to-rose-50'}>
           <CardContent className="py-6">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-gradient-to-br from-red-500 to-rose-500 rounded-full flex items-center justify-center">
+                <div className={`w-12 h-12 rounded-full flex items-center justify-center ${hasCompletedLln ? 'bg-gradient-to-br from-violet-500 to-fuchsia-500' : 'bg-gradient-to-br from-red-500 to-rose-500'}`}>
                   <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div>
-                  <Badge className="mb-1.5 bg-red-100 text-red-700 border-red-200 text-xs">Action required</Badge>
-                  <h3 className="font-semibold text-red-900">LLND Assessment Required</h3>
-                  <p className="text-red-800/80 text-sm">Complete the LLND assessment to fully activate your enrollment</p>
+                  <Badge className={`mb-1.5 text-xs ${hasCompletedLln ? 'bg-violet-100 text-violet-700 border-violet-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                    {hasCompletedLln ? 'Optional' : 'Action required'}
+                  </Badge>
+                  <h3 className={`font-semibold ${hasCompletedLln ? 'text-violet-900' : 'text-red-900'}`}>
+                    {hasCompletedLln ? 'LLND Assessment Retake Available' : 'LLND Assessment Required'}
+                  </h3>
+                  <p className={`text-sm ${hasCompletedLln ? 'text-violet-800/80' : 'text-red-800/80'}`}>
+                    {hasCompletedLln
+                      ? 'You have already passed. Retake anytime if you want to improve your score.'
+                      : 'Complete the LLND assessment to fully activate your enrollment.'}
+                  </p>
                 </div>
               </div>
               <Button 
                 onClick={() => setShowQuiz(true)}
-                className="bg-red-600 hover:bg-red-700 text-white"
+                className={hasCompletedLln ? 'bg-violet-600 hover:bg-violet-700 text-white' : 'bg-red-600 hover:bg-red-700 text-white'}
               >
                 <BookOpen className="w-4 h-4 mr-2" />
-                Take Assessment
+                {hasAttemptedQuiz ? 'Retake Assessment' : 'Take Assessment'}
               </Button>
             </div>
           </CardContent>
@@ -654,16 +662,16 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
                             Complete Enrollment Form
                           </Button>
                         )}
-                        {/* Show Take Assessment button if quiz not completed */}
-                        {!hasCompletedLln && !hasAttemptedQuiz && (
-                          <Button 
-                            onClick={() => handleTakeAssessmentForEnrolledCourse(course)}
-                            className="bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600"
-                          >
-                            <BookOpen className="w-4 h-4 mr-2" />
-                            Take LLND Assessment
-                          </Button>
-                        )}
+                        {/* LLND action is always available; retake remains optional after pass */}
+                        <Button 
+                          onClick={() => handleTakeAssessmentForEnrolledCourse(course)}
+                          className={hasCompletedLln
+                            ? 'bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-700 hover:to-fuchsia-700'
+                            : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600'}
+                        >
+                          <BookOpen className="w-4 h-4 mr-2" />
+                          {hasAttemptedQuiz ? 'Retake LLND Assessment' : 'Take LLND Assessment'}
+                        </Button>
                       </CardFooter>
                     </div>
                   </div>

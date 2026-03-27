@@ -355,7 +355,11 @@ namespace TrainingInstituteLMS.ApiService.Services.Quiz
                 .ToListAsync();
 
             var latestAttempt = attempts.FirstOrDefault();
-            var passedAttempt = attempts.FirstOrDefault(a => a.IsPassed || a.AdminBypass != null);
+            var passedAttempt = attempts
+                .Where(a => a.IsPassed || (a.AdminBypass != null && a.AdminBypass.IsActive))
+                .OrderByDescending(a => a.OverallPercentage)
+                .ThenByDescending(a => a.AttemptDate)
+                .FirstOrDefault();
             var hasAdminBypass = attempts.Any(a => a.AdminBypass != null && a.AdminBypass.IsActive);
 
             return new StudentQuizStatusResponseDto
