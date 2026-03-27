@@ -345,8 +345,6 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
-    // Prevent mobile "scroll jump" when switching views/routes
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleGoToPublicQuiz = () => {
@@ -364,8 +362,6 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
-    // Prevent mobile "scroll jump" when switching views/routes
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleGoToForms = () => {
@@ -460,8 +456,6 @@ export default function App() {
     setEnrollmentLinkData(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
-    // Prevent mobile "scroll jump" when switching views/routes
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleBookCourse = (courseId: string, courseCode: string, courseName: string, price: number, experienceType?: 'with' | 'without') => {
@@ -476,8 +470,6 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
-    // Prevent mobile "scroll jump" when switching views/routes
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleNavigateToEnrollFromPortal = (courseData?: {
@@ -501,8 +493,6 @@ export default function App() {
     setEnrollCode(null);
     setCurrentPage('publicEnrollmentWizard');
     updateUrl(PATHS.enroll);
-    // Prevent mobile "scroll jump" when switching views/routes
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   };
 
   const handleBackFromBooking = () => {
