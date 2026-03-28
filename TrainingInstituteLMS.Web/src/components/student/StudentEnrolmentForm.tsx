@@ -31,6 +31,7 @@ import {
   initialPrivacyTerms,
 } from '../../types/studentEnrolment';
 import { isValidDDMMYYYY } from '../../utils/dateDDMMYYYY';
+import { isValidEmail } from '../../utils/emailValidator';
 
 const CURRENT_YEAR = new Date().getFullYear();
 // Year ranges vary by field (DOB is in the past; expiry/declare dates are current/future)
@@ -154,7 +155,7 @@ export function StudentEnrolmentForm() {
     if (!applicant.gender) errs.gender = 'Please select gender.';
     if (!applicant.mobile?.trim()) errs.mobile = 'Mobile phone is required.';
     if (!applicant.email?.trim()) errs.email = 'Email is required.';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(applicant.email)) errs.email = 'A valid email is required.';
+    else if (!isValidEmail(applicant.email)) errs.email = 'A valid email is required.';
     if (!applicant.resAddress?.trim()) errs.resAddress = 'Residential address is required.';
     if (!applicant.resSuburb?.trim()) errs.resSuburb = 'Suburb is required.';
     if (!applicant.resState) errs.resState = 'State is required.';

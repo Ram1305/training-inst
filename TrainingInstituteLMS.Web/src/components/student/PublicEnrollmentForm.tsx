@@ -11,6 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Checkbox } from '../ui/checkbox';
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest } from '../../services/studentEnrollmentForm.service';
 import { authService } from '../../services/auth.service';
+import { isValidEmail } from '../../utils/emailValidator';
 import {
   ApplicantSection,
   USISection,
@@ -84,7 +85,7 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
 
     if (!registrationData.email.trim()) {
       errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registrationData.email)) {
+    } else if (!isValidEmail(registrationData.email)) {
       errors.email = 'Please enter a valid email address';
     }
 

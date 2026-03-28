@@ -44,6 +44,7 @@ import {
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest } from '../../services/studentEnrollmentForm.service';
 import { quizService, type SubmitGuestQuizRequest, type SubmitQuizSectionResult } from '../../services/quiz.service';
 import { authService } from '../../services/auth.service';
+import { isValidEmail } from '../../utils/emailValidator';
 import { QuizSection } from './QuizSection';
 import type { QuizSectionData } from './Quiz';
 import {
@@ -749,7 +750,7 @@ export function PublicEnrollmentWizard({
   }, [quizSectionResults]);
 
   useEffect(() => {
-    if (!isCompanyPortalLink || !enrollCode.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registrationData.email.trim())) {
+    if (!isCompanyPortalLink || !enrollCode.trim() || !isValidEmail(registrationData.email.trim())) {
       setPortalSkipLln(false);
       setPortalSkipForm(false);
       return;
@@ -996,7 +997,7 @@ export function PublicEnrollmentWizard({
     if (!registrationData.fullName.trim()) errors.fullName = 'Full name is required';
     if (!registrationData.email.trim()) {
       errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(registrationData.email)) {
+    } else if (!isValidEmail(registrationData.email)) {
       errors.email = 'Please enter a valid email address';
     }
     if (!registrationData.phone.trim()) errors.phone = 'Phone number is required';

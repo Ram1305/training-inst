@@ -21,6 +21,7 @@ import { paymentService } from '../../services/payment.service';
 import type { CompanyBillingStatementListItem } from '../../services/adminCompanyBilling.service';
 import { BankTransferDetailsCard } from '../payment/BankTransferDetailsCard';
 import { toast } from 'sonner';
+import { isValidEmail } from '../../utils/emailValidator';
 
 function isAuthSessionFailure(err: unknown): boolean {
   const status = (err as Error & { status?: number }).status;
@@ -54,9 +55,7 @@ function companyPaymentDisplay(row: CompanyBillingStatementListItem): { label: s
   return { label: 'Pending payment', paid: false };
 }
 
-function isValidEmail(v: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
-}
+
 
 export interface CompanyBillingPaymentsPanelProps {
   companyId?: string;

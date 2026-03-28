@@ -8,6 +8,7 @@ import { AlertCircle, Loader2, CheckCircle2, Eye, EyeOff, ArrowLeft } from 'luci
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { Progress } from '../ui/progress';
 import { quizService, type SubmitGuestQuizRequest, type SubmitQuizSectionResult } from '../../services/quiz.service';
+import { isValidEmail } from '../../utils/emailValidator';
 import { QuizSection } from './QuizSection';
 import type { QuizSectionData } from './Quiz';
 
@@ -276,7 +277,7 @@ export function PublicQuiz({ onComplete, onCancel }: PublicQuizProps) {
 
     if (!formData.email.trim()) {
       errors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       errors.email = 'Please enter a valid email address';
     }
 

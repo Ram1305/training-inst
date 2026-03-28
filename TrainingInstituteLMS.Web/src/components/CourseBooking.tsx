@@ -34,6 +34,7 @@ import { courseDateService } from "../services/courseDate.service";
 import { enrollmentService } from "../services/enrollment.service";
 import { paymentService } from "../services/payment.service";
 import { gtagEvent } from "../lib/gtag";
+import { isValidEmail } from "../utils/emailValidator";
 import type { CourseDateSimple } from "../services/courseDate.service";
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
 
@@ -217,7 +218,7 @@ export function CourseBooking({
 
     if (!formData.email.trim()) {
       errors.email = "Email is required";
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!isValidEmail(formData.email)) {
       errors.email = "Please enter a valid email address";
     }
 
