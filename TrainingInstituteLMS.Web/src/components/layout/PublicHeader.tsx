@@ -103,14 +103,7 @@ export function PublicHeader({
 
   const closeMobileMenu = () => setMobileMenuOpen(false);
 
-  useEffect(() => {
-    if (!mobileMenuOpen) return;
-    const prev = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = prev;
-    };
-  }, [mobileMenuOpen]);
+
 
   return (
     <header className="w-full">
