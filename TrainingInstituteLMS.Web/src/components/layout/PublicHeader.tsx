@@ -460,6 +460,16 @@ export function PublicHeader({
                   </Button>
                   <Button
                     type="button"
+                    onClick={() => {
+                      closeMobileMenu();
+                      onLogin?.();
+                    }}
+                    className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 font-semibold"
+                  >
+                    Login / Register
+                  </Button>
+                  <Button
+                    type="button"
                     variant="outline"
                     onClick={() => {
                       closeMobileMenu();
@@ -468,16 +478,6 @@ export function PublicHeader({
                     className="w-full rounded-full border-2 border-cyan-200 text-cyan-400 hover:bg-slate-800 hover:text-cyan-300"
                   >
                     VOC
-                  </Button>
-                  <Button
-                    type="button"
-                    onClick={() => {
-                      closeMobileMenu();
-                      onLogin?.();
-                    }}
-                    className="w-full border-2 border-white bg-transparent text-white hover:bg-white hover:text-slate-900 font-semibold"
-                  >
-                    Login / Register
                   </Button>
                 </div>
               </motion.div>

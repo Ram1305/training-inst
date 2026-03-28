@@ -406,12 +406,12 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
   if (currentStep === 'registration') {
     return (
       <div className="max-w-4xl mx-auto space-y-6 p-6">
-        <div className="flex items-center gap-4 mb-6">
+        {/* <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Button>
-        </div>
+        </div> */}
 
         <div>
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">

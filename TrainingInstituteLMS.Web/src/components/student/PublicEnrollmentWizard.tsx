@@ -3473,9 +3473,9 @@ export function PublicEnrollmentWizard({
               <p className="text-gray-700 mb-4">
                 Thank you for completing your registration. Please log in to continue.
               </p>
-              <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
+              {/* <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
                 Back to Home
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         </div>
@@ -3484,12 +3484,12 @@ export function PublicEnrollmentWizard({
 
     return (
       <div className="max-w-4xl mx-auto space-y-6 p-6">
-        <div className="flex items-center gap-4 mb-6">
+        {/* <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Button>
-        </div>
+        </div> */}
         <div>
           <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">
             Complete Your Registration
@@ -3637,12 +3637,12 @@ export function PublicEnrollmentWizard({
   if (enrollmentType === 'company' && companyOrderSuccess) {
     return (
       <div className="max-w-4xl mx-auto space-y-6 p-6">
-        <div className="flex items-center gap-4 mb-6">
+        {/* <div className="flex items-center gap-4 mb-6">
           <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" />
             Back to Home
           </Button>
-        </div>
+        </div> */}
         <Card className="border-violet-100">
           <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
             <CardTitle className="flex items-center gap-2">
@@ -3693,9 +3693,9 @@ export function PublicEnrollmentWizard({
                 </p>
               </div>
             </div>
-            <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
+            {/* <Button onClick={onCancel} className="bg-violet-600 hover:bg-violet-700">
               Back to Home
-            </Button>
+            </Button> */}
           </CardContent>
         </Card>
       </div>
@@ -3712,12 +3712,12 @@ export function PublicEnrollmentWizard({
   return (
     <div className="max-w-4xl mx-auto space-y-6 p-6">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
+      {/* <div className="flex items-center gap-4 mb-6">
         <Button variant="outline" onClick={onCancel} className="flex items-center gap-2">
           <ArrowLeft className="w-4 h-4" />
           Back to Home
         </Button>
-      </div>
+      </div> */}
 
       <div>
         <h1 className="text-3xl font-bold mb-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 bg-clip-text text-transparent">

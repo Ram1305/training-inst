@@ -17,7 +17,7 @@ import {
   Award,
   CreditCard,
   BarChart3,
-  Star,
+
   Image,
   ClipboardCheck,
   Megaphone,
@@ -38,7 +38,7 @@ import { AdminPayments } from './admin/AdminPayments';
 import { AdminCompanyPayments } from './admin/AdminCompanyPayments';
 import { AdminCompanyBilling } from './admin/AdminCompanyBilling';
 import { AdminReports } from './admin/AdminReports';
-import { AdminReviews } from './admin/AdminReviews';
+
 import { AdminGallery } from './admin/AdminGallery';
 import { AdminVOC } from './admin/AdminVOC';
 import { AdminBookingDetails } from './admin/AdminBookingDetails';
@@ -67,7 +67,7 @@ type AdminPage =
   | 'company-payments'
   | 'company-billing'
   | 'reports'
-  | 'google-reviews'
+
   | 'gallery'
   | 'banners'
   | 'voc'
@@ -89,7 +89,7 @@ const VALID_ADMIN_PAGES: AdminPage[] = [
   'company-payments',
   'company-billing',
   'reports',
-  'google-reviews',
+
   'gallery',
   'banners',
   'voc',
@@ -171,7 +171,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
     { id: 'certificates', name: 'Certificates', icon: Award },
     { id: 'payments', name: 'Payments', icon: CreditCard },
     { id: 'reports', name: 'Reports', icon: BarChart3 },
-    { id: 'google-reviews', name: 'Google Reviews', icon: Star },
+
     { id: 'gallery', name: 'Gallery', icon: Image },
     { id: 'banners', name: 'Banners', icon: Megaphone },
     { id: 'voc', name: 'VOC Submissions', icon: ClipboardCheck },
@@ -250,8 +250,7 @@ export function AdminPortal({ user, onLogout, onNavigateToLanding }: AdminPortal
         return <AdminCompanyBilling />;
       case 'reports':
         return <AdminReports />;
-      case 'google-reviews':
-        return <AdminReviews />;
+
       case 'gallery':
         return <AdminGallery />;
       case 'banners':
