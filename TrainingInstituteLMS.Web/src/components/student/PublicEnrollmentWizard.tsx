@@ -89,6 +89,19 @@ import {
 } from '../../utils/australiaTime';
 import { toISODate } from '../../utils/dateDDMMYYYY';
 
+/** Read a file as a data URL without using `FileReader` (some WebViews report FileReader as undefined). */
+async function blobToDataUrl(blob: Blob): Promise<string> {
+  const buffer = await blob.arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+  let binary = '';
+  const chunkSize = 8192;
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize) as unknown as number[]);
+  }
+  const mime = blob.type || 'application/octet-stream';
+  return `data:${mime};base64,${btoa(binary)}`;
+}
+
 interface PublicEnrollmentWizardProps {
   onComplete: (result: { userId: string; studentId: string; email: string; fullName: string }) => void;
   onCancel: () => void;
@@ -1636,34 +1649,32 @@ export function PublicEnrollmentWizard({
   };
 
   // Payment proof file handler
-  const handlePaymentProofChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePaymentProofChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error('File size must be less than 5MB');
-        return;
-      }
-      setPaymentProofFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPaymentProofPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) {
+      setPaymentProofFile(null);
+      setPaymentProofPreview(null);
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      e.target.value = '';
+      return;
+    }
+    setPaymentProofFile(file);
+    try {
+      setPaymentProofPreview(await blobToDataUrl(file));
+    } catch {
+      toast.error('Could not read the payment slip file');
+      setPaymentProofFile(null);
+      setPaymentProofPreview(null);
+      e.target.value = '';
     }
   };
 
   const removePaymentProof = () => {
     setPaymentProofFile(null);
     setPaymentProofPreview(null);
-  };
-
-  const fileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-      reader.readAsDataURL(file);
-    });
   };
 
   // Map form data to request
@@ -1809,8 +1820,8 @@ export function PublicEnrollmentWizard({
       const docPrimaryId = formData.applicant.docPrimaryId;
       const docSecondaryId = formData.applicant.docSecondaryId;
       const [primaryIdDataUrl, secondaryIdDataUrl] = await Promise.all([
-        docPrimaryId ? fileToDataUrl(docPrimaryId) : Promise.resolve(''),
-        docSecondaryId ? fileToDataUrl(docSecondaryId) : Promise.resolve(''),
+        docPrimaryId ? blobToDataUrl(docPrimaryId) : Promise.resolve(''),
+        docSecondaryId ? blobToDataUrl(docSecondaryId) : Promise.resolve(''),
       ]);
       // Use ref to ensure we have the latest quiz results (avoids stale closure)
       const resultsToSubmit = quizSectionResultsRef.current.length > 0 ? quizSectionResultsRef.current : quizSectionResults;
