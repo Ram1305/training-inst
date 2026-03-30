@@ -1,4 +1,4 @@
-﻿using TrainingInstituteLMS.DTOs.DTOs.Requests.Auth;
+using TrainingInstituteLMS.DTOs.DTOs.Requests.Auth;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Auth;
 
 namespace TrainingInstituteLMS.ApiService.Services.Auth
