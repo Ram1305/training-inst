@@ -58,7 +58,7 @@ export function LoginPage({ onLogin, onBack, onNavigateToEnroll }: LoginPageProp
 
     try {
       const response = await authService.login({
-        email: loginEmail,
+        email: loginEmail.trim(),
         password: loginPassword,
         rememberMe: rememberMe,
       });

@@ -33,34 +33,49 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
             _siteSettingsService = siteSettingsService;
         }
 
-        public async Task<AuthResponseDto?> LoginAsync(LoginRequestDto request)
+        /// <summary>Trim whitespace so UI/DB copies with leading/trailing spaces still match.</summary>
+        private static string NormalizeEmail(string? email) =>
+            string.IsNullOrWhiteSpace(email) ? string.Empty : email.Trim();
+
+        public async Task<LoginAttemptResult> LoginAsync(LoginRequestDto request)
         {
+            var email = NormalizeEmail(request.Email);
+            if (string.IsNullOrEmpty(email))
+            {
+                return LoginAttemptResult.Failed(LoginFailureKind.EmailNotFound);
+            }
+
+            // Compare with trimmed DB value so legacy rows with accidental spaces still match.
             var user = await _context.Users
                 .Include(u => u.Student)
                 .Include(u => u.Company)
-                .FirstOrDefaultAsync(u => u.Email == request.Email && u.IsActive);
+                .FirstOrDefaultAsync(u => u.IsActive && u.Email.Trim() == email);
 
             if (user == null)
             {
-                return null;
+                return LoginAttemptResult.Failed(LoginFailureKind.EmailNotFound);
             }
 
-            // Verify password
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             {
-                return null;
+                return LoginAttemptResult.Failed(LoginFailureKind.WrongPassword);
             }
 
-            // Update last login
             user.LastLoginAt = DateTime.UtcNow;
             await _context.SaveChangesAsync();
 
-            return MapToAuthResponse(user);
+            return LoginAttemptResult.Success(MapToAuthResponse(user));
         }
 
         public async Task<AuthResponseDto?> RegisterAsync(RegisterRequestDto request)
         {
-            if (await EmailExistsAsync(request.Email))
+            var email = NormalizeEmail(request.Email);
+            if (string.IsNullOrEmpty(email))
+            {
+                return null;
+            }
+
+            if (await EmailExistsAsync(email))
             {
                 return null;
             }
@@ -72,7 +87,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
             {
                 UserId = Guid.NewGuid(),
                 FullName = fullName,
-                Email = request.Email,
+                Email = email,
                 PhoneNumber = isCompany ? null : request.PhoneNumber,
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword(request.Password),
                 UserType = isCompany ? "Company" : "Student",
@@ -106,7 +121,7 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
                     StudentId = Guid.NewGuid(),
                     UserId = user.UserId,
                     FullName = request.FullName,
-                    Email = request.Email,
+                    Email = email,
                     PhoneNumber = request.PhoneNumber,
                     IsActive = true,
                     CreatedAt = DateTime.UtcNow
@@ -155,7 +170,13 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
 
         public async Task<bool> EmailExistsAsync(string email)
         {
-            return await _context.Users.AnyAsync(u => u.Email == email);
+            var e = NormalizeEmail(email);
+            if (string.IsNullOrEmpty(e))
+            {
+                return false;
+            }
+
+            return await _context.Users.AnyAsync(u => u.Email.Trim() == e);
         }
 
         public async Task<AuthResponseDto?> GetUserByIdAsync(Guid userId)

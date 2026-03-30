@@ -63,14 +63,21 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
 
             try
             {
-                var response = await _authService.LoginAsync(request);
+                var result = await _authService.LoginAsync(request);
 
-                if (response == null)
+                if (result.Failure == LoginFailureKind.EmailNotFound)
                 {
-                    _logger.LogWarning("Failed login attempt for email: {Email}", request.Email);
-                    return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Invalid email or password"));
+                    _logger.LogWarning("Login failed — unknown or inactive email: {Email}", request.Email);
+                    return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Email is incorrect."));
                 }
 
+                if (result.Failure == LoginFailureKind.WrongPassword)
+                {
+                    _logger.LogWarning("Login failed — wrong password for email: {Email}", request.Email);
+                    return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Password is incorrect."));
+                }
+
+                var response = result.User!;
                 await SignInAuthCookieAsync(response);
                 _logger.LogInformation("User logged in successfully: {Email}", request.Email);
                 return Ok(ApiResponse<AuthResponseDto>.SuccessResponse(response, "Login successful"));
