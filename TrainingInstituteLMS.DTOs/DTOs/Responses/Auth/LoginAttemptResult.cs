@@ -3,7 +3,8 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Responses.Auth
     public enum LoginFailureKind
     {
         EmailNotFound,
-        WrongPassword
+        WrongPassword,
+        AccountInactive
     }
 
     /// <summary>

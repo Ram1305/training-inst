@@ -33,27 +33,36 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
             _siteSettingsService = siteSettingsService;
         }
 
-        /// <summary>Trim whitespace so UI/DB copies with leading/trailing spaces still match.</summary>
+        /// <summary>Trim whitespace; use <see cref="EmailKey"/> for case-insensitive lookups.</summary>
         private static string NormalizeEmail(string? email) =>
             string.IsNullOrWhiteSpace(email) ? string.Empty : email.Trim();
 
+        /// <summary>Normalized email in lowercase for comparisons (avoids CS collation mismatches).</summary>
+        private static string EmailKey(string? email) =>
+            NormalizeEmail(email).ToLowerInvariant();
+
         public async Task<LoginAttemptResult> LoginAsync(LoginRequestDto request)
         {
-            var email = NormalizeEmail(request.Email);
-            if (string.IsNullOrEmpty(email))
+            var emailKey = EmailKey(request.Email);
+            if (string.IsNullOrEmpty(emailKey))
             {
                 return LoginAttemptResult.Failed(LoginFailureKind.EmailNotFound);
             }
 
-            // Compare with trimmed DB value so legacy rows with accidental spaces still match.
+            // Match case-insensitively; find row even if inactive so we can return a specific message.
             var user = await _context.Users
                 .Include(u => u.Student)
                 .Include(u => u.Company)
-                .FirstOrDefaultAsync(u => u.IsActive && u.Email.Trim() == email);
+                .FirstOrDefaultAsync(u => u.Email.Trim().ToLower() == emailKey);
 
             if (user == null)
             {
                 return LoginAttemptResult.Failed(LoginFailureKind.EmailNotFound);
+            }
+
+            if (!user.IsActive)
+            {
+                return LoginAttemptResult.Failed(LoginFailureKind.AccountInactive);
             }
 
             if (!BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
@@ -170,13 +179,13 @@ namespace TrainingInstituteLMS.ApiService.Services.Auth
 
         public async Task<bool> EmailExistsAsync(string email)
         {
-            var e = NormalizeEmail(email);
+            var e = EmailKey(email);
             if (string.IsNullOrEmpty(e))
             {
                 return false;
             }
 
-            return await _context.Users.AnyAsync(u => u.Email.Trim() == e);
+            return await _context.Users.AnyAsync(u => u.Email.Trim().ToLower() == e);
         }
 
         public async Task<AuthResponseDto?> GetUserByIdAsync(Guid userId)

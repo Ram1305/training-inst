@@ -67,8 +67,15 @@ namespace TrainingInstituteLMS.ApiService.Controllers.Auth
 
                 if (result.Failure == LoginFailureKind.EmailNotFound)
                 {
-                    _logger.LogWarning("Login failed — unknown or inactive email: {Email}", request.Email);
+                    _logger.LogWarning("Login failed — no user for email: {Email}", request.Email);
                     return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse("Email is incorrect."));
+                }
+
+                if (result.Failure == LoginFailureKind.AccountInactive)
+                {
+                    _logger.LogWarning("Login failed — inactive account: {Email}", request.Email);
+                    return Unauthorized(ApiResponse<AuthResponseDto>.FailureResponse(
+                        "This account is inactive. Please contact support."));
                 }
 
                 if (result.Failure == LoginFailureKind.WrongPassword)
