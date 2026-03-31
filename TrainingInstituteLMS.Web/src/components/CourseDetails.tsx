@@ -23,6 +23,36 @@ import { SAFETY_TRAINING_ACADEMY_LOGO } from '../constants/safetyTrainingAcademy
 
 const logoImage = '/assets/SafetyTrainingAcademylogo.png';
 
+function normalizeCourseBlurb(
+  text: string,
+  opts: { price?: number | string | null; delivery?: string | null; location?: string | null }
+): string {
+  if (!text) return text;
+  let out = text;
+  if (opts.price != null) {
+    const priceNum =
+      typeof opts.price === 'number' ? opts.price : Number(String(opts.price).replace(/[^0-9.]/g, ''));
+    const formatted =
+      Number.isFinite(priceNum) && Math.abs(priceNum - Math.trunc(priceNum)) < 0.000001
+        ? `$${priceNum.toFixed(0)}`
+        : Number.isFinite(priceNum)
+          ? `$${priceNum.toFixed(2)}`
+          : `$${String(opts.price)}`;
+
+    out = out.replace(
+      /(\b(?:COST|PRICE)\b\s*:\s*)\$?\s*([0-9]+(?:[.,][0-9]+)*)/gi,
+      (_m, prefix) => `${prefix}${formatted}`
+    );
+  }
+  if (opts.delivery) {
+    out = out.replace(/(\bDELIVERY\b\s*:\s*)([^\n📌💵]+)(?=\s*(?:💵|📌|$))/gi, `$1${opts.delivery}`);
+  }
+  if (opts.location) {
+    out = out.replace(/(\bLOCATION\b\s*:\s*)([^\n]+)$/gi, `$1${opts.location}`);
+  }
+  return out;
+}
+
 interface CourseDetailsPageProps {
   courseId: string;
   onBack: () => void;
@@ -311,7 +341,10 @@ export function CourseDetailsPage({
               {course.title}
             </h1>
             <p className="text-blue-100 text-lg max-w-3xl">
-              {course.description || 'Professional certification program with industry-recognized credentials'}
+              {normalizeCourseBlurb(
+                course.description || 'Professional certification program with industry-recognized credentials',
+                { price: course.price, delivery: course.delivery, location: course.location }
+              )}
             </p>
           </div>
 
