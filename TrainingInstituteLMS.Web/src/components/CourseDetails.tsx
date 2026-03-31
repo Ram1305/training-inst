@@ -505,7 +505,13 @@ export function CourseDetailsPage({
                 <CardContent className="p-4 sm:p-6 overflow-x-auto">
                   <div
                     className="course-description-content text-gray-700 text-base sm:text-lg leading-relaxed [&_.course-desc-kv-label]:text-blue-600 [&_.course-desc-kv-label]:font-semibold [&_.course-desc-kv-value]:text-blue-700 [&_.course-desc-kv-value]:font-bold [&_.course-desc-h2]:text-lg sm:[&_.course-desc-h2]:text-xl [&_.course-desc-h2]:font-bold [&_.course-desc-h2]:text-slate-900 [&_.course-desc-h2]:mt-4 [&_.course-desc-h3]:text-base sm:[&_.course-desc-h3]:text-lg [&_.course-desc-h3]:font-semibold [&_.course-desc-h3]:text-slate-800 [&_.course-desc-h3]:mt-3 [&_.course-desc-ul]:list-disc [&_.course-desc-ul]:pl-4 sm:[&_.course-desc-ul]:pl-6 [&_.course-desc-ol]:list-decimal [&_.course-desc-ol]:pl-4 sm:[&_.course-desc-ol]:pl-6 [&_.course-desc-li]:my-1 [&_strong]:font-semibold [&_em]:italic [&_table]:w-full [&_table]:overflow-hidden [&_table]:block sm:[&_table]:table [&_table]:overflow-x-auto"
-                    dangerouslySetInnerHTML={{ __html: courseDescriptionToHtml(course.courseDescription) }}
+                    dangerouslySetInnerHTML={{
+                      __html: courseDescriptionToHtml(course.courseDescription, {
+                        price: course.price,
+                        delivery: course.delivery,
+                        location: course.location
+                      })
+                    }}
                   />
 
                   {/* Handbook */}
