@@ -17,6 +17,7 @@ import { SAFETY_TRAINING_ACADEMY_LOGO } from '../constants/safetyTrainingAcademy
 import contactPersonImage from '/assets/Contact-Us.jpg.bv.jpg';
 import { PublicHeader } from './layout/PublicHeader';
 import { ResourcesDropdown } from './ui/ResourcesDropdown';
+import { SOCIAL_LINKS } from "../constants/socialLinks";
 
 interface ContactPageProps {
   onBack: () => void;
@@ -486,13 +487,31 @@ export function ContactPage({ onBack, onLogin, onRegister, onAbout, onViewCourse
               </p>
               {/* Social Media Icons */}
               <div className="flex gap-3">
-                <a href="#" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                <a
+                  href={SOCIAL_LINKS.facebook}
+                  aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                >
                   <Facebook className="w-5 h-5" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                <a
+                  href={SOCIAL_LINKS.linkedin}
+                  aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                >
                   <Linkedin className="w-5 h-5" />
                 </a>
-                <a href="#" className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all">
+                <a
+                  href={SOCIAL_LINKS.instagram}
+                  aria-label="Instagram"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="w-10 h-10 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
+                >
                   <Instagram className="w-5 h-5" />
                 </a>
               </div>

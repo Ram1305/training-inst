@@ -52,6 +52,7 @@ import { PublicHeader } from "./layout/PublicHeader";
 import { PublicBannerModal } from "./layout/PublicBannerModal";
 import googleReviewsJson from '../../assets/googlereviews.json';
 import '../reviews-marquee.css';
+import { SOCIAL_LINKS } from "../constants/socialLinks";
 
 interface LandingPageProps {
   onLogin: () => void;
@@ -1354,22 +1355,28 @@ export function LandingPage({ onLogin, onRegister, onCourseDetails, onAbout, onC
               <p className="text-white/90 text-sm mb-4">Professional certification programs for your career growth.</p>
               <div className="flex gap-4">
                 <a
-                  href="#"
+                  href={SOCIAL_LINKS.facebook}
                   aria-label="Facebook"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
                 >
                   <Facebook className="w-6 h-6" />
                 </a>
                 <a
-                  href="#"
+                  href={SOCIAL_LINKS.linkedin}
                   aria-label="LinkedIn"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
                 >
                   <Linkedin className="w-6 h-6" />
                 </a>
                 <a
-                  href="#"
+                  href={SOCIAL_LINKS.instagram}
                   aria-label="Instagram"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="w-12 h-12 bg-white/20 hover:bg-white/30 rounded-full flex items-center justify-center transition-all"
                 >
                   <Instagram className="w-6 h-6" />
