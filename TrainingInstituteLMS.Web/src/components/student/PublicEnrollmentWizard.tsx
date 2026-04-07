@@ -75,7 +75,6 @@ import {
 import { paymentService } from '../../services/payment.service';
 import { PaymentSuccessCard } from '../PaymentSuccessCard';
 import { PaymentFailureCard } from '../PaymentFailureCard';
-import { PaymentSuccessPage } from '../PaymentSuccessPage';
 import { gtagEvent } from '../../lib/gtag';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { API_CONFIG } from '../../config/api.config';
@@ -2615,22 +2614,38 @@ export function PublicEnrollmentWizard({
           return year.toString().padStart(2, '0');
         });
 
-        // Card payment success: show full-page payment success
+        // Card payment success: show success card and "Continue to LLND Assessment" button
         if (paymentMethod === 'card' && paymentCompleted) {
           return (
-            <PaymentSuccessPage
-              paymentMethod="card"
-              transactionId={paymentTransactionId ?? undefined}
-              courseName={getSelectedCourse()?.courseName}
-              coursePrice={getSelectedCoursePrice()}
-              studentName={registrationData.fullName || undefined}
-              studentEmail={registrationData.email || undefined}
-              onContinue={() => {
-                prefillFormFromRegistration();
-                setCurrentStep(3);
-              }}
-              continueLabel="Continue to LLND Assessment"
-            />
+            <Card className="border-violet-100">
+              <CardHeader className="bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white rounded-t-lg">
+                <CardTitle className="flex items-center gap-2">
+                  <CreditCard className="w-5 h-5" />
+                  Step 2: Payment
+                </CardTitle>
+                <CardDescription className="text-violet-100">
+                  Choose your payment method and provide payment details
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <PaymentSuccessCard
+                  title="Payment successful"
+                  message="Your card has been charged. You can now continue to the LLND Assessment."
+                  transactionId={paymentTransactionId ?? undefined}
+                  isRedirecting={false}
+                >
+                  <Button
+                    onClick={() => {
+                      prefillFormFromRegistration();
+                      setCurrentStep(3);
+                    }}
+                    className="bg-violet-600 hover:bg-violet-700 text-white"
+                  >
+                    Continue to LLND Assessment
+                  </Button>
+                </PaymentSuccessCard>
+              </CardContent>
+            </Card>
           );
         }
 
@@ -2732,20 +2747,7 @@ export function PublicEnrollmentWizard({
                       }}
                       className={`mt-1 ${registrationErrors.email ? 'border-red-500' : ''}`}
                     />
-                    {registrationErrors.email && (
-                      <div className="mt-1.5 flex items-start gap-2">
-                        <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/></svg>
-                        <p className="text-red-600 text-sm">
-                          {registrationErrors.email === 'Email already registered'
-                            ? 'This email is already registered. Please use a different email or '
-                            : registrationErrors.email}
-                          {registrationErrors.email === 'Email already registered' && (
-                            <a href="/login" className="underline font-semibold text-violet-600 hover:text-violet-800" onClick={(e) => { e.preventDefault(); window.location.href = '/login'; }}>login to your account</a>
-                          )}
-                          {registrationErrors.email === 'Email already registered' && '.'}
-                        </p>
-                      </div>
-                    )}
+                    {registrationErrors.email && <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>}
                   </div>
                   {/* Individual: no password field; backend stores default password */}
                   <div className="flex items-start gap-3 bg-yellow-50 border border-yellow-200 rounded-lg p-4">

@@ -118,7 +118,7 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
       const emailCheckResponse = await authService.checkEmail(registrationData.email);
       if (emailCheckResponse.success && emailCheckResponse.data === true) {
         toast.error('This email is already registered. Please use a different email or login to your account.');
-        setRegistrationErrors(prev => ({ ...prev, email: 'EMAIL_ALREADY_REGISTERED' }));
+        setRegistrationErrors(prev => ({ ...prev, email: 'Email already registered' }));
         return;
       }
     } catch (error) {
@@ -474,17 +474,7 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
                       className={`mt-1 ${registrationErrors.email ? 'border-red-500' : ''}`}
                     />
                     {registrationErrors.email && (
-                      registrationErrors.email === 'EMAIL_ALREADY_REGISTERED' ? (
-                        <div className="mt-1.5 flex items-start gap-2">
-                          <svg className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd"/></svg>
-                          <p className="text-red-600 text-sm">
-                            This email is already registered. Please use a different email or{' '}
-                            <a href="/login" className="underline font-semibold text-violet-600 hover:text-violet-800">login to your account</a>.
-                          </p>
-                        </div>
-                      ) : (
-                        <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>
-                      )
+                      <p className="text-red-500 text-sm mt-1">{registrationErrors.email}</p>
                     )}
                   </div>
 

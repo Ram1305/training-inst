@@ -20,7 +20,6 @@ import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { Quiz } from './Quiz';
 import { EnrollmentPaymentModal } from './EnrollmentPaymentModal';
 import { StudentEnrollmentForm } from './StudentEnrollmentForm';
-import { PaymentSuccessPage } from '../PaymentSuccessPage';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 import { toast } from 'sonner';
 import { useQuizStatus } from '../../hooks/useQuizStatus';
@@ -54,10 +53,6 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
   
   // Selected dates for enrollment
   const [selectedDates, setSelectedDates] = useState<Record<string, string>>({});
-
-  // Payment success page state
-  const [showPaymentSuccessPage, setShowPaymentSuccessPage] = useState(false);
-  const [lastPaymentSuccessData, setLastPaymentSuccessData] = useState<{ courseName?: string; coursePrice?: number } | null>(null);
 
   // API data states
   const [availableCourses, setAvailableCourses] = useState<StudentBrowseCourse[]>([]);
@@ -279,13 +274,9 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
 
   const handleCreditCardSuccess = async () => {
     await Promise.all([fetchAvailableCourses(), fetchEnrolledCourses()]);
-    setLastPaymentSuccessData({
-      courseName: selectedCourseForPayment?.courseName,
-      coursePrice: selectedCourseForPayment?.price ?? undefined,
-    });
     setShowPaymentUpload(false);
     setSelectedCourseForPayment(null);
-    setShowPaymentSuccessPage(true);
+    alert('Payment successful! Please complete the LLND Assessment in your enrolled courses section.');
   };
 
   const handleDateSelect = (courseId: string, dateId: string) => {
@@ -335,21 +326,6 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
   const enrollmentFormPending = enrollmentFormData?.enrollmentFormStatus === 'Pending';
   const enrollmentFormApproved = enrollmentFormData?.enrollmentFormStatus === 'Approved';
   const enrollmentFormRejected = enrollmentFormData?.enrollmentFormStatus === 'Rejected';
-
-  if (showPaymentSuccessPage) {
-    return (
-      <PaymentSuccessPage
-        paymentMethod="card"
-        courseName={lastPaymentSuccessData?.courseName}
-        coursePrice={lastPaymentSuccessData?.coursePrice}
-        onContinue={() => {
-          setShowPaymentSuccessPage(false);
-          setLastPaymentSuccessData(null);
-        }}
-        continueLabel="Go to My Courses"
-      />
-    );
-  }
 
   if (showEnrollmentForm) {
     return (
