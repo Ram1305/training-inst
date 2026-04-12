@@ -1265,12 +1265,9 @@ export function PublicEnrollmentWizard({
             toast.error(regRes.message || 'Registration failed');
             return;
           }
-          const enrRes = await publicEnrollmentWizardService.enrollInCourse({
-            studentId: regRes.data.studentId,
+          const enrRes = await enrollmentService.createEnrollment(regRes.data.studentId, {
             courseId: selectedCourseId,
-            courseDateId: selectedCourseDateId,
-            enrollmentCode: enrollCode.trim(),
-            paymentMethod: 'pay_later',
+            selectedTheoryDateId: selectedCourseDateId || undefined,
           });
           if (!enrRes.success) {
             toast.error(enrRes.message || 'Enrolment failed');
@@ -1840,18 +1837,17 @@ export function PublicEnrollmentWizard({
     try {
       const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
       
-      // If bank transfer, create enrollment and submit proof
-      if (effectivePaymentMethod === 'bank_transfer') {
-        const enrollRes = await publicEnrollmentWizardService.enrollInCourse({
-          studentId: studentId!,
+      // If we are skipping, we need to create the enrollment record first
+      // Bank Transfer and Pay Later both need this. 
+      // Card payment already created it during paymentService.processCardPayment in Step 2.
+      if (effectivePaymentMethod === 'bank_transfer' || effectivePaymentMethod === 'pay_later') {
+        const enrollRes = await enrollmentService.createEnrollment(studentId!, {
           courseId: selectedCourseId,
-          courseDateId: selectedCourseDateId,
-          paymentMethod: 'bank_transfer',
-          enrollmentCode: enrollCode || undefined
+          selectedTheoryDateId: selectedCourseDateId || undefined
         });
         
         if (enrollRes.success && enrollRes.data) {
-          if (paymentProofFile) {
+          if (effectivePaymentMethod === 'bank_transfer' && paymentProofFile) {
             await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, studentId!, {
               transactionId,
               amountPaid: getSelectedCoursePrice(),
