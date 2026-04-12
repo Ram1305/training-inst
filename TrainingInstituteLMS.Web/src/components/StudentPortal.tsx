@@ -88,7 +88,10 @@ export function StudentPortal({ user, onLogout, onNavigateToLanding, onNavigateT
     return () => window.clearInterval(intervalId);
   }, [fetchRequirements, user?.studentId]);
 
-  const hasCompletedLln = hasPassedQuiz || canEnroll;
+  // hasPassedQuiz/canEnroll are global student flags. course.quizCompleted is per-enrollment.
+  // We want to ensure that even if they have a global "canEnroll" pass, 
+  // they still see the requirement if the specific enrollment isn't finished.
+  const hasCompletedLln = hasPassedQuiz && (enrolledCourses.length === 0 || enrolledCourses.every(c => c.quizCompleted));
   const needsEnrollmentForm = !enrollmentFormData?.enrollmentFormCompleted;
   const isEnrollmentFormBlockedByLLND = !hasCompletedLln;
   const hasPendingRequirements =

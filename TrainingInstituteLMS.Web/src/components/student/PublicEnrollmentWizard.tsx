@@ -827,7 +827,7 @@ export function PublicEnrollmentWizard({
   useEffect(() => {
     if (enrollmentType === 'individual' && paymentMethod === 'card' && paymentCompleted && currentStep === 2) {
       const timer = setTimeout(() => {
-        handleFinalSubmit(true);
+        handleIndividualSkipFinalize();
       }, 3000);
       return () => clearTimeout(timer);
     }
@@ -1294,7 +1294,8 @@ export function PublicEnrollmentWizard({
       prefillFormFromRegistration();
       if (enrollmentType === 'individual') {
         // Skip LLN and Enrollment Form for individuals after payment
-        handleFinalSubmit(true);
+        // We defer these requirements to the student dashboard
+        handleIndividualSkipFinalize();
         return;
       }
       if (isCompanyPortalLink && portalSkipLln && !portalSkipForm) {
@@ -1802,67 +1803,6 @@ export function PublicEnrollmentWizard({
     return { totalQuestions, totalCorrect };
   };
 
-  const generateIndividualSkipFormData = (regData: typeof registrationData): StudentEnrolmentFormData => {
-    const nameParts = regData.fullName.trim().split(' ');
-    const firstName = nameParts[0] || '';
-    const lastName = nameParts.slice(1).join(' ') || 'Student';
-    
-    return {
-      applicant: {
-        ...initialApplicantDetails,
-        title: 'Mr',
-        givenName: firstName,
-        surname: lastName,
-        dob: '2000-01-01',
-        gender: 'Male',
-        email: regData.email,
-        mobile: regData.phone,
-        resAddress: 'Skipped - Online Enrollment',
-        resSuburb: 'Melbourne',
-        resState: 'VIC',
-        resPostcode: '3000',
-        emergencyName: 'Emergency Contact',
-        emergencyRelationship: 'Other',
-        emergencyContactNumber: regData.phone,
-        emergencyPermission: 'Yes',
-      },
-      usi: {
-        ...initialUSIDetails,
-        usiApply: 'No',
-        usi: 'SKIPPED123',
-        usiAccessPermission: true,
-      },
-      education: {
-        ...initialEducationDetails,
-        schoolLevel: '12 Year 12 or equivalent',
-        schoolInAus: true,
-        hasPostQual: 'No',
-        employmentStatus: 'Full-time',
-        trainingReason: 'Job',
-      },
-      additionalInfo: {
-        ...initialAdditionalInfo,
-        countryOfBirth: 'Australia',
-        langOther: 'No',
-        indigenousStatus: 'Neither',
-        hasDisability: 'No',
-      },
-      privacyTerms: {
-        ...initialPrivacyTerms,
-        acceptPrivacy: true,
-        acceptTerms: true,
-        declareName: regData.fullName,
-        declareDate: toISODate(new Date().toISOString()) ?? new Date().toISOString().split('T')[0],
-        signatureData: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
-      },
-    };
-  };
-
-  // Skip LLN and enrollment form
-  const skipToFinalSubmission = async () => {
-    await handleFinalSubmit(true);
-  };
-
   type ApiServiceError = Error & {
     responseBody?: {
       message?: string;
@@ -1893,8 +1833,57 @@ export function PublicEnrollmentWizard({
     return fallback;
   };
 
+  // Skip LLN/Form and finalize enrollment (for individuals who skip to dashboard)
+  const handleIndividualSkipFinalize = async () => {
+    setIsSubmitting(true);
+    try {
+      const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
+      
+      // If bank transfer, create enrollment and submit proof
+      if (effectivePaymentMethod === 'bank_transfer') {
+        const enrollRes = await publicEnrollmentWizardService.enrollInCourse({
+          studentId: studentId!,
+          courseId: selectedCourseId,
+          courseDateId: selectedCourseDateId,
+          paymentMethod: 'bank_transfer',
+          enrollmentCode: enrollCode || undefined
+        });
+        
+        if (enrollRes.success && enrollRes.data) {
+          if (paymentProofFile) {
+            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, studentId!, {
+              transactionId,
+              amountPaid: getSelectedCoursePrice(),
+              receiptFile: paymentProofFile
+            });
+          }
+        } else {
+          toast.error(enrollRes.message || 'Failed to enroll');
+          setIsSubmitting(false);
+          return;
+        }
+      }
+      
+      // Account created during registration/payment is already linked.
+      // We show the success screen.
+      setIndividualEnrollmentResult({
+        userId: userId!,
+        studentId: studentId!,
+        email: registrationData.email,
+        fullName: registrationData.fullName,
+      });
+      setIndividualEnrollmentSuccess(true);
+      toast.success('Course booked! Please complete your enrollment form in the dashboard.');
+    } catch (err) {
+      console.error('Deferred enrollment finalize failed:', err);
+      toast.error('An error occurred. Please visit your dashboard to check your status.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   // Final submit
-  const handleFinalSubmit = async (isAutoSkip: boolean = false) => {
+  const handleFinalSubmit = async () => {
     const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
     if (!effectivePaymentMethod) {
       toast.error('Please select a payment method');
@@ -1903,110 +1892,15 @@ export function PublicEnrollmentWizard({
 
     setIsSubmitting(true);
     try {
-      let resultsToSubmit: { section: string; score: number; percentage: number; passed: boolean }[] = [];
-      let currentFormData = formData;
-
-      if (isAutoSkip) {
-        currentFormData = generateIndividualSkipFormData(registrationData);
-        // Generate dummy passing quiz results
-        resultsToSubmit = quizSections.map(sec => ({
-          section: sec.title,
-          score: sec.questions.length,
-          percentage: 100,
-          passed: true
-        }));
-      } else {
-        // Use ref to ensure we have the latest quiz results (avoids stale closure)
-        resultsToSubmit = quizSectionResultsRef.current.length > 0 ? quizSectionResultsRef.current : quizSectionResults;
-      }
-
-      const formRequest = {
-        title: currentFormData.applicant.title,
-        surname: currentFormData.applicant.surname,
-        givenName: currentFormData.applicant.givenName,
-        middleName: currentFormData.applicant.middleName || undefined,
-        preferredName: currentFormData.applicant.preferredName || undefined,
-        dateOfBirth: toISODate(currentFormData.applicant.dob) ?? currentFormData.applicant.dob,
-        gender: currentFormData.applicant.gender,
-        homePhone: currentFormData.applicant.homePhone || undefined,
-        workPhone: currentFormData.applicant.workPhone || undefined,
-        mobile: currentFormData.applicant.mobile,
-        email: currentFormData.applicant.email,
-        residentialAddress: currentFormData.applicant.resAddress,
-        residentialSuburb: currentFormData.applicant.resSuburb,
-        residentialState: currentFormData.applicant.resState,
-        residentialPostcode: currentFormData.applicant.resPostcode,
-        postalAddressDifferent: currentFormData.applicant.postalDifferent,
-        postalAddress: currentFormData.applicant.postAddress || undefined,
-        postalSuburb: currentFormData.applicant.postSuburb || undefined,
-        postalState: currentFormData.applicant.postState || undefined,
-        postalCodeOptional: currentFormData.applicant.postPostcode || undefined,
-        emergencyContactName: currentFormData.applicant.emergencyName || '',
-        emergencyContactRelationship: currentFormData.applicant.emergencyRelationship || '',
-        emergencyContactNumber: currentFormData.applicant.emergencyContactNumber || '',
-        emergencyPermission: currentFormData.applicant.emergencyPermission || 'No',
-        usi: currentFormData.usi.usi || undefined,
-        usiAccessPermission: currentFormData.usi.usiAccessPermission,
-        usiApplyThroughSTA: currentFormData.usi.usiApply || 'No',
-        usiAuthoriseName: currentFormData.usi.usiAuthoriseName || undefined,
-        usiConsent: currentFormData.usi.usiConsent || undefined,
-        townCityOfBirth: currentFormData.usi.townCityBirth || undefined,
-        overseasCityOfBirth: currentFormData.usi.overseasCityBirth || undefined,
-        usiIdType: currentFormData.usi.usiIdType || undefined,
-        driversLicenceState: currentFormData.usi.dlState || undefined,
-        driversLicenceNumber: currentFormData.usi.dlNumber || undefined,
-        medicareNumber: currentFormData.usi.medicareNumber || undefined,
-        medicareIRN: currentFormData.usi.medicareIRN || undefined,
-        medicareCardColor: currentFormData.usi.medicareColor || undefined,
-        medicareExpiry: currentFormData.usi.medicareExpiry ? (toISODate(currentFormData.usi.medicareExpiry) ?? currentFormData.usi.medicareExpiry) : undefined,
-        birthCertificateState: currentFormData.usi.birthState || undefined,
-        immiCardNumber: currentFormData.usi.immiNumber || undefined,
-        australianPassportNumber: currentFormData.usi.ausPassportNumber || undefined,
-        nonAustralianPassportNumber: currentFormData.usi.nonAusPassportNumber || undefined,
-        nonAustralianPassportCountry: currentFormData.usi.nonAusPassportCountry || undefined,
-        citizenshipStockNumber: currentFormData.usi.citizenshipStock || undefined,
-        citizenshipAcquisitionDate: currentFormData.usi.citizenshipAcqDate ? (toISODate(currentFormData.usi.citizenshipAcqDate) ?? currentFormData.usi.citizenshipAcqDate) : undefined,
-        descentAcquisitionDate: currentFormData.usi.descentAcqDate ? (toISODate(currentFormData.usi.descentAcqDate) ?? currentFormData.usi.descentAcqDate) : undefined,
-        schoolLevel: currentFormData.education.schoolLevel || '',
-        schoolCompleteYear: currentFormData.education.schoolLevel === '02 Never attended school' ? '' : (currentFormData.education.schoolCompleteYear || ''),
-        schoolName: currentFormData.education.schoolName || 'N/A',
-        schoolInAustralia: currentFormData.education.schoolInAus,
-        schoolState: currentFormData.education.schoolState || undefined,
-        schoolPostcode: currentFormData.education.schoolPostcode || undefined,
-        schoolCountry: currentFormData.education.schoolCountry || undefined,
-        hasPostSecondaryQualification: currentFormData.education.hasPostQual || 'No',
-        qualificationLevels: currentFormData.education.qualLevels?.length ? currentFormData.education.qualLevels : undefined,
-        qualificationDetails: currentFormData.education.qualDetails || undefined,
-        employmentStatus: currentFormData.education.employmentStatus || 'Not employed',
-        employerName: currentFormData.education.employerName || undefined,
-        supervisorName: currentFormData.education.supervisorName || undefined,
-        employerAddress: currentFormData.education.employerAddress || undefined,
-        employerEmail: currentFormData.education.employerEmail || undefined,
-        employerPhone: currentFormData.education.employerPhone || undefined,
-        trainingReason: currentFormData.education.trainingReason || 'To get a job',
-        trainingReasonOther: currentFormData.education.trainingReasonOther || undefined,
-        countryOfBirth: currentFormData.additionalInfo.countryOfBirth || 'Australia',
-        speaksOtherLanguage: currentFormData.additionalInfo.langOther || 'No',
-        homeLanguage: currentFormData.additionalInfo.homeLanguage || undefined,
-        indigenousStatus: currentFormData.additionalInfo.indigenousStatus || 'No',
-        hasDisability: currentFormData.additionalInfo.hasDisability || 'No',
-        disabilityTypes: currentFormData.additionalInfo.disabilityTypes?.length ? currentFormData.additionalInfo.disabilityTypes : undefined,
-        disabilityNotes: currentFormData.additionalInfo.disabilityNotes || undefined,
-        acceptedPrivacyNotice: currentFormData.privacyTerms.acceptPrivacy,
-        acceptedTermsAndConditions: currentFormData.privacyTerms.acceptTerms,
-        declarationName: currentFormData.privacyTerms.declareName,
-        declarationDate: toISODate(currentFormData.privacyTerms.declareDate) ?? currentFormData.privacyTerms.declareDate,
-        signatureData: currentFormData.privacyTerms.signatureData || '',
-      };
-
-      const BLANK_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
-      const docPrimaryId = isAutoSkip ? null : currentFormData.applicant.docPrimaryId;
-      const docSecondaryId = isAutoSkip ? null : currentFormData.applicant.docSecondaryId;
+      const formRequest = mapFormDataToRequest();
+      const docPrimaryId = formData.applicant.docPrimaryId;
+      const docSecondaryId = formData.applicant.docSecondaryId;
       const [primaryIdDataUrl, secondaryIdDataUrl] = await Promise.all([
-        docPrimaryId ? blobToDataUrl(docPrimaryId) : (isAutoSkip ? Promise.resolve(BLANK_IMAGE) : Promise.resolve('')),
-        docSecondaryId ? blobToDataUrl(docSecondaryId) : (isAutoSkip ? Promise.resolve(BLANK_IMAGE) : Promise.resolve('')),
+        docPrimaryId ? blobToDataUrl(docPrimaryId) : Promise.resolve(''),
+        docSecondaryId ? blobToDataUrl(docSecondaryId) : Promise.resolve(''),
       ]);
-      
+      // Use ref to ensure we have the latest quiz results (avoids stale closure)
+      const resultsToSubmit = quizSectionResultsRef.current.length > 0 ? quizSectionResultsRef.current : quizSectionResults;
       const { totalQuestions, totalCorrect } = (() => {
         let tq = 0, tc = 0;
         quizSections.forEach((sec, index) => {
@@ -2063,8 +1957,8 @@ export function PublicEnrollmentWizard({
         totalQuestions: totalQuestions,
         correctAnswers: totalCorrect,
         overallPercentage: overallPercentage,
-        isPassed: isAutoSkip ? true : quizPassed,
-        declarationName: isAutoSkip ? registrationData.fullName : declarationName,
+        isPassed: quizPassed,
+        declarationName: declarationName,
         sectionResults: sectionResultsForApi,
         // Course selection
         courseId: selectedCourseId,
@@ -2077,13 +1971,13 @@ export function PublicEnrollmentWizard({
         paymentProofDataUrl: effectivePaymentMethod === 'bank_transfer' ? (paymentProofPreview || undefined) : undefined,
         paymentProofFileName: effectivePaymentMethod === 'bank_transfer' ? (paymentProofFile?.name || undefined) : undefined,
         paymentProofContentType: effectivePaymentMethod === 'bank_transfer' ? (paymentProofFile?.type || undefined) : undefined,
-        // Photo IDs
+        // Primary Photo ID and Photo documents
         primaryIdDataUrl: primaryIdDataUrl || undefined,
-        primaryIdFileName: isAutoSkip ? 'primary_id.png' : (docPrimaryId?.name || undefined),
-        primaryIdContentType: isAutoSkip ? 'image/png' : (docPrimaryId?.type || undefined),
+        primaryIdFileName: docPrimaryId?.name || undefined,
+        primaryIdContentType: docPrimaryId?.type || undefined,
         secondaryIdDataUrl: secondaryIdDataUrl || undefined,
-        secondaryIdFileName: isAutoSkip ? 'secondary_id.png' : (docSecondaryId?.name || undefined),
-        secondaryIdContentType: isAutoSkip ? 'image/png' : (docSecondaryId?.type || undefined),
+        secondaryIdFileName: docSecondaryId?.name || undefined,
+        secondaryIdContentType: docSecondaryId?.type || undefined,
       };
 
       // Submit public enrollment form (creates user + student + form + quiz + payment)
@@ -2110,13 +2004,9 @@ export function PublicEnrollmentWizard({
       } else {
         toast.error(response.message || 'Failed to submit enrollment');
       }
-    } catch (err: any) {
-      console.error('Error submitting enrollment:', err);
-      // Detailed logging for validation errors to help debug 400 Bad Request
-      if (err.responseBody?.errors) {
-        console.error('SERVER VALIDATION ERRORS:', JSON.stringify(err.responseBody.errors, null, 2));
-      }
-      toast.error(getBestErrorMessage(err, 'Failed to submit enrollment'));
+    } catch (error) {
+      console.error('Error submitting enrollment:', error);
+      toast.error(getBestErrorMessage(error, 'Failed to submit enrollment'));
     } finally {
       setIsSubmitting(false);
     }

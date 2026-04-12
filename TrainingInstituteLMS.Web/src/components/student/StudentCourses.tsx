@@ -315,7 +315,8 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
   };
 
   // Check if any enrolled course needs quiz
-  const hasCompletedLln = hasPassedQuiz || canEnroll;
+  // hasPassedQuiz/canEnroll are global student flags. course.quizCompleted is per-enrollment.
+  const hasCompletedLln = hasPassedQuiz && (enrolledCourses.length === 0 || enrolledCourses.every(c => c.quizCompleted));
   const hasEnrolledCourseNeedingQuiz = !hasCompletedLln;
 
   // Check if enrollment form needs to be completed
@@ -367,39 +368,28 @@ export function StudentCourses({ onNavigateToEnroll }: StudentCoursesProps = {})
         <p className="text-gray-600">Manage your enrolled courses and discover new certifications</p>
       </div>
 
-      {/* Quiz/Enrollment Status Alert - At Top */}
-      {!isLoadingQuizStatus && (
-        <>
-          {enrolledCourses.some(c => isPendingPaymentStatus(c.paymentStatus)) ? (
-            <Alert className="border-yellow-200 bg-yellow-50 mb-6">
-              <Clock className="h-4 w-4 text-yellow-600" />
-              <AlertTitle className="text-yellow-900">Enrollment Pending Verification</AlertTitle>
-              <AlertDescription className="text-yellow-800">
-                Your payment and enrollment details are currently being verified. This typically takes 1-2 business days. You will receive an email once your access is fully activated.
+      {/* Quiz Status Alert - At Top */}
+      {!isLoadingQuizStatus && hasAttemptedQuiz && (
+        <Alert className={hasPassedQuiz || canEnroll ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}>
+          {hasPassedQuiz || canEnroll ? (
+            <>
+              <CheckCircle className="h-4 w-4 text-green-600" />
+              <AlertTitle className="text-green-900">Pre-Enrollment Assessment Passed</AlertTitle>
+              <AlertDescription className="text-green-800">
+                Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - You can now enroll in courses. You can also retake LLND anytime if you want to improve your result.
               </AlertDescription>
-            </Alert>
-          ) : hasAttemptedQuiz ? (
-            <Alert className={hasPassedQuiz || canEnroll ? 'border-green-200 bg-green-50' : 'border-yellow-200 bg-yellow-50'}>
-              {hasPassedQuiz || canEnroll ? (
-                <>
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                  <AlertTitle className="text-green-900">Pre-Enrollment Assessment Passed</AlertTitle>
-                  <AlertDescription className="text-green-800">
-                    Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - Your LLN assessment is complete. {enrolledCourses.length > 0 ? 'Your enrolled courses are listed below.' : 'You can now browse and enroll in courses.'}
-                  </AlertDescription>
-                </>
-              ) : (
-                <>
-                  <AlertTriangle className="h-4 w-4 text-yellow-600" />
-                  <AlertTitle className="text-yellow-900">Assessment Under Review</AlertTitle>
-                  <AlertDescription className="text-yellow-800">
-                    Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - Your results are being reviewed by an administrator.
-                  </AlertDescription>
-                </>
-              )}
-            </Alert>
-          ) : null}
-        </>
+            </>
+          ) : (
+            <>
+              <AlertTriangle className="h-4 w-4 text-yellow-600" />
+              <AlertTitle className="text-yellow-900">Assessment Under Review</AlertTitle>
+              <AlertDescription className="text-yellow-800">
+                Score: {quizStatus?.latestAttempt?.overallPercentage?.toFixed(2)}% - Your results are being reviewed by an administrator who may grant access to enroll.
+                You can still retake the assessment anytime.
+              </AlertDescription>
+            </>
+          )}
+        </Alert>
       )}
 
       {/* LLND Assessment - First action (top) */}
