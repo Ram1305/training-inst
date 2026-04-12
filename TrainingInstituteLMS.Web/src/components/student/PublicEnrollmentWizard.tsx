@@ -41,6 +41,7 @@ import {
   type CourseDropdownItem,
   type CourseDateDropdownItem
 } from '../../services/publicEnrollmentWizard.service';
+import { enrollmentService } from '../../services/enrollment.service';
 import { studentEnrollmentFormService, type SubmitEnrollmentFormRequest } from '../../services/studentEnrollmentForm.service';
 import { quizService, type SubmitGuestQuizRequest, type SubmitQuizSectionResult } from '../../services/quiz.service';
 import { authService } from '../../services/auth.service';
