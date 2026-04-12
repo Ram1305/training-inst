@@ -21,6 +21,7 @@ const PublicEnrollmentWizard = lazy(() => import('./components/student/PublicEnr
 const PublicVOCForm = lazy(() => import('./components/student/PublicVOCForm').then(m => ({ default: m.PublicVOCForm })));
 import { useAuth } from './contexts/AuthContext';
 import type { AuthUser } from './contexts/AuthContext';
+import { authService } from './services/auth.service';
 import { publicEnrollmentWizardService } from './services/publicEnrollmentWizard.service';
 import { toast } from 'sonner';
 
@@ -505,17 +506,48 @@ export default function App() {
     }
   };
 
-  const handleBookingSuccess = (data: { userId: string; studentId: string; email: string }) => {
+  const handleBookingSuccess = async (data: { userId: string; studentId: string; email: string; password?: string }) => {
     let fullName = '';
+    let phone = '';
     try {
       const tempUserData = localStorage.getItem('tempUserData');
       if (tempUserData) {
         const parsed = JSON.parse(tempUserData);
         fullName = parsed.fullName || '';
+        phone = parsed.phone || '';
         localStorage.removeItem('tempUserData');
       }
     } catch (error) {
       console.error('Error retrieving temp user data:', error);
+    }
+    
+    // Perform actual login to establish session if password is provided
+    if (data.password) {
+      try {
+        const loginResponse = await authService.login({
+          email: data.email,
+          password: data.password
+        });
+        
+        if (loginResponse.success && loginResponse.data) {
+          const authUser: AuthUser = {
+            userId: loginResponse.data.userId,
+            fullName: loginResponse.data.fullName,
+            email: loginResponse.data.email,
+            userType: loginResponse.data.userType,
+            phoneNumber: loginResponse.data.phoneNumber || phone,
+            isActive: true,
+            studentId: loginResponse.data.studentId,
+          };
+          
+          setUser(authUser);
+          setCurrentPage('portal');
+          return;
+        }
+      } catch (loginError) {
+        console.error('Auto-login failed after booking:', loginError);
+        // Fallback to manual session setting if login fails
+      }
     }
     
     const authUser: AuthUser = {
@@ -523,6 +555,7 @@ export default function App() {
       fullName: fullName,
       email: data.email,
       userType: 'Student',
+      phoneNumber: phone,
       isActive: true,
       studentId: data.studentId,
     };

@@ -45,7 +45,7 @@ interface CourseBookingProps {
   coursePrice?: number;
   experienceType?: 'with' | 'without';
   onBack: () => void;
-  onBookingSuccess?: (data: { userId: string; studentId: string; email: string }) => void;
+  onBookingSuccess?: (data: { userId: string; studentId: string; email: string; password?: string }) => void;
   onAbout?: () => void;
   onContact?: () => void;
   onBookNow?: () => void;
@@ -333,10 +333,11 @@ export function CourseBooking({
             userId: bookingData.userId,
             studentId: bookingData.studentId,
             email: bookingData.email,
+            phone: formData.phone.trim(),
           };
           localStorage.setItem('tempUserData', JSON.stringify(tempUserData));
           
-          // Wait a moment to show success message, then redirect
+          // Wait 3 seconds to show success message, then redirect
           setTimeout(() => {
             // Clear form
             setFormData({
@@ -361,9 +362,10 @@ export function CourseBooking({
                 userId: bookingData.userId,
                 studentId: bookingData.studentId,
                 email: bookingData.email,
+                password: formData.password, // Pass password for auto-login
               });
             }
-          }, 1500);
+          }, 3000);
         } else {
           // Use errorMessages or message from the API response
           const errorMsg = result.data?.errorMessages || result.message || result.errors?.join(", ") || "Payment failed. Please try again.";
@@ -396,10 +398,11 @@ export function CourseBooking({
             userId: bookingData.userId,
             studentId: bookingData.studentId,
             email: bookingData.email,
+            phone: formData.phone.trim(),
           };
           localStorage.setItem('tempUserData', JSON.stringify(tempUserData));
           
-          // Wait a moment to show success message, then redirect
+          // Wait 3 seconds to show success message, then redirect
           setTimeout(() => {
             // Clear form
             setFormData({
@@ -418,9 +421,10 @@ export function CourseBooking({
                 userId: bookingData.userId,
                 studentId: bookingData.studentId,
                 email: bookingData.email,
+                password: formData.password, // Pass password for auto-login
               });
             }
-          }, 1500);
+          }, 3000);
         }
       }
     } catch (err) {
