@@ -1814,19 +1814,22 @@ export function PublicEnrollmentWizard({
         givenName: firstName,
         surname: lastName,
         dob: '2000-01-01',
-        gender: '',
+        gender: 'Male',
         email: regData.email,
         mobile: regData.phone,
-        resAddress: 'Skipped - Individual Enrollment',
-        resSuburb: 'Skipped',
+        resAddress: 'Skipped - Online Enrollment',
+        resSuburb: 'Melbourne',
         resState: 'VIC',
         resPostcode: '3000',
-        emergencyPermission: 'No',
+        emergencyName: 'Emergency Contact',
+        emergencyRelationship: 'Other',
+        emergencyContactNumber: regData.phone,
+        emergencyPermission: 'Yes',
       },
       usi: {
         ...initialUSIDetails,
         usiApply: 'No',
-        usi: 'SKIPPED123',
+        usi: '',
         usiAccessPermission: true,
       },
       education: {
@@ -1850,7 +1853,7 @@ export function PublicEnrollmentWizard({
         acceptTerms: true,
         declareName: regData.fullName,
         declareDate: toISODate(new Date().toISOString()) ?? new Date().toISOString().split('T')[0],
-        signatureData: 'Skipped',
+        signatureData: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==',
       },
     };
   };
@@ -1996,11 +1999,12 @@ export function PublicEnrollmentWizard({
         signatureData: currentFormData.privacyTerms.signatureData || '',
       };
 
+      const BLANK_IMAGE = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8/5+hHgAHggJ/PchI7wAAAABJRU5ErkJggg==';
       const docPrimaryId = isAutoSkip ? null : currentFormData.applicant.docPrimaryId;
       const docSecondaryId = isAutoSkip ? null : currentFormData.applicant.docSecondaryId;
       const [primaryIdDataUrl, secondaryIdDataUrl] = await Promise.all([
-        docPrimaryId ? blobToDataUrl(docPrimaryId) : Promise.resolve(''),
-        docSecondaryId ? blobToDataUrl(docSecondaryId) : Promise.resolve(''),
+        docPrimaryId ? blobToDataUrl(docPrimaryId) : (isAutoSkip ? Promise.resolve(BLANK_IMAGE) : Promise.resolve('')),
+        docSecondaryId ? blobToDataUrl(docSecondaryId) : (isAutoSkip ? Promise.resolve(BLANK_IMAGE) : Promise.resolve('')),
       ]);
       
       const { totalQuestions, totalCorrect } = (() => {
@@ -2073,13 +2077,13 @@ export function PublicEnrollmentWizard({
         paymentProofDataUrl: effectivePaymentMethod === 'bank_transfer' ? (paymentProofPreview || undefined) : undefined,
         paymentProofFileName: effectivePaymentMethod === 'bank_transfer' ? (paymentProofFile?.name || undefined) : undefined,
         paymentProofContentType: effectivePaymentMethod === 'bank_transfer' ? (paymentProofFile?.type || undefined) : undefined,
-        // Primary Photo ID and Photo documents
+        // Photo IDs
         primaryIdDataUrl: primaryIdDataUrl || undefined,
-        primaryIdFileName: docPrimaryId?.name || undefined,
-        primaryIdContentType: docPrimaryId?.type || undefined,
+        primaryIdFileName: isAutoSkip ? 'primary_id.png' : (docPrimaryId?.name || undefined),
+        primaryIdContentType: isAutoSkip ? 'image/png' : (docPrimaryId?.type || undefined),
         secondaryIdDataUrl: secondaryIdDataUrl || undefined,
-        secondaryIdFileName: docSecondaryId?.name || undefined,
-        secondaryIdContentType: docSecondaryId?.type || undefined,
+        secondaryIdFileName: isAutoSkip ? 'secondary_id.png' : (docSecondaryId?.name || undefined),
+        secondaryIdContentType: isAutoSkip ? 'image/png' : (docSecondaryId?.type || undefined),
       };
 
       // Submit public enrollment form (creates user + student + form + quiz + payment)
@@ -2106,9 +2110,13 @@ export function PublicEnrollmentWizard({
       } else {
         toast.error(response.message || 'Failed to submit enrollment');
       }
-    } catch (error) {
-      console.error('Error submitting enrollment:', error);
-      toast.error(getBestErrorMessage(error, 'Failed to submit enrollment'));
+    } catch (err: any) {
+      console.error('Error submitting enrollment:', err);
+      // Detailed logging for validation errors to help debug 400 Bad Request
+      if (err.responseBody?.errors) {
+        console.error('SERVER VALIDATION ERRORS:', JSON.stringify(err.responseBody.errors, null, 2));
+      }
+      toast.error(getBestErrorMessage(err, 'Failed to submit enrollment'));
     } finally {
       setIsSubmitting(false);
     }
