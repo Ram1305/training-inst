@@ -1837,18 +1837,44 @@ export function PublicEnrollmentWizard({
     try {
       const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
       
+      // 1. Ensure student is registered
+      let currentStudentId = studentId;
+      let currentUserId = userId;
+      
+      if (!currentStudentId) {
+        const regRes = await publicEnrollmentWizardService.registerUser({
+          fullName: registrationData.fullName.trim(),
+          email: registrationData.email.trim(),
+          phone: registrationData.phone.trim(),
+          password: registrationData.password?.trim() || '123456',
+          enrollmentCode: enrollCode.trim(),
+        });
+        
+        if (!regRes.success || !regRes.data?.studentId) {
+          toast.error(regRes.message || 'Registration failed');
+          setIsSubmitting(false);
+          return;
+        }
+        
+        currentStudentId = regRes.data.studentId;
+        currentUserId = regRes.data.userId;
+        setStudentId(currentStudentId);
+        setUserId(currentUserId);
+      }
+
+      // 2. Create Enrollment
       // If we are skipping, we need to create the enrollment record first
       // Bank Transfer and Pay Later both need this. 
       // Card payment already created it during paymentService.processCardPayment in Step 2.
       if (effectivePaymentMethod === 'bank_transfer' || effectivePaymentMethod === 'pay_later') {
-        const enrollRes = await enrollmentService.createEnrollment(studentId!, {
+        const enrollRes = await enrollmentService.createEnrollment(currentStudentId!, {
           courseId: selectedCourseId,
           selectedTheoryDateId: selectedCourseDateId || undefined
         });
         
         if (enrollRes.success && enrollRes.data) {
           if (effectivePaymentMethod === 'bank_transfer' && paymentProofFile) {
-            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, studentId!, {
+            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, currentStudentId!, {
               transactionId,
               amountPaid: getSelectedCoursePrice(),
               receiptFile: paymentProofFile
@@ -1861,11 +1887,12 @@ export function PublicEnrollmentWizard({
         }
       }
       
+      // 3. Complete
       // Account created during registration/payment is already linked.
       // We show the success screen.
       setIndividualEnrollmentResult({
-        userId: userId!,
-        studentId: studentId!,
+        userId: currentUserId!,
+        studentId: currentStudentId!,
         email: registrationData.email,
         fullName: registrationData.fullName,
       });
