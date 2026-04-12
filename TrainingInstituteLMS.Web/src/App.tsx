@@ -19,6 +19,7 @@ const PublicQuiz = lazy(() => import('./components/student/PublicQuiz').then(m =
 const PublicEnrollmentForm = lazy(() => import('./components/student/PublicEnrollmentForm').then(m => ({ default: m.PublicEnrollmentForm })));
 const PublicEnrollmentWizard = lazy(() => import('./components/student/PublicEnrollmentWizard').then(m => ({ default: m.PublicEnrollmentWizard })));
 const PublicVOCForm = lazy(() => import('./components/student/PublicVOCForm').then(m => ({ default: m.PublicVOCForm })));
+const TestScreen = lazy(() => import('./components/TestScreen').then(m => ({ default: m.TestScreen })));
 import { useAuth } from './contexts/AuthContext';
 import type { AuthUser } from './contexts/AuthContext';
 import { publicEnrollmentWizardService } from './services/publicEnrollmentWizard.service';
@@ -81,6 +82,7 @@ const PATHS = {
   course: (id: string, slug?: string) => slug ? `/course/${id}/${slug}` : `/course/${id}`,
   enrollWithCode: (code: string) => `/enroll/${code}`,
   voc: '/voc',
+  test: '/test',
 } as const;
 
 // Create URL-safe slug from course name (e.g. "White Card Training" -> "white-card-training")
@@ -94,7 +96,7 @@ const courseNameToSlug = (name: string): string =>
     .replace(/^-|-$/g, '') || 'course';
 
 // Map pathname to page (for parsing URLs)
-type PublicPage = 'landing' | 'about' | 'contact' | 'bookNow' | 'publicEnrollmentWizard' | 'publicEnrollment' | 'forms' | 'feesRefund' | 'gallery' | 'publicQuiz' | 'login' | 'publicVOCForm';
+type PublicPage = 'landing' | 'about' | 'contact' | 'bookNow' | 'publicEnrollmentWizard' | 'publicEnrollment' | 'forms' | 'feesRefund' | 'gallery' | 'publicQuiz' | 'login' | 'publicVOCForm' | 'test';
 const PATHNAME_TO_PAGE: Record<string, PublicPage> = {
   '/': 'landing',
   '/home': 'landing',
@@ -109,6 +111,7 @@ const PATHNAME_TO_PAGE: Record<string, PublicPage> = {
   '/quiz': 'publicQuiz',
   '/login': 'login',
   '/voc': 'publicVOCForm',
+  '/test': 'test',
 };
 
 // Helper function to parse URL path
@@ -133,6 +136,8 @@ const parseUrlPath = (): { path: string; page?: PublicPage; enrollCode?: string;
     return { path: page, page };
   }
   
+  // For testing purposes, default to 'test' page
+  // return { path: 'test', page: 'test' };
   return { path: 'landing', page: 'landing' };
 };
 
@@ -149,7 +154,7 @@ const updateUrl = (path: string, replace = false) => {
 
 export default function App() {
   const { user: authUser, setUser, isLoading, logout, isAuthenticated } = useAuth();
-  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'portal' | 'courseDetails' | 'handbookViewer' | 'courseBooking' | 'about' | 'contact' | 'bookNow' | 'publicQuiz' | 'publicEnrollment' | 'publicEnrollmentWizard' | 'forms' | 'feesRefund' | 'gallery' | 'publicVOCForm'>('landing');
+  const [currentPage, setCurrentPage] = useState<'landing' | 'login' | 'portal' | 'courseDetails' | 'handbookViewer' | 'courseBooking' | 'about' | 'contact' | 'bookNow' | 'publicQuiz' | 'publicEnrollment' | 'publicEnrollmentWizard' | 'forms' | 'feesRefund' | 'gallery' | 'publicVOCForm' | 'test'>('test');
   const [selectedCourseId, setSelectedCourseId] = useState<string | null>(null);
   const [handbookViewerState, setHandbookViewerState] = useState<{ pdfUrl: string; title?: string; courseName?: string } | null>(null);
   const [selectedCourseData, setSelectedCourseData] = useState<{
@@ -620,6 +625,9 @@ export default function App() {
             onViewCourses={handleViewCourses}
             onViewComboCourses={handleViewComboCourses}
           />
+        )}
+        {currentPage === 'test' && (
+          <TestScreen />
         )}
         {currentPage === 'publicQuiz' && (
           <PublicQuiz
