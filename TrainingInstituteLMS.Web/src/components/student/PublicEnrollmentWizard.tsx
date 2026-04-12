@@ -1829,7 +1829,7 @@ export function PublicEnrollmentWizard({
       usi: {
         ...initialUSIDetails,
         usiApply: 'No',
-        usi: '',
+        usi: 'SKIPPED123',
         usiAccessPermission: true,
       },
       education: {
