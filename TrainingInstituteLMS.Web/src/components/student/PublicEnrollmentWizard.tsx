@@ -823,6 +823,26 @@ export function PublicEnrollmentWizard({
     }
   }, [cardData.cardNumber]);
 
+  // Auto-submit after card payment for individuals (skipping Step 3/4 as requested)
+  useEffect(() => {
+    if (enrollmentType === 'individual' && paymentMethod === 'card' && paymentCompleted && currentStep === 2) {
+      const timer = setTimeout(() => {
+        handleFinalSubmit();
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [enrollmentType, paymentMethod, paymentCompleted, currentStep]);
+
+  // Auto-redirect to dashboard after successful final submission for individuals
+  useEffect(() => {
+    if (enrollmentType === 'individual' && individualEnrollmentSuccess && individualEnrollmentResult) {
+      const timer = setTimeout(() => {
+        onComplete(individualEnrollmentResult);
+      }, 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [enrollmentType, individualEnrollmentSuccess, individualEnrollmentResult, onComplete]);
+
   const fetchCourses = async () => {
     setLoadingCourses(true);
     try {
@@ -1272,6 +1292,11 @@ export function PublicEnrollmentWizard({
       }
 
       prefillFormFromRegistration();
+      if (enrollmentType === 'individual') {
+        // Skip LLN and Enrollment Form for individuals after payment
+        handleFinalSubmit();
+        return;
+      }
       if (isCompanyPortalLink && portalSkipLln && !portalSkipForm) {
         setCurrentStep(4);
       } else {
@@ -2630,19 +2655,28 @@ export function PublicEnrollmentWizard({
               <CardContent className="pt-6">
                 <PaymentSuccessCard
                   title="Payment successful"
-                  message="Your card has been charged. You can now continue to the LLND Assessment."
+                  message={enrollmentType === 'individual' 
+                    ? "Your card has been charged. We are finalizing your enrollment and taking you to your dashboard in 3 seconds..." 
+                    : "Your card has been charged. You can now continue to the LLND Assessment."}
                   transactionId={paymentTransactionId ?? undefined}
-                  isRedirecting={false}
+                  isRedirecting={enrollmentType === 'individual'}
                 >
-                  <Button
-                    onClick={() => {
-                      prefillFormFromRegistration();
-                      setCurrentStep(3);
-                    }}
-                    className="bg-violet-600 hover:bg-violet-700 text-white"
-                  >
-                    Continue to LLND Assessment
-                  </Button>
+                  {enrollmentType === 'individual' ? (
+                    <div className="text-center py-4">
+                      {/* Auto-submitting in background via useEffect */}
+                      <p className="text-sm text-gray-500 italic">Please do not refresh the page...</p>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => {
+                        prefillFormFromRegistration();
+                        setCurrentStep(3);
+                      }}
+                      className="bg-violet-600 hover:bg-violet-700 text-white"
+                    >
+                      Continue to LLND Assessment
+                    </Button>
+                  )}
                 </PaymentSuccessCard>
               </CardContent>
             </Card>

@@ -413,7 +413,35 @@ export default function App() {
     setCurrentPage('portal');
   };
 
-  const handlePublicEnrollmentWizardComplete = (result: { userId: string; studentId: string; email: string; fullName: string }) => {
+  const handlePublicEnrollmentWizardComplete = async (result: { userId: string; studentId: string; email: string; fullName: string }) => {
+    // Perform auto-login for individuals (using default password '123456' which is currently used in the wizard for individual registrations)
+    try {
+      const loginResponse = await authService.login({
+        email: result.email,
+        password: '123456'
+      });
+      
+      if (loginResponse.success && loginResponse.data) {
+        const authUser: AuthUser = {
+          userId: loginResponse.data.userId,
+          fullName: loginResponse.data.fullName,
+          email: loginResponse.data.email,
+          userType: loginResponse.data.userType,
+          phoneNumber: loginResponse.data.phoneNumber,
+          isActive: true,
+          studentId: loginResponse.data.studentId,
+        };
+        
+        setUser(authUser);
+        setEnrollmentLinkData(null);
+        setCurrentPage('portal');
+        return;
+      }
+    } catch (loginError) {
+      console.error('Wizard auto-login failed:', loginError);
+      // Fallback to manual session setting
+    }
+
     const authUser: AuthUser = {
       userId: result.userId,
       fullName: result.fullName,
