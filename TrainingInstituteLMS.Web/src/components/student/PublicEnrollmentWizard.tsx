@@ -1304,7 +1304,7 @@ export function PublicEnrollmentWizard({
       // If proceeding to LLND or Form and Pay Later/Bank Transfer is used, create the enrollment record early
       // so we can send the confirmation email immediately as requested.
       const isPayLaterFlow = allowPayLater || paymentMethod === 'bank_transfer' || paymentMethod === 'cash';
-      if (isPayLaterFlow && !currentStudentId) {
+      if (isPayLaterFlow && !studentId) {
         setIsSubmitting(true);
         try {
           // 1. Register User/Student
@@ -1320,10 +1320,10 @@ export function PublicEnrollmentWizard({
             setIsSubmitting(false);
             return;
           }
-          const studentId = regRes.data.studentId;
-          const userId = regRes.data.userId;
-          setCurrentStudentId(studentId);
-          setCurrentUserId(userId);
+          const regStudentId = regRes.data.studentId;
+          const regUserId = regRes.data.userId;
+          setStudentId(regStudentId);
+          setUserId(regUserId);
 
           // 2. Create Enrollment
           const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
@@ -1937,7 +1937,7 @@ export function PublicEnrollmentWizard({
         
         if (enrollRes.success && enrollRes.data) {
           if (effectivePaymentMethod === 'bank_transfer' && paymentProofFile) {
-            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, currentStudentId!, {
+            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, studentId!, {
               transactionId,
               amountPaid: getSelectedCoursePrice(),
               receiptFile: paymentProofFile
@@ -1967,8 +1967,8 @@ export function PublicEnrollmentWizard({
       // Account created during registration/payment is already linked.
       // We show the success screen.
       setIndividualEnrollmentResult({
-        userId: currentUserId!,
-        studentId: currentStudentId!,
+        userId: userId!,
+        studentId: studentId!,
         email: registrationData.email,
         fullName: registrationData.fullName,
       });
