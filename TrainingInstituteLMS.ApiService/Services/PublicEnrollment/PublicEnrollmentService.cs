@@ -1305,6 +1305,18 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             var course = enrollment.Course;
             var courseDate = enrollment.CourseDate;
 
+            // Date fallback logic: CourseDate > ExamDate > TheoryDate
+            if (courseDate == null)
+            {
+                var fallbackDateId = enrollment.SelectedExamDateId ?? enrollment.SelectedTheoryDateId;
+                if (fallbackDateId.HasValue)
+                {
+                    _logger.LogInformation("SendQuickEnrollmentConfirmationAsync: Using fallback date {CourseDateId} for enrollment {EnrollmentId}", fallbackDateId.Value, enrollment.EnrollmentId);
+                    courseDate = await _context.CourseDates.FindAsync(fallbackDateId.Value);
+                }
+            }
+
+
             try
             {
                 var paymentMethodDisplay = request.PaymentMethod switch

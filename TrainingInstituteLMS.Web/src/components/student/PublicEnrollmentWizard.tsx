@@ -537,9 +537,8 @@ export function PublicEnrollmentWizard({
               price: slBlExp.price,
               label: hidePrices
                 ? `${course.courseCode} – ${course.courseName} · SL + BL${slBlExp.original != null ? ' (promo)' : ''}`
-                : `${course.courseCode} – ${course.courseName} · SL + BL $${slBlExp.price}${
-                    slBlExp.original != null ? ` (was $${slBlExp.original})` : ''
-                  }`,
+                : `${course.courseCode} – ${course.courseName} · SL + BL $${slBlExp.price}${slBlExp.original != null ? ` (was $${slBlExp.original})` : ''
+                }`,
               categoryName,
               variant: 'slbl'
             });
@@ -562,9 +561,8 @@ export function PublicEnrollmentWizard({
             price: slBl.price,
             label: hidePrices
               ? `${course.courseCode} – ${course.courseName} · SL + BL${slBl.original != null ? ' (promo)' : ''}`
-              : `${course.courseCode} – ${course.courseName} · SL + BL $${slBl.price}${
-                  slBl.original != null ? ` (was $${slBl.original})` : ''
-                }`,
+              : `${course.courseCode} – ${course.courseName} · SL + BL $${slBl.price}${slBl.original != null ? ` (was $${slBl.original})` : ''
+              }`,
             categoryName,
             variant: 'slbl'
           });
@@ -1884,11 +1882,11 @@ export function PublicEnrollmentWizard({
     setIsSubmitting(true);
     try {
       const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
-      
+
       // 1. Ensure student is registered
       let currentStudentId = studentId;
       let currentUserId = userId;
-      
+
       if (!currentStudentId) {
         const regRes = await publicEnrollmentWizardService.registerUser({
           fullName: registrationData.fullName.trim(),
@@ -1897,13 +1895,13 @@ export function PublicEnrollmentWizard({
           password: registrationData.password?.trim() || '123456',
           enrollmentCode: enrollCode.trim(),
         });
-        
+
         if (!regRes.success || !regRes.data?.studentId) {
           toast.error(regRes.message || 'Registration failed');
           setIsSubmitting(false);
           return;
         }
-        
+
         currentStudentId = regRes.data.studentId;
         currentUserId = regRes.data.userId;
         setStudentId(currentStudentId);
@@ -1919,7 +1917,7 @@ export function PublicEnrollmentWizard({
           courseId: selectedCourseId,
           selectedTheoryDateId: selectedCourseDateId || undefined
         });
-        
+
         if (enrollRes.success && enrollRes.data) {
           if (effectivePaymentMethod === 'bank_transfer' && paymentProofFile) {
             await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, currentStudentId!, {
@@ -1947,7 +1945,7 @@ export function PublicEnrollmentWizard({
           return;
         }
       }
-      
+
       // 3. Complete
       // Account created during registration/payment is already linked.
       // We show the success screen.
@@ -2386,8 +2384,8 @@ export function PublicEnrollmentWizard({
                                   <SelectGroup key={group.category}>
                                     <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
                                     {group.items.map(item => (
-                                      <SelectItem 
-                                        key={`${item.id}|${item.price}|${item.variant}`} 
+                                      <SelectItem
+                                        key={`${item.id}|${item.price}|${item.variant}`}
                                         value={`${item.id}|${item.price}|${item.variant}`}
                                         className="max-w-full"
                                       >
@@ -2791,8 +2789,8 @@ export function PublicEnrollmentWizard({
               <CardContent className="pt-6">
                 <PaymentSuccessCard
                   title="Payment successful"
-                  message={enrollmentType === 'individual' 
-                    ? "Your card has been charged. We are finalizing your enrollment and taking you to your dashboard in 3 seconds..." 
+                  message={enrollmentType === 'individual'
+                    ? "Your card has been charged. We are finalizing your enrollment and taking you to your dashboard in 3 seconds..."
                     : "Your card has been charged. You can now continue to the LLND Assessment."}
                   transactionId={paymentTransactionId ?? undefined}
                   isRedirecting={enrollmentType === 'individual'}
@@ -3391,36 +3389,36 @@ export function PublicEnrollmentWizard({
 
         return (
           <div className="space-y-4">
-              <Card className="border-violet-100">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <ClipboardCheck className="w-5 h-5" />
-                    Step 3: LLND Assessment
-                  </CardTitle>
-                  <CardDescription>
-                    Section {quizSectionIndex + 1} of {quizSections.length}: {quizSections[quizSectionIndex].title}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Progress value={((quizSectionIndex + 1) / quizSections.length) * 100} className="h-2" />
-                  <div className="flex gap-2 mt-4 flex-wrap">
-                    {quizSections.map((s, i) => (
-                      <Badge
-                        key={s.id}
-                        variant={i < quizSectionIndex ? 'default' : i === quizSectionIndex ? 'secondary' : 'outline'}
-                        className={i < quizSectionIndex ? 'bg-green-500' : ''}
-                      >
-                        {i + 1}. {s.id.charAt(0).toUpperCase() + s.id.slice(1)}
-                      </Badge>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            <Card className="border-violet-100">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <ClipboardCheck className="w-5 h-5" />
+                  Step 3: LLND Assessment
+                </CardTitle>
+                <CardDescription>
+                  Section {quizSectionIndex + 1} of {quizSections.length}: {quizSections[quizSectionIndex].title}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Progress value={((quizSectionIndex + 1) / quizSections.length) * 100} className="h-2" />
+                <div className="flex gap-2 mt-4 flex-wrap">
+                  {quizSections.map((s, i) => (
+                    <Badge
+                      key={s.id}
+                      variant={i < quizSectionIndex ? 'default' : i === quizSectionIndex ? 'secondary' : 'outline'}
+                      className={i < quizSectionIndex ? 'bg-green-500' : ''}
+                    >
+                      {i + 1}. {s.id.charAt(0).toUpperCase() + s.id.slice(1)}
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
 
-              <QuizSection
-                section={quizSections[quizSectionIndex]}
-                onComplete={handleQuizSectionComplete}
-              />
+            <QuizSection
+              section={quizSections[quizSectionIndex]}
+              onComplete={handleQuizSectionComplete}
+            />
           </div>
         );
 
@@ -3932,52 +3930,52 @@ export function PublicEnrollmentWizard({
         <Card className="border-violet-100">
           <CardContent className="py-4">
             <div className="flex min-w-0 flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-end">
-                {currentStep > 1 && (
-                  <Button
-                    variant="outline"
-                    onClick={handlePrevious}
-                    disabled={paymentProcessing || isSubmitting}
-                    className="enrollment-nav-button"
-                  >
-                    <ArrowLeft className="w-4 h-4 mr-2" />
-                    Previous
-                  </Button>
-                )}
+              {currentStep > 1 && (
                 <Button
-                  onClick={handleNext}
-                  className="enrollment-nav-button bg-gradient-to-r from-violet-600 to-fuchsia-600"
-                  disabled={
-                    paymentProcessing ||
-                    isSubmitting ||
-                    (currentStep === 1 && enrollmentType === 'company' && pendingCompanyCourse !== null)
-                  }
+                  variant="outline"
+                  onClick={handlePrevious}
+                  disabled={paymentProcessing || isSubmitting}
+                  className="enrollment-nav-button"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Creating order...
-                    </>
-                  ) : paymentProcessing ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Processing Payment...
-                    </>
-                  ) : currentStep === 2 && enrollmentType === 'company' ? (
-                    'Create order & get links'
-                  ) : currentStep === 2 && paymentMethod === 'card' ? (
-                    <>
-                      <Lock className="w-4 h-4 mr-2" />
-                      Pay ${getSelectedCoursePrice()} & Continue
-                    </>
-                  ) : currentStep === 2 ? (
-                    'Continue to LLND Assessment'
-                  ) : (
-                    <>
-                      Next
-                      <ArrowRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Previous
                 </Button>
+              )}
+              <Button
+                onClick={handleNext}
+                className="enrollment-nav-button bg-gradient-to-r from-violet-600 to-fuchsia-600"
+                disabled={
+                  paymentProcessing ||
+                  isSubmitting ||
+                  (currentStep === 1 && enrollmentType === 'company' && pendingCompanyCourse !== null)
+                }
+              >
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Creating order...
+                  </>
+                ) : paymentProcessing ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Processing Payment...
+                  </>
+                ) : currentStep === 2 && enrollmentType === 'company' ? (
+                  'Create order & get links'
+                ) : currentStep === 2 && paymentMethod === 'card' ? (
+                  <>
+                    <Lock className="w-4 h-4 mr-2" />
+                    Pay ${getSelectedCoursePrice()} & Continue
+                  </>
+                ) : currentStep === 2 ? (
+                  'Continue to LLND Assessment'
+                ) : (
+                  <>
+                    Next
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </>
+                )}
+              </Button>
             </div>
           </CardContent>
         </Card>

@@ -311,12 +311,12 @@ export const studentEnrollmentFormService = {
   async uploadDocument(file: File, documentType: 'primaryId' | 'secondaryId' | 'usiId' | 'qualification', studentId?: string): Promise<ApiResponse<{ documentUrl: string }>> {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     // Use studentId-specific endpoint if provided
-    const endpoint = studentId 
+    const endpoint = studentId
       ? `/StudentEnrollmentForm/upload-document/${studentId}?documentType=${documentType}`
       : `/StudentEnrollmentForm/upload-document?documentType=${documentType}`;
-    
+
     const url = `${API_CONFIG.BASE_URL}${endpoint}`;
     const response = await fetch(url, {
       method: 'POST',
@@ -375,7 +375,7 @@ export const studentEnrollmentFormService = {
   async uploadDocumentForStudent(studentId: string, file: File, documentType: 'primaryId' | 'secondaryId' | 'usiId' | 'qualification'): Promise<ApiResponse<{ documentUrl: string }>> {
     const formData = new FormData();
     formData.append('file', file);
-    
+
     const url = `${API_CONFIG.BASE_URL}/StudentEnrollmentForm/admin/${studentId}/upload-document?documentType=${documentType}`;
     const response = await fetch(url, {
       method: 'POST',
@@ -424,7 +424,7 @@ export const studentEnrollmentFormService = {
   // Alternative: View using backend-generated HTML
   async viewEnrollmentFormHtml(studentId: string): Promise<void> {
     const html = await this.getEnrollmentFormPdfHtml(studentId);
-    
+
     // Open in new window for viewing
     const viewWindow = window.open('', '_blank');
     if (viewWindow) {

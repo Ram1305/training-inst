@@ -372,6 +372,17 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 {
                     var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseId == enrollment.CourseId);
                     var courseDate = await _context.CourseDates.FirstOrDefaultAsync(cd => cd.CourseDateId == enrollment.CourseDateId);
+
+                    // Date fallback logic: CourseDate > ExamDate > TheoryDate
+                    if (courseDate == null)
+                    {
+                        var fallbackDateId = enrollment.SelectedExamDateId ?? enrollment.SelectedTheoryDateId;
+                        if (fallbackDateId.HasValue)
+                        {
+                            courseDate = await _context.CourseDates.FindAsync(fallbackDateId.Value);
+                        }
+                    }
+
                     var paymentMethodDisplay = MapPaymentMethodForDisplay(request.PaymentMethod);
                     var amountPaid = request.PaymentAmount ?? (course?.Price ?? 0);
                     var orderId = directPayBookingId ?? enrollment.EnrollmentId.ToString();
