@@ -1320,7 +1320,7 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                     student.FullName,
                     student.Email,
                     student.PhoneNumber ?? student.Mobile ?? "",
-                    student.Address,
+                    student.ResidentialAddress ?? "",
                     course.CourseName,
                     course.CourseCode,
                     courseDate?.ScheduledDate,
