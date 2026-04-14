@@ -1328,7 +1328,7 @@ export function PublicEnrollmentWizard({
           // 2. Create Enrollment
           const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
           const enrollRes = await publicEnrollmentWizardService.enrollInCourse({
-            studentId,
+            studentId: regStudentId,
             courseId: selectedCourseId!,
             courseDateId: selectedCourseDateId!,
             enrollmentCode: enrollCode.trim(),
