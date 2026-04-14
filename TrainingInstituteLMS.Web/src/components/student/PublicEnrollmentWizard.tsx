@@ -1922,7 +1922,7 @@ export function PublicEnrollmentWizard({
         
         if (enrollRes.success && enrollRes.data) {
           if (effectivePaymentMethod === 'bank_transfer' && paymentProofFile) {
-            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, studentId!, {
+            await enrollmentService.submitPaymentProof(enrollRes.data.enrollmentId, currentStudentId!, {
               transactionId,
               amountPaid: getSelectedCoursePrice(),
               receiptFile: paymentProofFile
@@ -1952,8 +1952,8 @@ export function PublicEnrollmentWizard({
       // Account created during registration/payment is already linked.
       // We show the success screen.
       setIndividualEnrollmentResult({
-        userId: userId!,
-        studentId: studentId!,
+        userId: currentUserId!,
+        studentId: currentStudentId!,
         email: registrationData.email,
         fullName: registrationData.fullName,
       });

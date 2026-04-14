@@ -516,6 +516,32 @@ Best regards,
                     ? $"{studentName}<br/>{studentEmail}<br/>{studentPhone}"
                     : $"{studentName}<br/>{studentAddress.Trim().Replace("\n", "<br/>")}<br/>{studentEmail}<br/>{studentPhone}";
 
+                var bankDetailsPlain = (paymentMethod == "Bank Transfer" || paymentMethod == "bank_transfer") ? $@"
+------------------------------------------------------------
+BANK TRANSFER DETAILS
+------------------------------------------------------------
+Bank: Commonwealth Bank
+Account Name: AIET College
+BSB: 062 141
+Account No: 10490235
+Please use your order number #{orderId} or your full name as the payment reference.
+" : "";
+
+                var bankDetailsHtml = (paymentMethod == "Bank Transfer" || paymentMethod == "bank_transfer") ? $@"
+<!-- Bank Details box -->
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#fffbeb;border-radius:8px;border:1px solid #fcd34d;'>
+<tr><td style='padding:20px;'>
+<p style='margin:0 0 12px;font-size:12px;font-weight:700;color:#92400e;text-transform:uppercase;letter-spacing:1px;'>Bank Transfer Details</p>
+<table width='100%' cellpadding='4' cellspacing='0' border='0' style='font-size:14px;color:#92400e;'>
+<tr><td style='padding:4px 0;width:120px;'>Bank</td><td style='padding:4px 0;'><strong>Commonwealth Bank</strong></td></tr>
+<tr><td style='padding:4px 0;'>Account Name</td><td style='padding:4px 0;'><strong>AIET College</strong></td></tr>
+<tr><td style='padding:4px 0;'>BSB</td><td style='padding:4px 0;'><strong>062 141</strong></td></tr>
+<tr><td style='padding:4px 0;'>Account No</td><td style='padding:4px 0;'><strong>10490235</strong></td></tr>
+</table>
+<p style='margin:12px 0 0;font-size:13px;color:#b45309;'>Please use your order number <strong>#{orderId}</strong> or your full name as the payment reference.</p>
+</td></tr>
+</table>" : "";
+
                 var plainBody = $@"Dear {studentName},
 
 Thank you for booking with Safety Training Academy. Your booking has been successfully received!
@@ -559,7 +585,7 @@ Safety Training Academy also provides the following facilities for your convenie
 Notes:
 Ensure you arrive prepared with the necessary items and documentation for your training session.
 If you have any additional questions or concerns, please don't hesitate to contact Safety Training Academy for clarification.
-";
+{bankDetailsPlain}";
 
                 if (!hideOrderAndPriceDetails)
                 {
@@ -682,6 +708,7 @@ Best regards,
 </ul>
 <p style='margin:0;font-size:13px;color:#334155;'><strong>Notes:</strong> Ensure you arrive prepared with the necessary items and documentation. If you have any questions, contact Safety Training Academy for clarification.</p>
 </div>
+{bankDetailsHtml}
 {orderAndProductHtml}
 <!-- Billing address box -->
 <table width='100%' cellpadding='0' cellspacing='0' border='0' style='margin-bottom:24px;background-color:#ffffff;border-radius:8px;border:1px solid #e2e8f0;box-shadow:0 1px 3px rgba(0,0,0,0.06);'>
