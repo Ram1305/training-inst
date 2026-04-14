@@ -309,4 +309,15 @@ export const publicEnrollmentWizardService = {
   async getLinkStudents(linkId: string): Promise<ApiResponse<EnrollmentLinkStudentsResponse>> {
     return apiService.get<ApiResponse<EnrollmentLinkStudentsResponse>>(`/PublicEnrollment/admin/links/${linkId}/students`);
   },
+
+  // Trigger an enrollment confirmation email (booking confirmed) early in the wizard flow.
+  async sendQuickEnrollmentConfirmation(request: {
+    enrollmentId: string;
+    email: string;
+    password: string;
+    paymentMethod: string;
+    hideOrderAndPriceDetails?: boolean;
+  }): Promise<ApiResponse<null>> {
+    return apiService.post<ApiResponse<null>>('/PublicEnrollment/send-confirmation', request);
+  },
 };

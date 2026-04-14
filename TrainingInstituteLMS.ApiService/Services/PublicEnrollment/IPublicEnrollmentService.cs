@@ -47,5 +47,8 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
         Task<string?> GetCompanyPortalEnrollmentFullUrlAsync(Guid companyId);
 
         Task<PortalPrerequisitesResponseDto?> GetPortalPrerequisitesAsync(string code, string email);
+        
+        // Quick enrollment confirmation (booking confirmed email early in wizard)
+        Task<bool> SendQuickEnrollmentConfirmationAsync(QuickEnrollmentConfirmationRequestDto request);
     }
 }

@@ -261,33 +261,52 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 else
                     enrollmentType = "Individual";
 
-                enrollment = new Data.Entities.Enrollments.Enrollment
+                // Check if an enrollment for this student/course/date already exists (created early in the wizard)
+                enrollment = await _context.Enrollments
+                    .FirstOrDefaultAsync(e => e.StudentId == student.StudentId && 
+                                             e.CourseId == request.CourseId.Value && 
+                                             e.CourseDateId == request.CourseDateId.Value &&
+                                             e.Status != "Cancelled");
+
+                if (enrollment != null)
                 {
-                    EnrollmentId = Guid.NewGuid(),
-                    StudentId = student.StudentId,
-                    CourseId = request.CourseId.Value,
-                    CourseDateId = request.CourseDateId.Value,
-                    EnrolledAt = DateTime.UtcNow,
-                    Status = "Active",
-                    PaymentStatus = paymentStatus,
-                    AmountPaid = enrollmentAmountPaid,
-                    EnrollmentType = enrollmentType,
-                    EnrollmentLinkId = link?.LinkId,
-                    QuizAttemptId = quizAttemptIdForEnrollment,
-                    QuizCompleted = quizAttemptIdForEnrollment.HasValue && (request.IsPassed ?? false)
-                };
-
-                _context.Enrollments.Add(enrollment);
-
-                // Update course enrollment count
-                if (course != null)
-                    course.EnrolledStudentsCount++;
-
-                // Update course date enrollment count
-                var courseDate = await _context.CourseDates.FindAsync(request.CourseDateId.Value);
-                if (courseDate != null)
+                    // Update existing enrollment
+                    enrollment.PaymentStatus = paymentStatus;
+                    enrollment.AmountPaid = enrollmentAmountPaid;
+                    enrollment.EnrollmentType = enrollmentType;
+                    enrollment.EnrollmentLinkId = link?.LinkId;
+                    enrollment.QuizAttemptId = quizAttemptIdForEnrollment;
+                    enrollment.QuizCompleted = quizAttemptIdForEnrollment.HasValue && (request.IsPassed ?? false);
+                }
+                else
                 {
-                    courseDate.CurrentEnrollments++;
+                    enrollment = new Data.Entities.Enrollments.Enrollment
+                    {
+                        EnrollmentId = Guid.NewGuid(),
+                        StudentId = student.StudentId,
+                        CourseId = request.CourseId.Value,
+                        CourseDateId = request.CourseDateId.Value,
+                        EnrolledAt = DateTime.UtcNow,
+                        Status = "Active",
+                        PaymentStatus = paymentStatus,
+                        AmountPaid = enrollmentAmountPaid,
+                        EnrollmentType = enrollmentType,
+                        EnrollmentLinkId = link?.LinkId,
+                        QuizAttemptId = quizAttemptIdForEnrollment,
+                        QuizCompleted = quizAttemptIdForEnrollment.HasValue && (request.IsPassed ?? false)
+                    };
+                    _context.Enrollments.Add(enrollment);
+
+                    // Update course enrollment count
+                    if (course != null)
+                        course.EnrolledStudentsCount++;
+
+                    // Update course date enrollment count
+                    var courseDate = await _context.CourseDates.FindAsync(request.CourseDateId.Value);
+                    if (courseDate != null)
+                    {
+                        courseDate.CurrentEnrollments++;
+                    }
                 }
 
                 // Create PaymentProof when: (1) transaction ID provided, OR (2) direct_pay/bank_transfer (so it shows on admin payment side)
@@ -346,9 +365,9 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
                 string.Equals(enrollment.EnrollmentType, "Company", StringComparison.OrdinalIgnoreCase))
                 await _companyBillingService.EnsureUnpaidCompanyBillForEnrollmentAsync(enrollment.EnrollmentId);
 
-            // Send enrollment confirmation email to both student and academy (when course is selected)
-            if (enrollment != null)
-            {
+                // Send enrollment confirmation email to both student and academy (when course is selected)
+                if (enrollment != null && !string.IsNullOrWhiteSpace(request.Email))
+                {
                 try
                 {
                     var course = await _context.Courses.FirstOrDefaultAsync(c => c.CourseId == enrollment.CourseId);

@@ -98,4 +98,16 @@ namespace TrainingInstituteLMS.DTOs.DTOs.Requests.PublicEnrollment
     {
         public string Status { get; set; } = string.Empty;
     }
+    /// <summary>
+    /// Request to trigger an enrollment confirmation email (booking confirmed) during the wizard flow,
+    /// before the full enrollment form is completed (e.g., Pay Later/Skip flow).
+    /// </summary>
+    public class QuickEnrollmentConfirmationRequestDto
+    {
+        public required Guid EnrollmentId { get; set; }
+        public required string Email { get; set; }
+        public required string Password { get; set; }
+        public required string PaymentMethod { get; set; }
+        public bool HideOrderAndPriceDetails { get; set; }
+    }
 }

@@ -262,6 +262,26 @@ namespace TrainingInstituteLMS.ApiService.Controllers.PublicEnrollment
             }
         }
 
+        /// <summary>
+        /// Trigger an enrollment confirmation email (booking confirmed) early in the wizard flow.
+        /// </summary>
+        [HttpPost("send-confirmation")]
+        public async Task<IActionResult> SendQuickEnrollmentConfirmation([FromBody] QuickEnrollmentConfirmationRequestDto request)
+        {
+            try
+            {
+                var success = await _publicEnrollmentService.SendQuickEnrollmentConfirmationAsync(request);
+                if (success)
+                    return Ok(ApiResponse<object>.SuccessResponse(null, "Confirmation email sent"));
+                else
+                    return BadRequest(ApiResponse<object>.FailureResponse("Failed to send confirmation email"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, ApiResponse<object>.FailureResponse(ex.Message));
+            }
+        }
+
         #endregion
 
         #region Admin Endpoints

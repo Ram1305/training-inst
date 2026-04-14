@@ -1276,6 +1276,70 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
             };
         }
 
+        public async Task<bool> SendQuickEnrollmentConfirmationAsync(QuickEnrollmentConfirmationRequestDto request)
+        {
+            if (request == null || string.IsNullOrWhiteSpace(request.Email))
+            {
+                _logger.LogWarning("SendQuickEnrollmentConfirmationAsync: Invalid request or empty email");
+                return false;
+            }
+
+            var enrollment = await _context.Enrollments
+                .Include(e => e.Student)
+                .Include(e => e.Course)
+                .Include(e => e.CourseDate)
+                .FirstOrDefaultAsync(e => e.EnrollmentId == request.EnrollmentId);
+
+            if (enrollment == null)
+            {
+                _logger.LogWarning("SendQuickEnrollmentConfirmationAsync: Enrollment {EnrollmentId} not found", request.EnrollmentId);
+                return false;
+            }
+
+            var student = enrollment.Student;
+            var course = enrollment.Course;
+            var courseDate = enrollment.CourseDate;
+
+            try
+            {
+                var paymentMethodDisplay = request.PaymentMethod switch
+                {
+                    "pay_later" => "Pay Later",
+                    "bank_transfer" => "Bank Transfer",
+                    "card" => "Credit Card",
+                    _ => request.PaymentMethod ?? "Other"
+                };
+
+                await _emailService.SendEnrollmentConfirmationAsync(
+                    request.Email,
+                    student.FullName,
+                    student.Email,
+                    student.PhoneNumber ?? student.Mobile ?? "",
+                    student.Address,
+                    course.CourseName,
+                    course.CourseCode,
+                    courseDate?.ScheduledDate,
+                    courseDate?.StartTime,
+                    courseDate?.EndTime,
+                    courseDate?.Location,
+                    enrollment.EnrollmentId.ToString(),
+                    enrollment.EnrolledAt,
+                    course.Price, // Use current course price as the amount shown in the email
+                    paymentMethodDisplay,
+                    request.Email,
+                    request.Password,
+                    request.HideOrderAndPriceDetails);
+
+                _logger.LogInformation("SendQuickEnrollmentConfirmationAsync: Success for Enrollment {EnrollmentId}", request.EnrollmentId);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "SendQuickEnrollmentConfirmationAsync: Failed for Enrollment {EnrollmentId}", request.EnrollmentId);
+                return false;
+            }
+        }
+
         public async Task<EnrollmentLinkStudentsResponseDto?> GetStudentsByLinkIdAsync(Guid linkId)
         {
             var link = await _context.EnrollmentLinks.AsNoTracking()

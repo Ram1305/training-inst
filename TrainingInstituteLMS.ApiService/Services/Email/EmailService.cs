@@ -328,26 +328,125 @@ info@safetytrainingacademy.edu.au";
 <p style='margin:0;font-size:13px;color:#64748b;'>Kind regards,<br/><strong style='color:#334155;'>Safety Training Academy</strong><br/>1300 976 097<br/><a href='mailto:info@safetytrainingacademy.edu.au' style='color:#3b82f6;'>info@safetytrainingacademy.edu.au</a></p>
 </td></tr></table></td></tr></table></body></html>";
 
+            // Academy notification body
+            var plainBodyAcademy = $@"NEW REGISTRATION RECEIVED (VIA LINK)
+
+Dear Team,
+
+A new student has registered and enrolled via an enrollment link.
+
+Student Details:
+Name: {studentName}
+Email: {toEmail}
+
+Course Details:
+Course: {courseName}
+Date: {dateStr}
+Time: {timeStr}
+Location: 3/14-16 Marjorie Street, Sefton NSW 2162
+
+Best regards,
+{_settings.FromName}";
+
+            var htmlBodyAcademy = $@"
+<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'></head>
+<body style='font-family:Arial,sans-serif;font-size:14px;line-height:1.5;color:#333;'>
+<div style='background-color:#4f46e5;color:#ffffff;padding:20px;text-align:center;border-radius:8px 8px 0 0;'>
+  <h1 style='margin:0;font-size:20px;'>New Registration Received</h1>
+</div>
+<div style='padding:20px;border:1px solid #e2e8f0;border-top:none;border-radius:0 0 8px 8px;'>
+  <p>Dear Team,</p>
+  <p>A new student has registered and enrolled via an enrollment link.</p>
+  <table width='100%' cellpadding='8' cellspacing='0' style='background-color:#f8fafc;border-radius:6px;margin-bottom:20px;'>
+    <tr><td style='color:#64748b;width:120px;'>Student Name</td><td><strong>{studentName}</strong></td></tr>
+    <tr><td style='color:#64748b;'>Student Email</td><td>{toEmail}</td></tr>
+    <tr><td style='color:#64748b;'>Course</td><td>{courseName}</td></tr>
+    <tr><td style='color:#64748b;'>Date</td><td>{dateStr}</td></tr>
+    <tr><td style='color:#64748b;'>Time</td><td>{timeStr}</td></tr>
+  </table>
+  <p>Best regards,<br/>{_settings.FromName}</p>
+</div>
+</body>
+</html>";
+
             try
             {
                 var user = _settings.User?.Trim() ?? string.Empty;
                 var smtpPassword = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
                 var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+
+                _logger.LogInformation("Email: Attempting to send registration confirmation to {Email} (link) via {Host}:{Port}", toEmail, _settings.SmtpHost, _settings.SmtpPort);
+
                 using var client = new SmtpClient();
-                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
-                await client.AuthenticateAsync(user, smtpPassword);
-                var message = new MimeMessage();
-                message.From.Add(new MailboxAddress(_settings.FromName, user));
-                message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
-                message.Subject = subject;
-                message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
-                await client.SendAsync(message);
-                await client.DisconnectAsync(true);
-                _logger.LogInformation("Enrollment link registration confirmation sent to {Email}", toEmail);
+                try
+                {
+                    await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                    _logger.LogInformation("Email: SMTP connected for link registration");
+                }
+                catch (Exception connectEx)
+                {
+                    _logger.LogError(connectEx, "Email: SMTP Connect failed for link registration to {Host}:{Port}", _settings.SmtpHost, _settings.SmtpPort);
+                    throw;
+                }
+
+                try
+                {
+                    await client.AuthenticateAsync(user, smtpPassword);
+                }
+                catch (Exception authEx)
+                {
+                    _logger.LogError(authEx, "Email: SMTP Authentication failed for link registration for {User}", user);
+                    throw;
+                }
+
+                try
+                {
+                    // 1. Send to academy bookings email (best-effort)
+                    if (!string.IsNullOrWhiteSpace(_settings.BookingsEmail))
+                    {
+                        try
+                        {
+                            var msgAcademy = new MimeMessage();
+                            msgAcademy.From.Add(new MailboxAddress(_settings.FromName, user));
+                            msgAcademy.To.Add(MailboxAddress.Parse(_settings.BookingsEmail.Trim()));
+                            msgAcademy.Subject = $"NEW REGISTRATION (LINK) - {studentName} - {courseName}";
+                            msgAcademy.Body = new BodyBuilder { TextBody = plainBodyAcademy, HtmlBody = htmlBodyAcademy }.ToMessageBody();
+                            await client.SendAsync(msgAcademy);
+                            _logger.LogInformation("Email: Registration notification sent to academy for {Email}", toEmail);
+                        }
+                        catch (Exception academyEx)
+                        {
+                            _logger.LogWarning(academyEx, "Email: Failed to send academy notification for link registration for {Email}", toEmail);
+                        }
+                    }
+
+                    // 2. Send to student
+                    var message = new MimeMessage();
+                    message.From.Add(new MailboxAddress(_settings.FromName, user));
+                    message.To.Add(MailboxAddress.Parse(toEmail.Trim()));
+                    message.Subject = subject;
+                    message.Body = new BodyBuilder { TextBody = plainBody, HtmlBody = htmlBody }.ToMessageBody();
+                    await client.SendAsync(message);
+                    _logger.LogInformation("Email: Registration confirmation sent to student {Email} via link", toEmail);
+                }
+                finally
+                {
+                    try
+                    {
+                        await client.DisconnectAsync(true);
+                        _logger.LogInformation("Email: SMTP disconnected after link registration");
+                    }
+                    catch (Exception discEx)
+                    {
+                        _logger.LogWarning(discEx, "Email: SMTP Disconnect error after link registration");
+                    }
+                }
             }
             catch (Exception ex)
             {
-                _logger.LogWarning(ex, "Failed to send enrollment link registration confirmation to {Email}", toEmail);
+                _logger.LogError(ex, "Failed to send enrollment link registration confirmation to {Email}", toEmail);
             }
         }
 

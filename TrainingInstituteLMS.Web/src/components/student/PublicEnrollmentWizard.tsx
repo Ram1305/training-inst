@@ -1298,9 +1298,72 @@ export function PublicEnrollmentWizard({
       }
       if (isCompanyPortalLink && portalSkipLln && !portalSkipForm) {
         setCurrentStep(4);
-      } else {
-        setCurrentStep(3);
+        return;
       }
+
+      // If proceeding to LLND or Form and Pay Later/Bank Transfer is used, create the enrollment record early
+      // so we can send the confirmation email immediately as requested.
+      const isPayLaterFlow = allowPayLater || paymentMethod === 'bank_transfer' || paymentMethod === 'cash';
+      if (isPayLaterFlow && !currentStudentId) {
+        setIsSubmitting(true);
+        try {
+          // 1. Register User/Student
+          const regRes = await publicEnrollmentWizardService.registerUser({
+            fullName: registrationData.fullName.trim(),
+            email: registrationData.email.trim(),
+            phone: registrationData.phone.trim(),
+            password: registrationData.password?.trim() || '123456',
+            enrollmentCode: enrollCode.trim(),
+          });
+          if (!regRes.success || !regRes.data?.studentId) {
+            toast.error(regRes.message || 'Registration failed');
+            setIsSubmitting(false);
+            return;
+          }
+          const studentId = regRes.data.studentId;
+          const userId = regRes.data.userId;
+          setCurrentStudentId(studentId);
+          setCurrentUserId(userId);
+
+          // 2. Create Enrollment
+          const effectivePaymentMethod = allowPayLater ? 'pay_later' : paymentMethod;
+          const enrollRes = await publicEnrollmentWizardService.enrollInCourse({
+            studentId,
+            courseId: selectedCourseId!,
+            courseDateId: selectedCourseDateId!,
+            enrollmentCode: enrollCode.trim(),
+            paymentMethod: effectivePaymentMethod,
+          });
+          if (!enrollRes.success || !enrollRes.data?.enrollmentId) {
+            toast.error(enrollRes.message || 'Enrolment failed');
+            setIsSubmitting(false);
+            return;
+          }
+
+          // 3. Trigger Confirmation Email
+          try {
+            await publicEnrollmentWizardService.sendQuickEnrollmentConfirmation({
+              enrollmentId: enrollRes.data.enrollmentId,
+              email: registrationData.email.trim(),
+              password: registrationData.password?.trim() || '123456',
+              paymentMethod: effectivePaymentMethod,
+              hideOrderAndPriceDetails: isAgentLink
+            });
+          } catch (emailErr) {
+            console.error('Failed to send early enrollment confirmation email:', emailErr);
+          }
+
+          toast.success('Registration successful. Confirmation email sent.');
+        } catch (e) {
+          toast.error(getBestErrorMessage(e, 'Failed to process registration'));
+          setIsSubmitting(false);
+          return;
+        } finally {
+          setIsSubmitting(false);
+        }
+      }
+
+      setCurrentStep(3);
       return;
     }
 
@@ -1880,6 +1943,19 @@ export function PublicEnrollmentWizard({
               receiptFile: paymentProofFile
             });
           }
+
+          // Trigger enrollment confirmation email immediately
+          try {
+            await publicEnrollmentWizardService.sendQuickEnrollmentConfirmation({
+              enrollmentId: enrollRes.data.enrollmentId,
+              email: registrationData.email.trim(),
+              password: registrationData.password?.trim() || '123456',
+              paymentMethod: effectivePaymentMethod,
+              hideOrderAndPriceDetails: isAgentLink
+            });
+          } catch (emailErr) {
+            console.error('Failed to send early enrollment confirmation email:', emailErr);
+          }
         } else {
           toast.error(enrollRes.message || 'Failed to enroll');
           setIsSubmitting(false);
@@ -1974,6 +2050,7 @@ export function PublicEnrollmentWizard({
         secondaryIdContentType?: string;
       } = {
         ...formRequest,
+        email: registrationData.email.trim(),
         password: enrollmentType === 'individual' ? '123456' : registrationData.password,
         fullName: registrationData.fullName,
         phone: registrationData.phone,
