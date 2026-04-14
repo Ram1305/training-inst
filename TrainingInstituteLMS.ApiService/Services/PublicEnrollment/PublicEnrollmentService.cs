@@ -174,10 +174,15 @@ namespace TrainingInstituteLMS.ApiService.Services.PublicEnrollment
                 .FirstOrDefaultAsync(u => u.Email == request.Email.Trim());
             if (existingUser != null)
             {
-                if (portalLink == null || !string.Equals(existingUser.UserType, "Student", StringComparison.OrdinalIgnoreCase) || existingUser.Student == null)
-                    throw new InvalidOperationException("An account with this email already exists");
+                // Allow reusing a student account if:
+                // 1. They are already a Student
+                // 2. They provide the correct password
+                // This allows the public wizard to function as a "Register or Login" form seamlessly.
+                if (!string.Equals(existingUser.UserType, "Student", StringComparison.OrdinalIgnoreCase) || existingUser.Student == null)
+                    throw new InvalidOperationException("An account with this email already exists and is not a student account. Please use a different email.");
+
                 if (!BCrypt.Net.BCrypt.Verify(request.Password, existingUser.PasswordHash))
-                    throw new InvalidOperationException("Invalid email or password for this account");
+                    throw new InvalidOperationException("This email is already registered. Please enter the correct password for your account to continue.");
 
                 var st = existingUser.Student;
                 if (!string.IsNullOrWhiteSpace(request.Phone))

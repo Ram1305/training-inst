@@ -1205,21 +1205,6 @@ export function PublicEnrollmentWizard({
       // Individual flow
       if (!validateRegistration()) return;
 
-      if (!isCompanyPortalLink) {
-        try {
-          const emailCheckResponse = await authService.checkEmail(registrationData.email);
-          if (emailCheckResponse.success && emailCheckResponse.data === true) {
-            toast.error('This email is already registered. Please use a different email or login to your account.');
-            setRegistrationErrors(prev => ({ ...prev, email: 'Email already registered' }));
-            return;
-          }
-        } catch (error) {
-          console.error('Error checking email:', error);
-          toast.error('Failed to verify email. Please try again.');
-          return;
-        }
-      }
-
       if (!allowPayLater && !paymentMethod) {
         toast.error('Please select a payment method');
         return;
@@ -1976,7 +1961,7 @@ export function PublicEnrollmentWizard({
       toast.success('Course booked! Please complete your enrollment form in the dashboard.');
     } catch (err) {
       console.error('Deferred enrollment finalize failed:', err);
-      toast.error('An error occurred. Please visit your dashboard to check your status.');
+      toast.error(getBestErrorMessage(err, 'An error occurred. Please visit your dashboard to check your status.'));
     } finally {
       setIsSubmitting(false);
     }
