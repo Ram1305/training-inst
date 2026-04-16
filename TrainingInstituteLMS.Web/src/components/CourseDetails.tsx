@@ -1217,19 +1217,18 @@ export function CourseDetailsPage({
         </div>
       </footer>
 
-      {/* Mobile Floating Book Now Bar */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] p-5 pb-8 bg-white border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex flex-col items-center gap-4"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] p-4 pb-8 bg-white border-t border-slate-200 shadow-[0_-8px_30px_rgba(0,0,0,0.08)] flex items-center justify-between gap-4"
       >
-        <div className="text-center">
-          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1 block">
-            {experienceBookingEnabled ? 'Starting From' : 'Total Course Fee'}
+        <div className="flex flex-col items-start">
+          <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest mb-1 leading-none">
+            {experienceBookingEnabled ? 'Starting From' : 'Course Fee'}
           </span>
-          <div className="text-3xl font-black text-blue-600 tracking-tight">
+          <div className="text-2xl font-black text-blue-700 tracking-tight leading-none">
             ${experienceBookingEnabled
               ? Math.min(withExperiencePrice || Infinity, withoutExperiencePrice || Infinity)
               : course.price
@@ -1249,11 +1248,11 @@ export function CourseDetailsPage({
               });
             }
           }}
-          className="w-full bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-600 hover:via-blue-700 hover:to-indigo-700 text-white rounded-full h-14 text-lg font-bold shadow-[0_10px_25px_rgba(37,99,235,0.3)] active:scale-95 transition-all duration-300 border border-blue-400/20"
+          className="flex-1 bg-blue-600 hover:bg-blue-700 text-white rounded-full h-12 text-base font-black shadow-lg active:scale-95 transition-all duration-300 border-0"
         >
           {experienceBookingEnabled ? (
             <span className="flex items-center gap-2">
-              Select Options <ChevronRight className="w-4 h-4" />
+              Book Now <ChevronRight className="w-4 h-4 stroke-[3px]" />
             </span>
           ) : (
             'Book Now'
