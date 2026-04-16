@@ -433,7 +433,7 @@ export function CourseDetailsPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
+              <Card className="hidden md:block border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
                 <CardContent className="p-3 sm:p-4 text-center">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
                     <DollarSign className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 stroke-blue-600" />
@@ -456,7 +456,7 @@ export function CourseDetailsPage({
                 </CardContent>
               </Card>
 
-              <Card className="border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
+              <Card className="hidden md:block border-2 border-blue-100 shadow-lg rounded-2xl bg-gradient-to-br from-blue-50 to-white">
                 <CardContent className="p-3 sm:p-4 text-center">
                   <div className="w-10 h-10 sm:w-12 sm:h-12 bg-blue-100 rounded-xl flex items-center justify-center mx-auto mb-2">
                     <Calendar className="w-5 h-5 sm:w-6 sm:h-6 text-blue-600 stroke-blue-600" />
@@ -817,7 +817,7 @@ export function CourseDetailsPage({
                   <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-12 -mb-12" />
                   <div className="relative">
                     {experienceBookingEnabled && withExperiencePrice != null && withoutExperiencePrice != null ? (
-                      <>
+                      <div className="hidden md:block">
                         <p className="text-blue-100 text-lg mb-4">Course Fee</p>
                         <div className="space-y-4 text-left sm:text-center">
                           <div>
@@ -839,7 +839,7 @@ export function CourseDetailsPage({
                             <div className="text-3xl sm:text-4xl font-bold">${withoutExperiencePrice}</div>
                           </div>
                         </div>
-                      </>
+                      </div>
                     ) : (
                       <>
                         {course.originalPrice && (
@@ -872,7 +872,7 @@ export function CourseDetailsPage({
 
                 <CardContent className="p-6 space-y-6">
                   {/* Course Details */}
-                  <div className="space-y-4">
+                  <div className="hidden md:block space-y-4">
                     <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-2 sm:mb-4">Course Details</h3>
 
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gradient-to-r from-blue-50 to-cyan-50 rounded-xl border border-blue-100 gap-1 sm:gap-4">
