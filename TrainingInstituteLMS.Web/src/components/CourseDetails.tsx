@@ -341,7 +341,7 @@ export function CourseDetailsPage({
                   Combo Available
                 </Badge>
               )}
-//hhh
+
             </div>
             {course.code && (
               <h1 className="text-4xl md:text-5xl font-bold mb-3 text-white">
