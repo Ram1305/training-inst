@@ -190,6 +190,20 @@ export function CourseDetailsPage({
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
+  const scrollToBooking = () => {
+    const element = document.getElementById('booking-card');
+    if (element) {
+      const offset = 100;
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   useEffect(() => {
     fetchCourseDetails();
     fetchData();
@@ -796,7 +810,7 @@ export function CourseDetailsPage({
               className="sticky top-6 space-y-6"
             >
               {/* Main Booking Card */}
-              <Card className="border-2 border-cyan-200 shadow-2xl rounded-3xl overflow-hidden">
+              <Card id="booking-card" className="border-2 border-cyan-200 shadow-2xl rounded-3xl overflow-hidden">
                 {/* Price Header */}
                 <div className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white p-8 text-center relative overflow-hidden">
                   <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-16 -mt-16" />
@@ -1202,6 +1216,67 @@ export function CourseDetailsPage({
           </div>
         </div>
       </footer>
+
+      {/* Mobile Floating Book Now Bar */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 100, opacity: 0 }}
+        transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] p-4 pb-6 bg-white/95 backdrop-blur-xl border-t border-slate-200/60 shadow-[0_-10px_40px_rgba(0,0,0,0.12)] flex items-center justify-between gap-4"
+      >
+        <div className="flex flex-col">
+          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.1em] mb-0.5">
+            {experienceBookingEnabled ? 'Starting From' : 'Total Course Fee'}
+          </span>
+          <div className="flex items-baseline gap-2">
+            <span className="text-2xl font-black text-slate-900 tracking-tight">
+              ${experienceBookingEnabled
+                ? Math.min(withExperiencePrice || Infinity, withoutExperiencePrice || Infinity)
+                : course.price
+              }
+            </span>
+            {course.originalPrice && (
+              <span className="text-xs text-slate-400 line-through font-medium">
+                ${course.originalPrice}
+              </span>
+            )}
+          </div>
+        </div>
+        <Button
+          onClick={() => {
+            if (experienceBookingEnabled) {
+              scrollToBooking();
+            } else {
+              onEnroll({
+                courseId,
+                courseName: course.title,
+                courseCode: course.code,
+                coursePrice: course.price
+              });
+            }
+          }}
+          className="flex-1 bg-gradient-to-r from-cyan-500 via-blue-600 to-indigo-600 hover:from-cyan-600 hover:via-blue-700 hover:to-indigo-700 text-white rounded-full h-14 text-lg font-bold shadow-[0_10px_25px_rgba(37,99,235,0.3)] active:scale-95 transition-all duration-300 border border-blue-400/20"
+        >
+          {experienceBookingEnabled ? (
+            <span className="flex items-center gap-2">
+              Select Options <ChevronRight className="w-4 h-4" />
+            </span>
+          ) : (
+            'Book Now'
+          )}
+        </Button>
+      </motion.div>
+
+      {/* CSS Override for Floating Buttons on Mobile */}
+      <style>{`
+        @media (max-width: 1024px) {
+          .fixed.bottom-6.right-6 {
+            bottom: 6rem !important;
+            transition: bottom 0.3s ease;
+          }
+        }
+      `}</style>
 
       {/* WhatsApp Floating Button */}
       <WhatsAppButton />
