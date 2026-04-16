@@ -1223,7 +1223,7 @@ export function CourseDetailsPage({
         animate={{ y: 0, opacity: 1 }}
         exit={{ y: 100, opacity: 0 }}
         transition={{ type: "spring", stiffness: 260, damping: 20, delay: 0.5 }}
-        className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] p-5 pb-8 bg-white/95 backdrop-blur-xl border-t border-slate-200/60 shadow-[0_-10px_40px_rgba(0,0,0,0.15)] flex flex-col items-center gap-4"
+        className="lg:hidden fixed bottom-0 left-0 right-0 z-[60] p-5 pb-8 bg-white border-t border-slate-200 shadow-[0_-10px_40px_rgba(0,0,0,0.1)] flex flex-col items-center gap-4"
       >
         <div className="text-center">
           <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1 block">
