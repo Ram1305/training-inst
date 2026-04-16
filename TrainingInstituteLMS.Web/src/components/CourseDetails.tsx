@@ -982,22 +982,22 @@ export function CourseDetailsPage({
                         {slBlPrice != null && slBlPrice > 0 &&
                           Math.abs(slBlPrice - withExperiencePrice) > 0.001 &&
                           Math.abs(slBlPrice - withoutExperiencePrice) > 0.001 && (
-                          <Button
-                            onClick={() => onEnroll({
-                              courseId,
-                              courseName: course.title,
-                              courseCode: course.code,
-                              coursePrice: slBlPrice
-                            })}
-                            className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
-                          >
-                            {slBlOriginalPrice != null && (
-                              <span className="price-strikethrough text-white/80 text-base mr-2">${slBlOriginalPrice}</span>
-                            )}
-                            <span className="text-lg">${slBlPrice}</span>
-                            <span className="ml-1">Book Now SL + BL</span>
-                          </Button>
-                        )}
+                            <Button
+                              onClick={() => onEnroll({
+                                courseId,
+                                courseName: course.title,
+                                courseCode: course.code,
+                                coursePrice: slBlPrice
+                              })}
+                              className="w-full bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white rounded-full h-14 text-lg font-bold shadow-xl hover:shadow-2xl transition-all"
+                            >
+                              {slBlOriginalPrice != null && (
+                                <span className="price-strikethrough text-white/80 text-base mr-2">${slBlOriginalPrice}</span>
+                              )}
+                              <span className="text-lg">${slBlPrice}</span>
+                              <span className="ml-1">Book Now SL + BL</span>
+                            </Button>
+                          )}
                       </>
                     ) : (
                       <>
