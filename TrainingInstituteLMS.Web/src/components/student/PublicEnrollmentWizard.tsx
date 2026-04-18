@@ -348,6 +348,15 @@ const AUTO_PASS_ATTEMPT = 4;
 
 type EnrollmentType = 'individual' | 'company';
 
+const slugifyText = (value: string): string =>
+  value
+    .trim()
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
 /** Promo / combo special tier; matches CourseDetails + landing course cards (promo first, else combo). */
 function getSlBlPricingForDropdownCourse(course: CourseDropdownItem): { price: number; original: number | null } | null {
   const promo = course.promoPrice != null && Number(course.promoPrice) > 0 ? Number(course.promoPrice) : null;
@@ -835,12 +844,18 @@ export function PublicEnrollmentWizard({
   // Auto-redirect to dashboard after successful final submission for individuals
   useEffect(() => {
     if (enrollmentType === 'individual' && individualEnrollmentSuccess && individualEnrollmentResult) {
+      const selectedCourseName =
+        courses.find((c) => c.courseId === selectedCourseId)?.courseName ||
+        'course';
+      const successSlug = slugifyText(selectedCourseName) || 'course';
+      window.history.replaceState({}, '', `/enroll/success/${successSlug}`);
+
       const timer = setTimeout(() => {
         onComplete(individualEnrollmentResult);
-      }, 3000);
+      }, 5000);
       return () => clearTimeout(timer);
     }
-  }, [enrollmentType, individualEnrollmentSuccess, individualEnrollmentResult, onComplete]);
+  }, [enrollmentType, individualEnrollmentSuccess, individualEnrollmentResult, onComplete, courses, selectedCourseId]);
 
   const fetchCourses = async () => {
     setLoadingCourses(true);
@@ -2379,7 +2394,10 @@ export function PublicEnrollmentWizard({
                               <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white overflow-hidden">
                                 <SelectValue placeholder="Choose a course..." className="truncate pr-4" />
                               </SelectTrigger>
-                              <SelectContent>
+                              <SelectContent
+                                position="item-aligned"
+                                className="max-h-[70vh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:w-auto sm:max-w-[40rem]"
+                              >
                                 {groupedCourseItems().map(group => (
                                   <SelectGroup key={group.category}>
                                     <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
@@ -2387,9 +2405,9 @@ export function PublicEnrollmentWizard({
                                       <SelectItem
                                         key={`${item.id}|${item.price}|${item.variant}`}
                                         value={`${item.id}|${item.price}|${item.variant}`}
-                                        className="max-w-full"
+                                        className="max-w-full items-start"
                                       >
-                                        <div className="truncate max-w-[280px] sm:max-w-[400px]">{item.label}</div>
+                                        <div className="whitespace-normal break-words [word-break:break-word] leading-5 pr-2 max-w-[calc(100vw-3.5rem)] sm:max-w-[36rem]">{item.label}</div>
                                       </SelectItem>
                                     ))}
                                   </SelectGroup>
@@ -2614,13 +2632,16 @@ export function PublicEnrollmentWizard({
                               <SelectTrigger className="w-full rounded-xl border-2 border-violet-200 bg-white hover:bg-violet-50/50 focus-visible:ring-violet-500 focus-visible:ring-offset-2 h-auto min-h-11 py-2.5 overflow-hidden">
                                 <SelectValue placeholder="Choose a course..." className="truncate pr-4" />
                               </SelectTrigger>
-                              <SelectContent className="max-h-[var(--radix-select-content-available-height)] min-w-[var(--radix-select-trigger-width)]">
+                              <SelectContent
+                                position="item-aligned"
+                                className="max-h-[70vh] w-[calc(100vw-1rem)] max-w-[calc(100vw-1rem)] sm:min-w-[var(--radix-select-trigger-width)] sm:w-auto sm:max-w-[40rem]"
+                              >
                                 {groupedCourseItems().map(group => (
                                   <SelectGroup key={group.category}>
                                     <SelectLabel className="font-bold text-violet-800 bg-violet-50">{group.category}</SelectLabel>
                                     {group.items.map(item => (
-                                      <SelectItem key={`${item.id}|${item.price}|${item.variant}`} value={`${item.id}|${item.price}|${item.variant}`}>
-                                        {item.label}
+                                      <SelectItem key={`${item.id}|${item.price}|${item.variant}`} value={`${item.id}|${item.price}|${item.variant}`} className="items-start">
+                                        <div className="whitespace-normal break-words [word-break:break-word] leading-5 pr-2 max-w-[calc(100vw-3.5rem)] sm:max-w-[36rem]">{item.label}</div>
                                       </SelectItem>
                                     ))}
                                   </SelectGroup>
@@ -2790,7 +2811,7 @@ export function PublicEnrollmentWizard({
                 <PaymentSuccessCard
                   title="Payment successful"
                   message={enrollmentType === 'individual'
-                    ? "Your card has been charged. We are finalizing your enrollment and taking you to your dashboard in 3 seconds..."
+                    ? "Your card has been charged. We are finalizing your enrollment and taking you to your dashboard in 5 seconds..."
                     : "Your card has been charged. You can now continue to the LLND Assessment."}
                   transactionId={paymentTransactionId ?? undefined}
                   isRedirecting={enrollmentType === 'individual'}
@@ -3758,6 +3779,9 @@ export function PublicEnrollmentWizard({
             </h1>
             <p className="text-violet-100 text-sm sm:text-base max-w-md mx-auto">
               Your enrollment has been completed successfully.
+            </p>
+            <p className="text-violet-100/90 text-xs sm:text-sm mt-2">
+              Redirecting to your dashboard in 5 seconds...
             </p>
           </div>
           <CardContent className="px-8 py-8 sm:px-10 sm:py-10 space-y-6">

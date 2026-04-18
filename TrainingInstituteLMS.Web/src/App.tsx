@@ -16,7 +16,7 @@ const FormsPage = lazy(() => import('./components/FormsPage').then(m => ({ defau
 const FeesRefundPage = lazy(() => import('./components/FeesRefundPage').then(m => ({ default: m.FeesRefundPage })));
 const GalleryPage = lazy(() => import('./components/GalleryPage').then(m => ({ default: m.GalleryPage })));
 const PublicQuiz = lazy(() => import('./components/student/PublicQuiz').then(m => ({ default: m.PublicQuiz })));
-const PublicEnrollmentForm = lazy(() => import('./components/student/PublicEnrollmentForm').then(m => ({ default: m.PublicEnrollmentWizard })));
+const PublicEnrollmentForm = lazy(() => import('./components/student/PublicEnrollmentForm').then(m => ({ default: m.PublicEnrollmentForm })));
 const PublicEnrollmentWizard = lazy(() => import('./components/student/PublicEnrollmentWizard').then(m => ({ default: m.PublicEnrollmentWizard })));
 const PublicVOCForm = lazy(() => import('./components/student/PublicVOCForm').then(m => ({ default: m.PublicVOCForm })));
 import { useAuth } from './contexts/AuthContext';
