@@ -1322,6 +1322,170 @@ Transaction: {transactionReference}
             }
         }
 
+        public async Task SendLLNCompletionNotificationAsync(
+            string studentEmail,
+            string studentName,
+            decimal score,
+            bool isPassed)
+        {
+            if (!_settings.IsConfigured || string.IsNullOrWhiteSpace(studentEmail)) return;
+
+            var status = isPassed ? "Passed" : "Under Review";
+            var statusColor = isPassed ? "#16a34a" : "#ca8a04";
+            var statusBg = isPassed ? "#f0fdf4" : "#fefce8";
+
+            var subjectStudent = "Pre-Enrollment Assessment Completed";
+            var subjectAcademy = $"ACTION REQUIRED: LLN Assessment Completed - {studentName}";
+
+            var htmlStudent = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'></head>
+<body style='margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
+<tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:22px;'>Assessment Completed</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p>Dear <strong>{studentName}</strong>,</p>
+<p>Thank you for completing your Pre-Enrollment (LLN) Assessment.</p>
+<div style='margin:24px 0;padding:20px;background-color:{statusBg};border-radius:8px;border:1px solid {statusColor};text-align:center;'>
+<p style='margin:0 0 8px;font-size:14px;color:#64748b;text-transform:uppercase;letter-spacing:1px;'>Your Result</p>
+<p style='margin:0;font-size:24px;font-weight:700;color:{statusColor};'>{status}</p>
+<p style='margin:8px 0 0;font-size:16px;color:#334155;'>Score: {score:F1}%</p>
+</div>
+{(isPassed 
+    ? "<p>Congratulations! You have passed the assessment. You can now proceed with your enrollment.</p>" 
+    : "<p>Your assessment is currently under review by our administration team. We will notify you once the review is complete.</p>")}
+<p>If you have any questions, please contact our support team.</p>
+</td></tr>
+<tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;'>
+Best regards,<br/><strong style='color:#334155;'>Safety Training Academy</strong>
+</td></tr>
+</table></td></tr></table></body></html>";
+
+            var htmlAcademy = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'></head>
+<body style='margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;'>
+<tr><td style='background:#f43f5e;color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:20px;'>ACTION REQUIRED: LLN Assessment Completed</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p>A student has completed their LLN Assessment.</p>
+<table width='100%' cellpadding='10' cellspacing='0' border='0' style='background-color:#f8fafc;border-radius:6px;margin-bottom:20px;'>
+<tr><td style='color:#64748b;width:120px;'>Student Name</td><td><strong>{studentName}</strong></td></tr>
+<tr><td style='color:#64748b;'>Email</td><td>{studentEmail}</td></tr>
+<tr><td style='color:#64748b;'>Score</td><td><strong>{score:F1}%</strong></td></tr>
+<tr><td style='color:#64748b;'>Status</td><td><span style='color:{statusColor};font-weight:700;'>{status}</span></td></tr>
+</table>
+<p>Please log in to the admin portal to review the results and manage the student's enrollment status if required.</p>
+</td></tr>
+</table></td></tr></table></body></html>";
+
+            await SendDualEmailAsync(studentEmail, subjectStudent, htmlStudent, subjectAcademy, htmlAcademy);
+        }
+
+        public async Task SendEnrollmentFormCompletionNotificationAsync(
+            string studentEmail,
+            string studentName)
+        {
+            if (!_settings.IsConfigured || string.IsNullOrWhiteSpace(studentEmail)) return;
+
+            var subjectStudent = "Enrollment Form Received";
+            var subjectAcademy = $"ACTION REQUIRED: Enrollment Form Submitted - {studentName}";
+
+            var htmlStudent = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'></head>
+<body style='margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;box-shadow:0 2px 8px rgba(0,0,0,0.08);'>
+<tr><td style='background:linear-gradient(135deg,#4f46e5 0%,#7c3aed 100%);color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:22px;'>Enrollment Form Submitted</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p>Dear <strong>{studentName}</strong>,</p>
+<p>We have successfully received your enrollment form.</p>
+<p>Our administration team will now review your application and documents. This process typically takes 1-2 business days.</p>
+<p>We will notify you via email as soon as your enrollment is approved or if we require any additional information.</p>
+</td></tr>
+<tr><td style='padding:20px 30px;background-color:#f8fafc;border-top:1px solid #e2e8f0;font-size:13px;color:#64748b;'>
+Best regards,<br/><strong style='color:#334155;'>Safety Training Academy</strong>
+</td></tr>
+</table></td></tr></table></body></html>";
+
+            var htmlAcademy = $@"<!DOCTYPE html>
+<html>
+<head><meta charset='utf-8'></head>
+<body style='margin:0;padding:0;font-family:Arial,sans-serif;background-color:#f4f4f4;'>
+<table width='100%' cellpadding='0' cellspacing='0' border='0' style='padding:20px 0;'>
+<tr><td align='center'>
+<table width='600' cellpadding='0' cellspacing='0' border='0' style='background-color:#ffffff;border-radius:8px;overflow:hidden;'>
+<tr><td style='background:#f43f5e;color:#ffffff;padding:24px 30px;text-align:center;'>
+<h1 style='margin:0;font-size:20px;'>ACTION REQUIRED: Enrollment Form Submitted</h1>
+</td></tr>
+<tr><td style='padding:30px;'>
+<p>A student has submitted their enrollment form and is awaiting review.</p>
+<table width='100%' cellpadding='10' cellspacing='0' border='0' style='background-color:#f8fafc;border-radius:6px;margin-bottom:20px;'>
+<tr><td style='color:#64748b;width:120px;'>Student Name</td><td><strong>{studentName}</strong></td></tr>
+<tr><td style='color:#64748b;'>Email</td><td>{studentEmail}</td></tr>
+<tr><td style='color:#64748b;'>Submitted At</td><td>{DateTime.UtcNow:f} (UTC)</td></tr>
+</table>
+<p>Please log in to the admin portal to review the form and documents.</p>
+</td></tr>
+</table></td></tr></table></body></html>";
+
+            await SendDualEmailAsync(studentEmail, subjectStudent, htmlStudent, subjectAcademy, htmlAcademy);
+        }
+
+        private async Task SendDualEmailAsync(
+            string studentEmail, string subjectStudent, string htmlStudent,
+            string subjectAcademy, string htmlAcademy)
+        {
+            try
+            {
+                var user = _settings.User?.Trim() ?? string.Empty;
+                var password = (_settings.Password ?? string.Empty).Replace(" ", "").Trim();
+                using var client = new SmtpClient();
+                var socketOptions = _settings.SmtpPort == 465 ? SecureSocketOptions.SslOnConnect : SecureSocketOptions.Auto;
+                await client.ConnectAsync(_settings.SmtpHost, _settings.SmtpPort, socketOptions);
+                await client.AuthenticateAsync(user, password);
+
+                // Send to student
+                var msgS = new MimeMessage();
+                msgS.From.Add(new MailboxAddress(_settings.FromName, user));
+                msgS.To.Add(MailboxAddress.Parse(studentEmail.Trim()));
+                msgS.Subject = subjectStudent;
+                msgS.Body = new BodyBuilder { HtmlBody = htmlStudent }.ToMessageBody();
+                await client.SendAsync(msgS);
+
+                // Send to academy bookings
+                var bookings = _settings.BookingsEmail?.Trim();
+                if (!string.IsNullOrWhiteSpace(bookings))
+                {
+                    var msgA = new MimeMessage();
+                    msgA.From.Add(new MailboxAddress(_settings.FromName, user));
+                    msgA.To.Add(MailboxAddress.Parse(bookings));
+                    msgA.Subject = subjectAcademy;
+                    msgA.Body = new BodyBuilder { HtmlBody = htmlAcademy }.ToMessageBody();
+                    await client.SendAsync(msgA);
+                }
+
+                await client.DisconnectAsync(true);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send dual notification emails to {Email}", studentEmail);
+            }
+        }
+
+
         private static string FormatBookingIdForEmail(string bookingId)
         {
             if (string.IsNullOrWhiteSpace(bookingId)) return "00000000";

@@ -471,6 +471,16 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
 
             await _context.SaveChangesAsync();
 
+            // Send notification email
+            try
+            {
+                await _emailService.SendEnrollmentFormCompletionNotificationAsync(student.Email, student.FullName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send enrollment form submission email for student {Id}", studentId);
+            }
+
             return MapToEnrollmentFormResponseDto(student);
         }
 
@@ -507,6 +517,16 @@ namespace TrainingInstituteLMS.ApiService.Services.StudentEnrollment
             student.PhoneNumber = request.Mobile;
 
             await _context.SaveChangesAsync();
+
+            // Send notification email
+            try
+            {
+                await _emailService.SendEnrollmentFormCompletionNotificationAsync(student.Email, student.FullName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to send enrollment form update email for student {Id}", studentId);
+            }
 
             return MapToEnrollmentFormResponseDto(student);
         }

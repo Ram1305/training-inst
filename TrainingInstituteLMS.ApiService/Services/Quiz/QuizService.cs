@@ -5,6 +5,7 @@ using TrainingInstituteLMS.Data.Entities.Auth;
 using TrainingInstituteLMS.Data.Entities.Students;
 using TrainingInstituteLMS.DTOs.DTOs.Requests.Quiz;
 using TrainingInstituteLMS.DTOs.DTOs.Responses.Quiz;
+using TrainingInstituteLMS.ApiService.Services.Email;
 
 namespace TrainingInstituteLMS.ApiService.Services.Quiz
 {
@@ -12,11 +13,16 @@ namespace TrainingInstituteLMS.ApiService.Services.Quiz
     {
         private readonly TrainingLMSDbContext _context;
         private readonly ILogger<QuizService> _logger;
+        private readonly IEmailService _emailService;
 
-        public QuizService(TrainingLMSDbContext context, ILogger<QuizService> logger)
+        public QuizService(
+            TrainingLMSDbContext context, 
+            ILogger<QuizService> logger,
+            IEmailService emailService)
         {
             _context = context;
             _logger = logger;
+            _emailService = emailService;
         }
 
         public async Task<GuestQuizSubmissionResultDto> SubmitGuestQuizAsync(SubmitGuestQuizRequestDto request)
@@ -126,6 +132,20 @@ namespace TrainingInstituteLMS.ApiService.Services.Quiz
 
                     await _context.SaveChangesAsync();
                     await transaction.CommitAsync();
+
+                    // Send notification email
+                    try
+                    {
+                        await _emailService.SendLLNCompletionNotificationAsync(
+                            request.Email,
+                            request.FullName,
+                            request.OverallPercentage,
+                            request.IsPassed);
+                    }
+                    catch (Exception emailEx)
+                    {
+                        _logger.LogWarning(emailEx, "Failed to send LLN completion email for guest {Email}", request.Email);
+                    }
 
                     _logger.LogInformation(
                         "Guest quiz submitted successfully. User: {Email}, Student ID: {StudentId}, Quiz Attempt: {QuizAttemptId}, Passed: {IsPassed}",
@@ -242,6 +262,20 @@ namespace TrainingInstituteLMS.ApiService.Services.Quiz
                             "Updated {Count} enrollment(s) for student {StudentId} with quiz completion",
                             pendingEnrollments.Count, request.StudentId);
                     }
+                }
+
+                // Send notification email
+                try
+                {
+                    await _emailService.SendLLNCompletionNotificationAsync(
+                        student.Email,
+                        student.FullName,
+                        request.OverallPercentage,
+                        request.IsPassed);
+                }
+                catch (Exception emailEx)
+                {
+                    _logger.LogWarning(emailEx, "Failed to send LLN completion email for student {Id}", request.StudentId);
                 }
 
                 _logger.LogInformation(

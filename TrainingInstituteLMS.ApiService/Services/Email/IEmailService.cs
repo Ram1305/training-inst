@@ -85,5 +85,21 @@ namespace TrainingInstituteLMS.ApiService.Services.Email
             decimal amount,
             string transactionReference,
             string linesSummary);
+
+        /// <summary>
+        /// Sends LLN completion notification to student and academy.
+        /// </summary>
+        Task SendLLNCompletionNotificationAsync(
+            string studentEmail,
+            string studentName,
+            decimal score,
+            bool isPassed);
+
+        /// <summary>
+        /// Sends enrollment form completion notification to student and academy.
+        /// </summary>
+        Task SendEnrollmentFormCompletionNotificationAsync(
+            string studentEmail,
+            string studentName);
     }
 }
