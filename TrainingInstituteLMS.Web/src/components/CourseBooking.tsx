@@ -1,5 +1,5 @@
 // src/components/CourseBooking.tsx
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   CreditCard,
@@ -34,6 +34,7 @@ import { courseDateService } from "../services/courseDate.service";
 import { enrollmentService } from "../services/enrollment.service";
 import { paymentService } from "../services/payment.service";
 import { gtagEvent } from "../lib/gtag";
+import { trackCompleteRegistration } from "../lib/fbq";
 import { isValidEmail } from "../utils/emailValidator";
 import type { CourseDateSimple } from "../services/courseDate.service";
 import logoImage from '/assets/SafetyTrainingAcademylogo.png';
@@ -92,6 +93,7 @@ export function CourseBooking({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const completeRegistrationTrackedRef = useRef(false);
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
@@ -152,6 +154,13 @@ export function CourseBooking({
         }),
       }));
   }, [courseDates]);
+
+  useEffect(() => {
+    if (!success) return;
+    if (completeRegistrationTrackedRef.current) return;
+    completeRegistrationTrackedRef.current = true;
+    trackCompleteRegistration({ currency: "AUD", value: 0 });
+  }, [success]);
 
   // Fetch available course dates
   useEffect(() => {

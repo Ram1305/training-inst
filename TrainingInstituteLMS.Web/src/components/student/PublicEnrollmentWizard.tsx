@@ -77,6 +77,7 @@ import { paymentService } from '../../services/payment.service';
 import { PaymentSuccessCard } from '../PaymentSuccessCard';
 import { PaymentFailureCard } from '../PaymentFailureCard';
 import { gtagEvent } from '../../lib/gtag';
+import { trackCompleteRegistration } from '../../lib/fbq';
 import { ImageWithFallback } from '../figma/ImageWithFallback';
 import { API_CONFIG } from '../../config/api.config';
 import { usePublicSiteUrl } from '../../contexts/PublicSiteUrlContext';
@@ -705,6 +706,7 @@ export function PublicEnrollmentWizard({
   const [paymentProcessing, setPaymentProcessing] = useState(false);
   const [paymentCompleted, setPaymentCompleted] = useState(false);
   const [paymentTransactionId, setPaymentTransactionId] = useState<number | null>(null);
+  const completeRegistrationTrackedRef = useRef(false);
 
   // Credit card form data
   const [cardData, setCardData] = useState({
@@ -830,6 +832,14 @@ export function PublicEnrollmentWizard({
       setCardType('unknown');
     }
   }, [cardData.cardNumber]);
+
+  // Track successful registration/payment completion for Meta Pixel (once).
+  useEffect(() => {
+    if (paymentMethod !== 'card' || !paymentCompleted) return;
+    if (completeRegistrationTrackedRef.current) return;
+    completeRegistrationTrackedRef.current = true;
+    trackCompleteRegistration({ currency: 'AUD', value: 0 });
+  }, [paymentMethod, paymentCompleted]);
 
   // Auto-submit after card payment for individuals (skipping Step 3/4 as requested)
   useEffect(() => {

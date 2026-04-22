@@ -1,6 +1,7 @@
 import { useState, useCallback } from 'react';
 import { ArrowLeft, ArrowRight, Save, CheckCircle, Loader2, AlertCircle, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
+import { trackCompleteRegistration } from '../../lib/fbq';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '../ui/card';
 import { Button } from '../ui/button';
 import { Input } from '../ui/input';
@@ -386,6 +387,7 @@ export function PublicEnrollmentForm({ onComplete, onCancel }: PublicEnrollmentF
 
       if (response.success && response.data) {
         toast.success('Enrollment form submitted successfully! Your account has been created.');
+        trackCompleteRegistration({ currency: 'AUD', value: 0 });
         onComplete({
           userId: response.data.userId,
           studentId: response.data.studentId,
