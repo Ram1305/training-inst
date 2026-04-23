@@ -799,6 +799,34 @@ export function PublicEnrollmentWizard({
     setPendingCompanyCourse(null);
   }, [hideEnrollmentTypeSelector]);
 
+  // GTM Purchase Event Tracking
+  useEffect(() => {
+    if (individualEnrollmentSuccess && enrollmentType === 'individual' && !completeRegistrationTrackedRef.current) {
+      completeRegistrationTrackedRef.current = true;
+
+      const orderId = transactionId || paymentTransactionId?.toString() || studentId || `ORD-${Date.now()}`;
+      const course = getSelectedCourse();
+      const price = getSelectedCoursePrice();
+
+      if (typeof window !== 'undefined' && (window as any).dataLayer) {
+        (window as any).dataLayer.push({
+          event: 'purchase',
+          ecommerce: {
+            transaction_id: orderId,
+            value: price,
+            currency: 'AUD',
+            items: [{
+              item_name: course?.courseName || 'Course Enrollment',
+              price: price,
+              quantity: 1
+            }]
+          }
+        });
+        console.log('GTM Purchase Event Pushed:', { orderId, courseName: course?.courseName, price });
+      }
+    }
+  }, [individualEnrollmentSuccess, enrollmentType, transactionId, paymentTransactionId, studentId, selectedCourseId]);
+
   // Fetch courses on mount
   useEffect(() => {
     fetchCourses();
